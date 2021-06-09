@@ -1,0 +1,25 @@
+version: '3.5'
+
+services:
+
+  front:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front.rule=Host(`npp.localhost`)"
+
+  traefik:
+    image: traefik:2.2.0
+    command:
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--log.level=DEBUG"
+      - '--providers.docker.watch=true'
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: on-failure

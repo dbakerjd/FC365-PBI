@@ -1,0 +1,30 @@
+version: '3.5'
+
+services:
+
+  front:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    volumes:
+      - ./npp/dist:/var/www/html
+    working_dir: /var/www/html
+    shm_size: 1g
+    restart: on-failure
+    expose:
+      - "80"
+    networks:
+      default:
+    environment:
+      VIRTUAL_PORT: 80
+
+  ngrok:
+    image: shkoliar/ngrok
+    ports:
+      - 4551:4551
+    links:
+      - front
+    environment:
+      - DOMAIN=front
+      - PORT=80
+      - REGION=eu
