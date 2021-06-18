@@ -1,0 +1,43 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.9/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.9",
+    "version": "1.0.1",
+    "id": "36a2ca2b-44fc-4af5-8544-5b383ad4e5e2",
+    "packageName": "com.microsoft.teams.extension",
+    "developer": {
+        "name": "Beta Software S.L.",
+        "websiteUrl": "https://npp.staging.beta.barcelona/#",
+        "privacyUrl": "https://npp.staging.beta.barcelona/#",
+        "termsOfUseUrl": "https://npp.staging.beta.barcelona/#"
+    },
+    "icons": {
+        "color": "color.png",
+        "outline": "outline.png"
+    },
+    "name": {
+        "short": "NPP Demo",
+        "full": ""
+    },
+    "description": {
+        "short": "Short description for Personal App.",
+        "full": "Full description of Personal App."
+    },
+    "accentColor": "#FFFFFF",
+    "staticTabs": [
+        {
+            "entityId": "index",
+            "name": "Personal Tab",
+            "contentUrl": "https://npp.staging.beta.barcelona/#tab",
+            "websiteUrl": "https://npp.staging.beta.barcelona/#tab",
+            "scopes": [
+                "personal"
+            ]
+        }
+    ],
+    "permissions": [
+        "identity"
+    ],
+    "validDomains": [
+        "npp.staging.beta.barcelona"
+    ]
+}
