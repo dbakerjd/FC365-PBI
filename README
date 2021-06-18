@@ -1,0 +1,5 @@
+What you need to develop this:
+
+1- run ng serve to develop locally
+2- run bin/upload.sh to build and deploy to Beta's test server (you'll need your ssh key added to the server, contact marc@beta.barcelona)
+3- add to teams the zip you'll find inside appPackage directory
