@@ -1,1 +1,11 @@
-<p>dashboard works!</p>
+<p>
+User: {{ getUser() | json }}
+</p>
+
+<p>
+Context: {{ getContext() | json }}
+</p>
+
+<p>
+Token: {{ getToken() | json }}
+</p>
