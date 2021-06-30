@@ -1,8 +1,8 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.9/MicrosoftTeams.schema.json",
     "manifestVersion": "1.9",
-    "version": "1.0.1",
-    "id": "36a2ca2b-44fc-4af5-8544-5b383ad4e5e2",
+    "version": "1.0.4",
+    "id": "17534ca2-f4f8-43c0-8612-72bdd29a9ee8",
     "packageName": "com.microsoft.teams.extension",
     "developer": {
         "name": "Beta Software S.L.",
@@ -26,7 +26,7 @@
     "staticTabs": [
         {
             "entityId": "index",
-            "name": "Personal Tab",
+            "name": "NPP",
             "contentUrl": "https://npp.staging.beta.barcelona/#tab",
             "websiteUrl": "https://npp.staging.beta.barcelona/#tab",
             "scopes": [
@@ -38,6 +38,13 @@
         "identity"
     ],
     "validDomains": [
+        "betasoftwaresl.sharepoint.com",
         "npp.staging.beta.barcelona"
-    ]
+    ],
+    "webApplicationInfo": {
+        "id": "17534ca2-f4f8-43c0-8612-72bdd29a9ee8"
+    }
 }
+
+//value: D~n1xUOWt2mePePDq5-fpU1QRll~E98U~H
+//secret id: e187c144-cdd3-4b82-8c2d-a4701f2a5950
