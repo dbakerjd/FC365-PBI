@@ -3,3 +3,9 @@ What you need to develop this:
 1- run ng serve to develop locally
 2- run bin/upload.sh to build and deploy to Beta's test server (you'll need your ssh key added to the server, contact marc@beta.barcelona)
 3- add to teams the zip you'll find inside appPackage directory
+
+
+//value: D~n1xUOWt2mePePDq5-fpU1QRll~E98U~H
+//secret id: e187c144-cdd3-4b82-8c2d-a4701f2a5950
+//https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/samples/msal-angular-v2-samples/angular12-sample-app/src/app/app.component.ts
+//https://github.com/AzureAD/microsoft-authentication-library-for-js/wiki
