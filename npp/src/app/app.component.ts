@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TeamsService } from './teams.service';
+import { TeamsService } from './services/teams.service';
 
 @Component({
   selector: 'app-root',
@@ -11,5 +11,6 @@ export class AppComponent {
 
   }
   ngOnInit(): void {
+    this.teams.getActiveAccount();
   }
 }
