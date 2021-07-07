@@ -9,3 +9,4 @@ What you need to develop this:
 //secret id: e187c144-cdd3-4b82-8c2d-a4701f2a5950
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/blob/dev/samples/msal-angular-v2-samples/angular12-sample-app/src/app/app.component.ts
 //https://github.com/AzureAD/microsoft-authentication-library-for-js/wiki
+//clear teams cache: %appdata%\Microsoft\Teams
