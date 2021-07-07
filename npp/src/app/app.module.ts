@@ -24,7 +24,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // PPE testing environment
       authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
-      redirectUri: '/auth-response',
+      redirectUri: '/',
       postLogoutRedirectUri: '/'
     },
     cache: {
