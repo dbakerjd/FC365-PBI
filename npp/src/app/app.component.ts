@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { TeamsService } from './services/teams.service';
+import { MsalService } from '@azure/msal-angular';
 
 @Component({
   selector: 'app-root',
@@ -7,10 +7,10 @@ import { TeamsService } from './services/teams.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  constructor(private readonly teams: TeamsService) {
+  constructor(private authService: MsalService) {
 
   }
   ngOnInit(): void {
-    this.teams.getActiveAccount();
+    this.authService.handleRedirectObservable().subscribe();
   }
 }

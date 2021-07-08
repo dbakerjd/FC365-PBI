@@ -23,16 +23,15 @@ export class TeamsService {
     });
   }
 
-  async getActiveAccount() {
+  getActiveAccount() {
     if(this.authService.instance.getAllAccounts().length == 0) {
-      let response;
       if (this.msalGuardConfig.authRequest){
-        response = await this.authService.loginPopup({...this.msalGuardConfig.authRequest} as PopupRequest).toPromise();
+        this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as PopupRequest);
         
       } else {
-        response = await this.authService.loginPopup().toPromise();
+        this.authService.loginRedirect();
       }
-      this.authService.instance.setActiveAccount(response.account);    
+      return false; 
     } 
 
     let activeAccount = this.authService.instance.getActiveAccount();
