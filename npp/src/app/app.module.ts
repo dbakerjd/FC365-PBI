@@ -9,6 +9,12 @@ import { TeamsService } from './services/teams.service';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { IPublicClientApplication, PublicClientApplication, InteractionType, BrowserCacheLocation, LogLevel } from '@azure/msal-browser';
 import { MsalGuard, MsalInterceptor, MsalBroadcastService, MsalInterceptorConfiguration, MsalModule, MsalService, MSAL_GUARD_CONFIG, MSAL_INSTANCE, MSAL_INTERCEPTOR_CONFIG, MsalGuardConfiguration, MsalRedirectComponent } from '@azure/msal-angular';
+import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
+import { OpportunityDetailComponent } from './opportunity/opportunity-detail/opportunity-detail.component';
+import { ActionsListComponent } from './actions/actions-list/actions-list.component';
+import { HeaderComponent } from './shared/header/header.component';
+import { NotificationsListComponent } from './shared/notifications-list/notifications-list.component';
+import { UserProfilePicComponent } from './shared/user-profile-pic/user-profile-pic.component';
 
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
@@ -66,6 +72,12 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
   declarations: [
     AppComponent,
     DashboardComponent,
+    OpportunityListComponent,
+    OpportunityDetailComponent,
+    ActionsListComponent,
+    HeaderComponent,
+    NotificationsListComponent,
+    UserProfilePicComponent,
   ],
   imports: [
     BrowserModule,

@@ -11,6 +11,16 @@ import { filter } from 'rxjs/operators';
 })
 export class DashboardComponent implements OnInit {
   account: any;
+  items = [{
+    src: '',
+    text: 'NPP Summary'
+  }, {
+    src: '',
+    text: 'Your Opportunities'
+  }, {
+    src: '',
+    text: 'Power BI Report'
+  }];
 
   constructor(private readonly teams: TeamsService, private authService: MsalService, private msalBroadcastService: MsalBroadcastService) { }
 
