@@ -1,0 +1,17 @@
+:host {
+    display: block;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width:1000%;
+}
+.dashboard-wrapper {
+    background-color: #000;
+    color: #fff;
+    height: 100%;
+
+    h1, h2 {
+        margin: 0;
+        padding: 0;
+    }
+}
