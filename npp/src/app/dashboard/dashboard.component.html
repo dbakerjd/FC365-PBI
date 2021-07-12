@@ -3,9 +3,9 @@
     <h1>Welcome</h1>
     <h2>Your journey starts here</h2>
     <div class="dashboard-items">
-        <div class="dashboard-item" *ngFor="let item of items">
+        <div class="dashboard-item" *ngFor="let item of items" (click)="navigateTo(item)">
             <img src="{{item.src}}"/>
-            <span>{{item.text}}</span>
+            <div class="dashboard-item-text">{{item.text}}</div>
         </div>
     </div>
 </div>

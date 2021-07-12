@@ -15,6 +15,8 @@ import { ActionsListComponent } from './actions/actions-list/actions-list.compon
 import { HeaderComponent } from './shared/header/header.component';
 import { NotificationsListComponent } from './shared/notifications-list/notifications-list.component';
 import { UserProfilePicComponent } from './shared/user-profile-pic/user-profile-pic.component';
+import { SummaryComponent } from './summary/summary.component';
+import { PowerBiComponent } from './power-bi/power-bi.component';
 
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
@@ -78,6 +80,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     HeaderComponent,
     NotificationsListComponent,
     UserProfilePicComponent,
+    SummaryComponent,
+    PowerBiComponent,
   ],
   imports: [
     BrowserModule,

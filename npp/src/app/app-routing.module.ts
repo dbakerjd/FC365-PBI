@@ -1,9 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { ActionsListComponent } from './actions/actions-list/actions-list.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
+import { PowerBiComponent } from './power-bi/power-bi.component';
+import { SummaryComponent } from './summary/summary.component';
 
 const routes: Routes = [
-  { path: '', component: DashboardComponent }
+  { path: '', component: DashboardComponent },
+  { path: 'summary', component: SummaryComponent },
+  { path: 'opportunities', component: OpportunityListComponent },
+  { path: 'opportunities/:id/actions', component: ActionsListComponent },
+  { path: 'power-bi', component: PowerBiComponent },
 ];
 
 @NgModule({

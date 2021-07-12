@@ -1,6 +1,13 @@
 <div class="header-wrapper">
-  <div class="header-back-button" *ngIf="!isHome" (click)="goBack()"></div>  
-  <div class="header-home" *ngIf="isHome"></div>
-  <h1>NPP Opportunity Assessment</h1>
-  <div class="header-logo"></div>
-</div>
+  <div class="header-button header-back" *ngIf="!isHome" (click)="goBack()">
+    <img src="assets/left-arrow.svg"/>
+  </div>  
+  <div class="header-button header-home" *ngIf="isHome">
+    <img src="assets/home.svg"/>
+  </div>
+  <div class="header-title">NPP Opportunity Assessment</div>
+  <div class="header-logo">
+    <img src="assets/fc365.svg"/>
+  </div>
+  <div style="clear: both"></div>
+</div> 
