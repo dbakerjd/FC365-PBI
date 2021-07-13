@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -8,10 +9,13 @@ import { Opportunity, SharepointService } from 'src/app/services/sharepoint.serv
 })
 export class OpportunityListComponent implements OnInit {
   opportunities: Opportunity[] = [];
-  constructor(private sharepoint: SharepointService) { }
+  constructor(private sharepoint: SharepointService, private router: Router) { }
 
   async ngOnInit() {
     this.opportunities = await this.sharepoint.getOpportunities();
   }
 
+  navigateTo(item: Opportunity) {
+    this.router.navigate(['opportunities', item.Id, 'actions']);
+  }
 }

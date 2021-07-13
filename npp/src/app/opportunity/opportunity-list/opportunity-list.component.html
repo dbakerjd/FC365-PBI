@@ -3,18 +3,23 @@
 <div class="opportunity-list-wrapper">
     <div class="opportunity-list-item" *ngFor="let item of opportunities">
         <div class="opportunity-status">
-            <p>{{item.opportunityStatus}}</p>
-            <p>{{item.opportunityType}}</p>
+            <div>
+                <div class="opportunity-active" *ngIf="item.opportunityStatus == 'Active'"></div>
+                <div class="opportunity-archived" *ngIf="item.opportunityStatus == 'Archived'"></div>
+                {{item.opportunityStatus}}
+            </div>
+            <p><label>Type: </label>{{item.opportunityType}}</p>
         </div>
-        <div class="opportunity-name">
-            <p>{{item.title}}</p>
-            <p><span>Molecule Name: </span> {{item.moleculeName}}</p>
-            <p><span>Indication: </span> {{item.indicationName}}</p>
+        <div class="opportunity-name" (click)="navigateTo(item)">
+            <p class="opportunity-title">{{item.title}}</p>
+            <p><label>Molecule Name: </label> {{item.moleculeName}}</p>
+            <p><label>Indication: </label> {{item.indicationName}}</p>
         </div>
-        <div class="opportunity-progress">
-            <p><b>Progress:</b> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
-            <p><span>Molecule Name: </span> {{item.moleculeName}}</p>
-            <p><span>Indication: </span> {{item.indicationName}}</p>
+        <div class="opportunity-progress" (click)="navigateTo(item)">
+            <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
+            <p><label>Opportunity Owner: </label> {{item.opportunityOwner}}</p>
+            <p><label>Project End Date: </label> {{item.projectEnd | date : 'MMM y'}}</p>
+            <p><label>Therapy Area: </label> {{item.therapyArea}}</p>
         </div>
     </div>
 </div>

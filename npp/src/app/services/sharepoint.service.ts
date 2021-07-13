@@ -35,7 +35,7 @@ export class SharepointService {
       opportunityStatus: "Active",
       indicationName: "Chronic Obstructive Pulmonary Disease (COPD)",
       Id: 67,
-      therapyArea: "",
+      therapyArea: "Respiratory",
       updated: new Date("5/25/2021 3:04 PM"),
       progress: 79
     },{
@@ -48,7 +48,7 @@ export class SharepointService {
       opportunityStatus: "Active",
       indicationName: "Asthma",
       Id: 68,
-      therapyArea: "",
+      therapyArea: "Respiratory",
       updated: new Date("5/25/2021 3:55 PM"),
       progress: 45
     },{
@@ -58,10 +58,10 @@ export class SharepointService {
       projectStart: new Date("5/1/2021"),
       projectEnd: new Date("5/1/2025"),
       opportunityType: "Product Development",
-      opportunityStatus: "Active",
+      opportunityStatus: "Archived",
       indicationName: "Hemophilia",
       Id: 69,
-      therapyArea: "",
+      therapyArea: "Haematology",
       updated: new Date("5/25/2021 4:14 PM"),
       progress: 12
     }];
