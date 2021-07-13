@@ -18,6 +18,11 @@ import { UserProfilePicComponent } from './shared/user-profile-pic/user-profile-
 import { SummaryComponent } from './summary/summary.component';
 import { PowerBiComponent } from './power-bi/power-bi.component';
 import { SharepointService } from './services/sharepoint.service';
+import { OpportunityFilterComponent } from './opportunity/opportunity-filter/opportunity-filter.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { FormlyModule } from '@ngx-formly/core';
+import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
+import { ProgressBarComponent } from './shared/progress-bar/progress-bar.component';
 
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
@@ -83,12 +88,17 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     UserProfilePicComponent,
     SummaryComponent,
     PowerBiComponent,
+    OpportunityFilterComponent,
+    ProgressBarComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    MsalModule
+    MsalModule,
+    ReactiveFormsModule,
+    FormlyModule.forRoot({ extras: { lazyRender: true } }),
+    FormlyBootstrapModule
   ],
   providers: [
     TeamsService,

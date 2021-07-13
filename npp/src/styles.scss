@@ -1,8 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+
 /* You can add global styles to this file, and also import other style files */
 html, body {
     height: 100%;
     padding: 0;
     margin: 0;
     font-size: 12px;
-    font-family: OpenSans;
+    font-family: "Open Sans";
+}
+p {
+    margin: 0;
+    padding: 0;
+}
+
+app-opportunity-filter {
+    formly-field {
+        display: inline-block;
+        max-width: 16%;
+        margin: 0.85rem 1.8rem;
+        
+        select, input {
+            max-width: 100%;
+            padding: 4px 4px 3px 7.5px;
+            opacity: 0.4;
+            border-radius: 5px;
+            border: solid 1px #000000;
+        }
+
+        &:nth-child(1) {
+            width: 25%;
+            input {
+                width: 100%;
+            }
+        }
+    }
+}
+
+app-opportunity-list {
+    app-progress-bar {
+        display: block;
+        width: 8rem;
+        height: 0.8rem;
+    }
 }

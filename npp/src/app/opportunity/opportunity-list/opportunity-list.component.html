@@ -1,2 +1,20 @@
 <app-header [isHome]="false"></app-header>
-<p>opportunity-list works!</p>
+<app-opportunity-filter></app-opportunity-filter>
+<div class="opportunity-list-wrapper">
+    <div class="opportunity-list-item" *ngFor="let item of opportunities">
+        <div class="opportunity-status">
+            <p>{{item.opportunityStatus}}</p>
+            <p>{{item.opportunityType}}</p>
+        </div>
+        <div class="opportunity-name">
+            <p>{{item.title}}</p>
+            <p><span>Molecule Name: </span> {{item.moleculeName}}</p>
+            <p><span>Indication: </span> {{item.indicationName}}</p>
+        </div>
+        <div class="opportunity-progress">
+            <p><b>Progress:</b> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
+            <p><span>Molecule Name: </span> {{item.moleculeName}}</p>
+            <p><span>Indication: </span> {{item.indicationName}}</p>
+        </div>
+    </div>
+</div>
