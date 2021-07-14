@@ -26,23 +26,10 @@ export class DashboardComponent implements OnInit {
     route: ['power-bi']
   }];
 
-  constructor(private readonly teams: TeamsService, private authService: MsalService, private msalBroadcastService: MsalBroadcastService, private router: Router) { }
+  constructor(private readonly teams: TeamsService, private router: Router) { }
 
   ngOnInit(): void {
-    this.msalBroadcastService.msalSubject$
-      /*.pipe(
-        filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
-      )*/
-      .subscribe((result: EventMessage) => {
-        console.log(result);
-        if( result.eventType === EventType.LOGIN_SUCCESS) {
-          const payload = result.payload as AuthenticationResult;
-          this.authService.instance.setActiveAccount(payload.account);
-          this.account = payload.account;
-        }
-      });
     
-    this.account = this.teams.getActiveAccount();
   }
 
   getUser() {

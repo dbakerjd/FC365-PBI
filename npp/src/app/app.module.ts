@@ -24,6 +24,7 @@ import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ProgressBarComponent } from './shared/progress-bar/progress-bar.component';
 import { environment } from 'src/environments/environment';
+import { LicensingService } from './services/licensing.service';
 
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
@@ -124,7 +125,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     MsalGuard,
     MsalBroadcastService,
     ErrorService,
-    SharepointService
+    SharepointService,
+    LicensingService
   ],
   bootstrap: [AppComponent]
 })

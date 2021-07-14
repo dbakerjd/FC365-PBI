@@ -8,6 +8,7 @@ import { ErrorService } from './error.service';
   providedIn: 'root'
 })
 export class TeamsService {
+  public account: any = false;
   public user: any = false;
   public token: any = false;
   public context: any = false;
@@ -24,25 +25,57 @@ export class TeamsService {
   }
 
   getActiveAccount() {
-    if(this.authService.instance.getAllAccounts().length == 0) {
-      if (this.msalGuardConfig.authRequest){
-        this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as PopupRequest);
-        
-      } else {
-        this.authService.loginRedirect();
-      }
-      return false; 
-    } 
-
+    
     let activeAccount = this.authService.instance.getActiveAccount();
-    if (!activeAccount && this.authService.instance.getAllAccounts().length > 0) {
-      let accounts = this.authService.instance.getAllAccounts();
-      this.authService.instance.setActiveAccount(accounts[0]);
+
+    /*
+    trying to make account to persist
+    */
+    if(!activeAccount) {
+      activeAccount = this.getStorageAccount();
+      if(activeAccount) this.authService.instance.setActiveAccount(activeAccount);
       activeAccount = this.authService.instance.getActiveAccount();
+    }
+    /*
+    end
+    */
+
+    if (!activeAccount) {
+      let accounts = this.authService.instance.getAllAccounts();
+      if (!accounts || accounts.length == 0) {
+        if(this.msalGuardConfig.authRequest){
+          this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as PopupRequest);
+        } else {
+          this.authService.loginRedirect();
+        }
+        return false;
+      } else {
+        this.setActiveAccount(accounts[0]);
+        activeAccount = this.authService.instance.getActiveAccount();
+      }
     }
 
     return activeAccount;
     
+  }
+
+  setActiveAccount(account: any) {
+    this.authService.instance.setActiveAccount(account);
+    this.account = account;
+    this.setStorageAccount(account);
+  }
+
+  setStorageAccount(account: any) {
+    localStorage.setItem('teamsAccount', JSON.stringify(account));
+  }
+
+  getStorageAccount() {
+    let account = localStorage.getItem('teamsAccount');
+    if(account) {
+      return JSON.parse(account);
+    } else {
+      return false;
+    }
   }
 
 
