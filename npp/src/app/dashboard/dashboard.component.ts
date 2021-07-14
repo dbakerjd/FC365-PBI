@@ -29,17 +29,20 @@ export class DashboardComponent implements OnInit {
   constructor(private readonly teams: TeamsService, private authService: MsalService, private msalBroadcastService: MsalBroadcastService, private router: Router) { }
 
   ngOnInit(): void {
-    /*this.msalBroadcastService.msalSubject$
-      .pipe(
+    this.msalBroadcastService.msalSubject$
+      /*.pipe(
         filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
-      )
+      )*/
       .subscribe((result: EventMessage) => {
         console.log(result);
-        const payload = result.payload as AuthenticationResult;
-        this.authService.instance.setActiveAccount(payload.account);
+        if( result.eventType === EventType.LOGIN_SUCCESS) {
+          const payload = result.payload as AuthenticationResult;
+          this.authService.instance.setActiveAccount(payload.account);
+          this.account = payload.account;
+        }
       });
     
-    this.account = this.teams.getActiveAccount();*/
+    this.account = this.teams.getActiveAccount();
   }
 
   getUser() {

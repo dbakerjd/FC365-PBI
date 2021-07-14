@@ -23,6 +23,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ProgressBarComponent } from './shared/progress-bar/progress-bar.component';
+import { environment } from 'src/environments/environment';
 
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
@@ -38,8 +39,8 @@ export function MSALInstanceFactory(): IPublicClientApplication {
       clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // PPE testing environment
       authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
-      redirectUri: '/',
-      postLogoutRedirectUri: '/'
+      redirectUri: environment.ssoRedirectUrl,
+      postLogoutRedirectUri: environment.ssoRedirectUrl
     },
     cache: {
       cacheLocation: BrowserCacheLocation.LocalStorage,
