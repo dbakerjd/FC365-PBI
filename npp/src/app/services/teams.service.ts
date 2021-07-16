@@ -24,6 +24,19 @@ export class TeamsService {
     });
   }
 
+  setToken(token: string) {
+    this.token = token;
+    this.setStorageToken(token);
+  }
+
+  setStorageToken(token: string) {
+    localStorage.setItem('teamsAccessToken', token);
+  }
+
+  getStorageToken() {
+    this.token = localStorage.getItem('teamsAccessToken');
+  }
+
   getActiveAccount() {
     
     let activeAccount = this.authService.instance.getActiveAccount();
@@ -70,6 +83,7 @@ export class TeamsService {
   }
 
   getStorageAccount() {
+    this.getStorageToken();
     let account = localStorage.getItem('teamsAccount');
     if(account) {
       return JSON.parse(account);

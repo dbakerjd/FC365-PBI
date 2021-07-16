@@ -1,1 +1,30 @@
 <app-header [isHome]="false"></app-header>
+<div class="opportunity-info-wrapper" *ngIf="opportunity">
+    <div class="opportunity-name">
+        <h2>{{opportunity.title}}</h2>
+        <div>
+            <div class="opportunity-active" *ngIf="opportunity.opportunityStatus == 'Active'"></div>
+            <div class="opportunity-archived" *ngIf="opportunity.opportunityStatus == 'Archived'"></div>
+            {{opportunity.opportunityStatus}}
+            &nbsp;·&nbsp;
+            <label>{{opportunity.opportunityType}}</label>
+        </div>
+    </div>
+    <div class="opportunity-dates">
+        <p><label>Project start: </label> {{opportunity.projectStart | date : 'MMM y'}}</p>
+        <p><label>Project end: </label> {{opportunity.projectEnd | date : 'MMM y'}}</p>
+    </div>
+    <div class="opportunity-molecule">
+        <p><label>Molecule Name: </label> {{opportunity.moleculeName}}</p>
+        <p><label>Indication: </label> {{opportunity.indicationName}}</p> 
+    </div>
+    <div class="opportunity-owner">
+        <div class="opportunity-owner-pic">
+            <img [src]="opportunity.opportunityOwner.profilePic"/>
+        </div>
+        <div class="opportunity-owner-info">
+            <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
+            <div class="opportunity-owner-info-name">{{opportunity.opportunityOwner.name}}</div>
+        </div>
+    </div>
+</div>

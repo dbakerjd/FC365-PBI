@@ -13,6 +13,9 @@ export class OpportunityListComponent implements OnInit {
 
   async ngOnInit() {
     this.opportunities = await this.sharepoint.getOpportunities();
+
+    let lists = await this.sharepoint.query('lists').toPromise();
+    console.log(lists);
   }
 
   navigateTo(item: Opportunity) {

@@ -24,6 +24,7 @@ export class AppComponent {
         console.log(result);
         const payload = result.payload as AuthenticationResult;
         this.teams.setActiveAccount(payload.account);
+        this.teams.setToken(payload.accessToken);
     });
 
     this.teams.getActiveAccount();

@@ -1,0 +1,72 @@
+.opportunity-info-wrapper {
+    width: 100%;
+    background-color: #f5f5f5;
+    padding: 1rem 0;
+    & > div {
+        display: inline-block;
+        height: 3rem;
+        label {
+            color: rgba(0, 0, 0, 0.5);
+        }
+    }
+
+    h2 {
+        padding: 0;
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: normal;
+        letter-spacing: normal;
+        color: #000000;
+    }
+    
+    .opportunity-name {
+        padding-left: 2rem;
+        width: 25%;
+
+        .opportunity-active {
+            background-color: #bdffd1;
+            border: 1px solid #94d9a9;
+            border-radius: 50%;
+            display: inline-block;
+            width: 0.6rem;
+            height: 0.6rem;
+            margin: 0;
+        }
+
+        .opportunity-archived {
+            background-color: #ffc1b8;
+            border: 1px solid #f68b7b;
+            border-radius: 50%;
+            display: inline-block;
+            width: 0.6rem;
+            height: 0.6rem;
+            margin: 0;
+        }
+    }
+    .opportunity-dates{
+        width: 14%;
+    }
+
+    .opportunity-molecule {
+        width: 43%;
+    }
+
+    .opportunity-owner {
+        width: 15%;
+        & > div {
+            display: inline-block;
+        }
+        .opportunity-owner-pic {
+            img {
+                width: 3rem;
+                height: 3rem;
+                border: 2px solid #ea5817;
+                border-radius: 50%;
+                margin-right: 1rem;
+            }
+        }
+    }
+}

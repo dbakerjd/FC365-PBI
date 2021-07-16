@@ -4,6 +4,6 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class LicensingService {
-
+  siteUrl: string = 'https://betasoftwaresl.sharepoint.com/_api/';
   constructor() { }
 }
