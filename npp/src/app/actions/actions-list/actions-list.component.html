@@ -1,4 +1,4 @@
-<app-header [isHome]="false"></app-header>
+<app-npp-header [isHome]="false"></app-npp-header>
 <div class="opportunity-info-wrapper" *ngIf="opportunity">
     <div class="opportunity-name">
         <h2>{{opportunity.title}}</h2>
@@ -20,11 +20,51 @@
     </div>
     <div class="opportunity-owner">
         <div class="opportunity-owner-pic">
+            <div class="opportunity-owner-pic-background"></div>
             <img [src]="opportunity.opportunityOwner.profilePic"/>
         </div>
         <div class="opportunity-owner-info">
             <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
             <div class="opportunity-owner-info-name">{{opportunity.opportunityOwner.name}}</div>
         </div>
+    </div>
+</div>
+<div class="gates-and-actions-wrapper">
+    <div class="gates-wrapper">
+        <div class="gates-item" *ngFor="let gate of gates" [ngClass]="{'selected-gate': currentGate && currentGate.id === gate.id}" (click)="setGate(gate.id)">{{gate.name}}</div>
+    </div>
+    <div class="actions-wrapper">
+        <div class="gate-info-wrapper">
+            <div class="gate-info-review">
+                <label>{{currentGate?.name}} Review date: </label>
+                {{currentGate?.reviewedAt | date : 'shortDate'}}
+            </div>
+            <div class="gate-info-progress">
+                <label>{{currentGate?.name}} Progress: </label>
+                &nbsp;{{currentGateProgress}}%
+                <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
+            </div>
+            <div class="gate-info-icons">
+    
+            </div>
+        </div>
+        <div class="action-item" *ngFor="let action of currentActions">
+            <div class="action-item-name"><span>{{action.actionName}}</span></div>
+            <div class="action-item-completed" *ngIf="action.completed">
+                <label>Completed: </label>
+                {{action.timestamp | date : 'shortDate'}}
+                <label> at </label>
+                {{action.timestamp | date : 'HH:mm'}}
+                <label> by </label>
+                {{action.targetUser?.name}}
+            </div>
+            <div class="action-item-completed" *ngIf="!action.completed">Not completed yet</div>
+            <div class="action-item-due">
+                <label>Due by </label>
+                <ngx-datepicker [(ngModel)]="action.dueDate" [options]="dateOptions"></ngx-datepicker>
+            </div>
+            <div class="action-item-complete"></div>
+        </div>
+        
     </div>
 </div>

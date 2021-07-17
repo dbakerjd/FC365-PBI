@@ -62,7 +62,8 @@ export class SharepointService {
     moleculeName: "Nucala",
     opportunityOwner: {
       id: 1,
-      name: "David Baker"
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
     },
     projectStart: new Date("5/1/2021"),
     projectEnd: new Date("11/1/2021"),
@@ -78,7 +79,8 @@ export class SharepointService {
     moleculeName: "Tezepelumab",
     opportunityOwner: {
       id: 1,
-      name: "David Baker"
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
     },
     projectStart: new Date("5/1/2021"),
     projectEnd: new Date("1/1/2024"),
@@ -94,7 +96,8 @@ export class SharepointService {
     moleculeName: "Concizumab",
     opportunityOwner: {
       id: 1,
-      name: "David Baker"
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
     },
     projectStart: new Date("5/1/2021"),
     projectEnd: new Date("5/1/2025"),
