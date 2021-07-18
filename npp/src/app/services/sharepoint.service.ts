@@ -528,7 +528,7 @@ export class SharepointService {
     title:  "Innovation board",
     actionName:  "Innovation board",
     dueDate: new Date("7/5/2021"),
-    completed: true,
+    completed: false,
     timestamp: new Date("6/7/2021 11:43 AM"),
     targetUserId: 1,
     targetUser: {
@@ -542,7 +542,7 @@ export class SharepointService {
     title:  "SMT Approval",
     actionName:  "SMT Approval",
     dueDate: new Date("8/5/2021"),
-    completed: true,
+    completed: false,
     timestamp: new Date("6/7/2021 11:43 AM"),
     targetUserId: 1,
     targetUser: {
@@ -556,7 +556,7 @@ export class SharepointService {
     title:  "DD/Contract approving process",
     actionName:  "DD/Contract approving process",
     dueDate: new Date("9/5/2021"),
-    completed: true,
+    completed: false,
     timestamp: new Date("6/7/2021 11:43 AM"),
     targetUserId: 1,
     targetUser: {
