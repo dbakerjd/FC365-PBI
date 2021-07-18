@@ -63,7 +63,9 @@
                 <label>Due by </label>
                 <ngx-datepicker [(ngModel)]="action.dueDate" [options]="dateOptions"></ngx-datepicker>
             </div>
-            <div class="action-item-complete"></div>
+            <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
+                <span>{{action.status}}</span>
+            </div>
         </div>
         
     </div>

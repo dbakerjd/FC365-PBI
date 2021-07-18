@@ -30,6 +30,8 @@ export class ActionsListComponent implements OnInit {
           
           el.actions = await this.sharepoint.getActions(el.id);
           
+          this.setStatus(el.actions);
+
           //set current gate
           if(index < (this.gates.length - 1)) {
             let uncompleted = el.actions.filter(a => !a.completed);
@@ -45,6 +47,31 @@ export class ActionsListComponent implements OnInit {
         });
       }
     });
+  }
+
+  setStatus(actions: Action[]) {
+    actions.forEach(a => {
+      this.computeStatus(a);
+    });
+  }
+
+  computeStatus(a: Action) {
+    let today = new Date().getTime();
+    if(a.completed) a.status = 'completed';
+    else {
+      let dueDate = a.dueDate.getTime();
+      if(dueDate < today) {
+        a.status = 'late';
+      } else {
+        a.status = 'pending';
+      }
+    }
+  }
+
+  toggleStatus(action: Action) {
+    action.completed = !action.completed;
+    this.computeStatus(action);
+
   }
 
   setGate(gateId: number) {

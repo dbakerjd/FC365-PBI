@@ -40,6 +40,7 @@ export interface Action {
   timestamp: Date;
   targetUserId: Number;
   targetUser: User;
+  status?: string;
 }
 
 export interface Gate {

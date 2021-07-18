@@ -190,7 +190,30 @@ label {
             }
 
             .action-item-complete {
-                width: 17.06%;
+                width: calc(17.06% - 1px);
+                font-weight: normal;
+                font-stretch: normal;
+                font-style: normal;
+                line-height: normal;
+                letter-spacing: normal;
+                color: rgba(0, 0, 0, 0.6);
+                line-height: 3.42rem;
+                margin: 1px 0px 1px 1.2px;
+                & > span {
+                    margin-left: 1.35rem;
+                }
+                &.action-completed {
+                    background-color: #bdffd1;    
+                }
+
+                &.action-late {
+                    background-color: #ffc1c1;
+                }
+                
+                &.action-pending {
+                    background-color: #f5f5f5;
+                }
+
             }
         }
     }
