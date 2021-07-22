@@ -37,6 +37,12 @@ export class TeamsService {
     this.token = localStorage.getItem('teamsAccessToken');
   }
 
+  loginAgain() {
+    this.token = null;
+    localStorage.removeItem('teamsAccessToken');
+    this.getActiveAccount();
+  }
+
   getActiveAccount() {
     
     let activeAccount = this.authService.instance.getActiveAccount();

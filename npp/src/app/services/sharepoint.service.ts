@@ -622,6 +622,17 @@ export class SharepointService {
     return this.actions.filter(el => el.gateId == gateId);
   }
 
+  async getLists() {
+    try {
+      let lists = await this.query('lists').toPromise();
+      return lists;
+    } catch (e) {
+      if(e.status == 401) {
+        this.teams.loginAgain();
+      }
+      return [];
+    }
+  }
   async getOpportunityTypes() {
     return [
       { value: 'acquisition', label: 'Acquisition' },
