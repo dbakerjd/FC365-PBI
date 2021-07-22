@@ -13,6 +13,10 @@ p {
     padding: 0;
 }
 
+label {
+    color: rgba(0, 0, 0, 0.5);
+}
+
 app-opportunity-filter {
     formly-field {
         display: inline-block;
