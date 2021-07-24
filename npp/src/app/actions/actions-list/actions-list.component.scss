@@ -201,14 +201,44 @@
                 }
                 &.action-completed {
                     background-color: #bdffd1;    
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Check.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
                 }
 
                 &.action-late {
                     background-color: #ffc1c1;
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Warning.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
                 }
                 
                 &.action-pending {
                     background-color: #f5f5f5;
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Pending.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
                 }
 
             }

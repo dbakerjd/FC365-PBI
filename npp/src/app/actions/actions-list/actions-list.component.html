@@ -65,6 +65,7 @@
             </div>
             <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
                 <span>{{action.status}}</span>
+                <div class="action-item-status-icon"></div>
             </div>
         </div>
         
