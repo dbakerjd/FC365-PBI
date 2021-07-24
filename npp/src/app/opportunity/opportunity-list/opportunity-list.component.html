@@ -17,7 +17,7 @@
         </div>
         <div class="opportunity-progress" (click)="navigateTo(item)">
             <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
-            <p><label>Opportunity Owner: </label> {{item.opportunityOwner}}</p>
+            <p><label>Opportunity Owner: </label> {{item.opportunityOwner?.name}}</p>
             <p><label>Project End Date: </label> {{item.projectEnd | date : 'MMM y'}}</p>
             <p><label>Therapy Area: </label> {{item.therapyArea}}</p>
         </div>

@@ -155,6 +155,28 @@
             }
             .gate-info-icons {
                 width: 17.06%;
+                height: 100%;
+                &>div {
+                    width: 20%;
+                    height: 100%;
+                    cursor: pointer;
+                    float: left;
+                }
+                .gate-info-icons-actions {
+                    background: url("/assets/menu.svg") no-repeat 1.35rem center;
+                }
+                .gate-info-icons-documents {
+                    background: url("/assets/folder.svg") no-repeat 1.35rem center;
+                }
+                .gate-info-icons-models {
+                    background: url("/assets/share.svg") no-repeat 1.35rem center;
+                }
+                .gate-info-icons-refresh-bi {
+                    background: url("/assets/cilindro.svg") no-repeat 1.35rem center;
+                }
+                .gate-info-icons-stage-settings {
+                    background: url("/assets/settings.svg") no-repeat 1.35rem center;
+                }
             }
         }
 
