@@ -2,8 +2,11 @@
     background: #f5f5f5;
     margin-top: 1px;
     overflow: hidden;
-    padding: 1rem 0;
-
+    
+    & > div {
+        border-left: 1px solid #fff;
+        padding: 1rem 0;
+    }
     & > div p, & > div div {
         margin-left: 2rem;
 
@@ -13,7 +16,7 @@
     }
 
     .opportunity-status {
-        width: 15%;
+        width: calc(15% - 1px);
         float: left;
 
         .opportunity-active {
@@ -38,7 +41,7 @@
     }
 
     .opportunity-name {
-        width: 50%;
+        width: calc(50% - 1px);
         float: left;
         cursor: pointer;
 
@@ -48,7 +51,7 @@
     }
 
     .opportunity-progress {
-        width: 35%;
+        width: calc(35% -1px);
         float: left;
         cursor: pointer;
 
