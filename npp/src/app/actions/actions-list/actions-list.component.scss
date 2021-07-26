@@ -5,6 +5,8 @@
     position: relative;
     height: 3.17rem;
     overflow: hidden;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
     & > div {
         display: block;
         float: left;
@@ -28,7 +30,7 @@
     
     .opportunity-name {
         padding-left: 2rem;
-        width: 25%;
+        width: calc(25% - 2rem);
 
         .opportunity-active {
             background-color: #bdffd1;
@@ -51,11 +53,11 @@
         }
     }
     .opportunity-dates{
-        width: 10.18%;
+        width: 11.18%;
     }
 
     .opportunity-molecule {
-        width: 43%;
+        width: 48%;
     }
 
     .opportunity-owner {
@@ -64,6 +66,7 @@
             display: inline-block;
         }
         .opportunity-owner-pic {
+            margin-left: 1rem;
             width: 3rem;
             height: 3rem;
             overflow: hidden;
@@ -115,7 +118,13 @@
             text-align: center;
             color: #000;
             cursor: pointer;
+            border-top: 1px solid #fff;
+            border-left: 1px solid #fff;
+            border-right: 1px solid #fff;
 
+            &:last-child {
+                border-bottom: 1px solid #fff;
+            }
             &.selected-gate {
                 color: #fff;
                 background-color: #000;
@@ -183,32 +192,37 @@
         .action-item {
             width: 100%;
             height: 3.42rem;
+            clear: left;
+            &:last-child {
+                border-bottom: 1px solid #fff;
+            } 
 
             & > div {
                 display: block;
                 float: left;
                 line-height: 3.42rem;
                 background-color: #f5f5f5;
+                border-top: 1px solid #fff;
+                border-left: 1px solid #fff;
+                padding-left: 1.59rem;
             }
 
             .action-item-name {
-                width: 29.24%;
-                span {
-                    margin-left: 1.59rem;
-                }
+                width: calc(28.4% - 1px - 1.59rem);
             }
 
             .action-item-completed {
-                width: 26.84%;
+                width: calc(27.7% - 1px - 1.25rem);
+                padding-left: 1.25rem;
             }
 
             .action-item-due {
-                width: 26.84%;
+                width: calc(26.84% - 1px - 1.59rem);
                 
             }
 
             .action-item-complete {
-                width: calc(17.06% - 1px);
+                width: calc(17.06% - 2px - 1.59rem);
                 font-weight: normal;
                 font-stretch: normal;
                 font-style: normal;
@@ -216,11 +230,7 @@
                 letter-spacing: normal;
                 color: rgba(0, 0, 0, 0.6);
                 line-height: 3.42rem;
-                margin: 1px 0px 1px 1.2px;
                 cursor: pointer;
-                & > span {
-                    margin-left: 1.35rem;
-                }
                 &.action-completed {
                     background-color: #bdffd1;    
                     position: relative;
