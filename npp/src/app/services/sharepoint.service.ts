@@ -53,10 +53,88 @@ export interface Gate {
   actions: Action[];
 }
 
+export interface NPPFile {
+  id: number;
+  parentId: number;
+  name: string;
+  updatedAt: Date;
+  description: string;
+  stageId: number;
+  opportunityId: number;
+  country: string[];
+  modelScenario: string[];
+  modelApprovalComments: string;
+  approvalStatus: string;
+  userId: number;
+}
+
+export interface NPPFolder {
+  id: number;
+  name: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SharepointService {
+
+  folders: NPPFolder[] = [{
+    id: 1,
+    name: 'Finance'
+  },{
+    id: 2,
+    name: 'Commercial'
+  }, {
+    id: 3,
+    name: 'Technical'
+  }, {
+    id: 4,
+    name: 'Regulatory'
+  }, {
+    id: 5,
+    name: 'Other'
+  }];
+
+  files: NPPFile[] = [{
+    id: 1,
+    parentId: 1,
+    name: 'test.pdf',
+    updatedAt: new Date(),
+    description: 'test description',
+    stageId: 1,
+    opportunityId: 1,
+    country: [],
+    modelScenario: [],
+    modelApprovalComments: '',
+    approvalStatus: '',
+    userId: 67
+  },{
+    id: 2,
+    parentId: 1,
+    name: 'test2.pdf',
+    updatedAt: new Date(),
+    description: 'Another test description',
+    stageId: 1,
+    opportunityId: 1,
+    country: [],
+    modelScenario: [],
+    modelApprovalComments: '',
+    approvalStatus: '',
+    userId: 67
+  },{
+    id: 3,
+    parentId: 1,
+    name: 'test3.pdf',
+    updatedAt: new Date(),
+    description: 'Yet another test description',
+    stageId: 1,
+    opportunityId: 1,
+    country: [],
+    modelScenario: [],
+    modelApprovalComments: '',
+    approvalStatus: '',
+    userId: 67
+  }];
 
   opportunities: Opportunity[] =  [{
     title: "Acquisition of Nucala for COPD",
@@ -652,5 +730,9 @@ export class SharepointService {
 
   async getOpportunity(id: number) {
     return this.opportunities.find(el => el.Id == id);
+  }
+
+  async getFiles(id: number) {
+    return this.files.filter(f => f.parentId == id);
   }
 }

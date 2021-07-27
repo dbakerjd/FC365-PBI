@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
-import { Action, Gate, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -20,6 +20,9 @@ export class ActionsListComponent implements OnInit {
   };
   currentSection = 'actions';
   dateListener: any;
+  currentFiles: NPPFile[] = [];
+  currentFolders: NPPFolder[] = [];
+  currentFolder: number | undefined = undefined;
 
   constructor(private sharepoint: SharepointService, private route: ActivatedRoute) { }
 
@@ -107,7 +110,21 @@ export class ActionsListComponent implements OnInit {
       this.currentGate = gate;
       this.currentActions = gate.actions;
       this.computeProgress();
+      this.getFolders();
     }
+  }
+
+  getFolders() {
+    this.currentFolders = this.sharepoint.folders;
+    if(this.currentFolders && 
+      this.currentFolders.length) {
+        this.setFolder(this.currentFolders[0].id);
+    }
+  }
+
+  async setFolder(folderId: number) {
+    this.currentFolder = folderId;
+    this.currentFiles = await this.sharepoint.getFiles(folderId);
   }
 
   ngOnDestroy() {

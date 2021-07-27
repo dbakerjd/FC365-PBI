@@ -45,6 +45,7 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
+                <div class="gate-info-icons-upload" title="Upload file"></div>
                 <div class="gate-info-icons-actions" title="Actions list" (click)="setSection('actions')"></div>
                 <div class="gate-info-icons-documents" title="Documents" (click)="setSection('documents')"></div>
                 <div class="gate-info-icons-models" title="Models"></div>
@@ -55,7 +56,18 @@
         <div [ngSwitch]="currentSection">
             <!-- DOCUMENTS LIST -->
             <div *ngSwitchCase="'documents'">
-
+                <div class="documents-folders">
+                    <div class="documents-folders-item" *ngFor="let folder of currentFolders" (click)="setFolder(folder.id)" [ngClass]="{'selected-folder': currentFolder == folder.id}">
+                        <span class="helper"></span>
+                        <img src="assets/folder.svg"/>
+                        <p>{{folder.name}}</p>
+                    </div>
+                </div>
+                <div class="documents-files">
+                    <div class="documents-files-item" *ngFor="let file of currentFiles">
+                        {{file.name}}
+                    </div>
+                </div>
             </div>
             <!-- ACTIONS LIST -->
             <div *ngSwitchDefault>
