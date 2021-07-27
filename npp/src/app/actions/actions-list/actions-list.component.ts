@@ -16,8 +16,11 @@ export class ActionsListComponent implements OnInit {
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   dateOptions: DatepickerOptions = {
-    format: 'M/d/Y'
+    format: 'Y-M-d'
   };
+  currentSection = 'actions';
+  dateListener: any;
+
   constructor(private sharepoint: SharepointService, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
@@ -45,8 +48,22 @@ export class ActionsListComponent implements OnInit {
           }
 
         });
+
+        this.setUpDateListener();
       }
     });
+  }
+
+  setUpDateListener() {
+    this.dateListener = setInterval(()=>{
+      if(this.currentActions) {
+        this.setStatus(this.currentActions)
+      };
+    }, 1000);
+  }
+
+  setSection(section: string) {
+    this.currentSection = section;
   }
 
   setStatus(actions: Action[]) {
@@ -66,6 +83,7 @@ export class ActionsListComponent implements OnInit {
         a.status = 'pending';
       }
     }
+    this.computeProgress();
   }
 
   toggleStatus(action: Action) {
@@ -74,18 +92,25 @@ export class ActionsListComponent implements OnInit {
 
   }
 
+  computeProgress() {
+    if(this.currentActions && this.currentActions.length) {
+      let completed = this.currentActions.filter(el => el.completed);
+      this.currentGateProgress = Math.round((completed.length / this.currentActions.length) * 10000) / 100;
+    } else {
+      this.currentGateProgress = 0;
+    }
+    
+  }
   setGate(gateId: number) {
     let gate = this.gates.find(el => el.id == gateId);
     if(gate) {
       this.currentGate = gate;
       this.currentActions = gate.actions;
-      if(this.currentActions.length) {
-        let completed = this.currentActions.filter(el => el.completed);
-        this.currentGateProgress = Math.round((completed.length / this.currentActions.length) * 10000) / 100;
-      } else {
-        this.currentGateProgress = 0;
-      }
-     
+      this.computeProgress();
     }
+  }
+
+  ngOnDestroy() {
+    clearTimeout(this.dateListener);
   }
 }

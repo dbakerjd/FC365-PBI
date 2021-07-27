@@ -60,7 +60,7 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
   const protectedResourceMap = new Map<string, Array<string>>();
   protectedResourceMap.set('https://graph.microsoft.com/v1.0/me', ['user.read']); // Prod environment. Uncomment to use.
-  protectedResourceMap.set('https://betasoftwaresl.sharepoint.com/_api', ['AllSites.FullControl']);
+  //protectedResourceMap.set('https://betasoftwaresl.sharepoint.com/_api/web', ['AllSites.FullControl']);
 
   return {
     interactionType: InteractionType.Redirect,
@@ -72,7 +72,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
   return { 
     interactionType: InteractionType.Redirect,
     authRequest: {
-      scopes: ['user.read', 'https://betasoftwaresl.sharepoint.com/AllSites.FullControl']
+      scopes: ['https://betasoftwaresl.sharepoint.com/.default']
     },
     loginFailedRoute: '/'
   };

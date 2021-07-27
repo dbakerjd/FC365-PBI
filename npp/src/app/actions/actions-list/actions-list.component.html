@@ -37,7 +37,7 @@
         <div class="gate-info-wrapper">
             <div class="gate-info-review">
                 <label>{{currentGate?.name}} Review date: </label>
-                {{currentGate?.reviewedAt | date : 'shortDate'}}
+                {{currentGate?.reviewedAt | date : 'Y-M-d'}}
             </div>
             <div class="gate-info-progress">
                 <label>{{currentGate?.name}} Progress: </label>
@@ -45,33 +45,41 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
-                <div class="gate-info-icons-actions" title="Actions list"></div>
-                <div class="gate-info-icons-documents" title="Documents"></div>
+                <div class="gate-info-icons-actions" title="Actions list" (click)="setSection('actions')"></div>
+                <div class="gate-info-icons-documents" title="Documents" (click)="setSection('documents')"></div>
                 <div class="gate-info-icons-models" title="Models"></div>
                 <div class="gate-info-icons-refresh-bi" title="Refresh Power BI"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings"></div>
             </div>
         </div>
-        <div class="action-item" *ngFor="let action of currentActions">
-            <div class="action-item-name"><span>{{action.actionName}}</span></div>
-            <div class="action-item-completed" *ngIf="action.completed">
-                <label>Completed: </label>
-                {{action.timestamp | date : 'shortDate'}}
-                <label> at </label>
-                {{action.timestamp | date : 'HH:mm'}}
-                <label> by </label>
-                {{action.targetUser?.name}}
+        <div [ngSwitch]="currentSection">
+            <!-- DOCUMENTS LIST -->
+            <div *ngSwitchCase="'documents'">
+
             </div>
-            <div class="action-item-completed" *ngIf="!action.completed">Not completed yet</div>
-            <div class="action-item-due">
-                <label>Due by </label>
-                <ngx-datepicker [(ngModel)]="action.dueDate" [options]="dateOptions"></ngx-datepicker>
+            <!-- ACTIONS LIST -->
+            <div *ngSwitchDefault>
+                <div class="action-item" *ngFor="let action of currentActions">
+                    <div class="action-item-name"><span>{{action.actionName}}</span></div>
+                    <div class="action-item-completed" *ngIf="action.completed">
+                        <label>Completed: </label>
+                        {{action.timestamp | date : 'Y-M-d'}}
+                        <label> at </label>
+                        {{action.timestamp | date : 'HH:mm'}}
+                        <label> by </label>
+                        {{action.targetUser?.name}}
+                    </div>
+                    <div class="action-item-completed" *ngIf="!action.completed">Not completed yet</div>
+                    <div class="action-item-due">
+                        <label>Due by </label>
+                        <ngx-datepicker [(ngModel)]="action.dueDate" [options]="dateOptions"></ngx-datepicker>
+                    </div>
+                    <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
+                        <span>{{action.status}}</span>
+                        <div class="action-item-status-icon"></div>
+                    </div>
+                </div>        
             </div>
-            <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
-                <span>{{action.status}}</span>
-                <div class="action-item-status-icon"></div>
-            </div>
-        </div>
-        
+        </div>        
     </div>
 </div>
