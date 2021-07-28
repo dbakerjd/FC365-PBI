@@ -65,7 +65,19 @@
                 </div>
                 <div class="documents-files">
                     <div class="documents-files-item" *ngFor="let file of currentFiles">
-                        {{file.name}}
+                        <div class="documents-files-item-name">
+                            <p><label>name: </label>{{file.name}}</p>
+                            <p><label>uploaded at </label>{{file.updatedAt | date : 'Y-M-d'}} <label> by </label>{{file.user.name}}</p>
+                        </div>
+                        <div class="documents-files-item-comments">
+                            <p><label>comments: </label>{{file.description}}</p>
+                        </div>
+                        <div class="documents-files-item-icons">
+                            <div class="documents-files-item-icons-file" title="Open file"></div>
+                            <div class="documents-files-item-icons-download" title="Download file"></div>
+                            <div class="documents-files-item-icons-share" title="Share file"></div>
+                            <div class="documents-files-item-icons-remove" title="Delete file"></div>
+                        </div>
                     </div>
                 </div>
             </div>

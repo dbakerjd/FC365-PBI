@@ -65,7 +65,7 @@ export interface NPPFile {
   modelScenario: string[];
   modelApprovalComments: string;
   approvalStatus: string;
-  userId: number;
+  user: User;
 }
 
 export interface NPPFolder {
@@ -107,7 +107,11 @@ export class SharepointService {
     modelScenario: [],
     modelApprovalComments: '',
     approvalStatus: '',
-    userId: 67
+    user: {
+      id: 1,
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
+    }
   },{
     id: 2,
     parentId: 1,
@@ -120,7 +124,11 @@ export class SharepointService {
     modelScenario: [],
     modelApprovalComments: '',
     approvalStatus: '',
-    userId: 67
+    user: {
+      id: 1,
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
+    }
   },{
     id: 3,
     parentId: 1,
@@ -133,7 +141,11 @@ export class SharepointService {
     modelScenario: [],
     modelApprovalComments: '',
     approvalStatus: '',
-    userId: 67
+    user: {
+      id: 1,
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
+    }
   }];
 
   opportunities: Opportunity[] =  [{
