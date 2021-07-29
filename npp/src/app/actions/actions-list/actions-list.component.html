@@ -31,7 +31,23 @@
 </div>
 <div class="gates-and-actions-wrapper">
     <div class="gates-wrapper">
-        <div class="gates-item" *ngFor="let gate of gates" [ngClass]="{'selected-gate': currentGate && currentGate.id === gate.id}" (click)="setGate(gate.id)">{{gate.name}}</div>
+        <div class="gates-item-wrapper" *ngFor="let gate of gates">
+            <div class="gates-item"  [ngClass]="{'selected-gate': currentGate && currentGate.id === gate.id, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.id)">
+                <span>{{gate.name}}</span>
+                <svg *ngIf=" currentSection == 'documents' ">
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
+            </div>
+            <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.id === gate.id">
+                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder === folder.id}" (click)="setFolder(folder.id)">
+                    <svg>
+                        <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                    </svg>
+                    <span>{{folder.name}}</span>
+                    <img src="assets/user.svg"/>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="actions-wrapper">
         <div class="gate-info-wrapper">
@@ -56,17 +72,12 @@
         <div [ngSwitch]="currentSection">
             <!-- DOCUMENTS LIST -->
             <div *ngSwitchCase="'documents'">
-                <div class="documents-folders">
-                    <div class="documents-folders-item" *ngFor="let folder of currentFolders" (click)="setFolder(folder.id)" [ngClass]="{'selected-folder': currentFolder == folder.id}">
-                        <span class="helper"></span>
-                        <img src="assets/folder.svg"/>
-                        <p>{{folder.name}}</p>
-                    </div>
-                </div>
                 <div class="documents-files">
                     <div class="documents-files-item" *ngFor="let file of currentFiles">
                         <div class="documents-files-item-name">
                             <p><label>name: </label>{{file.name}}</p>
+                        </div>
+                        <div class="documents-files-item-uploaded">
                             <p><label>uploaded at </label>{{file.updatedAt | date : 'Y-M-d'}} <label> by </label>{{file.user.name}}</p>
                         </div>
                         <div class="documents-files-item-comments">

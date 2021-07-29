@@ -35,7 +35,7 @@ export class ActionsListComponent implements OnInit {
         this.gates.forEach(async (el, index) => {
           
           el.actions = await this.sharepoint.getActions(el.id);
-          
+          el.folders = await this.sharepoint.folders;
           this.setStatus(el.actions);
 
           //set current gate
@@ -119,6 +119,9 @@ export class ActionsListComponent implements OnInit {
     if(this.currentFolders && 
       this.currentFolders.length) {
         this.setFolder(this.currentFolders[0].id);
+    } else {
+      this.currentFolder = undefined;
+      this.currentFiles = [];
     }
   }
 

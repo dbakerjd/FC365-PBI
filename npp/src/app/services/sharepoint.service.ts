@@ -51,6 +51,7 @@ export interface Gate {
   reviewedAt: Date;
   createdAt: Date;
   actions: Action[];
+  folders?: NPPFolder[];
 }
 
 export interface NPPFile {
@@ -498,7 +499,8 @@ export class SharepointService {
     reviewedAt: new Date("5/1/2021"),
     id: 29,
     createdAt: new Date("5/25/2021 2:45 PM"),
-    actions: []
+    actions: [],
+    folders: []
   },{
     title: "Gate 2",
     opportunityId: 67,
@@ -506,7 +508,8 @@ export class SharepointService {
     reviewedAt: new Date("7/1/2021"),
     id: 30,
     createdAt: new Date("5/25/2021 3:04 PM"),
-    actions: []
+    actions: [],
+    folders: []
   },{
     title: "Gate 1",
     opportunityId: 68,
@@ -514,7 +517,8 @@ export class SharepointService {
     reviewedAt: new Date("4/1/2022"),
     id: 31,
     createdAt: new Date("5/25/2021 3:55 PM"),
-    actions: []
+    actions: [],
+    folders: []
   },{
     title: "Phase 1",
     opportunityId: 69,
@@ -522,7 +526,8 @@ export class SharepointService {
     reviewedAt: new Date("1/1/2022"),
     id: 32,
     createdAt: new Date("5/25/2021 3:58 PM"),
-    actions: []
+    actions: [],
+    folders: []
   },{
     title: "Phase 2",
     opportunityId: 69,
@@ -530,7 +535,8 @@ export class SharepointService {
     reviewedAt: new Date("12/1/2022"),
     id: 33,
     createdAt: new Date("5/25/2021 4:01 PM"),
-    actions: []
+    actions: [],
+    folders: []
   },{
     title: "Phase 3",
     opportunityId: 69,
@@ -538,7 +544,8 @@ export class SharepointService {
     reviewedAt: new Date("6/1/2023"),
     id: 34,
     createdAt: new Date("5/25/2021 4:02 PM"),
-    actions: []
+    actions: [],
+    folders: []
   }];
 
   actions: Action[] = [{
