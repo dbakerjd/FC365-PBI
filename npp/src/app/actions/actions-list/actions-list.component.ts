@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
+import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -23,8 +25,9 @@ export class ActionsListComponent implements OnInit {
   currentFiles: NPPFile[] = [];
   currentFolders: NPPFolder[] = [];
   currentFolder: number | undefined = undefined;
+  uploadDialogInstance: any; 
 
-  constructor(private sharepoint: SharepointService, private route: ActivatedRoute) { }
+  constructor(private sharepoint: SharepointService, private route: ActivatedRoute, public matDialog: MatDialog) { }
 
   ngOnInit(): void {
     this.route.params.subscribe(async (params) => {
@@ -55,6 +58,16 @@ export class ActionsListComponent implements OnInit {
         this.setUpDateListener();
       }
     });
+  }
+
+  openUploadDialog() {
+    this.uploadDialogInstance = this.matDialog.open(UploadFileComponent, {
+      height: '400px',
+      width: '600px',
+      data: {
+        folderList: this.currentFolders
+      }
+    })
   }
 
   setUpDateListener() {

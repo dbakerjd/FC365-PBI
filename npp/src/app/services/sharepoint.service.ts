@@ -72,6 +72,7 @@ export interface NPPFile {
 export interface NPPFolder {
   id: number;
   name: string;
+  containsModels?: boolean;
 }
 
 @Injectable({
@@ -94,6 +95,10 @@ export class SharepointService {
   }, {
     id: 5,
     name: 'Other'
+  },{
+    id: 6,
+    name: 'Forecast Models',
+    containsModels: true
   }];
 
   files: NPPFile[] = [{

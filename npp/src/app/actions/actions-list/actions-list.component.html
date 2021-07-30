@@ -61,7 +61,7 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
-                <div class="gate-info-icons-upload" title="Upload file"></div>
+                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
                 <div class="gate-info-icons-actions" title="Actions list" (click)="setSection('actions')"></div>
                 <div class="gate-info-icons-documents" title="Documents" (click)="setSection('documents')"></div>
                 <div class="gate-info-icons-models" title="Models"></div>

@@ -26,6 +26,11 @@ import { ProgressBarComponent } from './shared/progress-bar/progress-bar.compone
 import { environment } from 'src/environments/environment';
 import { LicensingService } from './services/licensing.service';
 import { DatepickerModule } from 'ng2-datepicker';
+import { UploadFileComponent } from './modals/upload-file/upload-file.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { DialogHeaderComponent } from './modals/dialog-header/dialog-header.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -92,16 +97,24 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     PowerBiComponent,
     OpportunityFilterComponent,
     ProgressBarComponent,
+    UploadFileComponent,
+    DialogHeaderComponent,
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
     HttpClientModule,
     MsalModule,
     ReactiveFormsModule,
     FormlyModule.forRoot({ extras: { lazyRender: true } }),
     FormlyBootstrapModule,
-    DatepickerModule
+    DatepickerModule,
+    MatButtonModule,
+    MatDialogModule
+  ],
+  entryComponents: [
+    UploadFileComponent
   ],
   providers: [
     TeamsService,
