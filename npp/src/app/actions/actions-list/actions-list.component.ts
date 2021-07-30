@@ -62,8 +62,8 @@ export class ActionsListComponent implements OnInit {
 
   openUploadDialog() {
     this.uploadDialogInstance = this.matDialog.open(UploadFileComponent, {
-      height: '400px',
-      width: '600px',
+      height: '600px',
+      width: '405px',
       data: {
         folderList: this.currentFolders
       }

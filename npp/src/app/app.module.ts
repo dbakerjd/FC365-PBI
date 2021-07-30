@@ -31,6 +31,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogHeaderComponent } from './modals/dialog-header/dialog-header.component';
+import { FormlyFieldFile } from './shared/formly-fields/file-input';
+import { FileValueAccessor } from './shared/formly-fields/file-value-accessor';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -99,6 +101,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     ProgressBarComponent,
     UploadFileComponent,
     DialogHeaderComponent,
+    FileValueAccessor,
+    FormlyFieldFile
   ],
   imports: [
     BrowserModule,
@@ -107,14 +111,13 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     HttpClientModule,
     MsalModule,
     ReactiveFormsModule,
-    FormlyModule.forRoot({ extras: { lazyRender: true } }),
+    FormlyModule.forRoot({ 
+      types: [{ name: 'file-input', component: FormlyFieldFile, wrappers: ['form-field']  }],
+      extras: { lazyRender: true } }),
     FormlyBootstrapModule,
     DatepickerModule,
     MatButtonModule,
     MatDialogModule
-  ],
-  entryComponents: [
-    UploadFileComponent
   ],
   providers: [
     TeamsService,

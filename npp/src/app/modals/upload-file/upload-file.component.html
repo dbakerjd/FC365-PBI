@@ -1,8 +1,8 @@
 <app-dialog-header title="Upload File"></app-dialog-header>
 <mat-dialog-content>
-  
+    <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
 </mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancel</button>
-  <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button>
-</mat-dialog-actions>
+<div class="dialog-footer">
+    <div class="dialog-cancel-button" mat-dialog-close>Cancel</div>
+    <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial>Upload and close</div>
+</div>
