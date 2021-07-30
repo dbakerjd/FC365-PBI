@@ -82,6 +82,15 @@ export class ActionsListComponent implements OnInit {
     this.currentSection = section;
   }
 
+  showFolders() {
+    this.currentSection = 'documents';
+    this.setFolder(this.currentFolders[0].id);
+  }
+  showModels() {
+    this.setSection('documents');
+    this.setFolder(this.currentFolders[this.currentFolders.length - 1].id);
+  }
+
   setStatus(actions: Action[]) {
     actions.forEach(a => {
       this.computeStatus(a);
