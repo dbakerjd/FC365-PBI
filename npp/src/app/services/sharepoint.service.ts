@@ -152,6 +152,40 @@ export class SharepointService {
       name: "David Baker",
       profilePic: "/assets/profile.png"
     }
+  },{
+    id: 4,
+    parentId: 6,
+    name: 'test_model',
+    updatedAt: new Date(),
+    description: 'Yet another test description',
+    stageId: 1,
+    opportunityId: 1,
+    country: ['UK', 'Spain', 'Belgium'],
+    modelScenario: ['Upside', 'Downside'],
+    modelApprovalComments: 'Lorem Ipsum Dolor amet and all that',
+    approvalStatus: 'In Progress',
+    user: {
+      id: 1,
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
+    }
+  },{
+    id: 5,
+    parentId: 6,
+    name: 'test_model3',
+    updatedAt: new Date(),
+    description: 'Yet another test description',
+    stageId: 1,
+    opportunityId: 1,
+    country: ['UK', 'Spain', 'Belgium'],
+    modelScenario: ['Upside', 'Downside'],
+    modelApprovalComments: 'Some test random comment',
+    approvalStatus: 'In Progress',
+    user: {
+      id: 1,
+      name: "David Baker",
+      profilePic: "/assets/profile.png"
+    }
   }];
 
   opportunities: Opportunity[] =  [{

@@ -25,6 +25,7 @@ export class ActionsListComponent implements OnInit {
   currentFiles: NPPFile[] = [];
   currentFolders: NPPFolder[] = [];
   currentFolder: number | undefined = undefined;
+  displayingModels: boolean = false;
   uploadDialogInstance: any; 
 
   constructor(private sharepoint: SharepointService, private route: ActivatedRoute, public matDialog: MatDialog) { }
@@ -150,6 +151,12 @@ export class ActionsListComponent implements OnInit {
   async setFolder(folderId: number) {
     this.currentFolder = folderId;
     this.currentFiles = await this.sharepoint.getFiles(folderId);
+
+    let folder = this.currentFolders.find(el => el.id === folderId);
+    this.displayingModels = false;
+    if(folder) {
+      this.displayingModels = !!folder.containsModels;
+    }
   }
 
   ngOnDestroy() {

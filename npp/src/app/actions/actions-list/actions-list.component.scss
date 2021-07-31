@@ -197,6 +197,11 @@
             border-top: 1px solid #fff;
             overflow: hidden;
 
+            .documents-files-item-model-actions {
+                width: calc(100% - 2.7rem);
+                padding: 1rem 1.35rem;
+            }
+
             &:last-child {
                 border-bottom: 1px solid #fff;
             }
