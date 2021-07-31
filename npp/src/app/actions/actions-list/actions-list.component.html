@@ -104,8 +104,8 @@
                             <div class="documents-files-item-uploaded">
                                 <p><label>Status: </label>{{file.approvalStatus}}</p>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="npp-btn">Send for approval</div>
-                                    <div class="npp-btn">Create Scenario</div>
+                                    <div class="npp-btn" (click)="sendForApproval(file)">Send for approval</div>
+                                    <div class="npp-btn" (click)="createScenario(file)">Create Scenario</div>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">

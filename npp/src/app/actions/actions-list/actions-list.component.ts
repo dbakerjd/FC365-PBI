@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
+import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
+import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
@@ -67,6 +69,26 @@ export class ActionsListComponent implements OnInit {
       width: '405px',
       data: {
         folderList: this.currentFolders
+      }
+    })
+  }
+
+  sendForApproval(file: NPPFile) {
+    this.uploadDialogInstance = this.matDialog.open(SendForApprovalComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file
+      }
+    })
+  }
+
+  createScenario(file: NPPFile) {
+    this.uploadDialogInstance = this.matDialog.open(CreateScenarioComponent, {
+      height: '400px',
+      width: '405px',
+      data: {
+        file: file
       }
     })
   }

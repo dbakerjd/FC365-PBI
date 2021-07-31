@@ -33,6 +33,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogHeaderComponent } from './modals/dialog-header/dialog-header.component';
 import { FormlyFieldFile } from './shared/formly-fields/file-input';
 import { FileValueAccessor } from './shared/formly-fields/file-value-accessor';
+import { SendForApprovalComponent } from './modals/send-for-approval/send-for-approval.component';
+import { CreateScenarioComponent } from './modals/create-scenario/create-scenario.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -102,7 +104,9 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     UploadFileComponent,
     DialogHeaderComponent,
     FileValueAccessor,
-    FormlyFieldFile
+    FormlyFieldFile,
+    SendForApprovalComponent,
+    CreateScenarioComponent
   ],
   imports: [
     BrowserModule,
