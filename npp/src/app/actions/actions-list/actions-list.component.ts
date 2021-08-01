@@ -162,11 +162,17 @@ export class ActionsListComponent implements OnInit {
   }
   setGate(gateId: number) {
     let gate = this.gates.find(el => el.id == gateId);
-    if(gate) {
+    if(gate && gate != this.currentGate) {
       this.currentGate = gate;
       this.currentActions = gate.actions;
       this.computeProgress();
       this.getFolders();
+    } else if(gate && gate == this.currentGate) {
+      if(this.displayingModels || this.currentSection == 'documents') {
+        this.setSection('actions');
+      } else {
+        this.setSection('documents');
+      }
     }
   }
 
