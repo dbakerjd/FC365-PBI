@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { OpportunityFilterComponent } from './opportunity-filter.component';
+import { CreateOpportunityComponent } from './create-opportunity.component';
 
-describe('OpportunityFilterComponent', () => {
-  let component: OpportunityFilterComponent;
-  let fixture: ComponentFixture<OpportunityFilterComponent>;
+describe('CreateOpportunityComponent', () => {
+  let component: CreateOpportunityComponent;
+  let fixture: ComponentFixture<CreateOpportunityComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ OpportunityFilterComponent ]
+      declarations: [ CreateOpportunityComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(OpportunityFilterComponent);
+    fixture = TestBed.createComponent(CreateOpportunityComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

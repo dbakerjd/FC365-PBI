@@ -1,5 +1,14 @@
 <app-npp-header [isHome]="false"></app-npp-header>
-<app-opportunity-filter></app-opportunity-filter>
+<div class="opportunity-filter-wrapper">
+    <div class="opportunity-filter">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <formly-form [form]="form" [fields]="fields" [model]="model" (change)="onSubmit()"></formly-form>
+        </form>
+    </div>
+    <div class="opportunity-add">
+        <div class="npp-btn" (click)="createOpportunity()">Add Opportunity</div>
+    </div>
+</div>
 <div class="opportunity-list-wrapper">
     <div class="opportunity-list-item" *ngFor="let item of opportunities">
         <div class="opportunity-status">

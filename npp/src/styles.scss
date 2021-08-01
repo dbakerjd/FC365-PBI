@@ -28,10 +28,16 @@ label {
     color: rgba(0, 0, 0, 0.5);
 }
 
-app-opportunity-filter {
+app-opportunity-list {
+    app-progress-bar {
+        display: block;
+        width: 8rem;
+        height: 0.8rem;
+    }
+
     formly-field {
         display: inline-block;
-        max-width: 16%;
+        max-width: calc(19% - 7px);
         margin: 0.85rem 1.8rem;
         
         select, input {
@@ -48,14 +54,6 @@ app-opportunity-filter {
                 width: 100%;
             }
         }
-    }
-}
-
-app-opportunity-list {
-    app-progress-bar {
-        display: block;
-        width: 8rem;
-        height: 0.8rem;
     }
 }
 

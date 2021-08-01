@@ -18,7 +18,6 @@ import { UserProfilePicComponent } from './shared/user-profile-pic/user-profile-
 import { SummaryComponent } from './summary/summary.component';
 import { PowerBiComponent } from './power-bi/power-bi.component';
 import { SharepointService } from './services/sharepoint.service';
-import { OpportunityFilterComponent } from './opportunity/opportunity-filter/opportunity-filter.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
@@ -35,6 +34,8 @@ import { FormlyFieldFile } from './shared/formly-fields/file-input';
 import { FileValueAccessor } from './shared/formly-fields/file-value-accessor';
 import { SendForApprovalComponent } from './modals/send-for-approval/send-for-approval.component';
 import { CreateScenarioComponent } from './modals/create-scenario/create-scenario.component';
+import { CreateOpportunityComponent } from './modals/create-opportunity/create-opportunity.component';
+import { FormlyTypesModule, FORMLY_CONFIG } from './shared/formly-fields/formly-types.module';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -99,14 +100,13 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     UserProfilePicComponent,
     SummaryComponent,
     PowerBiComponent,
-    OpportunityFilterComponent,
     ProgressBarComponent,
     UploadFileComponent,
     DialogHeaderComponent,
     FileValueAccessor,
-    FormlyFieldFile,
     SendForApprovalComponent,
-    CreateScenarioComponent
+    CreateScenarioComponent,
+    CreateOpportunityComponent
   ],
   imports: [
     BrowserModule,
@@ -115,11 +115,10 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     HttpClientModule,
     MsalModule,
     ReactiveFormsModule,
-    FormlyModule.forRoot({ 
-      types: [{ name: 'file-input', component: FormlyFieldFile, wrappers: ['form-field']  }],
-      extras: { lazyRender: true } }),
-    FormlyBootstrapModule,
     DatepickerModule,
+    FormlyTypesModule,
+    FormlyModule.forRoot(FORMLY_CONFIG),
+    FormlyBootstrapModule,
     MatButtonModule,
     MatDialogModule
   ],
