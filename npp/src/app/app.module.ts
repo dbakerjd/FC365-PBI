@@ -36,6 +36,7 @@ import { SendForApprovalComponent } from './modals/send-for-approval/send-for-ap
 import { CreateScenarioComponent } from './modals/create-scenario/create-scenario.component';
 import { CreateOpportunityComponent } from './modals/create-opportunity/create-opportunity.component';
 import { FormlyTypesModule, FORMLY_CONFIG } from './shared/formly-fields/formly-types.module';
+import { StageSettingsComponent } from './modals/stage-settings/stage-settings.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -106,7 +107,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     FileValueAccessor,
     SendForApprovalComponent,
     CreateScenarioComponent,
-    CreateOpportunityComponent
+    CreateOpportunityComponent,
+    StageSettingsComponent
   ],
   imports: [
     BrowserModule,

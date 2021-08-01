@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
+import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
@@ -89,6 +90,16 @@ export class ActionsListComponent implements OnInit {
       width: '405px',
       data: {
         file: file
+      }
+    })
+  }
+
+  openStageSettings() {
+    this.uploadDialogInstance = this.matDialog.open(StageSettingsComponent, {
+      height: '400px',
+      width: '405px',
+      data: {
+        gate: this.currentGate
       }
     })
   }
