@@ -14,7 +14,7 @@ export class AppComponent {
 
   }
   ngOnInit(): void {
-    this.authService.handleRedirectObservable().subscribe();
+    /*this.authService.handleRedirectObservable().subscribe();
 
     this.msalBroadcastService.msalSubject$
       .pipe(
@@ -27,6 +27,6 @@ export class AppComponent {
         this.teams.setToken(payload.accessToken);
     });
 
-    this.teams.getActiveAccount();
+    this.teams.getActiveAccount();*/
   }
 }

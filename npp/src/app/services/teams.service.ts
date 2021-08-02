@@ -44,20 +44,14 @@ export class TeamsService {
   }
 
   getActiveAccount() {
-    
+    /*
     let activeAccount = this.authService.instance.getActiveAccount();
 
-    /*
-    trying to make account to persist
-    */
     if(!activeAccount) {
       activeAccount = this.getStorageAccount();
       if(activeAccount) this.authService.instance.setActiveAccount(activeAccount);
       activeAccount = this.authService.instance.getActiveAccount();
     }
-    /*
-    end
-    */
 
     if (!activeAccount) {
       let accounts = this.authService.instance.getAllAccounts();
@@ -75,7 +69,7 @@ export class TeamsService {
     }
 
     return activeAccount;
-    
+    */    
   }
 
   setActiveAccount(account: any) {

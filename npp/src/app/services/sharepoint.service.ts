@@ -759,7 +759,7 @@ export class SharepointService {
   }
 
   async getLists() {
-    try {
+   /* try {
       let lists = await this.query('lists').toPromise();
       return lists;
     } catch (e) {
@@ -767,7 +767,7 @@ export class SharepointService {
         this.teams.loginAgain();
       }
       return [];
-    }
+    }*/
   }
   async getOpportunityTypes() {
     return [

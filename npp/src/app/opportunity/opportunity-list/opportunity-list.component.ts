@@ -67,8 +67,8 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
-    let lists = await this.sharepoint.getLists();
-    console.log(lists);
+   /*let lists = await this.sharepoint.getLists();
+    console.log(lists);*/
   }
 
   createOpportunity() {
