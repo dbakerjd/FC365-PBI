@@ -44,7 +44,7 @@ export class TeamsService {
   }
 
   getActiveAccount() {
-    /*
+    
     let activeAccount = this.authService.instance.getActiveAccount();
 
     if(!activeAccount) {
@@ -68,8 +68,7 @@ export class TeamsService {
       }
     }
 
-    return activeAccount;
-    */    
+    return activeAccount;  
   }
 
   setActiveAccount(account: any) {

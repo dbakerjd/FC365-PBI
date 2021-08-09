@@ -742,8 +742,9 @@ export class SharepointService {
     return headersObject;
   }
 
-  async getOpportunities(): Promise<Opportunity[]> {
-    return this.opportunities;
+  async getOpportunities(): Promise<any[]> {
+    return this.query("lists/getbytitle('Opportunities')/items").toPromise() as Promise<any[]>;
+    //return this.opportunities;
   }
 
   async getIndications(): Promise<any[]> {
