@@ -15,19 +15,19 @@
             <div>
                 <div class="opportunity-active" *ngIf="item.opportunityStatus == 'Active'"></div>
                 <div class="opportunity-archived" *ngIf="item.opportunityStatus == 'Archived'"></div>
-                {{item.opportunityStatus}}
+                {{item.OpportunityStatus}}
             </div>
-            <p><label>Type: </label>{{item.opportunityType}}</p>
+            <p><label>Type: </label>{{item.OpportunityTypeId}}</p>
         </div>
         <div class="opportunity-name" (click)="navigateTo(item)">
-            <p class="opportunity-title">{{item.title}}</p>
-            <p><label>Molecule Name: </label> {{item.moleculeName}}</p>
-            <p><label>Indication: </label> {{item.indicationName}}</p>
+            <p class="opportunity-title">{{item.Title}}</p>
+            <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
+            <p><label>Indication: </label> {{item.IndicationId}}</p>
         </div>
         <div class="opportunity-progress" (click)="navigateTo(item)">
             <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
             <p><label>Opportunity Owner: </label> {{item.opportunityOwner?.name}}</p>
-            <p><label>Project End Date: </label> {{item.projectEnd | date : 'MMM y'}}</p>
+            <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
             <p><label>Therapy Area: </label> {{item.therapyArea}}</p>
         </div>
     </div>

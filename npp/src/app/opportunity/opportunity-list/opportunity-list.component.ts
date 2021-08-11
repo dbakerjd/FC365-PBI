@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity, OpportunityTest, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -67,6 +67,7 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     let objOpportunities = await this.sharepoint.getOpportunities();
+    this.opportunities = await this.sharepoint.getOpportunities();
     console.log(objOpportunities);
     /*this.opportunities = opt.map(el => {
       console.log(el);
@@ -87,7 +88,7 @@ export class OpportunityListComponent implements OnInit {
     console.log(this.model);
   }
 
-  navigateTo(item: Opportunity) {
-    this.router.navigate(['opportunities', item.ID, 'actions']);
+  navigateTo(item: OpportunityTest) {
+    this.router.navigate(['opportunities', item.Id, 'actions']);
   }
 }

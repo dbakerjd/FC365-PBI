@@ -6,7 +6,7 @@ import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
 
-export interface Opportunity {
+export interface OpportunityTest {
   title: string;
   moleculeName: string;
   opportunityOwner: User;
@@ -20,6 +20,23 @@ export interface Opportunity {
   updated: Date;
   users?: User[];
   progress: number;
+}
+
+export interface Opportunity {
+  ID: number;
+  Title: string;
+  MoleculeName: string;
+  OpportunityOwnerId: number;
+  ProjectStartDate: Date;
+  ProjectEndDate: Date;
+  OpportunityTypeId: number;
+  OpportunityStatus: string;
+  IndicationId: number;
+  therapyArea: string;
+  Modified: Date;
+  AuthorId: number;
+  // users?: User[];
+  progress?: number;
 }
 
 export interface User {
@@ -188,7 +205,7 @@ export class SharepointService {
     }
   }];
 
-  opportunities: Opportunity[] =  [{
+  opportunities: OpportunityTest[] =  [{
     title: "Acquisition of Nucala for COPD",
     moleculeName: "Nucala",
     opportunityOwner: {
@@ -750,8 +767,9 @@ export class SharepointService {
     return headersObject;
   }
 
-  async getOpportunities(): Promise<any> {
-    return await this.query("lists/getbytitle('Opportunities')/items");
+  async getOpportunities(): Promise<Opportunity[]> {
+    let queryObj = await this.query("lists/getbytitle('Opportunities')/items");
+    return queryObj.d.results;
   }
 
   async getIndications(): Promise<any[]> {
