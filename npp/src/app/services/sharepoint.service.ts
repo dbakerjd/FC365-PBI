@@ -41,6 +41,20 @@ export interface Opportunity {
   progress?: number;
 }
 
+export interface Action {
+  Id: number,
+  gateId?: number; // exists?
+  OpportunityNameId: number;
+  Title: string;
+  ActionNameId: string;
+  ActionDueDate: Date;
+  completed: boolean;
+  timestamp: Date;
+  targetUserId: Number;
+  targetUser: User;
+  status?: string;
+}
+
 export interface OpportunityType {
   ID: number;
   Title: string;
@@ -65,7 +79,7 @@ export interface User {
   profilePic?: string;
 }
 
-export interface Action {
+export interface ActionTest {
   id: number,
   gateId: number;
   opportunityId: number;
@@ -79,7 +93,7 @@ export interface Action {
   status?: string;
 }
 
-export interface Gate {
+export interface GateTest {
   id: number;
   title: string;
   opportunityId: number;
@@ -87,6 +101,17 @@ export interface Gate {
   reviewedAt: Date;
   createdAt: Date;
   actions: Action[];
+  folders?: NPPFolder[];
+}
+
+export interface Gate {
+  ID: number;
+  Title: string;
+  OpportunityNameId: number;
+  name?: string; // exists?
+  StageReview: Date;
+  Created: Date;
+  actions?: Action[];
   folders?: NPPFolder[];
 }
 
@@ -567,7 +592,7 @@ export class SharepointService {
     { value: "287", label : "Other"}
   ];
 
-  gates: Gate[] =  [{
+  gates: GateTest[] =  [{
     title: "Gate 1",
     opportunityId: 67,
     name: "Gate 1",
@@ -623,7 +648,7 @@ export class SharepointService {
     folders: []
   }];
 
-  actions: Action[] = [{
+  actions: ActionTest[] = [{
     gateId: 29,
     id: 1,
     opportunityId: 67,
@@ -797,11 +822,17 @@ export class SharepointService {
   }
 
   async getGates(opportunityId: number): Promise<Gate[]> {
-    return this.gates.filter(el => el.opportunityId == opportunityId);
+    let queryObj = await this.query("lists/getbytitle('Opportunity Stages')/items?$filter=OpportunityNameId eq "+opportunityId);
+    console.log('qObjGates', queryObj);
+    return queryObj.d.results;
+    // return this.gates.filter(el => el.opportunityId == opportunityId);
   }
 
   async getActions(gateId: number): Promise<Action[]> {
-    return this.actions.filter(el => el.gateId == gateId);
+    let queryObj = await this.query("lists/getbytitle('Opportunity Action List')/items?$filter=StageNameId eq "+gateId);
+    console.log('qObjActions', queryObj);
+    return queryObj.d.results;
+    // return this.actions.filter(el => el.gateId == gateId);
   }
 
   async getLists() {
@@ -832,8 +863,11 @@ export class SharepointService {
     ];
   }
 
-  async getOpportunity(id: number) {
-    return this.opportunities.find(el => el.Id == id);
+  async getOpportunity(id: number): Promise<Opportunity> {
+    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
+    console.log('objSingleOpportunity', queryObj);
+    return queryObj.d.results[0];
+    // return this.opportunities.find(el => el.Id == id);
   }
 
   async getFiles(id: number) {

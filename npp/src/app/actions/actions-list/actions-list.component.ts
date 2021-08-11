@@ -6,7 +6,7 @@ import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-s
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { Action, Gate, NPPFile, NPPFolder, OpportunityTest, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -16,7 +16,7 @@ import { Action, Gate, NPPFile, NPPFolder, OpportunityTest, SharepointService } 
 export class ActionsListComponent implements OnInit {
   gates: Gate[] = [];
   opportunityId = 0;
-  opportunity: OpportunityTest | undefined = undefined;
+  opportunity: Opportunity | undefined = undefined;
   currentGate: Gate | undefined = undefined;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
@@ -41,7 +41,7 @@ export class ActionsListComponent implements OnInit {
         this.gates = await this.sharepoint.getGates(params.id);
         this.gates.forEach(async (el, index) => {
           
-          el.actions = await this.sharepoint.getActions(el.id);
+          el.actions = await this.sharepoint.getActions(el.ID);
           el.folders = await this.sharepoint.folders;
           this.setStatus(el.actions);
 
@@ -49,11 +49,11 @@ export class ActionsListComponent implements OnInit {
           if(index < (this.gates.length - 1)) {
             let uncompleted = el.actions.filter(a => !a.completed);
             if(!this.currentGate && uncompleted && (uncompleted.length > 0)) {
-              this.setGate(el.id);
+              this.setGate(el.ID);
             } 
           } else {
             if(!this.currentGate) {
-              this.setGate(el.id);
+              this.setGate(el.ID);
             }
           }
 
@@ -133,14 +133,18 @@ export class ActionsListComponent implements OnInit {
 
   computeStatus(a: Action) {
     let today = new Date().getTime();
+
     if(a.completed) a.status = 'completed';
-    else {
-      let dueDate = a.dueDate.getTime();
+    else if (a.ActionDueDate) {
+      a.ActionDueDate = new Date(a.ActionDueDate);
+      let dueDate = new Date(a.ActionDueDate).getTime();
       if(dueDate < today) {
         a.status = 'late';
       } else {
         a.status = 'pending';
       }
+    } else {
+      a.status = 'pending';
     }
     this.computeProgress();
   }
@@ -161,7 +165,7 @@ export class ActionsListComponent implements OnInit {
     
   }
   setGate(gateId: number) {
-    let gate = this.gates.find(el => el.id == gateId);
+    let gate = this.gates.find(el => el.ID == gateId);
     if(gate && gate != this.currentGate) {
       this.currentGate = gate;
       this.currentActions = gate.actions;
