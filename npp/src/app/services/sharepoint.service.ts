@@ -730,8 +730,16 @@ export class SharepointService {
   */
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
-  query(url: string) {
-    return this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() });
+  async query(url: string): Promise<any> {
+    try {
+      let lists = await this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() }).toPromise();
+      return lists;
+    } catch (e) {
+      if(e.status == 401) {
+        this.teams.loginAgain();
+      }
+      return {};
+    }
   }
 
   buildDefaultHeaders(): any {
@@ -742,9 +750,8 @@ export class SharepointService {
     return headersObject;
   }
 
-  async getOpportunities(): Promise<any[]> {
-    return this.query("lists/getbytitle('Opportunities')/items").toPromise() as Promise<any[]>;
-    //return this.opportunities;
+  async getOpportunities(): Promise<any> {
+    return await this.query("lists/getbytitle('Opportunities')/items");
   }
 
   async getIndications(): Promise<any[]> {
