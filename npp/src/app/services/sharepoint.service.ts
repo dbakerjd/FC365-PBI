@@ -30,6 +30,7 @@ export interface Opportunity {
   ProjectStartDate: Date;
   ProjectEndDate: Date;
   OpportunityTypeId: number;
+  OpportunityType?: OpportunityType;
   OpportunityStatus: string;
   IndicationId: number;
   therapyArea: string;
@@ -37,6 +38,11 @@ export interface Opportunity {
   AuthorId: number;
   // users?: User[];
   progress?: number;
+}
+
+export interface OpportunityType {
+  ID: number;
+  Title: string;
 }
 
 export interface User {
@@ -768,7 +774,8 @@ export class SharepointService {
   }
 
   async getOpportunities(): Promise<Opportunity[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunities')/items");
+    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$select=*,OpportunityType/Title&$expand=OpportunityType");
+    console.log('qObj', queryObj);
     return queryObj.d.results;
   }
 

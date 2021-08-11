@@ -17,7 +17,7 @@
                 <div class="opportunity-archived" *ngIf="item.opportunityStatus == 'Archived'"></div>
                 {{item.OpportunityStatus}}
             </div>
-            <p><label>Type: </label>{{item.OpportunityTypeId}}</p>
+            <p><label>Type: </label>{{item.OpportunityType?.Title}}</p>
         </div>
         <div class="opportunity-name" (click)="navigateTo(item)">
             <p class="opportunity-title">{{item.Title}}</p>
