@@ -40,6 +40,7 @@ export class TeamsService {
   loginAgain() {
     this.token = null;
     localStorage.removeItem('teamsAccessToken');
+    localStorage.removeItem('teamsAccount');
     this.getActiveAccount();
   }
 
