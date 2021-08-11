@@ -38,10 +38,21 @@ export class TeamsService {
   }
 
   loginAgain() {
+    this.authService.logoutRedirect();
+    let activeAccount = this.authService.instance.getActiveAccount();
+    console.log(activeAccount);
+    this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: undefined}).then(function(accessTokenResponse) {
+      // Acquire token silent success
+      // Call API with token
+      console.log('atr', accessTokenResponse);
+      // Call your API with token
+  });
+    /*
     this.token = null;
     localStorage.removeItem('teamsAccessToken');
     localStorage.removeItem('teamsAccount');
     this.getActiveAccount();
+    */
   }
 
   getActiveAccount() {
