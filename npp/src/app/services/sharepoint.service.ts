@@ -1,7 +1,7 @@
 import { NumberSymbol } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AccountInfo } from '@azure/msal-browser';
+import { AccountInfo, AuthorizationUrlRequest } from '@azure/msal-browser';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
@@ -33,9 +33,10 @@ export interface Opportunity {
   OpportunityType?: OpportunityType;
   OpportunityStatus: string;
   IndicationId: number;
-  therapyArea: string;
+  Indication: Indication;
   Modified: Date;
   AuthorId: number;
+  Author?: Author;
   // users?: User[];
   progress?: number;
 }
@@ -43,6 +44,18 @@ export interface Opportunity {
 export interface OpportunityType {
   ID: number;
   Title: string;
+}
+
+export interface Indication {
+  ID: number;
+  Title: string;
+  TherapyArea: string;
+}
+
+export interface Author {
+  ID: number;
+  FirstName: string;
+  LastName: string;
 }
 
 export interface User {
@@ -774,7 +787,7 @@ export class SharepointService {
   }
 
   async getOpportunities(): Promise<Opportunity[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$select=*,OpportunityType/Title&$expand=OpportunityType");
+    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
     console.log('qObj', queryObj);
     return queryObj.d.results;
   }

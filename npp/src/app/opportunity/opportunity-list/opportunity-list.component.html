@@ -22,13 +22,13 @@
         <div class="opportunity-name" (click)="navigateTo(item)">
             <p class="opportunity-title">{{item.Title}}</p>
             <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
-            <p><label>Indication: </label> {{item.IndicationId}}</p>
+            <p><label>Indication: </label> {{item.Indication?.Title}}</p>
         </div>
         <div class="opportunity-progress" (click)="navigateTo(item)">
             <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
-            <p><label>Opportunity Owner: </label> {{item.opportunityOwner?.name}}</p>
+            <p *ngIf="item.Author"><label>Opportunity Owner: </label> {{item.Author.FirstName + ' ' + item.Author.LastName}}</p>
             <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
-            <p><label>Therapy Area: </label> {{item.therapyArea}}</p>
+            <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
         </div>
     </div>
 </div>
