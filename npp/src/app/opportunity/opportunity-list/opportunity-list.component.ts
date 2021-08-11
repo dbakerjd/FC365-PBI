@@ -88,6 +88,6 @@ export class OpportunityListComponent implements OnInit {
   }
 
   navigateTo(item: Opportunity) {
-    this.router.navigate(['opportunities', item.Id, 'actions']);
+    this.router.navigate(['opportunities', item.ID, 'actions']);
   }
 }
