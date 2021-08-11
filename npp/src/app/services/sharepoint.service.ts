@@ -730,8 +730,16 @@ export class SharepointService {
   */
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
-  query(url: string) {
-    return this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() });
+  async query(url: string) {
+    try {
+      let lists = await this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() }).toPromise();
+      return lists;
+    } catch (e) {
+      if(e.status == 401) {
+        this.teams.loginAgain();
+      }
+      return [];
+    }
   }
 
   buildDefaultHeaders(): any {
