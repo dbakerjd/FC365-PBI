@@ -67,6 +67,7 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
+    console.log('loaded');
     for (let op of this.opportunities) {
       op.progress = await this.computeProgress(op);
     }
@@ -88,7 +89,7 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {
-    let actions = await this.sharepoint.getActionsByOpportunity(opportunity.ID);
+    let actions = await this.sharepoint.getActions(opportunity.ID);
     if (actions.length) {
       let gates: {'total': number; 'completed': number}[] = [];
       let currentGate = 0;

@@ -2,6 +2,7 @@ import { NumberSymbol } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AccountInfo, AuthorizationUrlRequest } from '@azure/msal-browser';
+import { filter } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
@@ -830,16 +831,11 @@ export class SharepointService {
     // return this.gates.filter(el => el.opportunityId == opportunityId);
   }
 
-  async getActions(opportunityId: number, stageId: number): Promise<Action[]> {
-    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$filter=(StageNameId eq ${stageId}) and (OpportunityNameId eq ${opportunityId})`);
+  async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
+    let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
+    if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
+    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$filter=${filterConditions}&$orderby=StageNameId%20asc`);
     console.log('qObjActions', queryObj);
-    return queryObj.d.results;
-    // return this.actions.filter(el => el.gateId == gateId);
-  }
-
-  async getActionsByOpportunity(opportunityId: number): Promise<Action[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunity Action List')/items?$filter=OpportunityNameId eq "+opportunityId+"&$orderby=StageNameId%20asc");
-    console.log('qObjActionsOpp', queryObj);
     return queryObj.d.results;
   }
 
