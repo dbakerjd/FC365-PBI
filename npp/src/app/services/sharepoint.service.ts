@@ -110,7 +110,7 @@ export interface Gate {
   ID: number;
   Title: string;
   OpportunityNameId: number;
-  name?: string; // exists?
+  StageNameId: number;
   StageReview: Date;
   Created: Date;
   actions?: Action[];
@@ -830,8 +830,8 @@ export class SharepointService {
     // return this.gates.filter(el => el.opportunityId == opportunityId);
   }
 
-  async getActions(gateId: number): Promise<Action[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunity Action List')/items?$filter=StageNameId eq "+gateId);
+  async getActions(opportunityId: number, stageId: number): Promise<Action[]> {
+    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$filter=(StageNameId eq ${stageId}) and (OpportunityNameId eq ${opportunityId})`);
     console.log('qObjActions', queryObj);
     return queryObj.d.results;
     // return this.actions.filter(el => el.gateId == gateId);

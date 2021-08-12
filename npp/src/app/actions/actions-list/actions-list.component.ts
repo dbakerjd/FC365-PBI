@@ -43,8 +43,7 @@ export class ActionsListComponent implements OnInit {
         }
         this.gates = await this.sharepoint.getGates(params.id);
         this.gates.forEach(async (el, index) => {
-          
-          el.actions = await this.sharepoint.getActions(el.ID);
+          el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
           el.folders = await this.sharepoint.folders;
           this.setStatus(el.actions);
 
