@@ -38,6 +38,9 @@ export class ActionsListComponent implements OnInit {
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
         this.opportunity = await this.sharepoint.getOpportunity(params.id);
+        if (this.opportunity.OpportunityOwner) {
+          this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+        }
         this.gates = await this.sharepoint.getGates(params.id);
         this.gates.forEach(async (el, index) => {
           
@@ -47,7 +50,7 @@ export class ActionsListComponent implements OnInit {
 
           //set current gate
           if(index < (this.gates.length - 1)) {
-            let uncompleted = el.actions.filter(a => !a.completed);
+            let uncompleted = el.actions.filter(a => !a.Complete);
             if(!this.currentGate && uncompleted && (uncompleted.length > 0)) {
               this.setGate(el.ID);
             } 
@@ -134,7 +137,7 @@ export class ActionsListComponent implements OnInit {
   computeStatus(a: Action) {
     let today = new Date().getTime();
 
-    if(a.completed) a.status = 'completed';
+    if(a.Complete) a.status = 'completed';
     else if (a.ActionDueDate) {
       a.ActionDueDate = new Date(a.ActionDueDate);
       let dueDate = new Date(a.ActionDueDate).getTime();
@@ -150,20 +153,20 @@ export class ActionsListComponent implements OnInit {
   }
 
   toggleStatus(action: Action) {
-    action.completed = !action.completed;
+    action.Complete = !action.Complete;
     this.computeStatus(action);
 
   }
 
   computeProgress() {
     if(this.currentActions && this.currentActions.length) {
-      let completed = this.currentActions.filter(el => el.completed);
+      let completed = this.currentActions.filter(el => el.Complete);
       this.currentGateProgress = Math.round((completed.length / this.currentActions.length) * 10000) / 100;
     } else {
       this.currentGateProgress = 0;
     }
-    
   }
+
   setGate(gateId: number) {
     let gate = this.gates.find(el => el.ID == gateId);
     if(gate && gate != this.currentGate) {

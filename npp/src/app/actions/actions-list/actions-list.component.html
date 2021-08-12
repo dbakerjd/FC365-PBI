@@ -21,24 +21,26 @@
     <div class="opportunity-owner">
         <div class="opportunity-owner-pic">
             <div class="opportunity-owner-pic-background"></div>
-            <img [src]="opportunity.opportunityOwner?.profilePic"/>
+            <img [src]="opportunity.OpportunityOwner?.profilePicUrl"/>
         </div>
         <div class="opportunity-owner-info">
             <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
-            <div class="opportunity-owner-info-name">{{opportunity.opportunityOwner?.name}}</div>
+            <div class="opportunity-owner-info-name" *ngIf="opportunity.OpportunityOwner">
+                {{opportunity.OpportunityOwner.FirstName + ' ' + opportunity.OpportunityOwner.LastName}}
+            </div>
         </div>
     </div>
 </div>
 <div class="gates-and-actions-wrapper">
     <div class="gates-wrapper">
         <div class="gates-item-wrapper" *ngFor="let gate of gates">
-            <div class="gates-item"  [ngClass]="{'selected-gate': currentGate && currentGate.id === gate.id, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.id)">
+            <div class="gates-item"  [ngClass]="{'selected-gate': currentGate && currentGate.ID === gate.ID, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.ID)">
                 <span>{{gate.Title}}</span>
                 <svg *ngIf=" currentSection == 'documents' ">
                     <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
                 </svg>
             </div>
-            <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.id === gate.ID">
+            <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.ID === gate.ID">
                 <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder === folder.id}" (click)="setFolder(folder.id)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
@@ -126,7 +128,7 @@
             <div *ngSwitchDefault>
                 <div class="action-item" *ngFor="let action of currentActions">
                     <div class="action-item-name"><span>{{action.Title}}</span></div>
-                    <div class="action-item-completed" *ngIf="action.completed">
+                    <div class="action-item-completed" *ngIf="action.Complete">
                         <label>Completed: </label>
                         {{action.Timestamp | date : 'Y-M-d'}}
                         <label> at </label>
@@ -134,7 +136,7 @@
                         <label> by </label>
                         {{action.targetUser?.name}}
                     </div>
-                    <div class="action-item-completed" *ngIf="!action.completed">Not completed yet</div>
+                    <div class="action-item-completed" *ngIf="!action.Complete">Not completed yet</div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
                         <label>Due by </label>
                         <ngx-datepicker [(ngModel)]="action.ActionDueDate" [options]="dateOptions"></ngx-datepicker>

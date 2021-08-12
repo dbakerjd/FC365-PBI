@@ -9,7 +9,7 @@ import { TeamsService } from './teams.service';
 export interface OpportunityTest {
   title: string;
   moleculeName: string;
-  opportunityOwner: User;
+  opportunityOwner: UserTest;
   projectStart: Date;
   projectEnd: Date;
   opportunityType: string;
@@ -27,6 +27,7 @@ export interface Opportunity {
   Title: string;
   MoleculeName: string;
   OpportunityOwnerId: number;
+  OpportunityOwner?: User;
   ProjectStartDate: Date;
   ProjectEndDate: Date;
   OpportunityTypeId: number;
@@ -36,20 +37,20 @@ export interface Opportunity {
   Indication: Indication;
   Modified: Date;
   AuthorId: number;
-  Author?: Author;
+  Author?: User;
   // users?: User[];
   progress?: number;
 }
 
 export interface Action {
   Id: number,
-  gateId?: number; // exists?
+  StageNameId: number;
   OpportunityNameId: number;
   Title: string;
   ActionNameId: string;
   ActionDueDate: Date;
-  completed: boolean;
-  timestamp: Date;
+  Complete: boolean;
+  Timestamp: Date;
   targetUserId: Number;
   targetUser: User;
   status?: string;
@@ -66,13 +67,14 @@ export interface Indication {
   TherapyArea: string;
 }
 
-export interface Author {
+export interface User {
   ID: number;
   FirstName: string;
   LastName: string;
+  profilePicUrl: string;
 }
 
-export interface User {
+export interface UserTest {
   id: number;
   name: string;
   email?: string;
@@ -89,7 +91,7 @@ export interface ActionTest {
   completed: boolean;
   timestamp: Date;
   targetUserId: Number;
-  targetUser: User;
+  targetUser: UserTest;
   status?: string;
 }
 
@@ -127,7 +129,7 @@ export interface NPPFile {
   modelScenario: string[];
   modelApprovalComments: string;
   approvalStatus: string;
-  user: User;
+  user: UserTest;
 }
 
 export interface NPPFolder {
@@ -835,6 +837,12 @@ export class SharepointService {
     // return this.actions.filter(el => el.gateId == gateId);
   }
 
+  async getActionsByOpportunity(opportunityId: number): Promise<Action[]> {
+    let queryObj = await this.query("lists/getbytitle('Opportunity Action List')/items?$filter=OpportunityNameId eq "+opportunityId+"&$orderby=StageNameId%20asc");
+    console.log('qObjActionsOpp', queryObj);
+    return queryObj.d.results;
+  }
+
   async getLists() {
    /* try {
       let lists = await this.query('lists').toPromise();
@@ -846,6 +854,7 @@ export class SharepointService {
       return [];
     }*/
   }
+
   async getOpportunityTypes() {
     return [
       { value: 'acquisition', label: 'Acquisition' },
@@ -864,7 +873,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
+    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
     console.log('objSingleOpportunity', queryObj);
     return queryObj.d.results[0];
     // return this.opportunities.find(el => el.Id == id);
@@ -872,5 +881,10 @@ export class SharepointService {
 
   async getFiles(id: number) {
     return this.files.filter(f => f.parentId == id);
+  }
+
+  async getUserProfilePic(userId: number): Promise<string> {
+    let queryObj = await this.query(`lists/getByTitle('User Information List')/items?$filter=Id eq ${userId}&$select=Picture`);
+    return queryObj.d.results[0].Picture.Url;
   }
 }
