@@ -135,11 +135,11 @@ export class ActionsListComponent implements OnInit {
 
   computeStatus(a: Action) {
     let today = new Date().getTime();
+    if (a.ActionDueDate) a.ActionDueDate = new Date(a.ActionDueDate); // set to date format for datepicker
 
     if(a.Complete) a.status = 'completed';
     else if (a.ActionDueDate) {
-      a.ActionDueDate = new Date(a.ActionDueDate);
-      let dueDate = new Date(a.ActionDueDate).getTime();
+      let dueDate = a.ActionDueDate.getTime();
       if(dueDate < today) {
         a.status = 'late';
       } else {
