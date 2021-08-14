@@ -52,8 +52,8 @@ export interface Action {
   ActionDueDate: Date;
   Complete: boolean;
   Timestamp: Date;
-  targetUserId: Number;
-  targetUser: User;
+  TargetUserId: Number;
+  TargetUser: User;
   status?: string;
 }
 
@@ -834,7 +834,7 @@ export class SharepointService {
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
-    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$filter=${filterConditions}&$orderby=StageNameId%20asc`);
+    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`);
     console.log('qObjActions', queryObj);
     return queryObj.d.results;
   }
