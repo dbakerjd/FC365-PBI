@@ -10,7 +10,8 @@
     </div>
 </div>
 <div class="opportunity-list-wrapper">
-    <div class="opportunity-list-item" *ngFor="let item of opportunities">
+    <ng-container *ngIf="( opportunities | filter:model.search:model.status:model.type:model.indication) as result">
+    <div class="opportunity-list-item" *ngFor="let item of result">
         <div class="opportunity-status">
             <div>
                 <div class="opportunity-active" *ngIf="item.OpportunityStatus == 'Active'"></div>
@@ -31,4 +32,6 @@
             <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
         </div>
     </div>
+    <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  
+    </ng-container>
 </div>

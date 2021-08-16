@@ -60,6 +60,7 @@ export interface Action {
 export interface OpportunityType {
   ID: number;
   Title: string;
+  StageType: string;
 }
 
 export interface Indication {
@@ -305,175 +306,6 @@ export class SharepointService {
     progress: 12
   }];
 
-  gates: GateTest[] =  [{
-    title: "Gate 1",
-    opportunityId: 67,
-    name: "Gate 1",
-    reviewedAt: new Date("5/1/2021"),
-    id: 29,
-    createdAt: new Date("5/25/2021 2:45 PM"),
-    actions: [],
-    folders: []
-  },{
-    title: "Gate 2",
-    opportunityId: 67,
-    name: "Gate 2",
-    reviewedAt: new Date("7/1/2021"),
-    id: 30,
-    createdAt: new Date("5/25/2021 3:04 PM"),
-    actions: [],
-    folders: []
-  },{
-    title: "Gate 1",
-    opportunityId: 68,
-    name: "Gate 1",
-    reviewedAt: new Date("4/1/2022"),
-    id: 31,
-    createdAt: new Date("5/25/2021 3:55 PM"),
-    actions: [],
-    folders: []
-  },{
-    title: "Phase 1",
-    opportunityId: 69,
-    name: "Phase 1",
-    reviewedAt: new Date("1/1/2022"),
-    id: 32,
-    createdAt: new Date("5/25/2021 3:58 PM"),
-    actions: [],
-    folders: []
-  },{
-    title: "Phase 2",
-    opportunityId: 69,
-    name: "Phase 2",
-    reviewedAt: new Date("12/1/2022"),
-    id: 33,
-    createdAt: new Date("5/25/2021 4:01 PM"),
-    actions: [],
-    folders: []
-  },{
-    title: "Phase 3",
-    opportunityId: 69,
-    name: "Phase 3",
-    reviewedAt: new Date("6/1/2023"),
-    id: 34,
-    createdAt: new Date("5/25/2021 4:02 PM"),
-    actions: [],
-    folders: []
-  }];
-
-  actions: ActionTest[] = [{
-    gateId: 29,
-    id: 1,
-    opportunityId: 67,
-    title:  "Commercial terms negotiations",
-    actionName:  "Commercial terms negotiations",
-    dueDate: new Date("4/29/2021"),
-    completed: true,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 2,
-    opportunityId: 67,
-    title:  "Innovation board",
-    actionName:  "Innovation board",
-    dueDate: new Date("3/5/2021"),
-    completed: true,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 3,
-    opportunityId: 67,
-    title:  "SMT Approval",
-    actionName:  "SMT Approval",
-    dueDate: new Date("4/5/2021"),
-    completed: true,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 4,
-    opportunityId: 67,
-    title:  "DD/Contract approving process",
-    actionName:  "DD/Contract approving process",
-    dueDate: new Date("5/5/2021"),
-    completed: true,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 5,
-    opportunityId: 67,
-    title:  "Commercial terms negotiations",
-    actionName:  "Commercial terms negotiations",
-    dueDate: new Date("6/29/2021"),
-    completed: true,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 6,
-    opportunityId: 67,
-    title:  "Innovation board",
-    actionName:  "Innovation board",
-    dueDate: new Date("7/5/2021"),
-    completed: false,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 7,
-    opportunityId: 67,
-    title:  "SMT Approval",
-    actionName:  "SMT Approval",
-    dueDate: new Date("8/5/2021"),
-    completed: false,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  },{
-    gateId: 29,
-    id: 8,
-    opportunityId: 67,
-    title:  "DD/Contract approving process",
-    actionName:  "DD/Contract approving process",
-    dueDate: new Date("9/5/2021"),
-    completed: false,
-    timestamp: new Date("6/7/2021 11:43 AM"),
-    targetUserId: 1,
-    targetUser: {
-      id: 1,
-      name: "David Baker"
-    }
-  }];
 
   /*
 "Registration changes (MA owner)","Gate 2","Acquisition of Nucala for COPD","Registration changes (MA owner)","4/5/2021","Sí","7/6/2021 9:04 AM","Marc Torruella Altadill"
@@ -535,7 +367,7 @@ export class SharepointService {
     return queryObj.d.results;
   }
 
-  async getIndications(): Promise<any[]> {
+  async getIndications(): Promise<Indication[]> {
     let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items");
     console.log('qObjInd', queryObj);
     return queryObj.d.results;
@@ -573,12 +405,14 @@ export class SharepointService {
     }*/
   }
 
-  async getOpportunityTypes() {
-    return [
-      { value: 'acquisition', label: 'Acquisition' },
-      { value: 'licensing', label: 'Licensing' },
-      { value: 'productDevelopment', label: 'Product Development' }
-    ];
+  async getOpportunityTypes(): Promise<OpportunityType[]> {
+    let queryObj = await this.query("lists/getbytitle('Master Opportunity Type List')/items");
+    console.log('qObjOpTypes', queryObj);
+    return queryObj.d.results;
+  }
+
+  async getOpportunityTypesList() {
+    return (await this.getOpportunityTypes()).map(t => {return {value: t.ID, label: t.Title}});
   }
 
   async getOpportunityFields() {
@@ -594,7 +428,6 @@ export class SharepointService {
     let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
     console.log('objSingleOpportunity', queryObj);
     return queryObj.d.results[0];
-    // return this.opportunities.find(el => el.Id == id);
   }
 
   async getFiles(id: number) {

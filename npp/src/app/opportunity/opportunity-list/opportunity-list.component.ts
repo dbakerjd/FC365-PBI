@@ -14,7 +14,7 @@ import { Action, Opportunity, OpportunityTest, SharepointService } from 'src/app
 export class OpportunityListComponent implements OnInit {
   opportunities: Opportunity[] = [];
   form = new FormGroup({});
-  model = { };
+  model: any = { };
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
 
@@ -23,7 +23,7 @@ export class OpportunityListComponent implements OnInit {
   async ngOnInit() {
 
     let indications = await this.sharepoint.getIndicationsList();
-    let opportunityTypes = await this.sharepoint.getOpportunityTypes();
+    let opportunityTypes = await this.sharepoint.getOpportunityTypesList();
     let opportunityFields = await this.sharepoint.getOpportunityFields();
     
     this.fields = [{
@@ -38,8 +38,10 @@ export class OpportunityListComponent implements OnInit {
         templateOptions: {
           placeholder: 'All',
           options: [
+            { value: 'processing', label: 'Processing' },
             { value: 'active', label: 'Active' },
             { value: 'archived', label: 'Archived' },
+            { value: 'approved', label: 'Approved' },
           ]
         }
       },{
@@ -67,7 +69,6 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
-    console.log('loaded');
     for (let op of this.opportunities) {
       op.progress = await this.computeProgress(op);
     }
