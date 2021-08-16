@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AuthenticationResult, EventMessage, EventType } from '@azure/msal-browser';
-import { filter } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 import { TeamsService } from './services/teams.service';
 
 @Component({
@@ -10,6 +11,8 @@ import { TeamsService } from './services/teams.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
+  private readonly _destroying$ = new Subject<void>();
+  
   constructor(private readonly teams: TeamsService, private authService: MsalService, private msalBroadcastService: MsalBroadcastService, ) {
 
   }
@@ -19,6 +22,7 @@ export class AppComponent {
     this.msalBroadcastService.msalSubject$
       .pipe(
         filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
+        takeUntil(this._destroying$)
       )
       .subscribe((result: EventMessage) => {
         console.log(result);
@@ -28,5 +32,10 @@ export class AppComponent {
     });
 
     this.teams.getActiveAccount();
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next();
+    this._destroying$.complete();
   }
 }
