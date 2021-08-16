@@ -368,14 +368,15 @@ export class SharepointService {
   }
 
   async getIndications(): Promise<Indication[]> {
-    let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items");
+    let count = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
+    let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items?$skiptoken=Paged=TRUE&$top="+count.d.ItemCount);
     console.log('qObjInd', queryObj);
     return queryObj.d.results;
   }
 
   async getIndicationsList(): Promise<any[]> {
     let indications = await this.getIndications();
-    return indications.map(el => { return {value: el.ID, label: el.Title}})
+    return indications.map(el => { return {value: el.ID, label: el.Title, group: el.TherapyArea}})
   }
 
   async getGates(opportunityId: number): Promise<Gate[]> {
