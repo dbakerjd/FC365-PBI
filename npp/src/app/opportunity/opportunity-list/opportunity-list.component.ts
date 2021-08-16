@@ -22,7 +22,7 @@ export class OpportunityListComponent implements OnInit {
 
   async ngOnInit() {
 
-    let indications = await this.sharepoint.getIndications();
+    let indications = await this.sharepoint.getIndicationsList();
     let opportunityTypes = await this.sharepoint.getOpportunityTypes();
     let opportunityFields = await this.sharepoint.getOpportunityFields();
     

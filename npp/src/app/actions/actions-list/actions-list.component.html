@@ -1,7 +1,7 @@
 <app-npp-header [isHome]="false"></app-npp-header>
 <div class="opportunity-info-wrapper" *ngIf="opportunity">
     <div class="opportunity-name">
-        <h2>{{opportunity.title}}</h2>
+        <h2>{{opportunity.Title}}</h2>
         <div>
             <div class="opportunity-active" *ngIf="opportunity.opportunityStatus == 'Active'"></div>
             <div class="opportunity-archived" *ngIf="opportunity.opportunityStatus == 'Archived'"></div>
