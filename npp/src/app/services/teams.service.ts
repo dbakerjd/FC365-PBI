@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG } from '@azure/msal-angular';
-import { PopupRequest } from '@azure/msal-browser';
+import { PopupRequest, AccountInfo } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { ErrorService } from './error.service';
 
@@ -37,16 +37,33 @@ export class TeamsService {
     this.token = localStorage.getItem('teamsAccessToken');
   }
 
-  loginAgain() {
-    this.authService.logoutRedirect();
+  refreshToken() {
+    if (this.getStorageToken() == null) {
+      console.log('no token found');
+      // TODO
+    }
+  }
+
+  async loginAgain() {
+    // this.authService.logoutRedirect();
+
+    /*
     let activeAccount = this.authService.instance.getActiveAccount();
     console.log(activeAccount);
-    this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: undefined}).then(function(accessTokenResponse) {
-      // Acquire token silent success
-      // Call API with token
-      console.log('atr', accessTokenResponse);
-      // Call your API with token
-  });
+    console.log(this.token);
+    if (activeAccount) {
+      let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
+        // Acquire token silent success
+        // Call API with token
+        return accessTokenResponse;
+        // Call your API with token
+    });
+    console.log('newtoken', newToken);
+    console.log('oldtoken', localStorage.getItem('teamsAccessToken'));
+    this.setToken(newToken.idToken);
+    console.log('changedtoken', localStorage.getItem('teamsAccessToken'));
+
+  }
     /*
     this.token = null;
     localStorage.removeItem('teamsAccessToken');

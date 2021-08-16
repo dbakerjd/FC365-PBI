@@ -510,17 +510,22 @@ export class SharepointService {
       return lists;
     } catch (e) {
       if(e.status == 401) {
-        this.teams.loginAgain();
+        await this.teams.loginAgain(); 
+        return await this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() }).toPromise();
       }
       return {};
     }
   }
 
   buildDefaultHeaders(): any {
+    if (!this.teams.token) {
+      this.teams.refreshToken();
+    }
     let headersObject = new HttpHeaders({
       'Accept':'application/json;odata=verbose',
       'Authorization': 'Bearer ' + this.teams.token
     });
+    console.log('headers', headersObject);
     return headersObject;
   }
 
