@@ -506,20 +506,20 @@ export class SharepointService {
 
   async query(url: string): Promise<any> {
     try {
-      let lists = await this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() }).toPromise();
+      let lists = await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
       return lists;
     } catch (e) {
       if(e.status == 401) {
-        await this.teams.loginAgain(); 
-        return await this.http.get(this.licensing.siteUrl + url, { headers: this.buildDefaultHeaders() }).toPromise();
+        await this.teams.refreshToken(true); 
+        return await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
       }
       return {};
     }
   }
 
-  buildDefaultHeaders(): any {
+  async buildDefaultHeaders(): Promise<any> {
     if (!this.teams.token) {
-      this.teams.refreshToken();
+      await this.teams.refreshToken();
     }
     let headersObject = new HttpHeaders({
       'Accept':'application/json;odata=verbose',

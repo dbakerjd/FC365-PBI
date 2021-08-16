@@ -37,33 +37,24 @@ export class TeamsService {
     this.token = localStorage.getItem('teamsAccessToken');
   }
 
-  refreshToken() {
-    if (this.getStorageToken() == null) {
-      console.log('no token found');
-      // TODO
+  async refreshToken(force = false) {
+    // this.authService.logoutRedirect();
+    if (this.getStorageToken() == null || force) {
+      console.log('no token found in storage');
+      let activeAccount = this.authService.instance.getActiveAccount();
+      if (activeAccount) {
+        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
+          return accessTokenResponse;
+        });
+        this.setToken(newToken.accessToken);
+      } else {
+        this.authService.loginRedirect();
+      }
     }
   }
 
   async loginAgain() {
     // this.authService.logoutRedirect();
-
-    /*
-    let activeAccount = this.authService.instance.getActiveAccount();
-    console.log(activeAccount);
-    console.log(this.token);
-    if (activeAccount) {
-      let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
-        // Acquire token silent success
-        // Call API with token
-        return accessTokenResponse;
-        // Call your API with token
-    });
-    console.log('newtoken', newToken);
-    console.log('oldtoken', localStorage.getItem('teamsAccessToken'));
-    this.setToken(newToken.idToken);
-    console.log('changedtoken', localStorage.getItem('teamsAccessToken'));
-
-  }
     /*
     this.token = null;
     localStorage.removeItem('teamsAccessToken');
