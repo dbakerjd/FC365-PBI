@@ -41,15 +41,18 @@ export class TeamsService {
     // this.authService.logoutRedirect();
     if (this.getStorageToken() == null || force) {
       console.log('no token found in storage');
+      
       let activeAccount = this.authService.instance.getActiveAccount();
       if (activeAccount) {
-        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
+        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["Sites.FullControl", "user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
           return accessTokenResponse;
         });
-        this.setToken(newToken.accessToken);
+        // this.setToken(newToken.accessToken);
+        console.log('setted new token', this.token);
       } else {
         this.authService.loginRedirect();
       }
+      
     }
   }
 

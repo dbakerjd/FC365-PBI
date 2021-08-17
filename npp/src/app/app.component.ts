@@ -31,6 +31,17 @@ export class AppComponent {
         this.teams.setToken(payload.accessToken);
     });
 
+    this.msalBroadcastService.msalSubject$
+        .pipe(
+            filter((msg: EventMessage) => msg.eventType === EventType.ACQUIRE_TOKEN_SUCCESS),
+            takeUntil(this._destroying$)
+        )
+        .subscribe((result: EventMessage) => {
+            const payload = result.payload as AuthenticationResult;
+            this.teams.setActiveAccount(payload.account);
+            this.teams.setToken(payload.accessToken);
+        });
+
     this.teams.getActiveAccount();
   }
 
