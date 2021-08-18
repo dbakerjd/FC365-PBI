@@ -78,7 +78,7 @@ export class OpportunityListComponent implements OnInit {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
       height: '700px',
       width: '405px'
-    })
+    });
   }
 
   onSubmit() {

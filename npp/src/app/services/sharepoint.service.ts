@@ -2,7 +2,7 @@ import { NumberSymbol } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AccountInfo, AuthorizationUrlRequest } from '@azure/msal-browser';
-import { filter } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
@@ -41,6 +41,16 @@ export interface Opportunity {
   Author?: User;
   // users?: User[];
   progress?: number;
+}
+
+export interface OpportunityInput {
+  Title: string;
+  MoleculeName: string;
+  OpportunityOwnerId: number;
+  ProjectStartDate: Date;
+  ProjectEndDate: Date;
+  OpportunityTypeId: number;
+  IndicationId: number;
 }
 
 export interface Action {
@@ -119,6 +129,15 @@ export interface Gate {
   folders?: NPPFolder[];
 }
 
+export interface GateInput {
+  Title: string;
+  OpportunityNameId: number;
+  StageNameId: number;
+  StageReview: Date;
+  actions?: Action[];
+  folders?: NPPFolder[];
+}
+
 export interface NPPFile {
   id: number;
   parentId: number;
@@ -138,6 +157,12 @@ export interface NPPFolder {
   id: number;
   name: string;
   containsModels?: boolean;
+}
+
+export interface SelectInputList {
+  label: string;
+  value: any;
+  group?: string;
 }
 
 @Injectable({
@@ -349,6 +374,50 @@ export class SharepointService {
     }
   }
 
+  async createHttpGate(url: string): Promise<any> {
+    let newGate: GateInput = {
+      Title: 'New posted gate 3',
+      OpportunityNameId: 1,
+      StageNameId: 3,
+      StageReview: new Date('2021/01/19 12:00:00'),
+    }
+    try {
+      let result = await this.http.post(
+        this.licensing.siteUrl + url, 
+        newGate,
+        { 
+          headers: await this.buildDefaultHeaders()
+        }
+      ).toPromise();
+      // .pipe(
+      // catchError()
+    // );.pipe(
+      console.log('result', result);
+      return result;
+    } catch (e) {
+      if(e.status == 401) {
+        await this.teams.refreshToken(true); 
+        return await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
+      }
+      return {};
+    }
+  }
+
+  async create(url: string, data: any): Promise<any> {
+    try {
+      return await this.http.post(
+        this.licensing.siteUrl + url, 
+        data,
+        { headers: await this.buildDefaultHeaders() }
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        await this.teams.refreshToken(true);
+      }
+      return {};
+    }
+  }
+
   async buildDefaultHeaders(): Promise<any> {
     if (!this.teams.token) {
       await this.teams.refreshToken();
@@ -361,22 +430,48 @@ export class SharepointService {
     return headersObject;
   }
 
+  async createGate() {
+    this.createHttpGate("lists/getbytitle('Opportunity Stages')/items");
+  }
+
+  async createOpportunity(op: OpportunityInput): Promise<Opportunity> {
+    return await this.create("lists/getbytitle('Opportunities')/items", op);
+  }
+
   async getOpportunities(): Promise<Opportunity[]> {
     let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
     console.log('qObj', queryObj);
     return queryObj.d.results;
   }
 
-  async getIndications(): Promise<Indication[]> {
-    let count = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
-    let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items?$skiptoken=Paged=TRUE&$top="+count.d.ItemCount);
-    console.log('qObjInd', queryObj);
+  async getIndications(therapy?: string): Promise<Indication[]> {
+    let max = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
+    let queryUrl = "lists/getbytitle('Master Therapy Areas')/items?$skiptoken=Paged=TRUE&$top="+max.d.ItemCount;
+    if (therapy) {
+      queryUrl += `&$filter=TherapyArea eq '${therapy}'`;
+    }
+    let queryObj = await this.query(queryUrl);
     return queryObj.d.results;
   }
 
-  async getIndicationsList(): Promise<any[]> {
-    let indications = await this.getIndications();
+  async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {
+    let indications = await this.getIndications(therapy);
+
+    if (therapy) {
+      return indications.map(el => { return {value: el.ID, label: el.Title}})
+    }
     return indications.map(el => { return {value: el.ID, label: el.Title, group: el.TherapyArea}})
+  }
+
+  async getTherapiesList(): Promise<SelectInputList[]> {
+    let count = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
+    let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items?$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count.d.ItemCount);
+    let indications: Indication[] = queryObj.d.results;
+
+    return indications
+      .map(v => v.TherapyArea)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .map(v => { return { label: v, value: v }});
   }
 
   async getGates(opportunityId: number): Promise<Gate[]> {
