@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { Gate } from 'src/app/services/sharepoint.service';
+import { Stage } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-stage-settings',
@@ -29,7 +29,7 @@ export class StageSettingsComponent implements OnInit {
 
   form: FormGroup = new FormGroup({});
   model: any;   
-  gate: Gate | undefined;
+  gate: Stage | undefined;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any) { }
 

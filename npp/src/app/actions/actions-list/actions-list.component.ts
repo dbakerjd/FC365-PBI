@@ -6,7 +6,7 @@ import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-s
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -14,10 +14,10 @@ import { Action, Gate, NPPFile, NPPFolder, Opportunity, SharepointService } from
   styleUrls: ['./actions-list.component.scss']
 })
 export class ActionsListComponent implements OnInit {
-  gates: Gate[] = [];
+  gates: Stage[] = [];
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
-  currentGate: Gate | undefined = undefined;
+  currentGate: Stage | undefined = undefined;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   dateOptions: DatepickerOptions = {

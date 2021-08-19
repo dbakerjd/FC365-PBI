@@ -5,7 +5,8 @@
     </mat-dialog-content>
     <div class="dialog-footer">
         <div class="dialog-cancel-button" mat-dialog-close>Close</div>
-        <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial (click)="onSubmit()">Create</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onNext()" *ngIf="!firstStepCompleted">Next</div>
+        <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial (click)="onSubmit()" *ngIf="firstStepCompleted">Create</div>
     </div>
 </form>
 

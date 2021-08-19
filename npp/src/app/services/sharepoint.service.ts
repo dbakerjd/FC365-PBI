@@ -53,6 +53,12 @@ export interface OpportunityInput {
   IndicationId: number;
 }
 
+export interface StageInput {
+  Title: string;
+  // StageUsers: string;
+  StageReview: Date;
+}
+
 export interface Action {
   Id: number,
   StageNameId: number;
@@ -118,22 +124,13 @@ export interface GateTest {
   folders?: NPPFolder[];
 }
 
-export interface Gate {
+export interface Stage {
   ID: number;
   Title: string;
   OpportunityNameId: number;
   StageNameId: number;
   StageReview: Date;
   Created: Date;
-  actions?: Action[];
-  folders?: NPPFolder[];
-}
-
-export interface GateInput {
-  Title: string;
-  OpportunityNameId: number;
-  StageNameId: number;
-  StageReview: Date;
   actions?: Action[];
   folders?: NPPFolder[];
 }
@@ -374,8 +371,9 @@ export class SharepointService {
     }
   }
 
+  /*
   async createHttpGate(url: string): Promise<any> {
-    let newGate: GateInput = {
+    let newGate: StageInput = {
       Title: 'New posted gate 3',
       OpportunityNameId: 1,
       StageNameId: 3,
@@ -402,6 +400,7 @@ export class SharepointService {
       return {};
     }
   }
+  */
 
   async create(url: string, data: any): Promise<any> {
     try {
@@ -430,12 +429,19 @@ export class SharepointService {
     return headersObject;
   }
 
+  /** TODEL */
+  /*
   async createGate() {
     this.createHttpGate("lists/getbytitle('Opportunity Stages')/items");
   }
+  */
 
-  async createOpportunity(op: OpportunityInput): Promise<Opportunity> {
-    return await this.create("lists/getbytitle('Opportunities')/items", op);
+  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
+    let opportunity = await this.create("lists/getbytitle('Opportunities')/items", op);
+    let stageType = await this.getStageType(op.OpportunityTypeId);
+    let masterStage = await this.query(`lists/getbytitle('Master Stage List')/items?$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
+    let stage = await this.create("lists/getbytitle('Opportunity Stages')/items", { ...st, OpportunityNameId: opportunity.d.ID, StageNameId: masterStage.d.results[0].ID });
+    return opportunity.d;
   }
 
   async getOpportunities(): Promise<Opportunity[]> {
@@ -474,11 +480,10 @@ export class SharepointService {
       .map(v => { return { label: v, value: v }});
   }
 
-  async getGates(opportunityId: number): Promise<Gate[]> {
+  async getGates(opportunityId: number): Promise<Stage[]> {
     let queryObj = await this.query("lists/getbytitle('Opportunity Stages')/items?$filter=OpportunityNameId eq "+opportunityId);
     console.log('qObjGates', queryObj);
     return queryObj.d.results;
-    // return this.gates.filter(el => el.opportunityId == opportunityId);
   }
 
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
@@ -533,5 +538,11 @@ export class SharepointService {
   async getUserProfilePic(userId: number): Promise<string> {
     let queryObj = await this.query(`lists/getByTitle('User Information List')/items?$filter=Id eq ${userId}&$select=Picture`);
     return queryObj.d.results[0].Picture.Url;
+  }
+
+  async getStageType(OpportunityTypeId: number): Promise<String> {
+    let queryObj = await this.query("lists/getbytitle('Master Opportunity Type List')/items?$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
+    if (queryObj.d) return queryObj.d.results[0].StageType;
+    return '';
   }
 }

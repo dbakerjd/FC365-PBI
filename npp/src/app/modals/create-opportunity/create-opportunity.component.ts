@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { OpportunityInput, SharepointService } from 'src/app/services/sharepoint.service';
-import { takeUntil, tap } from 'rxjs/operators';
+import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { StageSettingsComponent } from '../stage-settings/stage-settings.component';
@@ -21,6 +21,7 @@ export class CreateOpportunityComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   indications: any[] = [];
   dialogInstance: any;
+  firstStepCompleted: boolean = false;
 
 
   constructor(private sharepoint: SharepointService, public matDialog: MatDialog) { }
@@ -29,118 +30,165 @@ export class CreateOpportunityComponent implements OnInit {
 
     let therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    this.firstStepCompleted = false;
 
-    this.fields = [{
-      fieldGroup: [{
-        key: 'Title',
-        type: 'input',
-        templateOptions: {
-          label: 'Opportunity Name:',
-          placeholder: 'Opportunity Name'
-        }
-      }, {
-        key: 'MoleculeName',
-        type: 'input',
-        templateOptions: {
-          label: 'Molecule Name:',
-          placeholder: 'Molecule Name'
-        }
-      }, {
-        key: 'OpportunityOwnerId',
-        type: 'input',
-        templateOptions: {
-          label: 'Opportunity Owner:',
-          placeholder: 'Opportunity Owner'
-        }
-      }, {
-        key: 'therapy',
-        type: 'select',
-        templateOptions: {
-          label: 'Therapy Area:',
-          options: therapies,
-          /*
-          change: (field) =>{ 
-            console.log('field', field);
-            console.log('field0', field.model);
-            console.log('field1', field.form?.controls.therapy);
-            console.log('field2', field.formControl?.value);
-            // console.log($event);
-            const tabletField = field.formControl?.parent?.get('indication');
-            console.log('ind field', tabletField);
-            // getField('nome', this.fields).templateOptions.options = this.newOptions;
-            this.sharepoint.getIndicationsList(field.model.therapy).then((r) => {
-              console.log('gagsaga');
-              console.log(r);
-              console.log(field.form);
-              console.log(this.fields);
-              let f = this.getField('indication', this.fields);
-              if (f && f.templateOptions) {
-                f.templateOptions.options = r;
-              }
-            });
-            console.log('indic ch', this.indications);
-            // if (field.form)
-            // this.setIndications(field.form.controls.editor.value);
+    this.fields = [
+      {
+        fieldGroup: [{
+          key: 'Opportunity.Title',
+          type: 'input',
+          templateOptions: {
+            label: 'Opportunity Name:',
+            placeholder: 'Opportunity Name',
+            required: true,
           }
-          */
-          
-        //  change: this.setIndications
-        },
-      }, {
-        key: 'IndicationId',
-        type: 'select',
-        templateOptions: {
-          label: 'Indication Name:',
-          options: [],
-        },
-        lifecycle: {
-          onInit: (form, field) => {
-            if (!field?.parent?.fieldGroup) return;
-            const therapySelect = field.parent.fieldGroup.find(f => f.key === 'therapy');
-            if (!therapySelect?.formControl) return;
-            therapySelect.formControl.valueChanges.pipe(
-              takeUntil(this._destroying$),
-              tap(th => {
-                this.sharepoint.getIndicationsList(th).then(r => {
-                  field.formControl?.setValue('');
-                  if (field.templateOptions) field.templateOptions.options = r;
-                });
-              }),
-            ).subscribe();
+        }, {
+          key: 'Opportunity.MoleculeName',
+          type: 'input',
+          templateOptions: {
+            label: 'Molecule Name:',
+            placeholder: 'Molecule Name',
+            required: true,
           }
-        }
-      }, {
-        key: 'OpportunityTypeId',
-        type: 'select',
-        templateOptions: {
-          label: 'Opportunity Type:',
-          options: oppTypes,
-        }
-      }, {
-        key: 'ProjectStartDate',
-        type: 'datepicker',
-        templateOptions: {
-          label: 'Project Start Date:'
-        }
-      }, {
-        key: 'ProjectEndDate',
-        type: 'datepicker',
-        templateOptions: {
-          label: 'Project End Date:'
-        }
-      }]
-    }];
+        }, {
+          key: 'Opportunity.OpportunityOwnerId',
+          type: 'input',
+          templateOptions: {
+            label: 'Opportunity Owner:',
+            placeholder: 'Opportunity Owner',
+            required: true,
+          }
+        }, {
+          key: 'therapy',
+          type: 'select',
+          templateOptions: {
+            label: 'Therapy Area:',
+            options: therapies,
+            required: true,
+          },
+        }, {
+          key: 'Opportunity.IndicationId',
+          type: 'select',
+          templateOptions: {
+            label: 'Indication Name:',
+            options: [],
+            required: true,
+          },
+          hooks: {
+            onInit: (field) => {
+              if (!field?.parent?.fieldGroup) return;
+              const therapySelect = field.parent.fieldGroup.find(f => f.key === 'therapy');
+              if (!therapySelect?.formControl) return;
+              therapySelect.formControl.valueChanges.pipe(
+                takeUntil(this._destroying$),
+                tap(th => {
+                  this.sharepoint.getIndicationsList(th).then(r => {
+                    field.formControl?.setValue('');
+                    if (field.templateOptions) field.templateOptions.options = r;
+                  });
+                }),
+              ).subscribe();
+            }
+          }
+        }, {
+          key: 'Opportunity.OpportunityTypeId',
+          type: 'select',
+          templateOptions: {
+            label: 'Opportunity Type:',
+            options: oppTypes,
+            required: true,
+            change: (field) => {
+              field.formControl?.valueChanges
+              .pipe(take(1), takeUntil(this._destroying$))
+              .subscribe(
+                (selectedValue) => {
+                  this.sharepoint.getStageType(selectedValue).then(r => {
+                    if (r) this.model.stageType = r;
+                  });
+                }
+            );
+            }
+          },
+        }, {
+          key: 'Opportunity.ProjectStartDate',
+          type: 'datepicker',
+          templateOptions: {
+            label: 'Project Start Date:',
+            required: true,
+          }
+        }, {
+          key: 'Opportunity.ProjectEndDate',
+          type: 'datepicker',
+          templateOptions: {
+            label: 'Project End Date:',
+            required: true,
+          }
+        }],
+        hideExpression: this.firstStepCompleted
+      },
+      {
+        template: '<div class="form-header">Complete First Stage Info</div><hr />',
+        hideExpression: !this.firstStepCompleted,
+        expressionProperties: {
+          'template': function($viewValue, $modelValue, scope) {
+            return `<div class="form-header">The Opportunity Stage Type is ${scope?.model.stageType}</div><hr />`
+          },
+        },
+      },
+      {
+        fieldGroup: [{
+          key: 'stageType',
+          type: 'input',
+          hideExpression: true,
+        }, {
+          key: 'Stage.Title',
+          type: 'input',
+          templateOptions: {
+            label: 'Stage Name:',
+            placeholder: 'First Stage Name'
+          },
+          expressionProperties: {
+            'templateOptions.label': function($viewValue, $modelValue, scope) {
+              return `${scope?.model.stageType} Name`;
+            },
+            'templateOptions.placeholder': function($viewValue, $modelValue, scope) {
+              return `First ${scope?.model.stageType} Name`;
+            },
+          },
+        }/*,{
+          key: 'Stage.StageUsersId',
+          type: 'input',
+          templateOptions: {
+              label: 'Stage Users:',
+              placeholder: 'Stage Users'
+          }
+        }*/,{
+          key: 'Stage.StageReview',
+          type: 'datepicker',
+          templateOptions: {
+              label: 'Stage Review:'
+          }
+        },],
+        hideExpression: !this.firstStepCompleted
+      }
+    ];
+  }
+
+  async onNext() {
+    this.firstStepCompleted = true;
+    this.fields[0].hideExpression = true;
+    this.fields[1].hideExpression = this.fields[2].hideExpression = false;
   }
 
   onSubmit() {
     console.log(this.model);
-    delete this.model.therapy;
-    let newOpportunity: OpportunityInput = { ...this.model };
-    this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
-      height: '700px',
-      width: '405px'
-    });
-    // this.sharepoint.createOpportunity(newOpportunity);
+    // delete this.model.therapy;
+    // let newOpportunity: OpportunityInput = { ...this.model.Opportunity };
+    // this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
+    //   height: '700px',
+    //   width: '405px'
+    // });
+    this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
   }
 
   /*
