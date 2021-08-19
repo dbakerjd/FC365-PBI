@@ -41,7 +41,7 @@ export class TeamsService {
     // this.authService.logoutRedirect();
     if (this.getStorageToken() == null || force) {
       console.log('no token found in storage');
-      
+      /*
       let activeAccount = this.authService.instance.getActiveAccount();
       if (activeAccount) {
         let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["Sites.FullControl", "user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
@@ -52,7 +52,7 @@ export class TeamsService {
       } else {
         this.authService.loginRedirect();
       }
-      
+      */
     }
   }
 
