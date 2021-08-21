@@ -38,7 +38,7 @@ export class TeamsService {
   }
 
   async refreshToken(force = false) {
-    // this.authService.logoutRedirect();
+    this.authService.logoutRedirect();
     if (this.getStorageToken() == null || force) {
       console.log('no token found in storage');
       /*
@@ -56,6 +56,12 @@ export class TeamsService {
     }
   }
 
+  async logout() {
+    console.log('logout redirect');
+    // this.authService.logoutRedirect();
+    // this.authService.logout();
+  }
+
   async loginAgain() {
     // this.authService.logoutRedirect();
     /*
@@ -67,7 +73,6 @@ export class TeamsService {
   }
 
   getActiveAccount() {
-    
     let activeAccount = this.authService.instance.getActiveAccount();
 
     if(!activeAccount) {
@@ -113,7 +118,6 @@ export class TeamsService {
       return false;
     }
   }
-
 
 
 }

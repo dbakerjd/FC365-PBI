@@ -3,6 +3,7 @@ import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AuthenticationResult, EventMessage, EventType } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
+import { LicensingService } from './services/licensing.service';
 import { TeamsService } from './services/teams.service';
 
 @Component({
@@ -13,7 +14,12 @@ import { TeamsService } from './services/teams.service';
 export class AppComponent {
   private readonly _destroying$ = new Subject<void>();
   
-  constructor(private readonly teams: TeamsService, private authService: MsalService, private msalBroadcastService: MsalBroadcastService, ) {
+  constructor(
+    private readonly teams: TeamsService, 
+    private authService: MsalService, 
+    private msalBroadcastService: MsalBroadcastService, 
+    private licensing: LicensingService
+  ) {
 
   }
   ngOnInit(): void {
@@ -27,6 +33,8 @@ export class AppComponent {
       .subscribe((result: EventMessage) => {
         console.log(result);
         const payload = result.payload as AuthenticationResult;
+        console.log('payload', payload);
+        console.log("l", this.licensing.hasJplusDLicense(payload.accessToken));
         this.teams.setActiveAccount(payload.account);
         this.teams.setToken(payload.accessToken);
     });
@@ -43,6 +51,8 @@ export class AppComponent {
         });
 
     this.teams.getActiveAccount();
+    console.log("l", this.licensing.hasJplusDLicense( this.teams.token));
+
   }
 
   ngOnDestroy(): void {
