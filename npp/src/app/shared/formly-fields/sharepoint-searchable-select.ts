@@ -6,36 +6,39 @@ import { HttpParams } from "@angular/common/http";
 import { SharepointService } from "src/app/services/sharepoint.service";
 import { FieldType } from "@ngx-formly/core";
 
+/*
+  templateOptions: {
+    id?: string, //name of the id field, default "id"
+    display?: string[], //name of the string fields you want to display, if the string is not a field name it will display as is. default "name"
+    returnObjects?: boolean, //should return the whole object instead of just IDs, default true
+    query?: string, //url to hit for values, default siteusers
+    filterLocally?: boolean, //should query all and filter locally, default false,
+    filterField?: string, //field name to filter by, default title
+  }
+*/
+
 @Component({
   selector: 'app-formly-field-searchable-select-api',
   template: `
-    <mat-form-field>
-      <mat-select [id]="id"
-                  [formControl]="formControl"
-                  [formlyAttributes]="field"
-                  [multiple]="to.multiple"
-                  [placeholder]="to.placeholder"
-                  [errorStateMatcher]="errorStateMatcher"
-                  [aria-labelledby]="formField?._labelId">
-        <mat-option>
-          <ngx-mat-select-search [formControl]="filterControl"
-                                 [placeholderLabel]="(to.placeholderLabel || 'Search for items') | translate"
-                                 [searching]="searching"
-                                 [noEntriesFoundLabel]="(to.noEntriesFoundLabel || 'No matching items found') | translate">
-          </ngx-mat-select-search>
-        </mat-option>
-        <ng-container *ngFor="let item of options$ | async">
-          <mat-option [value]="item.value" [disabled]="item.disabled">{{ item.label }}</mat-option>
-        </ng-container>
-      </mat-select>
-    </mat-form-field>
+
+    <input type="hidden" [formControl]="formControl" [formlyAttributes]="field">
   `
 })
 export class FormlyFieldSearchableSelectApi extends FieldType {
 
   options$: ReplaySubject<any[]> = new ReplaySubject<any[]>(1);
   searching: boolean = false;
+  currentItems: any[] = [];
+  idField = 'id';
+  display = ['name'];
+  returnObjects = true;
+  query = 'siteusers?'
+  filterLocally = false;
+  filterField = 'title';
 
+
+  //title:string("much nothing",
+  
   filterControl: FormControl = new FormControl();
   /** Subject that emits when the component has been destroyed. */
   protected _onDestroy = new Subject<void>();
