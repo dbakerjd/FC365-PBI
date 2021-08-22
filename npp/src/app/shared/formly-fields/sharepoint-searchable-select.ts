@@ -5,11 +5,11 @@ import {FormControl} from "@angular/forms";
 import { HttpParams } from "@angular/common/http";
 import { SharepointService } from "src/app/services/sharepoint.service";
 import { FieldType } from "@ngx-formly/core";
+import { ErrorService } from "src/app/services/error.service";
 
 /*
   templateOptions: {
-    id?: string, //name of the id field, default "id"
-    display?: string[], //name of the string fields you want to display, if the string is not a field name it will display as is. default "name"
+    modelParser: method that receives sharepoint response and returns object {id, value}, value will display on screen
     returnObjects?: boolean, //should return the whole object instead of just IDs, default true
     query?: string, //url to hit for values, default siteusers
     filterLocally?: boolean, //should query all and filter locally, default false,
@@ -28,14 +28,14 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
 
   options$: ReplaySubject<any[]> = new ReplaySubject<any[]>(1);
   searching: boolean = false;
-  currentItems: any[] = [];
-  idField = 'id';
-  display = ['name'];
+  items: any[] = [];
+  parsedItems: {id:number, value: string}[] = [];
+  selectedItems: {id:number, value: string}[] = [];
   returnObjects = true;
   query = 'siteusers?'
   filterLocally = false;
   filterField = 'title';
-
+  modelsParser: any;
 
   //title:string("much nothing",
   
@@ -43,11 +43,18 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
   /** Subject that emits when the component has been destroyed. */
   protected _onDestroy = new Subject<void>();
 
-  constructor(private readonly api: SharepointService) {
+  constructor(private readonly api: SharepointService, private readonly error: ErrorService) {
     super();
   }
 
   ngOnInit() {
+
+    const { filterField, filterLocally, returnObjects, modelsParser, query } = this.to;
+    this.filterField = filterField ? filterField : this.filterField;
+    this.filterLocally = filterLocally ? filterLocally : this.filterLocally;
+    this.returnObjects = (returnObjects === undefined || returnObjects === null) ? this.returnObjects : returnObjects;
+    this.modelsParser = modelsParser ? modelsParser : this.defaultModelParser;
+    this.query = query ? query : this.query;
 
     this.filterOptions('', true);
 
@@ -61,9 +68,7 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
         distinctUntilChanged()
       )
       .subscribe(q => {
-
         this.filterOptions(q);
-
       });
 
     // Listen for selection changes
@@ -76,36 +81,33 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
 
   }
 
+  defaultModelParser(el: any) {
+    return {
+      id: el.id,
+      value: el.title
+    }
+  }
+
   async filterOptions(q: string, firstLoad?: boolean) {
 
     try {
-      const { queryParams, modelsParser, partial, useCache, method } = this.to;
-
-      let variables = {q};
-
-      if (queryParams) {
-        variables = {...variables, ...queryParams};
-      }
-
-      let url = partial;
-      let opts = new HttpParams();
-
-      switch(method) {
-        case 'post':
-          variables && Object.keys(variables).forEach((key) => {
-            opts = opts.append(key, variables[key]);
-          });
-          break;
-        case 'get':
-        default:
-          variables && Object.keys(variables).forEach((key) => {
-            url = url.replace(':'+key, variables[key]);
-          });
-      }
+      const { filterField, filterLocally, returnObjects, modelsParser, query, parsedItems } = this;
       
+      let res;
 
-      let res = await this.api[method](url, opts,  useCache);
-      res = modelsParser ? modelsParser(res) : res;
+      if (firstLoad || !filterLocally) {
+        let partial = query;
+        if(q) {
+          partial+='$filter='+q;
+        } 
+
+        s = modelsParser(await this.api.query(partial));
+
+      } else {
+        res = 
+      }
+
+      
       
       this.searching = false;
 
