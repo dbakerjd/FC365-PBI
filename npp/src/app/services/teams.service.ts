@@ -20,7 +20,7 @@ export class TeamsService {
     
     microsoftTeams.getContext((context) => {
       this.context = context;
-      console.log(context);
+      console.log('context', context);
     });
   }
 
@@ -58,8 +58,7 @@ export class TeamsService {
 
   async logout() {
     console.log('logout redirect');
-    // this.authService.logoutRedirect();
-    // this.authService.logout();
+    this.authService.logoutRedirect();
   }
 
   async loginAgain() {
@@ -99,7 +98,7 @@ export class TeamsService {
     return activeAccount;  
   }
 
-  setActiveAccount(account: any) {
+  setActiveAccount(account: AccountInfo) {
     this.authService.instance.setActiveAccount(account);
     this.account = account;
     this.setStorageAccount(account);

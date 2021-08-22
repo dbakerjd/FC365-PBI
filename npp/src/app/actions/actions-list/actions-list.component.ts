@@ -41,7 +41,7 @@ export class ActionsListComponent implements OnInit {
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
         }
-        this.gates = await this.sharepoint.getGates(params.id);
+        this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
           el.folders = await this.sharepoint.folders;

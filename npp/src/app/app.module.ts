@@ -70,9 +70,10 @@ export function MSALInstanceFactory(): IPublicClientApplication {
 }
 
 export function MSALInterceptorConfigFactory(): MsalInterceptorConfiguration {
+  console.log('intercepted request');
   const protectedResourceMap = new Map<string, Array<string>>();
-  protectedResourceMap.set('https://graph.microsoft.com/v1.0/me', ['user.read']); // Prod environment. Uncomment to use.
-  //protectedResourceMap.set('https://betasoftwaresl.sharepoint.com/_api/web', ['AllSites.FullControl']);
+  // protectedResourceMap.set('https://betasoftwaresl.sharepoint.com', ['AllSites.FullControl', 'AllSites.Manage', 'Sites.Search.All']);
+  protectedResourceMap.set('https://betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
 
   return {
     interactionType: InteractionType.Redirect,
@@ -127,7 +128,6 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     MatDialogModule
   ],
   providers: [
-    TeamsService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: MsalInterceptor,
@@ -148,10 +148,11 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     MsalService,
     MsalGuard,
     MsalBroadcastService,
+    TeamsService,
     ErrorService,
     SharepointService,
     LicensingService
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent, MsalRedirectComponent]
 })
 export class AppModule { }
