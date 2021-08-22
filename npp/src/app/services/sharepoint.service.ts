@@ -345,7 +345,7 @@ export class SharepointService {
 
   async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
-      let endpoint = this.licensing.siteUrl + list + '/items';
+      let endpoint = this.licensing.getSharepointUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value && lists.value.length > 0) {
@@ -362,7 +362,7 @@ export class SharepointService {
 
   async getOneItem(list: string, conditions: string = ''): Promise<any> {
     try {
-      let endpoint = this.licensing.siteUrl + list + '/items';
+      let endpoint = this.licensing.getSharepointUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value && lists.value.length == 1) {
@@ -379,7 +379,7 @@ export class SharepointService {
 
   async countItems(list: string, conditions: string = ''): Promise<number> {
     try {
-      let endpoint = this.licensing.siteUrl + list + '/ItemCount';
+      let endpoint = this.licensing.getSharepointUri() + list + '/ItemCount';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value) {
@@ -397,7 +397,7 @@ export class SharepointService {
   async createItem(list: string, data: any): Promise<any> {
     try {
       return await this.http.post(
-        this.licensing.siteUrl + list + "/items", 
+        this.licensing.getSharepointUri() + list + "/items", 
         data
       ).toPromise();
     } catch (e) {
