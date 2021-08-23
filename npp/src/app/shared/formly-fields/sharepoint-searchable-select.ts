@@ -6,6 +6,7 @@ import { HttpParams } from "@angular/common/http";
 import { SharepointService } from "src/app/services/sharepoint.service";
 import { FieldType } from "@ngx-formly/core";
 import { ErrorService } from "src/app/services/error.service";
+import { THIS_EXPR } from "@angular/compiler/src/output/output_ast";
 
 /*
   templateOptions: {
@@ -20,22 +21,33 @@ import { ErrorService } from "src/app/services/error.service";
 @Component({
   selector: 'app-formly-field-searchable-select-api',
   template: `
-
+    <div class="searchable-field-wrapper">
+      <div class="searchable-field-selected-value" *ngFor="let item of selectedItems">
+        {{item.value}}
+        <span (click)="unselect(item)">X</span>
+      </div>
+      <input class="searchable-field-input" [formControl]="filterControl">
+      <div class="searchable-field-options" *ngIf="displayOptions">
+        <div class="searchable-field-option" (click)="select(option)" *ngFor="let option of parsedItems">{{option.value}}</div>
+      </div>
+    </div>
     <input type="hidden" [formControl]="formControl" [formlyAttributes]="field">
   `
 })
 export class FormlyFieldSearchableSelectApi extends FieldType {
 
-  options$: ReplaySubject<any[]> = new ReplaySubject<any[]>(1);
   searching: boolean = false;
   items: any[] = [];
   parsedItems: {id:number, value: string}[] = [];
+  filteredItems: {id:number, value: string}[] = [];
   selectedItems: {id:number, value: string}[] = [];
+  idField = 'Id';
   returnObjects = true;
-  query = 'siteusers?'
+  query = 'siteusers'
   filterLocally = false;
-  filterField = 'title';
+  filterField = 'Title';
   modelsParser: any;
+  displayOptions = false;
 
   //title:string("much nothing",
   
@@ -49,7 +61,8 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
 
   ngOnInit() {
 
-    const { filterField, filterLocally, returnObjects, modelsParser, query } = this.to;
+    const { idField, filterField, filterLocally, returnObjects, modelsParser, query } = this.to;
+    this.idField = idField ? idField : this.idField;
     this.filterField = filterField ? filterField : this.filterField;
     this.filterLocally = filterLocally ? filterLocally : this.filterLocally;
     this.returnObjects = (returnObjects === undefined || returnObjects === null) ? this.returnObjects : returnObjects;
@@ -81,46 +94,69 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
 
   }
 
+  select(item: {id: number, value: string}) {
+    this.displayOptions = false;
+    let newItem =  this.parsedItems.find(i => i.id == item.id);
+    let existingItem = this.selectedItems.find(i => i.id == item.id);
+
+    if(!existingItem && newItem) {
+      this.selectedItems.push(newItem);
+      this.triggerValueChanged();
+    }
+    
+  }
+
+  unselect(item: {id: number, value: string}) {
+    this.selectedItems = this.selectedItems.filter(el => el.id != item.id);
+    this.triggerValueChanged();
+  }
+
+  triggerValueChanged() {
+    let selectedItems = this.selectedItems.map(item => this.items.find(el => el[this.idField] == item.id));
+    this.formControl.setValue(selectedItems);
+  }
+
   defaultModelParser(el: any) {
     return {
-      id: el.id,
-      value: el.title
+      id: el[this.idField],
+      value: el.Title
     }
+  }
+
+  initSelected() {
+    this.selectedItems = [];
+    this.formControl.value && this.formControl.value.forEach && this.formControl.value.forEach((el:any) => {
+      let item =  this.items.find(i => (this.returnObjects && i[this.idField] == el[this.idField]) || (!this.returnObjects && i == el[this.idField]));
+      if(item) this.selectedItems.push(this.modelsParser(item));
+    })
   }
 
   async filterOptions(q: string, firstLoad?: boolean) {
 
     try {
-      const { filterField, filterLocally, returnObjects, modelsParser, query, parsedItems } = this;
+      const { filterField, filterLocally, returnObjects, query } = this;
       
       let res;
 
       if (firstLoad || !filterLocally) {
+        
         let partial = query;
-        if(q) {
-          partial+='$filter='+q;
-        } 
-
-        s = modelsParser(await this.api.query(partial));
+        //this.items = await this.api.query(partial, '$filter=Title eq '+q);
+        this.items = await this.api.query(partial, '');
+        this.parsedItems = this.items.map(el => this.modelsParser(el));
+        this.filteredItems = this.items;
+        if(!this.selectedItems) this.initSelected();
 
       } else {
-        res = 
+        this.filteredItems = this.items.filter(el => el[this.filterField].indexOf(q) != -1);
       }
-
       
-      
+      if(!firstLoad) this.displayOptions = true;
       this.searching = false;
 
-      if (firstLoad && this.formControl.value) {
-        const initialOption = res.find(o => o.value === this.formControl.value.toString());
-        this.formControl.setValue(initialOption.value);
-      }
-
-      this.options$.next(res);
-
     } catch(error) {
-        this.searching = false;
-        this.notificationService.handleError(error);
+      this.searching = false;
+      this.error.handleError(error);
     };
 
   }

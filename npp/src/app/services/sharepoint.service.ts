@@ -343,6 +343,24 @@ export class SharepointService {
 
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
+  async query(partial: string, conditions: string = '', count: number | 'all' = 'all'): Promise<any> {
+    //TODO implement usage of count
+    try {
+      let endpoint = this.licensing.getSharepointUri() + partial;
+      if (conditions) endpoint += '?' + conditions;
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      if (lists.value && lists.value.length > 0) {
+        return lists.value;
+      }
+      return [];
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return [];
+    }
+  }
+
   async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
       let endpoint = this.licensing.getSharepointUri() + list + '/items';

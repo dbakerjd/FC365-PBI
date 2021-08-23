@@ -13,7 +13,7 @@ export class StageSettingsComponent implements OnInit {
   fields: FormlyFieldConfig[] = [{
     fieldGroup: [{
       key: 'users',
-      type: 'input',
+      type: 'searchable',
       templateOptions: {
           label: 'Stage Users:',
           placeholder: 'Stage Users'
