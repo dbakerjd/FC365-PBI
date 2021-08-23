@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { OpportunityInput, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { StageSettingsComponent } from '../stage-settings/stage-settings.component';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -181,43 +180,9 @@ export class CreateOpportunityComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.model);
-    // delete this.model.therapy;
-    // let newOpportunity: OpportunityInput = { ...this.model.Opportunity };
-    // this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
-    //   height: '700px',
-    //   width: '405px'
-    // });
     this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
   }
-
-  /*
-  async setIndications(value: any, a?: any) {
-    console.log(value);
-    console.log(value.model);
-    let indications = await this.sharepoint.getIndicationsList(value.model.threapy);
-  }
-  */
-
-  /*
-  getField(key: string, fields: FormlyFieldConfig[]): FormlyFieldConfig | null {
-    for (let i = 0, len = fields.length; i < len; i++) {
-      const f = fields[i];
-      if (f.key === key) {
-        return f;
-      }
-      
-      if (f.fieldGroup && !f.key) {
-        const cf = this.getField(key, f.fieldGroup);
-        if (cf) {
-          return cf;
-        }
-      }
-    }
-    return null;
-  }
-  */
-  
+ 
   ngOnDestroy(): void {
     this._destroying$.next();
     this._destroying$.complete();

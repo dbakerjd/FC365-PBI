@@ -162,6 +162,19 @@ export interface SelectInputList {
   group?: string;
 }
 
+export interface SharepointResult {
+  'odata.metadata': string;
+  value: any;
+}
+
+const OPPORTUNITIES_LIST = "lists/getbytitle('Opportunities')";
+const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('Opportunity Stages')";
+const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
+const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
+const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
+const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
+const USER_INFO_LIST = "lists/getByTitle('User Information List')";
+
 @Injectable({
   providedIn: 'root'
 })
@@ -328,95 +341,74 @@ export class SharepointService {
     progress: 12
   }];
 
-
-  /*
-"Registration changes (MA owner)","Gate 2","Acquisition of Nucala for COPD","Registration changes (MA owner)","4/5/2021","Sí","7/6/2021 9:04 AM","Marc Torruella Altadill"
-"QA Audit","Gate 2","Acquisition of Nucala for COPD","QA Audit","5/5/2021","Sí","7/6/2021 9:04 AM","Marc Torruella Altadill"
-"Contract signing","Gate 2","Acquisition of Nucala for COPD","Contract signing","6/4/2021","Sí","7/6/2021 9:04 AM","Marc Torruella Altadill"
-"Registration changes (MA owner)","Gate 2","Acquisition of Nucala for COPD","Registration changes (MA owner)","7/4/2021","Sí","7/6/2021 9:04 AM","Marc Torruella Altadill"
-"Commercial terms negotiations","Gate 1","Acquisition of Tezepelumab (Asthma)","Commercial terms negotiations","2/4/2021","No","6/8/2021 4:55 PM","Marc Torruella Altadill"
-"Innovation board","Gate 1","Acquisition of Tezepelumab (Asthma)","Innovation board","3/6/2021","Sí","6/8/2021 4:55 PM","Marc Torruella Altadill"
-"SMT Approval","Gate 1","Acquisition of Tezepelumab (Asthma)","SMT Approval","4/5/2021","No",,
-"DD/Contract approving process","Gate 1","Acquisition of Tezepelumab (Asthma)","DD/Contract approving process","5/5/2021","No",,
-"Commercial terms negotiations","Gate 1","Acquisition of Tezepelumab (Asthma)","Commercial terms negotiations","6/4/2021","No",,
-"Innovation board","Gate 1","Acquisition of Tezepelumab (Asthma)","Innovation board","7/4/2021","No",,
-"SMT Approval","Gate 1","Acquisition of Tezepelumab (Asthma)","SMT Approval","8/3/2021","No",,
-"DD/Contract approving process","Gate 1","Acquisition of Tezepelumab (Asthma)","DD/Contract approving process","9/2/2021","No",,
-"Initiation and Prototyping (incl API sourcing and decision making)","Phase 1","Development of Concizumab","Initiation and Prototyping (incl API sourcing and decision making)","2/4/2021","Sí","5/25/2021 3:59 PM","David Baker"
-"Formulation optimisation","Phase 1","Development of Concizumab","Formulation optimisation","3/6/2021","Sí","5/25/2021 3:59 PM","David Baker"
-"Pre-Clinical study (with Report)","Phase 1","Development of Concizumab","Pre-Clinical study (with Report)","4/5/2021","Sí","5/25/2021 3:59 PM","David Baker"
-"Pilot BE (incl CTA and supplies)","Phase 1","Development of Concizumab","Pilot BE (incl CTA and supplies)","5/5/2021","Sí","5/25/2021 3:59 PM","David Baker"
-"Final Business case","Phase 1","Development of Concizumab","Final Business case","6/4/2021","Sí","5/25/2021 3:59 PM","David Baker"
-"Tech Transfer","Phase 2","Development of Concizumab","Tech Transfer","2/4/2021","Sí","5/25/2021 4:02 PM","David Baker"
-"Stability (Regulatory batches)","Phase 2","Development of Concizumab","Stability (Regulatory batches)","3/6/2021","Sí","5/25/2021 4:02 PM","David Baker"
-"Pivotal BE study (incl CTA, supplies and CSR)","Phase 2","Development of Concizumab","Pivotal BE study (incl CTA, supplies and CSR)","4/5/2021","Sí","5/25/2021 4:02 PM","David Baker"
-"Phase III Clinical study (incl CTA, supplies and CSR)","Phase 3","Development of Concizumab","Phase III Clinical study (incl CTA, supplies and CSR)","2/4/2021","No",,
-"Market Authorisation Submission-Approval","Phase 3","Development of Concizumab","Market Authorisation Submission-Approval","3/6/2021","No",,
-"Patent expiry","Phase 3","Development of Concizumab","Patent expiry","4/5/2021","No",,
-"Launch activities (including pricing/reimbursement)","Phase 3","Development of Concizumab","Launch activities (including pricing/reimbursement)","5/5/2021","No",,
-
-  */
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
-  async query(url: string): Promise<any> {
+  async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
-      let lists = await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
-      return lists;
+      let endpoint = this.licensing.getSharepointUri() + list + '/items';
+      if (conditions) endpoint += '?' + conditions;
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      if (lists.value && lists.value.length > 0) {
+        return lists.value;
+      }
+      return [];
     } catch (e) {
       if(e.status == 401) {
-        await this.teams.refreshToken(true); 
-        return await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
+        // await this.teams.refreshToken(true); 
       }
-      return {};
+      return [];
     }
   }
 
-  /*
-  async createHttpGate(url: string): Promise<any> {
-    let newGate: StageInput = {
-      Title: 'New posted gate 3',
-      OpportunityNameId: 1,
-      StageNameId: 3,
-      StageReview: new Date('2021/01/19 12:00:00'),
-    }
+  async getOneItem(list: string, conditions: string = ''): Promise<any> {
     try {
-      let result = await this.http.post(
-        this.licensing.siteUrl + url, 
-        newGate,
-        { 
-          headers: await this.buildDefaultHeaders()
-        }
-      ).toPromise();
-      // .pipe(
-      // catchError()
-    // );.pipe(
-      console.log('result', result);
-      return result;
+      let endpoint = this.licensing.getSharepointUri() + list + '/items';
+      if (conditions) endpoint += '?' + conditions;
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      if (lists.value && lists.value.length == 1) {
+        return lists.value[0];
+      }
+      return null;
     } catch (e) {
       if(e.status == 401) {
-        await this.teams.refreshToken(true); 
-        return await this.http.get(this.licensing.siteUrl + url, { headers: await this.buildDefaultHeaders() }).toPromise();
+        // await this.teams.refreshToken(true); 
       }
-      return {};
+      return null;
     }
   }
-  */
 
-  async create(url: string, data: any): Promise<any> {
+  async countItems(list: string, conditions: string = ''): Promise<number> {
+    try {
+      let endpoint = this.licensing.getSharepointUri() + list + '/ItemCount';
+      if (conditions) endpoint += '?' + conditions;
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      if (lists.value) {
+        return lists.value;
+      }
+      return 0;
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return 0;
+    }
+  }
+
+  async createItem(list: string, data: any): Promise<any> {
     try {
       return await this.http.post(
-        this.licensing.siteUrl + url, 
-        data,
-        { headers: await this.buildDefaultHeaders() }
+        this.licensing.getSharepointUri() + list + "/items", 
+        data
       ).toPromise();
     } catch (e) {
       if(e.status == 401) {
-        await this.teams.refreshToken(true);
+        // await this.teams.refreshToken(true);
       }
       return {};
     }
   }
 
+  /** UNUSED ¿TODEL? */
   async buildDefaultHeaders(): Promise<any> {
     if (!this.teams.token) {
       await this.teams.refreshToken();
@@ -425,39 +417,32 @@ export class SharepointService {
       'Accept':'application/json;odata=verbose',
       'Authorization': 'Bearer ' + this.teams.token
     });
-    console.log('headers', headersObject);
     return headersObject;
   }
 
-  /** TODEL */
-  /*
-  async createGate() {
-    this.createHttpGate("lists/getbytitle('Opportunity Stages')/items");
-  }
-  */
-
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
-    let opportunity = await this.create("lists/getbytitle('Opportunities')/items", op);
+    let opportunity = await this.createItem(OPPORTUNITIES_LIST, op);
     let stageType = await this.getStageType(op.OpportunityTypeId);
-    let masterStage = await this.query(`lists/getbytitle('Master Stage List')/items?$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
-    let stage = await this.create("lists/getbytitle('Opportunity Stages')/items", { ...st, OpportunityNameId: opportunity.d.ID, StageNameId: masterStage.d.results[0].ID });
-    return opportunity.d;
+    let masterStage = await this.getOneItem(MASTER_STAGES_LIST, `$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
+    let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
+
+    console.log(`CREATED OPPORTUNITY (ID ${opportunity.ID}) AND FIRST STAGE (ID ${stage.ID})`);
+    console.log('[TOOD] Call Endpoint to create groups and actions');
+    
+    return opportunity;
   }
 
   async getOpportunities(): Promise<Opportunity[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
-    console.log('qObj', queryObj);
-    return queryObj.d.results;
+    return await this.getAllItems(OPPORTUNITIES_LIST, "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
   }
 
   async getIndications(therapy?: string): Promise<Indication[]> {
-    let max = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
-    let queryUrl = "lists/getbytitle('Master Therapy Areas')/items?$skiptoken=Paged=TRUE&$top="+max.d.ItemCount;
+    let max = await this.countItems(MASTER_THERAPY_AREAS_LIST);
+    let cond = "/items?$skiptoken=Paged=TRUE&$top="+max;
     if (therapy) {
-      queryUrl += `&$filter=TherapyArea eq '${therapy}'`;
+      cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
-    let queryObj = await this.query(queryUrl);
-    return queryObj.d.results;
+    return await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond);
   }
 
   async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {
@@ -470,9 +455,8 @@ export class SharepointService {
   }
 
   async getTherapiesList(): Promise<SelectInputList[]> {
-    let count = await this.query("lists/getbytitle('Master Therapy Areas')/ItemCount");
-    let queryObj = await this.query("lists/getbytitle('Master Therapy Areas')/items?$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count.d.ItemCount);
-    let indications: Indication[] = queryObj.d.results;
+    let count = await this.countItems(MASTER_THERAPY_AREAS_LIST);
+    let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count);
 
     return indications
       .map(v => v.TherapyArea)
@@ -480,18 +464,14 @@ export class SharepointService {
       .map(v => { return { label: v, value: v }});
   }
 
-  async getGates(opportunityId: number): Promise<Stage[]> {
-    let queryObj = await this.query("lists/getbytitle('Opportunity Stages')/items?$filter=OpportunityNameId eq "+opportunityId);
-    console.log('qObjGates', queryObj);
-    return queryObj.d.results;
+  async getStages(opportunityId: number): Promise<Stage[]> {
+    return await this.getAllItems(OPPORTUNITY_STAGES_LIST, "$filter=OpportunityNameId eq "+opportunityId);
   }
 
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
-    let queryObj = await this.query(`lists/getbytitle('Opportunity Action List')/items?$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`);
-    console.log('qObjActions', queryObj);
-    return queryObj.d.results;
+    return await this.getAllItems(OPPORTUNITY_ACTIONS_LIST, `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`);
   }
 
   async getLists() {
@@ -504,15 +484,32 @@ export class SharepointService {
       }
       return [];
     }*/
+
+    /*
+    this.http.get('https://graph.microsoft.com/v1.0/me').subscribe(
+      r => {
+        console.log('r grapg', r);
+      }
+    );
+    */
+    this.http.get('https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/_api/web/lists').subscribe(
+      r => {
+        console.log('r sharepoint', r);
+      }
+    );
+    /*
+    this.http.get(this.licensing.siteUrl + "lists/getbytitle('Master Opportunity Type List')/items")
+      .subscribe(profile => {
+        console.log('response', profile);
+      });
+    */
   }
 
   async getOpportunityTypes(): Promise<OpportunityType[]> {
-    let queryObj = await this.query("lists/getbytitle('Master Opportunity Type List')/items");
-    console.log('qObjOpTypes', queryObj);
-    return queryObj.d.results;
+    return await this.getAllItems(MASTER_OPPORTUNITY_TYPES_LIST);
   }
 
-  async getOpportunityTypesList() {
+  async getOpportunityTypesList(): Promise<SelectInputList[]> {
     return (await this.getOpportunityTypes()).map(t => {return {value: t.ID, label: t.Title}});
   }
 
@@ -526,9 +523,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    let queryObj = await this.query("lists/getbytitle('Opportunities')/items?$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
-    console.log('objSingleOpportunity', queryObj);
-    return queryObj.d.results[0];
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
   }
 
   async getFiles(id: number) {
@@ -536,13 +531,15 @@ export class SharepointService {
   }
 
   async getUserProfilePic(userId: number): Promise<string> {
-    let queryObj = await this.query(`lists/getByTitle('User Information List')/items?$filter=Id eq ${userId}&$select=Picture`);
-    return queryObj.d.results[0].Picture.Url;
+    let queryObj = await this.getOneItem(USER_INFO_LIST, `$filter=Id eq ${userId}&$select=Picture`);
+    return queryObj.Picture.Url;
   }
 
-  async getStageType(OpportunityTypeId: number): Promise<String> {
-    let queryObj = await this.query("lists/getbytitle('Master Opportunity Type List')/items?$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
-    if (queryObj.d) return queryObj.d.results[0].StageType;
-    return '';
+  async getStageType(OpportunityTypeId: number): Promise<string> {
+    let result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
+    if (result == null) {
+      return '';
+    }
+    return result.StageType;
   }
 }

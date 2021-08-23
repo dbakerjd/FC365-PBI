@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG } from '@azure/msal-angular';
-import { PopupRequest, AccountInfo } from '@azure/msal-browser';
+import { PopupRequest, AccountInfo, RedirectRequest } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { ErrorService } from './error.service';
 
@@ -38,13 +38,13 @@ export class TeamsService {
   }
 
   async refreshToken(force = false) {
-    // this.authService.logoutRedirect();
+    this.authService.logoutRedirect();
     if (this.getStorageToken() == null || force) {
       console.log('no token found in storage');
       /*
       let activeAccount = this.authService.instance.getActiveAccount();
       if (activeAccount) {
-        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["Sites.FullControl", "user.read"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
+        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["https://betasoftwaresl.sharepoint.com/.default"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
           return accessTokenResponse;
         });
         // this.setToken(newToken.accessToken);
@@ -56,18 +56,36 @@ export class TeamsService {
     }
   }
 
-  async loginAgain() {
-    // this.authService.logoutRedirect();
-    /*
-    this.token = null;
-    localStorage.removeItem('teamsAccessToken');
-    localStorage.removeItem('teamsAccount');
-    this.getActiveAccount();
-    */
+  async checkAndSetActiveAccount(){
+    /**
+     * If no active account set but there are accounts signed in, sets first account to active account
+     * To use active account set here, subscribe to inProgress$ first in your component
+     */
+    let activeAccount = this.authService.instance.getActiveAccount();
+
+    if (!activeAccount && this.authService.instance.getAllAccounts().length > 0) {
+      let accounts = this.authService.instance.getAllAccounts();
+      this.authService.instance.setActiveAccount(accounts[0]);
+    } else if(!activeAccount) {
+      await this.login();
+    }
   }
 
+  async login() {
+    if (this.msalGuardConfig.authRequest){
+      this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as RedirectRequest);
+    } else {
+      this.authService.loginRedirect();
+    }
+  }
+
+  async logout() {
+    this.authService.logoutRedirect();
+  }
+
+
+  /** UNUSED */
   getActiveAccount() {
-    
     let activeAccount = this.authService.instance.getActiveAccount();
 
     if(!activeAccount) {
@@ -94,16 +112,19 @@ export class TeamsService {
     return activeAccount;  
   }
 
-  setActiveAccount(account: any) {
-    this.authService.instance.setActiveAccount(account);
-    this.account = account;
-    this.setStorageAccount(account);
+  setActiveAccount(account: AccountInfo | null) {
+    if (account) {
+      this.authService.instance.setActiveAccount(account);
+      this.account = account;
+      this.setStorageAccount(account);
+    }
   }
 
   setStorageAccount(account: any) {
     localStorage.setItem('teamsAccount', JSON.stringify(account));
   }
 
+  /** ONLY USED in getActiveAccount */
   getStorageAccount() {
     this.getStorageToken();
     let account = localStorage.getItem('teamsAccount');
@@ -113,7 +134,6 @@ export class TeamsService {
       return false;
     }
   }
-
 
 
 }
