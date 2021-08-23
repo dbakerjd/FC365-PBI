@@ -8,26 +8,27 @@ export class UploadFileConfig {
 
   }
 
-  fields(folders: NPPFolder[]): FormlyFieldConfig[] {
+  fields(opportunityId: number, stageId: number, folders: NPPFolder[]): FormlyFieldConfig[] {
     let {categories, countries, scenarios} = this;
 
     let config = [
       {
         fieldGroup: [
           {
-            key: 'name',
-            type: 'input',
-            templateOptions: {
-                label: 'File Name:',
-                placeholder: 'File Name'
-            }
-          },{
+            key: 'StageNameId',
+            defaultValue: stageId
+          },
+          {
+            key: 'OpportunityNameId',
+            defaultValue: opportunityId
+          },
+          {
             key: 'file',
             type: 'file-input',
             templateOptions: {
                 label: 'File',
-                placeholder: 'File'
-            }
+                placeholder: 'File',
+            },
           },
           categories(folders),
           countries(),

@@ -6,7 +6,7 @@ import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-s
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFileTest, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -25,7 +25,7 @@ export class ActionsListComponent implements OnInit {
   };
   currentSection = 'actions';
   dateListener: any;
-  currentFiles: NPPFile[] = [];
+  currentFiles: NPPFileTest[] = [];
   currentFolders: NPPFolder[] = [];
   currentFolder: number | undefined = undefined;
   displayingModels: boolean = false;
@@ -71,12 +71,14 @@ export class ActionsListComponent implements OnInit {
       height: '600px',
       width: '405px',
       data: {
-        folderList: this.currentFolders
+        folderList: this.currentFolders,
+        masterStageId: this.currentGate?.StageNameId,
+        opportunityId: this.opportunityId
       }
     })
   }
 
-  sendForApproval(file: NPPFile) {
+  sendForApproval(file: NPPFileTest) {
     this.uploadDialogInstance = this.matDialog.open(SendForApprovalComponent, {
       height: '300px',
       width: '405px',
@@ -86,7 +88,7 @@ export class ActionsListComponent implements OnInit {
     })
   }
 
-  createScenario(file: NPPFile) {
+  createScenario(file: NPPFileTest) {
     this.uploadDialogInstance = this.matDialog.open(CreateScenarioComponent, {
       height: '400px',
       width: '405px',

@@ -5,6 +5,7 @@ import { FormlyModule } from "@ngx-formly/core";
 import { DatepickerModule } from "ng2-datepicker";
 import { FormlyFieldDatePicker } from "./date-picker";
 import { FormlyFieldFile } from "./file-input";
+import { FileValueAccessor } from "./file-value-accessor";
 import { FormlyFieldSearchableSelectApi } from "./sharepoint-searchable-select";
 
 export const FORMLY_CONFIG = {
@@ -24,6 +25,7 @@ export const FORMLY_CONFIG = {
     DatepickerModule
   ],
   declarations: [
+    FileValueAccessor,
     FormlyFieldFile,
     FormlyFieldDatePicker,
     FormlyFieldSearchableSelectApi

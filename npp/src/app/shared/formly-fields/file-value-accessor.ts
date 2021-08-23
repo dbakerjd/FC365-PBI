@@ -2,7 +2,6 @@ import { Directive } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 
 @Directive({
-  // tslint:disable-next-line
   selector: 'input[type=file]',
   host: {
     '(change)': 'onChange($event.target.files)',
@@ -19,6 +18,6 @@ export class FileValueAccessor implements ControlValueAccessor {
   onTouched = () => { };
 
   writeValue(value: any) { }
-  registerOnChange(fn: any) { this.onChange = fn; }
-  registerOnTouched(fn: any) { this.onTouched = fn; }
+  registerOnChange(fn: any) { this.onChange = fn; console.log('chan', fn) }
+  registerOnTouched(fn: any) { this.onTouched = fn; console.log('touc', fn)}
 }

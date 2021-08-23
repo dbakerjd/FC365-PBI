@@ -92,6 +92,20 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
 }
 
 @NgModule({
+  imports: [
+    BrowserModule,
+    BrowserAnimationsModule,
+    AppRoutingModule,
+    HttpClientModule,
+    MsalModule,
+    ReactiveFormsModule,
+    DatepickerModule,
+    FormlyTypesModule,
+    FormlyModule.forRoot(FORMLY_CONFIG),
+    FormlyBootstrapModule,
+    MatButtonModule,
+    MatDialogModule,
+  ],
   declarations: [
     AppComponent,
     DashboardComponent,
@@ -106,26 +120,11 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     ProgressBarComponent,
     UploadFileComponent,
     DialogHeaderComponent,
-    FileValueAccessor,
     SendForApprovalComponent,
     CreateScenarioComponent,
     CreateOpportunityComponent,
     StageSettingsComponent,
     FilterPipe
-  ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    AppRoutingModule,
-    HttpClientModule,
-    MsalModule,
-    ReactiveFormsModule,
-    DatepickerModule,
-    FormlyTypesModule,
-    FormlyModule.forRoot(FORMLY_CONFIG),
-    FormlyBootstrapModule,
-    MatButtonModule,
-    MatDialogModule
   ],
   providers: [
     {

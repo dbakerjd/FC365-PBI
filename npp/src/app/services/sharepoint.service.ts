@@ -135,7 +135,7 @@ export interface Stage {
   folders?: NPPFolder[];
 }
 
-export interface NPPFile {
+export interface NPPFileTest {
   id: number;
   parentId: number;
   name: string;
@@ -148,6 +148,17 @@ export interface NPPFile {
   modelApprovalComments: string;
   approvalStatus: string;
   user: UserTest;
+}
+
+export interface NPPFile {
+  ID: number;
+  ApprovalStatusId: number;
+  OpportunityNameId: number;
+  StageNameId: number;
+  ModelApprovalComments: string;
+  AuthorId: number;
+  TargetUserId: number;
+  TargetUser?: User;
 }
 
 export interface NPPFolder {
@@ -201,7 +212,7 @@ export class SharepointService {
     containsModels: true
   }];
 
-  files: NPPFile[] = [{
+  files: NPPFileTest[] = [{
     id: 1,
     parentId: 1,
     name: 'test.pdf',
@@ -424,6 +435,58 @@ export class SharepointService {
       }
       return {};
     }
+  }
+
+  async updateItem(id: number, list: string, data: any): Promise<any> {
+    try {
+      return await this.http.post(
+        this.licensing.getSharepointUri() + list + `/items(${id})`, 
+        data,
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "MERGE"
+          })
+        }
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true);
+      }
+      return {};
+    }
+  }
+
+
+  async uploadFileQuery(fileData: FormData, folder: string, filename: string) {
+    try {
+      let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
+      return await this.http.post(
+        this.licensing.getSharepointUri() + url, 
+        fileData,
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true);
+      }
+      return {};
+    }
+  }
+
+  async uploadFile(file: any, folder: string, metadata?: any): Promise<any> {
+    const formData: FormData = new FormData();
+    formData.append('file', file);
+
+    let uploaded: any = await this.uploadFileQuery(formData, folder, file.name);
+
+    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
+
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
+
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${folder}')`, metadata);
+    }
+    return uploaded;
   }
 
   /** UNUSED ¿TODEL? */
