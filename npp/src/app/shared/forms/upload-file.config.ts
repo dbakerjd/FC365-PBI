@@ -31,8 +31,8 @@ export class UploadFileConfig {
             },
           },
           categories(folders),
-          countries(),
-          scenarios(),
+          countries(folders),
+          scenarios(folders),
           {
             key: 'description',
             type: 'textarea',
@@ -58,17 +58,17 @@ export class UploadFileConfig {
             label: 'Categories:',
             options: folders.map((f: NPPFolder) => {
                 return {
-                    'name': f.name,
-                    'value': f.id,
+                    'name': f.Title,
+                    'value': f.ID,
                 };
             }),
             valueProp: 'value',
-            labelProp: 'name'
+            labelProp: 'name',
         }
     }
   }
 
-  countries() {
+  countries(folders: NPPFolder[]) {
     return {
         key: 'country',
         type: 'select',
@@ -83,11 +83,13 @@ export class UploadFileConfig {
             valueProp: 'value',
             labelProp: 'name'
         },
-        "hideExpression": (model:any) => model.category  !== 6
+        "hideExpression": (model: any) => {
+          return folders.find(f => f.ID === model.category)?.Title !== 'Forecast Models';
+        },
     }
   }
 
-  scenarios() {
+  scenarios(folders: NPPFolder[]) {
     return {
         key: 'scenario',
         type: 'select',
@@ -106,7 +108,10 @@ export class UploadFileConfig {
             valueProp: 'value',
             labelProp: 'name'
         },
-        "hideExpression": (model:any) => model.category  !== 6
+        "hideExpression": (model: any) => {
+          return folders.find(f => f.ID === model.category)?.Title !== 'Forecast Models';
+        },
     }
   }
+
 }
