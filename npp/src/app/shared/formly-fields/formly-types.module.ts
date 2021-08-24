@@ -6,6 +6,7 @@ import { DatepickerModule } from "ng2-datepicker";
 import { FormlyFieldDatePicker } from "./date-picker";
 import { FormlyFieldFile } from "./file-input";
 import { FileValueAccessor } from "./file-value-accessor";
+import { FormlyFieldSearchableNgselectApi } from "./sharepoint-searchable-ngselect";
 import { FormlyFieldSearchableSelectApi } from "./sharepoint-searchable-select";
 
 export const FORMLY_CONFIG = {
@@ -13,6 +14,7 @@ export const FORMLY_CONFIG = {
     { name: 'file-input', component: FormlyFieldFile, wrappers: ['form-field']  },
     { name: 'datepicker', component: FormlyFieldDatePicker, wrappers: ['form-field']  },
     { name: 'searchable', component: FormlyFieldSearchableSelectApi, wrappers: ['form-field']  },
+    { name: 'ngsearchable', component: FormlyFieldSearchableNgselectApi, wrappers: ['form-field']  },
   ],
 };
 
@@ -28,7 +30,8 @@ export const FORMLY_CONFIG = {
     FileValueAccessor,
     FormlyFieldFile,
     FormlyFieldDatePicker,
-    FormlyFieldSearchableSelectApi
+    FormlyFieldSearchableSelectApi,
+    FormlyFieldSearchableNgselectApi
   ]
 })
 export class FormlyTypesModule { }

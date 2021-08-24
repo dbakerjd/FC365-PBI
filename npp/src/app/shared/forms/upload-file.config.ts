@@ -87,10 +87,27 @@ export class UploadFileConfig {
     }
   }
 
+  /*
   scenarios(options: SelectInputList[], folders: NPPFolder[]) {
     return {
         key: 'scenario',
         type: 'select',
+        templateOptions: {
+            label: 'Scenarios:',
+            options: options,
+            multiple: true,
+        },
+        "hideExpression": (model: any) => {
+          return !folders.find(f => f.ID === model.category)?.containsModels;
+        },
+    }
+  }
+  */
+
+  scenarios(options: SelectInputList[], folders: NPPFolder[]) {
+    return {
+        key: 'scenario',
+        type: 'ngsearchable',
         templateOptions: {
             label: 'Scenarios:',
             options: options,
