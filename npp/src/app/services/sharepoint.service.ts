@@ -211,6 +211,7 @@ const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
+const FILES_FOLDER = "Current Opportunity Library";
 
 @Injectable({
   providedIn: 'root'
@@ -536,7 +537,7 @@ export class SharepointService {
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
 
-      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${folder}')`, metadata);
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, metadata);
     }
     return uploaded;
   }
@@ -700,5 +701,9 @@ export class SharepointService {
 
   async getTest() {
     console.log('files', await this.getAllItems(`lists/getbytitle('Current Opportunity Library')`));
+  }
+
+  getBaseFilesFolder(): string {
+    return FILES_FOLDER;
   }
 }

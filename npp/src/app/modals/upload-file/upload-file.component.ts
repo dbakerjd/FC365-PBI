@@ -36,14 +36,10 @@ export class UploadFileComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('model', this.model);
-    console.log('folders data', this.data.folderList);
-
     let fileData = {
       StageNameId: this.model.StageNameId,
       OpportunityNameId: this.model.OpportunityNameId,
     };
-    console.log(fileData);
 
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // forecast model file
@@ -57,11 +53,11 @@ export class UploadFileComponent implements OnInit {
       Object.assign(fileData, {
         ModelApprovalComments: this.model.description
       });
-
-      console.log(fileData);
     }
 
-    this.sharepoint.uploadFile(this.model.file[0], 'Current Opportunity Library', fileData).then(
+    // upload file to correspondent folder
+    let folder = this.sharepoint.getBaseFilesFolder() + '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category
+    this.sharepoint.uploadFile(this.model.file[0], folder, fileData).then(
       r => { console.log('upload response', r); }
     )
   }
