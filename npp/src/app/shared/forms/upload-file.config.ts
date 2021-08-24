@@ -1,6 +1,5 @@
 import {FormlyFieldConfig} from '@ngx-formly/core';
-import { Country, NPPFolder, SelectInputList } from 'src/app/services/sharepoint.service';
-import { CountryList } from '../countries';
+import { NPPFolder, SelectInputList } from 'src/app/services/sharepoint.service';
 
 export class UploadFileConfig {
   
@@ -76,25 +75,11 @@ export class UploadFileConfig {
   countries(options: SelectInputList[], folders: NPPFolder[]) {
     return {
         key: 'country',
-        type: 'select',
+        type: 'ngsearchable',
         templateOptions: {
             label: 'Countries:',
-            options: options,multiple: true,
-        },
-        "hideExpression": (model: any) => {
-          return !folders.find(f => f.ID === model.category)?.containsModels;
-        },
-    }
-  }
-
-  /*
-  scenarios(options: SelectInputList[], folders: NPPFolder[]) {
-    return {
-        key: 'scenario',
-        type: 'select',
-        templateOptions: {
-            label: 'Scenarios:',
-            options: options,
+            filterLocally: false,
+            query: "lists/getByTitle('Countries')",
             multiple: true,
         },
         "hideExpression": (model: any) => {
@@ -102,7 +87,7 @@ export class UploadFileConfig {
         },
     }
   }
-  */
+
 
   scenarios(options: SelectInputList[], folders: NPPFolder[]) {
     return {
@@ -112,6 +97,7 @@ export class UploadFileConfig {
             label: 'Scenarios:',
             options: options,
             multiple: true,
+            placeholder: 'Choose scenarios'
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;

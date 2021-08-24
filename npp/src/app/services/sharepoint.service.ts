@@ -2,10 +2,13 @@ import { NumberSymbol } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { AccountInfo, AuthorizationUrlRequest } from '@azure/msal-browser';
+import { Observable, of } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
+import { map } from 'rxjs/operators';
+
 
 export interface OpportunityTest {
   title: string;
@@ -474,6 +477,25 @@ export class SharepointService {
         // await this.teams.refreshToken(true);
       }
       return {};
+    }
+  }
+
+  searchByTermInputList(list: string, field: string, term: string): Observable<SelectInputList[]> {
+    try {
+      return this.http.get(
+        this.licensing.getSharepointUri() + list + `/items?$filter=substringof('${term}', ${field})`
+      ).pipe(
+        map((res: any) => {
+         return res.value.map(
+           (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+         );
+        })
+      );
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true);
+      }
+      return of([]);
     }
   }
 

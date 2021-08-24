@@ -18,6 +18,6 @@ export class FileValueAccessor implements ControlValueAccessor {
   onTouched = () => { };
 
   writeValue(value: any) { }
-  registerOnChange(fn: any) { this.onChange = fn; console.log('chan', fn) }
-  registerOnTouched(fn: any) { this.onTouched = fn; console.log('touc', fn)}
+  registerOnChange(fn: any) { this.onChange = fn; }
+  registerOnTouched(fn: any) { this.onTouched = fn; }
 }
