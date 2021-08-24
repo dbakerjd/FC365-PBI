@@ -168,6 +168,11 @@ export interface NPPFolder {
   containsModels?: boolean;
 }
 
+export interface Country {
+  ID: number;
+  Title: string;
+}
+
 export interface NPPFolderTest {
   id: number;
   name: string;
@@ -192,12 +197,17 @@ const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
+const COUNTRIES_LIST = "lists/getByTitle('Countries')";
+const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 
 @Injectable({
   providedIn: 'root'
 })
 export class SharepointService {
+
+  masterCountriesList: SelectInputList[] = [];
+  masterScenariosList: SelectInputList[] = [];
 
   folders: NPPFolderTest[] = [{
     id: 1,
@@ -638,5 +648,19 @@ export class SharepointService {
       folders[index].containsModels = folders[index].Title === 'Forecast Models';
     }
     return folders;
+  }
+
+  async getCountriesList(): Promise<SelectInputList[]> {
+    if (this.masterCountriesList.length < 1) {
+      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, "$orderby=Title asc")).map(t => {return {value: t.ID, label: t.Title}});
+    }
+    return this.masterCountriesList;
+  }
+
+  async getScenariosList(): Promise<SelectInputList[]> {
+    if (this.masterScenariosList.length < 1) {
+      this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => {return {value: t.ID, label: t.Title}});
+    }
+    return this.masterScenariosList;
   }
 }

@@ -66,12 +66,14 @@ export class ActionsListComponent implements OnInit {
     });
   }
 
-  openUploadDialog() {
+  async openUploadDialog() {
     this.uploadDialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
       data: {
         folderList: this.currentFolders,
+        countries: await this.sharepoint.getCountriesList(),
+        scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
         opportunityId: this.opportunityId
       }

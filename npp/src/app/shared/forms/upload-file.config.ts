@@ -1,5 +1,5 @@
 import {FormlyFieldConfig} from '@ngx-formly/core';
-import { NPPFolder } from 'src/app/services/sharepoint.service';
+import { Country, NPPFolder, SelectInputList } from 'src/app/services/sharepoint.service';
 import { CountryList } from '../countries';
 
 export class UploadFileConfig {
@@ -8,7 +8,12 @@ export class UploadFileConfig {
 
   }
 
-  fields(opportunityId: number, stageId: number, folders: NPPFolder[]): FormlyFieldConfig[] {
+  fields(
+    opportunityId: number, 
+    stageId: number, 
+    folders: NPPFolder[], 
+    countriesList: SelectInputList[], 
+    scenariosList: SelectInputList[]): FormlyFieldConfig[] {
     let {categories, countries, scenarios} = this;
 
     let config = [
@@ -31,8 +36,8 @@ export class UploadFileConfig {
             },
           },
           categories(folders),
-          countries(folders),
-          scenarios(folders),
+          countries(countriesList, folders),
+          scenarios(scenariosList, folders),
           {
             key: 'description',
             type: 'textarea',
@@ -68,48 +73,30 @@ export class UploadFileConfig {
     }
   }
 
-  countries(folders: NPPFolder[]) {
+  countries(options: SelectInputList[], folders: NPPFolder[]) {
     return {
         key: 'country',
         type: 'select',
         templateOptions: {
             label: 'Countries:',
-            options: Object.keys(CountryList).map((key: string) => {
-                return {
-                    'name': (CountryList as unknown as  {[key:string]: string;})[key],
-                    'value': key,
-                };
-            }),
-            valueProp: 'value',
-            labelProp: 'name'
+            options: options,
         },
         "hideExpression": (model: any) => {
-          return folders.find(f => f.ID === model.category)?.Title !== 'Forecast Models';
+          return !folders.find(f => f.ID === model.category)?.containsModels;
         },
     }
   }
 
-  scenarios(folders: NPPFolder[]) {
+  scenarios(options: SelectInputList[], folders: NPPFolder[]) {
     return {
         key: 'scenario',
         type: 'select',
         templateOptions: {
             label: 'Scenarios:',
-            options: [{
-                name: 'Base Case',
-                value: '1'
-            },{
-                name: 'Upside',
-                value: '2'
-            },{
-                name: 'Downside',
-                value: '3'
-            }],
-            valueProp: 'value',
-            labelProp: 'name'
+            options: options,
         },
         "hideExpression": (model: any) => {
-          return folders.find(f => f.ID === model.category)?.Title !== 'Forecast Models';
+          return !folders.find(f => f.ID === model.category)?.containsModels;
         },
     }
   }

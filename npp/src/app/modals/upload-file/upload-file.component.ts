@@ -25,7 +25,12 @@ export class UploadFileComponent implements OnInit {
 
   ngOnInit(): void {
     this.formConfig = new UploadFileConfig();
-    this.fields = this.formConfig.fields(this.data.opportunityId, this.data.masterStageId, this.data.folderList);
+    this.fields = this.formConfig.fields(
+      this.data.opportunityId, 
+      this.data.masterStageId, 
+      this.data.folderList,
+      this.data.countries,
+      this.data.scenarios);
     this.form = new FormGroup({});
   }
 
