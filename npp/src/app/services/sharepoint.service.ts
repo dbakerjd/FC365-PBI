@@ -218,8 +218,19 @@ const FILES_FOLDER = "Current Opportunity Library";
 })
 export class SharepointService {
 
+  // local cache
+  masterOpportunitiesTypes: OpportunityType[] = [];
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
+  masterTherapiesList: SelectInputList[] = [];
+  masterIndications: {
+    therapy: string;
+    indications: Indication[]
+  }[] = [];
+  masterFolders: {
+    stage: number;
+    folders: NPPFolder[]
+  }[] = [];
 
   folders: NPPFolderTest[] = [{
     id: 1,
@@ -542,18 +553,6 @@ export class SharepointService {
     return uploaded;
   }
 
-  /** UNUSED ¿TODEL? */
-  async buildDefaultHeaders(): Promise<any> {
-    if (!this.teams.token) {
-      await this.teams.refreshToken();
-    }
-    let headersObject = new HttpHeaders({
-      'Accept':'application/json;odata=verbose',
-      'Authorization': 'Bearer ' + this.teams.token
-    });
-    return headersObject;
-  }
-
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
     let opportunity = await this.createItem(OPPORTUNITIES_LIST, op);
     let stageType = await this.getStageType(op.OpportunityTypeId);
@@ -570,13 +569,22 @@ export class SharepointService {
     return await this.getAllItems(OPPORTUNITIES_LIST, "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
   }
 
-  async getIndications(therapy?: string): Promise<Indication[]> {
+  async getIndications(therapy: string = 'all'): Promise<Indication[]> {
+    let cache = this.masterIndications.find(i => i.therapy == therapy);
+    if (cache) {
+      return cache.indications;
+    }
     let max = await this.countItems(MASTER_THERAPY_AREAS_LIST);
     let cond = "/items?$skiptoken=Paged=TRUE&$top="+max;
-    if (therapy) {
+    if (therapy !== 'all') {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
-    return await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond);
+    let results = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond);
+    this.masterIndications.push({
+      therapy: therapy,
+      indications: results
+    });
+    return results;
   }
 
   async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {
@@ -589,13 +597,16 @@ export class SharepointService {
   }
 
   async getTherapiesList(): Promise<SelectInputList[]> {
-    let count = await this.countItems(MASTER_THERAPY_AREAS_LIST);
-    let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count);
+    if (this.masterTherapiesList.length < 1) {
+      let count = await this.countItems(MASTER_THERAPY_AREAS_LIST);
+      let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count);
 
-    return indications
-      .map(v => v.TherapyArea)
-      .filter((value, index, self) => self.indexOf(value) === index)
-      .map(v => { return { label: v, value: v }});
+      return indications
+        .map(v => v.TherapyArea)
+        .filter((value, index, self) => self.indexOf(value) === index)
+        .map(v => { return { label: v, value: v }});
+    }
+    return this.masterTherapiesList;
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
@@ -640,7 +651,10 @@ export class SharepointService {
   }
 
   async getOpportunityTypes(): Promise<OpportunityType[]> {
-    return await this.getAllItems(MASTER_OPPORTUNITY_TYPES_LIST);
+    if (this.masterOpportunitiesTypes.length < 1) {
+      this.masterOpportunitiesTypes = await this.getAllItems(MASTER_OPPORTUNITY_TYPES_LIST);
+    }
+    return this.masterOpportunitiesTypes;
   }
 
   async getOpportunityTypesList(): Promise<SelectInputList[]> {
@@ -670,7 +684,12 @@ export class SharepointService {
   }
 
   async getStageType(OpportunityTypeId: number): Promise<string> {
-    let result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
+    let result: OpportunityType | undefined;
+    if (this.masterOpportunitiesTypes.length > 0) {
+      result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
+    } else {
+      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
+    }
     if (result == null) {
       return '';
     }
@@ -678,10 +697,18 @@ export class SharepointService {
   }
 
   async getFolders(masterStageId: number): Promise<NPPFolder[]> {
+    let cache = this.masterFolders.find(f => f.stage == masterStageId);
+    if (cache) {
+      return cache.folders;
+    }
     let folders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
     for (let index = 0; index < folders.length; index++) {
       folders[index].containsModels = folders[index].Title === 'Forecast Models';
     }
+    this.masterFolders.push({
+      stage: masterStageId,
+      folders: folders
+    });
     return folders;
   }
 
