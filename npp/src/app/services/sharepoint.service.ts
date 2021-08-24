@@ -121,7 +121,7 @@ export interface GateTest {
   reviewedAt: Date;
   createdAt: Date;
   actions: Action[];
-  folders?: NPPFolder[];
+  folders?: NPPFolderTest[];
 }
 
 export interface Stage {
@@ -162,6 +162,13 @@ export interface NPPFile {
 }
 
 export interface NPPFolder {
+  ID: number;
+  Title: string;
+  StageNameId: number;
+  containsModels?: boolean;
+}
+
+export interface NPPFolderTest {
   id: number;
   name: string;
   containsModels?: boolean;
@@ -184,6 +191,7 @@ const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
+const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 
 @Injectable({
@@ -191,7 +199,7 @@ const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 })
 export class SharepointService {
 
-  folders: NPPFolder[] = [{
+  folders: NPPFolderTest[] = [{
     id: 1,
     name: 'Finance'
   },{
@@ -622,5 +630,13 @@ export class SharepointService {
       return '';
     }
     return result.StageType;
+  }
+
+  async getFolders(masterStageId: number): Promise<NPPFolder[]> {
+    let folders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
+    for (let index = 0; index < folders.length; index++) {
+      folders[index].containsModels = folders[index].Title === 'Forecast Models';
+    }
+    return folders;
   }
 }

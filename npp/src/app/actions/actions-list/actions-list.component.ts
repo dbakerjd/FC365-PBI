@@ -44,7 +44,7 @@ export class ActionsListComponent implements OnInit {
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
-          el.folders = await this.sharepoint.folders;
+          el.folders = await this.sharepoint.getFolders(el.StageNameId);
           this.setStatus(el.actions);
 
           //set current gate
@@ -122,11 +122,13 @@ export class ActionsListComponent implements OnInit {
 
   showFolders() {
     this.currentSection = 'documents';
-    this.setFolder(this.currentFolders[0].id);
+    this.setFolder(this.currentFolders[0].ID);
   }
+
   showModels() {
     this.setSection('documents');
-    this.setFolder(this.currentFolders[this.currentFolders.length - 1].id);
+    let modelsFolder = this.currentFolders.find(el => el.containsModels === true);
+    if (modelsFolder)  this.setFolder(modelsFolder.ID);
   }
 
   setStatus(actions: Action[]) {
@@ -184,14 +186,13 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  getFolders() {
-    this.currentFolders = this.sharepoint.folders;
-    if(this.currentFolders && 
-      this.currentFolders.length) {
-        this.setFolder(this.currentFolders[0].id);
-    } else {
+  async getFolders() {
+    if (!this.currentGate?.folders) {
       this.currentFolder = undefined;
       this.currentFiles = [];
+    } else {
+      this.currentFolders = this.currentGate.folders;
+      if (this.currentFolders.length) this.setFolder(this.currentFolders[0].ID);
     }
   }
 
@@ -199,7 +200,7 @@ export class ActionsListComponent implements OnInit {
     this.currentFolder = folderId;
     this.currentFiles = await this.sharepoint.getFiles(folderId);
 
-    let folder = this.currentFolders.find(el => el.id === folderId);
+    let folder = this.currentFolders.find(el => el.ID === folderId);
     this.displayingModels = false;
     if(folder) {
       this.displayingModels = !!folder.containsModels;
