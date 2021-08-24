@@ -79,7 +79,7 @@ export class UploadFileConfig {
         type: 'select',
         templateOptions: {
             label: 'Countries:',
-            options: options,
+            options: options,multiple: true,
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;
@@ -94,6 +94,7 @@ export class UploadFileConfig {
         templateOptions: {
             label: 'Scenarios:',
             options: options,
+            multiple: true,
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;

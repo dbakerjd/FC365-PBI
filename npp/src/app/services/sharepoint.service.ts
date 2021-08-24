@@ -156,6 +156,8 @@ export interface NPPFile {
   OpportunityNameId: number;
   StageNameId: number;
   ModelApprovalComments: string;
+  CountryId?: number[];
+  ModelScenarioId?: number[];
   AuthorId: number;
   TargetUserId: number;
   TargetUser?: User;
@@ -662,5 +664,9 @@ export class SharepointService {
       this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => {return {value: t.ID, label: t.Title}});
     }
     return this.masterScenariosList;
+  }
+
+  async getTest() {
+    console.log('files', await this.getAllItems(`lists/getbytitle('Current Opportunity Library')`));
   }
 }

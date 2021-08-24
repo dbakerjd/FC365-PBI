@@ -3,7 +3,7 @@ import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
-import { SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-upload-file',
@@ -15,6 +15,7 @@ export class UploadFileComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   form: FormGroup = new FormGroup({});
   model: any = { };
+  folders: NPPFolder[] = [];
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -36,6 +37,7 @@ export class UploadFileComponent implements OnInit {
 
   onSubmit() {
     console.log('model', this.model);
+    console.log('folders data', this.data.folderList);
 
     let fileData = {
       StageNameId: this.model.StageNameId,
@@ -43,9 +45,13 @@ export class UploadFileComponent implements OnInit {
     };
     console.log(fileData);
 
-    if (this.model.category == 6) { // TODO
+    if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // forecast model file
-
+      Object.assign(fileData, {
+        CountryId: this.model.country,
+        ModelScenarioId: this.model.scenario,
+        ModelApprovalComments: this.model.description
+      });
     } else {
       // regular file
       Object.assign(fileData, {
@@ -55,7 +61,7 @@ export class UploadFileComponent implements OnInit {
       console.log(fileData);
     }
 
-    this.sharepoint.uploadFile(this.model.file[0], 'Current Opportunity Library',fileData).then(
+    this.sharepoint.uploadFile(this.model.file[0], 'Current Opportunity Library', fileData).then(
       r => { console.log('upload response', r); }
     )
   }
