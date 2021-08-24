@@ -51,11 +51,13 @@ export class CreateOpportunityComponent implements OnInit {
           }
         }, {
           key: 'Opportunity.OpportunityOwnerId',
-          type: 'input',
+          type: 'ngsearchable',
           templateOptions: {
             label: 'Opportunity Owner:',
             placeholder: 'Opportunity Owner',
             required: true,
+            filterLocally: false,
+            query: 'siteusers',
           }
         }, {
           key: 'therapy',
@@ -154,14 +156,17 @@ export class CreateOpportunityComponent implements OnInit {
               return `First ${scope?.model.stageType} Name`;
             },
           },
-        }/*,{
+        },{
           key: 'Stage.StageUsersId',
-          type: 'input',
+          type: 'ngsearchable',
           templateOptions: {
               label: 'Stage Users:',
-              placeholder: 'Stage Users'
+              placeholder: 'Stage Users',
+              filterLocally: false,
+              query: 'siteusers',
+              multiple: true
           }
-        }*/,{
+        },{
           key: 'Stage.StageReview',
           type: 'datepicker',
           templateOptions: {

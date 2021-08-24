@@ -195,6 +195,12 @@ export interface SharepointResult {
   value: any;
 }
 
+export interface FilterTerm {
+  term: string;
+  field?: string;
+  matchCase?: boolean;
+}
+
 const OPPORTUNITIES_LIST = "lists/getbytitle('Opportunities')";
 const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('Opportunity Stages')";
 const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
@@ -377,21 +383,33 @@ export class SharepointService {
 
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
-  async query(partial: string, conditions: string = '', count: number | 'all' = 'all'): Promise<any> {
+  query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
-    try {
-      let endpoint = this.licensing.getSharepointUri() + partial;
-      if (conditions) endpoint += '?' + conditions;
-      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
-      if (lists.value && lists.value.length > 0) {
-        return lists.value;
+
+    let filterUri = '';
+    if (filter && filter.term) {
+      filter.field = filter.field ? filter.field : 'Title';
+      filter.matchCase = filter.matchCase ? filter.matchCase : false;
+
+      if (filter.matchCase) {
+        filterUri = `$filter=substringof('${filter.term}',${filter.field})`;
+      } else {
+        let capitalized = filter.term.charAt(0).toUpperCase() + filter.term.slice(1);
+        filterUri = `$filter=substringof('${filter.term}',${filter.field}) or substringof('${capitalized}',${filter.field})`;
       }
-      return [];
+    }
+    let endpoint = this.licensing.getSharepointUri() + partial;
+    if (conditions || filterUri) endpoint += '?';
+    if (conditions) endpoint += conditions;
+    if (filterUri) endpoint += conditions ? '&' + filterUri : filterUri;
+    console.log('endpoint query', endpoint);
+    try {
+      return this.http.get(endpoint);
     } catch (e) {
       if(e.status == 401) {
         // await this.teams.refreshToken(true); 
       }
-      return [];
+      return of([]);
     }
   }
 
@@ -480,23 +498,15 @@ export class SharepointService {
     }
   }
 
-  searchByTermInputList(list: string, field: string, term: string): Observable<SelectInputList[]> {
-    try {
-      return this.http.get(
-        this.licensing.getSharepointUri() + list + `/items?$filter=substringof('${term}', ${field})`
-      ).pipe(
+  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
+    return this.query(query, '', 'all', { term, field, matchCase })
+      .pipe(
         map((res: any) => {
-         return res.value.map(
-           (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
-         );
+          return res.value.map(
+            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+          );
         })
       );
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true);
-      }
-      return of([]);
-    }
   }
 
 

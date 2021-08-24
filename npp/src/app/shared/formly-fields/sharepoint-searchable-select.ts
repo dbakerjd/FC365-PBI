@@ -142,7 +142,7 @@ export class FormlyFieldSearchableSelectApi extends FieldType {
         
         let partial = query;
         //this.items = await this.api.query(partial, '$filter=Title eq '+q);
-        this.items = await this.api.query(partial, '');
+        this.items = await this.api.query(partial, '').toPromise();
         this.parsedItems = this.items.map(el => this.modelsParser(el));
         this.filteredItems = this.items;
         if(!this.selectedItems) this.initSelected();

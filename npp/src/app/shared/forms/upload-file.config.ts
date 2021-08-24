@@ -78,8 +78,8 @@ export class UploadFileConfig {
         type: 'ngsearchable',
         templateOptions: {
             label: 'Countries:',
-            filterLocally: false,
-            query: "lists/getByTitle('Countries')",
+            filterLocally: true,
+            options: options,
             multiple: true,
         },
         "hideExpression": (model: any) => {
