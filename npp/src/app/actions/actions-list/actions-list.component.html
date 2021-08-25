@@ -79,13 +79,21 @@
                         <!-- NORMAL DOCUMENTS -->
                         <ng-container *ngIf="!displayingModels">
                             <div class="documents-files-item-name">
-                                <p><label>Name: </label>{{file.name}}</p>
+                                <p><label>Name: </label>{{file.Name}}</p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <p><label>Uploaded at </label>{{file.updatedAt | date : 'Y-M-d'}} <label> by </label>{{file.user.name}}</p>
+                                <p>
+                                    <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}} 
+                                    <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
+                                        {{file.ListItemAllFields.Author.FirstName + ' ' + file.ListItemAllFields.Author.LastName}}
+                                    </ng-container>
+                                </p>
                             </div>
                             <div class="documents-files-item-comments">
-                                <p><label>Description: </label>{{file.description}}</p>
+                                <p *ngIf="file.ListItemAllFields.ModelApprovalComments">
+                                    <label>Description: </label>
+                                    {{file.ListItemAllFields.ModelApprovalComments}}
+                                </p>
                             </div>
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file"></div>
@@ -98,10 +106,15 @@
                         <!-- FORECASTING MODELS -->
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
-                                <p><label>Name: </label>{{file.name}}</p>
-                                <p><label>Countries: </label>{{file.country.join(', ')}}</p>
+                                <p><label>Name: </label>{{file.Name}}</p>
+                                <p><label>Countries: </label>{{file.ListItemAllFields.Country.join(', ')}}</p>
                                 <p><label>Scenarios: </label>{{file.modelScenario.join(', ')}}</p>
-                                <p><label>Uploaded at </label>{{file.updatedAt | date : 'Y-M-d'}} <label> by </label>{{file.user.name}}</p>
+                                <p>
+                                    <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
+                                    <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
+                                        {{file.ListItemAllFields.Author.FirstName + ' ' + file.ListItemAllFields.Author.LastName}}
+                                    </ng-container>
+                                </p>
                             </div>
                             <div class="documents-files-item-uploaded">
                                 <p><label>Status: </label>{{file.approvalStatus}}</p>

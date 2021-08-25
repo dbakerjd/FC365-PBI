@@ -154,6 +154,13 @@ export interface NPPFileTest {
 }
 
 export interface NPPFile {
+  Name: string;
+  ServerRelativeUrl: string;
+  TimeLastModified: Date;
+  ListItemAllFields?: NPPFileMetadata;
+}
+
+export interface NPPFileMetadata {
   ID: number;
   ApprovalStatusId: number;
   OpportunityNameId: number;
@@ -162,6 +169,7 @@ export interface NPPFile {
   CountryId?: number[];
   ModelScenarioId?: number[];
   AuthorId: number;
+  Author: User;
   TargetUserId: number;
   TargetUser?: User;
 }
@@ -674,9 +682,9 @@ export class SharepointService {
     return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
   }
 
-  async getFiles(id: number) {
-    return this.files.filter(f => f.parentId == id);
-  }
+  // async getFiles(id: number) {
+  //   return this.files.filter(f => f.parentId == id);
+  // }
 
   async getUserProfilePic(userId: number): Promise<string> {
     let queryObj = await this.getOneItem(USER_INFO_LIST, `$filter=Id eq ${userId}&$select=Picture`);
@@ -732,5 +740,33 @@ export class SharepointService {
 
   getBaseFilesFolder(): string {
     return FILES_FOLDER;
+  }
+
+
+  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
+  async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+    let files: NPPFile[] = []
+    let result = await this.query(
+      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`, 
+      '$expand=ListItemAllFields',
+      'all'
+    ).toPromise();
+
+    if (result.value) {
+      files = result.value;
+    }
+    if (expandProperties && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const expandedProps = await this.query(
+          `lists/getbytitle('${FILES_FOLDER}')` + `/items(${files[i].ListItemAllFields?.ID})`, 
+          '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
+            Country/Title \
+            &$expand=StageName,Author,TargetUser,Country',
+          'all'
+        ).toPromise();
+        Object.assign(files[i].ListItemAllFields, expandedProps);
+      }
+    }
+    return files;
   }
 }

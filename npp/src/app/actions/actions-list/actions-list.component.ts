@@ -6,7 +6,7 @@ import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-s
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { Action, Stage, NPPFileTest, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -25,7 +25,7 @@ export class ActionsListComponent implements OnInit {
   };
   currentSection = 'actions';
   dateListener: any;
-  currentFiles: NPPFileTest[] = [];
+  currentFiles: NPPFile[] = [];
   currentFolders: NPPFolder[] = [];
   currentFolder: number | undefined = undefined;
   displayingModels: boolean = false;
@@ -81,7 +81,7 @@ export class ActionsListComponent implements OnInit {
     })
   }
 
-  sendForApproval(file: NPPFileTest) {
+  sendForApproval(file: NPPFile) {
     this.uploadDialogInstance = this.matDialog.open(SendForApprovalComponent, {
       height: '300px',
       width: '405px',
@@ -91,7 +91,7 @@ export class ActionsListComponent implements OnInit {
     })
   }
 
-  createScenario(file: NPPFileTest) {
+  createScenario(file: NPPFile) {
     this.uploadDialogInstance = this.matDialog.open(CreateScenarioComponent, {
       height: '400px',
       width: '405px',
@@ -201,11 +201,12 @@ export class ActionsListComponent implements OnInit {
 
   async setFolder(folderId: number) {
     this.currentFolder = folderId;
-    this.currentFiles = await this.sharepoint.getFiles(folderId);
-
+    this.currentFiles = await this.sharepoint.readFolderFiles(`${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId, true);
+    console.log('cf', this.currentFiles);
     let folder = this.currentFolders.find(el => el.ID === folderId);
+
     this.displayingModels = false;
-    if(folder) {
+    if (folder) {
       this.displayingModels = !!folder.containsModels;
     }
   }
