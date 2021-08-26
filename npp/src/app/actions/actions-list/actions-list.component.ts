@@ -205,7 +205,6 @@ export class ActionsListComponent implements OnInit {
     this.currentFolder = folderId;
     this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
     this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
-    console.log('cf', this.currentFiles);
     let folder = this.currentFolders.find(el => el.ID === folderId);
 
     this.displayingModels = false;
