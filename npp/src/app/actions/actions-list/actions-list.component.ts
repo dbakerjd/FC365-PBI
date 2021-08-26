@@ -213,29 +213,39 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  openFile(fileId: number, forceDownload = false) {
+  async openFile(fileId: number, forceDownload = false) {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    this.sharepoint.readFile(fileInfo.ServerRelativeUrl).subscribe((f: any) => {
-      var newBlob = new Blob([f]);
 
-      if (forceDownload) {
-        var link = document.createElement('a');
-        link.href = window.URL.createObjectURL(newBlob);
-        link.download = fileInfo.Name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        const data = window.URL.createObjectURL(newBlob);
-        window.open(data);
-      }
-    });
+    const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
+    var newBlob = new Blob([response]);
+
+    if (forceDownload) {
+      var link = document.createElement('a');
+      link.href = window.URL.createObjectURL(newBlob);
+      link.download = fileInfo.Name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      const data = window.URL.createObjectURL(newBlob);
+      window.open(data);
+    }
   }
 
-  deleteFile(fileId: number) {
-    confirm('Are you sure?');
+  async deleteFile(fileId: number) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    if (confirm('Are you sure?')) {
+      let done = await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)
+      if (done) {
+        // remove file for the current files list
+        this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
+        console.log('File deleted');
+      }
+    };
   }
 
   ngOnDestroy() {

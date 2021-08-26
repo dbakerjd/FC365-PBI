@@ -519,6 +519,41 @@ export class SharepointService {
     }
   }
 
+  async readFile(fileUri: string): Promise<any> {
+    try {
+      return this.http.get(
+        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
+        { responseType: 'arraybuffer' }
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return [];
+    }
+  }
+
+  async deleteFile(fileUri: string): Promise<boolean> {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')`, 
+        null,
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "DELETE"
+          }),
+        }
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+    return true;
+  }
+
   searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
     return this.query(query, '', 'all', { term, field, matchCase })
       .pipe(
@@ -771,19 +806,6 @@ export class SharepointService {
     return files;
   }
 
-  readFile(fileUri: string): Observable<any> {
-    try {
-      return this.http.get(
-        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
-        { responseType: 'arraybuffer' }
-      );
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
-      return of([]);
-    }
-  }
-
+  
 
 }
