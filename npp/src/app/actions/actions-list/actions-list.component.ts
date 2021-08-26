@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
+import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -247,15 +248,17 @@ export class ActionsListComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(async deleteConfirmed => {
-      if (deleteConfirmed) {
-        if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
-          // remove file for the current files list
-          this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
-          console.log('File deleted');
+    dialogRef.afterClosed()
+      .pipe(take(1))
+      .subscribe(async deleteConfirmed => {
+        if (deleteConfirmed) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+            // remove file for the current files list
+            this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
+            console.log('File deleted');
+          }
         }
-      }
-    });
+      });
   }
 
   ngOnDestroy() {
