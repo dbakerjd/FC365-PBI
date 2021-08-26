@@ -1,0 +1,9 @@
+<app-dialog-header title="Confirm Action"></app-dialog-header>
+
+<mat-dialog-content>
+    <p [innerHtml]="message"></p>
+</mat-dialog-content>
+<div class="dialog-footer">
+    <div class="dialog-cancel-button" mat-dialog-close (click)="onDismiss()">{{cancelButtonText}}</div>
+    <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial (click)="onConfirm()">{{confirmButtonText}}</div>
+</div>

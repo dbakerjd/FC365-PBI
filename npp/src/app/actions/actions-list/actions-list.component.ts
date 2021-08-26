@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
+import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
@@ -238,14 +239,24 @@ export class ActionsListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    if (confirm('Are you sure?')) {
-      let done = await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)
-      if (done) {
-        // remove file for the current files list
-        this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
-        console.log('File deleted');
+    const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      maxWidth: "400px",
+      height: "200px",
+      data: {
+        message: 'Are you sure you want to delete the file <em>' + fileInfo.Name + '</em> ?',
+        confirmButtonText: 'Yes, delete'
       }
-    };
+    });
+
+    dialogRef.afterClosed().subscribe(async deleteConfirmed => {
+      if (deleteConfirmed) {
+        if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+          // remove file for the current files list
+          this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
+          console.log('File deleted');
+        }
+      }
+    });
   }
 
   ngOnDestroy() {
