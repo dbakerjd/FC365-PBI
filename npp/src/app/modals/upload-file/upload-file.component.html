@@ -1,5 +1,5 @@
 <app-dialog-header title="Upload File"></app-dialog-header>
-<form [formGroup]="form" (ngSubmit)="onSubmit()" enctype="multipart/form-data">
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
     <mat-dialog-content>
         <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
     </mat-dialog-content>

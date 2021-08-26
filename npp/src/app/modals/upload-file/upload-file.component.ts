@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-upload-file',
@@ -57,8 +58,23 @@ export class UploadFileComponent implements OnInit {
 
     // upload file to correspondent folder
     let folder = this.sharepoint.getBaseFilesFolder() + '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category
-    this.sharepoint.uploadFile(this.model.file[0], folder, fileData).then(
-      r => { console.log('upload response', r); }
+    this.readFileDataAsText(this.model.file[0]).subscribe(
+      data => {
+        this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
+          r => { console.log('upload response', r); }
+        )
+      }
     )
+  }
+
+  private readFileDataAsText(file: any): Observable<string> {
+    return new Observable(obs => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        obs.next(reader.result as string);
+        obs.complete();
+      }
+      reader.readAsArrayBuffer(file);
+    });
   }
 }

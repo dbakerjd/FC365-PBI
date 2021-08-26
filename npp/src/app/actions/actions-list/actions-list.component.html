@@ -96,10 +96,10 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-icons">
-                                <div class="documents-files-item-icons-file" title="Open file"></div>
-                                <div class="documents-files-item-icons-download" title="Download file"></div>
+                                <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
                                 <div class="documents-files-item-icons-share" title="Share file"></div>
-                                <div class="documents-files-item-icons-remove" title="Delete file"></div>
+                                <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
 
@@ -107,8 +107,18 @@
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
-                                <p><label>Countries: </label>{{file.ListItemAllFields.Country.join(', ')}}</p>
-                                <p><label>Scenarios: </label>{{file.modelScenario.join(', ')}}</p>
+                                <p>
+                                    <label>Countries: </label>
+                                    <ng-container *ngFor="let c of file.ListItemAllFields.Country; let $last = last">
+                                        {{c.Title + ($last ? '' : ', ')}}
+                                    </ng-container>
+                                </p>
+                                <p>
+                                    <label>Scenarios: </label>
+                                    <ng-container *ngFor="let s of file.ListItemAllFields.ModelScenario; let $last = last">
+                                        {{s.Title + ($last ? '' : ', ')}}
+                                    </ng-container>
+                                </p>
                                 <p>
                                     <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
@@ -117,7 +127,7 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <p><label>Status: </label>{{file.approvalStatus}}</p>
+                                <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus}}</p>
                                 <div class="documents-files-item-model-actions">
                                     <div class="npp-btn" (click)="sendForApproval(file)">Send for approval</div>
                                     <div class="npp-btn" (click)="createScenario(file)">Create Scenario</div>
@@ -125,13 +135,13 @@
                             </div>
                             <div class="documents-files-item-comments">
                                 <p><label>Description: </label>{{file.description}}</p>
-                                <p><label>Comments: </label>{{file.modelApprovalComments}}</p>
+                                <p><label>Comments: </label>{{file.ListItemAllFields?.ModelApprovalComments}}</p>
                             </div>
                             <div class="documents-files-item-icons">
-                                <div class="documents-files-item-icons-file" title="Open file"></div>
-                                <div class="documents-files-item-icons-download" title="Download file"></div>
+                                <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" title="Download file" (click)="downloadFile(file.ListItemAllFields.ID, false)"></div>
                                 <div class="documents-files-item-icons-share" title="Share file"></div>
-                                <div class="documents-files-item-icons-remove" title="Delete file"></div>
+                                <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
                     </div>

@@ -28,6 +28,7 @@ export class ActionsListComponent implements OnInit {
   currentFiles: NPPFile[] = [];
   currentFolders: NPPFolder[] = [];
   currentFolder: number | undefined = undefined;
+  currentFolderUri: string = '';
   displayingModels: boolean = false;
   uploadDialogInstance: any; 
 
@@ -201,7 +202,8 @@ export class ActionsListComponent implements OnInit {
 
   async setFolder(folderId: number) {
     this.currentFolder = folderId;
-    this.currentFiles = await this.sharepoint.readFolderFiles(`${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId, true);
+    this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
+    this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
     console.log('cf', this.currentFiles);
     let folder = this.currentFolders.find(el => el.ID === folderId);
 
@@ -209,6 +211,31 @@ export class ActionsListComponent implements OnInit {
     if (folder) {
       this.displayingModels = !!folder.containsModels;
     }
+  }
+
+  openFile(fileId: number, forceDownload = false) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    this.sharepoint.readFile(fileInfo.ServerRelativeUrl).subscribe((f: any) => {
+      var newBlob = new Blob([f]);
+
+      if (forceDownload) {
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(newBlob);
+        link.download = fileInfo.Name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        const data = window.URL.createObjectURL(newBlob);
+        window.open(data);
+      }
+    });
+  }
+
+  deleteFile(fileId: number) {
+    confirm('Are you sure?');
   }
 
   ngOnDestroy() {

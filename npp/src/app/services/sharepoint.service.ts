@@ -166,6 +166,7 @@ export interface NPPFileMetadata {
   OpportunityNameId: number;
   StageNameId: number;
   ModelApprovalComments: string;
+  ApprovalStatus: string;
   CountryId?: number[];
   ModelScenarioId?: number[];
   AuthorId: number;
@@ -530,12 +531,15 @@ export class SharepointService {
   }
 
 
-  async uploadFileQuery(fileData: FormData, folder: string, filename: string) {
+  async uploadFileQuery(fileData: string, folder: string, filename: string) {
     try {
       let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
       return await this.http.post(
         this.licensing.getSharepointUri() + url, 
         fileData,
+        {
+          headers: { 'Content-Type': 'blob' }
+        }
       ).toPromise();
     } catch (e) {
       if(e.status == 401) {
@@ -545,11 +549,8 @@ export class SharepointService {
     }
   }
 
-  async uploadFile(file: any, folder: string, metadata?: any): Promise<any> {
-    const formData: FormData = new FormData();
-    formData.append('file', file);
-
-    let uploaded: any = await this.uploadFileQuery(formData, folder, file.name);
+  async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
+    let uploaded: any = await this.uploadFileQuery(fileData, folder, fileName);
 
     if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
 
@@ -760,8 +761,8 @@ export class SharepointService {
         const expandedProps = await this.query(
           `lists/getbytitle('${FILES_FOLDER}')` + `/items(${files[i].ListItemAllFields?.ID})`, 
           '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-            Country/Title \
-            &$expand=StageName,Author,TargetUser,Country',
+            Country/Title, ModelScenario/Title \
+            &$expand=StageName,Author,TargetUser,Country,ModelScenario',
           'all'
         ).toPromise();
         Object.assign(files[i].ListItemAllFields, expandedProps);
@@ -769,4 +770,20 @@ export class SharepointService {
     }
     return files;
   }
+
+  readFile(fileUri: string): Observable<any> {
+    try {
+      return this.http.get(
+        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
+        { responseType: 'arraybuffer' }
+      );
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return of([]);
+    }
+  }
+
+
 }
