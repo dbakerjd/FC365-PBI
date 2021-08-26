@@ -28,6 +28,7 @@ import { DatepickerModule } from 'ng2-datepicker';
 import { UploadFileComponent } from './modals/upload-file/upload-file.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogHeaderComponent } from './modals/dialog-header/dialog-header.component';
 import { FormlyFieldFile } from './shared/formly-fields/file-input';
@@ -39,6 +40,7 @@ import { FormlyTypesModule, FORMLY_CONFIG } from './shared/formly-fields/formly-
 import { StageSettingsComponent } from './modals/stage-settings/stage-settings.component';
 import { FilterPipe } from './filter.pipe';
 import { ConfirmDialogComponent } from './modals/confirm-dialog/confirm-dialog.component';
+import { ProgressSpinnerComponent } from './shared/progress-spinner/progress-spinner.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -106,6 +108,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     FormlyBootstrapModule,
     MatButtonModule,
     MatDialogModule,
+    MatProgressSpinnerModule,
   ],
   declarations: [
     AppComponent,
@@ -126,7 +129,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     CreateOpportunityComponent,
     StageSettingsComponent,
     FilterPipe,
-    ConfirmDialogComponent
+    ConfirmDialogComponent,
+    ProgressSpinnerComponent
   ],
   providers: [
     {

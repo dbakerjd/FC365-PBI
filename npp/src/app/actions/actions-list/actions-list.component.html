@@ -75,6 +75,10 @@
             <!-- DOCUMENTS LIST -->
             <div *ngSwitchCase="'documents'">
                 <div class="documents-files">
+                    <app-progress-spinner *ngIf="loading"></app-progress-spinner>
+                    <h3 *ngIf="currentFiles.length < 1 && !loading" style="text-align: center;">
+                        No files are currently uploaded to <em>{{currentFolder.Title}}</em> folder
+                    </h3>
                     <div class="documents-files-item" *ngFor="let file of currentFiles">
                         <!-- NORMAL DOCUMENTS -->
                         <ng-container *ngIf="!displayingModels">

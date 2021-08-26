@@ -29,10 +29,11 @@ export class ActionsListComponent implements OnInit {
   dateListener: any;
   currentFiles: NPPFile[] = [];
   currentFolders: NPPFolder[] = [];
-  currentFolder: number | undefined = undefined;
+  currentFolder: NPPFolder | undefined = undefined;
   currentFolderUri: string = '';
   displayingModels: boolean = false;
   uploadDialogInstance: any; 
+  loading = false;
 
   constructor(private sharepoint: SharepointService, private route: ActivatedRoute, public matDialog: MatDialog) { }
 
@@ -203,15 +204,16 @@ export class ActionsListComponent implements OnInit {
   }
 
   async setFolder(folderId: number) {
-    this.currentFolder = folderId;
+    this.loading = true;
+    this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
     this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
     this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
-    let folder = this.currentFolders.find(el => el.ID === folderId);
 
     this.displayingModels = false;
-    if (folder) {
-      this.displayingModels = !!folder.containsModels;
+    if (this.currentFolder) {
+      this.displayingModels = !!this.currentFolder.containsModels;
     }
+    this.loading = false;
   }
 
   async openFile(fileId: number, forceDownload = false) {
