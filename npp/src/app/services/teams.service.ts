@@ -80,11 +80,16 @@ export class TeamsService {
   }
 
   async logout() {
+    localStorage.removeItem('teamsAccount');
     this.authService.logoutRedirect();
+    
   }
 
-
+  async getActiveAccount() {
+    return await this.authService.instance.getActiveAccount();
+  }
   /** UNUSED */
+  /*
   getActiveAccount() {
     let activeAccount = this.authService.instance.getActiveAccount();
 
@@ -111,6 +116,7 @@ export class TeamsService {
 
     return activeAccount;  
   }
+  */
 
   setActiveAccount(account: AccountInfo | null) {
     if (account) {

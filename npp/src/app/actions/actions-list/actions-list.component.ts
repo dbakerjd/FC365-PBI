@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
@@ -35,7 +35,12 @@ export class ActionsListComponent implements OnInit {
   uploadDialogInstance: any; 
   loading = false;
 
-  constructor(private sharepoint: SharepointService, private route: ActivatedRoute, public matDialog: MatDialog) { }
+  constructor(
+    private readonly sharepoint: SharepointService, 
+    private route: ActivatedRoute, 
+    private router: Router,
+    public matDialog: MatDialog
+  ) { }
 
   ngOnInit(): void {
     this.sharepoint.getTest();
@@ -43,6 +48,9 @@ export class ActionsListComponent implements OnInit {
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
         this.opportunity = await this.sharepoint.getOpportunity(params.id);
+        if (!this.opportunity) {
+          this.router.navigate(['notfound']);
+        }
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
         }
@@ -162,10 +170,27 @@ export class ActionsListComponent implements OnInit {
     this.computeProgress();
   }
 
-  toggleStatus(action: Action) {
-    action.Complete = !action.Complete;
-    this.computeStatus(action);
+  async toggleStatus(action: Action) {
+    let done = false;
+    let currentUser = null;
+    if (action.Complete) done = await this.sharepoint.uncompleteAction(action.Id);
+    else {
+      currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
+      done = await this.sharepoint.completeAction(action.Id, currentUser.Id);
+    }
 
+    if (done) {
+      action.Complete = !action.Complete;
+      this.computeStatus(action);
+      if (action.Complete) {
+        action.Timestamp = new Date();
+        action.TargetUser = {
+          ID: currentUser.Id,
+          FirstName: currentUser.Title,
+          LastName: ''
+        };
+      }
+    }
   }
 
   computeProgress() {
@@ -204,6 +229,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   async setFolder(folderId: number) {
+    this.currentFiles = [];
     this.loading = true;
     this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
     this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;

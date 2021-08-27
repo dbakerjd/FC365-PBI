@@ -4,6 +4,7 @@ import { AuthenticationResult, EventMessage, EventType, InteractionStatus } from
 import { Subject } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { LicensingService } from './services/licensing.service';
+import { SharepointService } from './services/sharepoint.service';
 import { TeamsService } from './services/teams.service';
 
 @Component({
@@ -18,6 +19,7 @@ export class AppComponent implements OnInit, OnDestroy {
   
   constructor(
     private readonly teams: TeamsService, 
+    private readonly sharepoint: SharepointService, 
     private authService: MsalService, 
     private msalBroadcastService: MsalBroadcastService, 
     private licensing: LicensingService
@@ -53,7 +55,6 @@ export class AppComponent implements OnInit, OnDestroy {
         takeUntil(this._destroying$)
       )
       .subscribe(() => {
-        console.log('Interaction Status NONE');
         this.setLoginDisplay();
         this.teams.checkAndSetActiveAccount();
       })
@@ -67,6 +68,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   logout() {
+    this.sharepoint.removeCurrentUserInfo(); // clean local storage
     this.teams.logout();
   }
 

@@ -92,7 +92,8 @@ export interface User {
   ID: number;
   FirstName: string;
   LastName: string;
-  profilePicUrl: string;
+  Title?: string;
+  profilePicUrl?: string;
 }
 
 export interface UserTest {
@@ -434,6 +435,22 @@ export class SharepointService {
     }
   }
 
+  async getCurrentUserInfo() {
+    let account = localStorage.getItem('sharepointAccount');
+    if(account) {
+      return JSON.parse(account);
+    } else {
+      let account = await this.query('currentuser', '?$select=Title,Email,ID,FirstName,LastName').toPromise();
+      console.log('account sharepoint', account);
+      localStorage.setItem('sharepointAccount', JSON.stringify(account));
+      return account;
+    }
+  }
+
+  removeCurrentUserInfo() {
+    localStorage.removeItem('sharepointAccount');
+  }
+
   async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
       let endpoint = this.licensing.getSharepointUri() + list + '/items';
@@ -499,9 +516,9 @@ export class SharepointService {
     }
   }
 
-  async updateItem(id: number, list: string, data: any): Promise<any> {
+  async updateItem(id: number, list: string, data: any): Promise<boolean> {
     try {
-      return await this.http.post(
+      await this.http.post(
         this.licensing.getSharepointUri() + list + `/items(${id})`, 
         data,
         {
@@ -515,8 +532,9 @@ export class SharepointService {
       if(e.status == 401) {
         // await this.teams.refreshToken(true);
       }
-      return {};
+      return false;
     }
+    return true;
   }
 
   async readFile(fileUri: string): Promise<any> {
@@ -663,6 +681,24 @@ export class SharepointService {
     return await this.getAllItems(OPPORTUNITY_ACTIONS_LIST, `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`);
   }
 
+  async completeAction(actionId: number, userId: number): Promise<boolean> {
+    const data = {
+      TargetUserId: userId,
+      Timestamp: new Date(),
+      Complete: true
+    };
+    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, data);
+  }
+
+  async uncompleteAction(actionId: number): Promise<boolean> {
+    const data = {
+      TargetUserId: null,
+      Timestamp: null,
+      Complete: false
+    };
+    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, data);
+  }
+
   async getLists() {
    /* try {
       let lists = await this.query('lists').toPromise();
@@ -770,6 +806,7 @@ export class SharepointService {
     return this.masterScenariosList;
   }
 
+  /** todel */
   async getTest() {
     console.log('files', await this.getAllItems(`lists/getbytitle('Current Opportunity Library')`));
   }
@@ -777,7 +814,6 @@ export class SharepointService {
   getBaseFilesFolder(): string {
     return FILES_FOLDER;
   }
-
 
   /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
   async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
