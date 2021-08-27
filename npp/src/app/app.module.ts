@@ -41,6 +41,7 @@ import { StageSettingsComponent } from './modals/stage-settings/stage-settings.c
 import { FilterPipe } from './filter.pipe';
 import { ConfirmDialogComponent } from './modals/confirm-dialog/confirm-dialog.component';
 import { ProgressSpinnerComponent } from './shared/progress-spinner/progress-spinner.component';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -130,7 +131,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     StageSettingsComponent,
     FilterPipe,
     ConfirmDialogComponent,
-    ProgressSpinnerComponent
+    ProgressSpinnerComponent,
+    NotFoundComponent
   ],
   providers: [
     {
