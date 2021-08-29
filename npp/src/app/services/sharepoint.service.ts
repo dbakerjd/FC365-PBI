@@ -90,9 +90,10 @@ export interface Indication {
 
 export interface User {
   ID: number;
-  FirstName: string;
-  LastName: string;
+  FirstName?: string;
+  LastName?: string;
   Title?: string;
+  Email?: string;
   profilePicUrl?: string;
 }
 
@@ -435,13 +436,14 @@ export class SharepointService {
     }
   }
 
-  async getCurrentUserInfo() {
+  async getCurrentUserInfo(): Promise<User> {
     let account = localStorage.getItem('sharepointAccount');
     if(account) {
       return JSON.parse(account);
     } else {
-      let account = await this.query('currentuser', '?$select=Title,Email,ID,FirstName,LastName').toPromise();
+      let account = await this.query('currentuser', '?$select=Title,Email,Id,FirstName,LastName').toPromise();
       console.log('account sharepoint', account);
+      account['ID'] = account.Id; // set for User interface
       localStorage.setItem('sharepointAccount', JSON.stringify(account));
       return account;
     }
@@ -697,6 +699,10 @@ export class SharepointService {
       Complete: false
     };
     return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, data);
+  }
+
+  async setActionDueDate(actionId: number, newDate: string) {
+    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, { ActionDueDate: newDate });
   }
 
   async getLists() {

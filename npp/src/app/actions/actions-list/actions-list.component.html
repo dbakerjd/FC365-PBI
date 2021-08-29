@@ -166,7 +166,8 @@
                     <div class="action-item-completed" *ngIf="!action.Complete">Not completed yet</div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
                         <label>Due by </label>
-                        <ngx-datepicker [(ngModel)]="action.ActionDueDate" [options]="dateOptions"></ngx-datepicker>
+                        <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner"></ngx-datepicker>
+                        <span *ngIf="!isOwner">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
                     </div>
                     <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
                         <span>{{action.status}}</span>

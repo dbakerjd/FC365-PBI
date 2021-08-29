@@ -8,7 +8,7 @@ import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-s
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -16,6 +16,8 @@ import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService } fro
   styleUrls: ['./actions-list.component.scss']
 })
 export class ActionsListComponent implements OnInit {
+  currentUser: User | undefined = undefined;
+  isOwner = false;
   gates: Stage[] = [];
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
@@ -51,6 +53,9 @@ export class ActionsListComponent implements OnInit {
         if (!this.opportunity) {
           this.router.navigate(['notfound']);
         }
+        this.currentUser = await this.sharepoint.getCurrentUserInfo();
+        this.isOwner = this.currentUser.ID === this.opportunity.OpportunityOwnerId;
+
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
         }
@@ -172,11 +177,11 @@ export class ActionsListComponent implements OnInit {
 
   async toggleStatus(action: Action) {
     let done = false;
-    let currentUser = null;
+    if (!this.currentUser) this.currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
+    
     if (action.Complete) done = await this.sharepoint.uncompleteAction(action.Id);
     else {
-      currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
-      done = await this.sharepoint.completeAction(action.Id, currentUser.Id);
+      done = await this.sharepoint.completeAction(action.Id, this.currentUser.ID);
     }
 
     if (done) {
@@ -185,12 +190,16 @@ export class ActionsListComponent implements OnInit {
       if (action.Complete) {
         action.Timestamp = new Date();
         action.TargetUser = {
-          ID: currentUser.Id,
-          FirstName: currentUser.Title,
+          ID: this.currentUser.ID,
+          FirstName: this.currentUser.Title,
           LastName: ''
         };
       }
     }
+  }
+
+  onDueDateChange(actionId: number, value: string) {
+    this.sharepoint.setActionDueDate(actionId, value);
   }
 
   computeProgress() {
