@@ -1,7 +1,5 @@
-import { NumberSymbol } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { AccountInfo, AuthorizationUrlRequest } from '@azure/msal-browser';
 import { Observable, of } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
 import { ErrorService } from './error.service';
@@ -9,22 +7,6 @@ import { LicensingService } from './licensing.service';
 import { TeamsService } from './teams.service';
 import { map } from 'rxjs/operators';
 
-
-export interface OpportunityTest {
-  title: string;
-  moleculeName: string;
-  opportunityOwner: UserTest;
-  projectStart: Date;
-  projectEnd: Date;
-  opportunityType: string;
-  opportunityStatus: string;
-  indicationName: string;
-  Id: number;
-  therapyArea: string;
-  updated: Date;
-  users?: User[];
-  progress: number;
-}
 
 export interface Opportunity {
   ID: number;
@@ -36,7 +18,7 @@ export interface Opportunity {
   ProjectEndDate: Date;
   OpportunityTypeId: number;
   OpportunityType?: OpportunityType;
-  OpportunityStatus: string;
+  OpportunityStatus: "Processing" | "Archive" | "Active" | "Approved";
   IndicationId: number;
   Indication: Indication;
   Modified: Date;
@@ -58,8 +40,10 @@ export interface OpportunityInput {
 
 export interface StageInput {
   Title: string;
-  // StageUsers: string;
+  StageUsersId: number[];
   StageReview: Date;
+  OpportunityNameId?: number;
+  StageNameId?: number;
 }
 
 export interface Action {
@@ -97,38 +81,6 @@ export interface User {
   profilePicUrl?: string;
 }
 
-export interface UserTest {
-  id: number;
-  name: string;
-  email?: string;
-  profilePic?: string;
-}
-
-export interface ActionTest {
-  id: number,
-  gateId: number;
-  opportunityId: number;
-  title: string;
-  actionName: string;
-  dueDate: Date;
-  completed: boolean;
-  timestamp: Date;
-  targetUserId: Number;
-  targetUser: UserTest;
-  status?: string;
-}
-
-export interface GateTest {
-  id: number;
-  title: string;
-  opportunityId: number;
-  name: string;
-  reviewedAt: Date;
-  createdAt: Date;
-  actions: Action[];
-  folders?: NPPFolderTest[];
-}
-
 export interface Stage {
   ID: number;
   Title: string;
@@ -138,21 +90,6 @@ export interface Stage {
   Created: Date;
   actions?: Action[];
   folders?: NPPFolder[];
-}
-
-export interface NPPFileTest {
-  id: number;
-  parentId: number;
-  name: string;
-  updatedAt: Date;
-  description: string;
-  stageId: number;
-  opportunityId: number;
-  country: string[];
-  modelScenario: string[];
-  modelApprovalComments: string;
-  approvalStatus: string;
-  user: UserTest;
 }
 
 export interface NPPFile {
@@ -189,12 +126,6 @@ export interface Country {
   Title: string;
 }
 
-export interface NPPFolderTest {
-  id: number;
-  name: string;
-  containsModels?: boolean;
-}
-
 export interface SelectInputList {
   label: string;
   value: any;
@@ -229,7 +160,7 @@ const FILES_FOLDER = "Current Opportunity Library";
 })
 export class SharepointService {
 
-  // local cache
+  // local "cache"
   masterOpportunitiesTypes: OpportunityType[] = [];
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
@@ -242,167 +173,6 @@ export class SharepointService {
     stage: number;
     folders: NPPFolder[]
   }[] = [];
-
-  folders: NPPFolderTest[] = [{
-    id: 1,
-    name: 'Finance'
-  },{
-    id: 2,
-    name: 'Commercial'
-  }, {
-    id: 3,
-    name: 'Technical'
-  }, {
-    id: 4,
-    name: 'Regulatory'
-  }, {
-    id: 5,
-    name: 'Other'
-  },{
-    id: 6,
-    name: 'Forecast Models',
-    containsModels: true
-  }];
-
-  files: NPPFileTest[] = [{
-    id: 1,
-    parentId: 1,
-    name: 'test.pdf',
-    updatedAt: new Date(),
-    description: 'test description',
-    stageId: 1,
-    opportunityId: 1,
-    country: [],
-    modelScenario: [],
-    modelApprovalComments: '',
-    approvalStatus: '',
-    user: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    }
-  },{
-    id: 2,
-    parentId: 1,
-    name: 'test2.pdf',
-    updatedAt: new Date(),
-    description: 'Another test description',
-    stageId: 1,
-    opportunityId: 1,
-    country: [],
-    modelScenario: [],
-    modelApprovalComments: '',
-    approvalStatus: '',
-    user: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    }
-  },{
-    id: 3,
-    parentId: 1,
-    name: 'test3.pdf',
-    updatedAt: new Date(),
-    description: 'Yet another test description',
-    stageId: 1,
-    opportunityId: 1,
-    country: [],
-    modelScenario: [],
-    modelApprovalComments: '',
-    approvalStatus: '',
-    user: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    }
-  },{
-    id: 4,
-    parentId: 6,
-    name: 'test_model',
-    updatedAt: new Date(),
-    description: 'Yet another test description',
-    stageId: 1,
-    opportunityId: 1,
-    country: ['UK', 'Spain', 'Belgium'],
-    modelScenario: ['Upside', 'Downside'],
-    modelApprovalComments: 'Lorem Ipsum Dolor amet and all that',
-    approvalStatus: 'In Progress',
-    user: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    }
-  },{
-    id: 5,
-    parentId: 6,
-    name: 'test_model3',
-    updatedAt: new Date(),
-    description: 'Yet another test description',
-    stageId: 1,
-    opportunityId: 1,
-    country: ['UK', 'Spain', 'Belgium'],
-    modelScenario: ['Upside', 'Downside'],
-    modelApprovalComments: 'Some test random comment',
-    approvalStatus: 'In Progress',
-    user: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    }
-  }];
-
-  opportunities: OpportunityTest[] =  [{
-    title: "Acquisition of Nucala for COPD",
-    moleculeName: "Nucala",
-    opportunityOwner: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    },
-    projectStart: new Date("5/1/2021"),
-    projectEnd: new Date("11/1/2021"),
-    opportunityType: "Acquisition",
-    opportunityStatus: "Active",
-    indicationName: "Chronic Obstructive Pulmonary Disease (COPD)",
-    Id: 67,
-    therapyArea: "Respiratory",
-    updated: new Date("5/25/2021 3:04 PM"),
-    progress: 79
-  },{
-    title: "Acquisition of Tezepelumab (Asthma)",
-    moleculeName: "Tezepelumab",
-    opportunityOwner: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    },
-    projectStart: new Date("5/1/2021"),
-    projectEnd: new Date("1/1/2024"),
-    opportunityType: "Acquisition",
-    opportunityStatus: "Active",
-    indicationName: "Asthma",
-    Id: 68,
-    therapyArea: "Respiratory",
-    updated: new Date("5/25/2021 3:55 PM"),
-    progress: 45
-  },{
-    title: "Development of Concizumab",
-    moleculeName: "Concizumab",
-    opportunityOwner: {
-      id: 1,
-      name: "David Baker",
-      profilePic: "/assets/profile.png"
-    },
-    projectStart: new Date("5/1/2021"),
-    projectEnd: new Date("5/1/2025"),
-    opportunityType: "Product Development",
-    opportunityStatus: "Archived",
-    indicationName: "Hemophilia",
-    Id: 69,
-    therapyArea: "Haematology",
-    updated: new Date("5/25/2021 4:14 PM"),
-    progress: 12
-  }];
 
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
@@ -485,6 +255,20 @@ export class SharepointService {
       }
       return null;
     }
+  }
+
+  async getOneItemById(id: number, list: string, conditions: string = ''): Promise<any> {
+    try {
+      let endpoint = this.licensing.getSharepointUri() + list + `/items(${id})`;
+      if (conditions) endpoint += '?' + conditions;
+      return await this.http.get(endpoint).toPromise(); 
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return null;
+    }
+    return null;
   }
 
   async countItems(list: string, conditions: string = ''): Promise<number> {
@@ -618,13 +402,13 @@ export class SharepointService {
   }
 
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
-    let opportunity = await this.createItem(OPPORTUNITIES_LIST, op);
+    let opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
     let stageType = await this.getStageType(op.OpportunityTypeId);
     let masterStage = await this.getOneItem(MASTER_STAGES_LIST, `$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
     let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
 
     console.log(`CREATED OPPORTUNITY (ID ${opportunity.ID}) AND FIRST STAGE (ID ${stage.ID})`);
-    console.log('[TOOD] Call Endpoint to create groups and actions');
+    console.log('[TOOD] Use Endpoint to create groups and actions');
     
     return opportunity;
   }
@@ -639,7 +423,7 @@ export class SharepointService {
       return cache.indications;
     }
     let max = await this.countItems(MASTER_THERAPY_AREAS_LIST);
-    let cond = "/items?$skiptoken=Paged=TRUE&$top="+max;
+    let cond = "$skiptoken=Paged=TRUE&$top="+max;
     if (therapy !== 'all') {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
@@ -705,6 +489,14 @@ export class SharepointService {
     return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, { ActionDueDate: newDate });
   }
 
+  async updateStage(stageId: number, data: any) {
+    return await this.updateItem(stageId, OPPORTUNITY_STAGES_LIST, data);
+  }
+
+  async createStage(data: StageInput): Promise<boolean> {
+    return await this.createItem(OPPORTUNITY_STAGES_LIST, data);
+  }
+
   async getLists() {
    /* try {
       let lists = await this.query('lists').toPromise();
@@ -765,8 +557,8 @@ export class SharepointService {
   // }
 
   async getUserProfilePic(userId: number): Promise<string> {
-    let queryObj = await this.getOneItem(USER_INFO_LIST, `$filter=Id eq ${userId}&$select=Picture`);
-    return queryObj.Picture.Url;
+    let queryObj = await this.getOneItemById(userId, USER_INFO_LIST, `$select=Id,Picture`);
+    return queryObj.Picture?.Url;
   }
 
   async getStageType(OpportunityTypeId: number): Promise<string> {
@@ -780,6 +572,12 @@ export class SharepointService {
       return '';
     }
     return result.StageType;
+  }
+
+  async getNextStage(stageId: number): Promise<Stage | null> {
+    let current = await this.getOneItemById(stageId, MASTER_STAGES_LIST);
+    console.log('current', current);
+    return await this.getOneItem(MASTER_STAGES_LIST, `$filter=StageNumber eq ${current.StageNumber + 1} and StageType eq '${current.StageType}'`);
   }
 
   async getFolders(masterStageId: number): Promise<NPPFolder[]> {
