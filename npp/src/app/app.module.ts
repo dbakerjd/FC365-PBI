@@ -39,6 +39,7 @@ import { CreateOpportunityComponent } from './modals/create-opportunity/create-o
 import { FormlyTypesModule, FORMLY_CONFIG } from './shared/formly-fields/formly-types.module';
 import { StageSettingsComponent } from './modals/stage-settings/stage-settings.component';
 import { FilterPipe } from './filter.pipe';
+import { SortPipe } from './sort.pipe';
 import { ConfirmDialogComponent } from './modals/confirm-dialog/confirm-dialog.component';
 import { ProgressSpinnerComponent } from './shared/progress-spinner/progress-spinner.component';
 import { NotFoundComponent } from './not-found/not-found.component';
@@ -130,6 +131,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     CreateOpportunityComponent,
     StageSettingsComponent,
     FilterPipe,
+    SortPipe,
     ConfirmDialogComponent,
     ProgressSpinnerComponent,
     NotFoundComponent

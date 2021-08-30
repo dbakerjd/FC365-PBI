@@ -17,6 +17,7 @@ export class OpportunityListComponent implements OnInit {
   model: any = { };
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
+  loading = true;
 
   constructor(private sharepoint: SharepointService, private router: Router, public matDialog: MatDialog) { }
 
@@ -71,6 +72,7 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
+    this.loading = false;
     for (let op of this.opportunities) {
       op.progress = await this.computeProgress(op);
     }
@@ -84,7 +86,7 @@ export class OpportunityListComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log(this.model);
+    return;
   }
 
   navigateTo(item: Opportunity) {

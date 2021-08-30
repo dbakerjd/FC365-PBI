@@ -10,28 +10,32 @@
     </div>
 </div>
 <div class="opportunity-list-wrapper">
-    <ng-container *ngIf="( opportunities | filter:model.search:model.status:model.type:model.indication) as result">
-    <div class="opportunity-list-item" *ngFor="let item of result">
-        <div class="opportunity-status">
-            <div>
-                <div class="opportunity-active" *ngIf="item.OpportunityStatus == 'Active'"></div>
-                <div class="opportunity-archived" *ngIf="item.OpportunityStatus == 'Archived'"></div>
-                {{item.OpportunityStatus}}
+    <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
+
+    <ng-template #isLoaded>
+        <ng-container *ngIf="( opportunities | filter:model.search:model.status:model.type:model.indication | sort:model.sort_by) as result">
+        <div class="opportunity-list-item" *ngFor="let item of result">
+            <div class="opportunity-status">
+                <div>
+                    <div class="opportunity-active" *ngIf="item.OpportunityStatus == 'Active'"></div>
+                    <div class="opportunity-archived" *ngIf="item.OpportunityStatus == 'Archived'"></div>
+                    {{item.OpportunityStatus}}
+                </div>
+                <p><label>Type: </label>{{item.OpportunityType?.Title}}</p>
             </div>
-            <p><label>Type: </label>{{item.OpportunityType?.Title}}</p>
+            <div class="opportunity-name" (click)="navigateTo(item)">
+                <p class="opportunity-title">{{item.Title}}</p>
+                <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
+                <p><label>Indication: </label> {{item.Indication?.Title}}</p>
+            </div>
+            <div class="opportunity-progress" (click)="navigateTo(item)">
+                <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
+                <p *ngIf="item.Author"><label>Opportunity Owner: </label> {{item.Author.FirstName + ' ' + item.Author.LastName}}</p>
+                <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
+                <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
+            </div>
         </div>
-        <div class="opportunity-name" (click)="navigateTo(item)">
-            <p class="opportunity-title">{{item.Title}}</p>
-            <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
-            <p><label>Indication: </label> {{item.Indication?.Title}}</p>
-        </div>
-        <div class="opportunity-progress" (click)="navigateTo(item)">
-            <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
-            <p *ngIf="item.Author"><label>Opportunity Owner: </label> {{item.Author.FirstName + ' ' + item.Author.LastName}}</p>
-            <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
-            <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
-        </div>
-    </div>
-    <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  
-    </ng-container>
+        <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  
+        </ng-container>
+    </ng-template>
 </div>
