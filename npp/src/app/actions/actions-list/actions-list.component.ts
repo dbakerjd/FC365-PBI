@@ -6,6 +6,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
+import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
@@ -290,6 +291,16 @@ export class ActionsListComponent implements OnInit {
       const data = window.URL.createObjectURL(newBlob);
       window.open(data);
     }
+  }
+
+  async shareFile(fileId: number) {
+    this.matDialog.open(ShareDocumentComponent, {
+      height: '250px',
+      width: '405px',
+      data: {
+        fileId
+      }
+    });
   }
 
   async deleteFile(fileId: number) {

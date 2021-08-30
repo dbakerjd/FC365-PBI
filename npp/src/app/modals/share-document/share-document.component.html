@@ -1,0 +1,10 @@
+<app-dialog-header title="Share Document"></app-dialog-header>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content>
+        <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
+    </mat-dialog-content>
+    <div class="dialog-footer">
+        <div class="dialog-cancel-button" mat-dialog-close>Close</div>
+        <div class="dialog-submit-button" [mat-dialog-close]="true" (click)="onSubmit()" cdkFocusInitial>Share</div>
+    </div>
+</form>

@@ -43,6 +43,7 @@ import { SortPipe } from './sort.pipe';
 import { ConfirmDialogComponent } from './modals/confirm-dialog/confirm-dialog.component';
 import { ProgressSpinnerComponent } from './shared/progress-spinner/progress-spinner.component';
 import { NotFoundComponent } from './not-found/not-found.component';
+import { ShareDocumentComponent } from './modals/share-document/share-document.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -130,6 +131,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     CreateScenarioComponent,
     CreateOpportunityComponent,
     StageSettingsComponent,
+    ShareDocumentComponent,
     FilterPipe,
     SortPipe,
     ConfirmDialogComponent,
