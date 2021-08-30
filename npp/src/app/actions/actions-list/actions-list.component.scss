@@ -186,6 +186,31 @@
                 top: 1rem;
             }
         }
+
+        .next-stage-btn {
+            background-color: #bdffd1;
+            color: rgba(0, 0, 0, 0.6);
+            height: 3.42rem;
+            line-height: 3.42rem;
+            text-align: center;
+            color: #000;
+            cursor: pointer;
+            border: 1px solid #fff;
+            position: relative;
+            transition: all 2s;
+            .complete-btn-icon {
+                background: url('/assets/Check.svg') no-repeat;
+                background-size: cover;
+                width: 1.5rem;
+                height: 1.5rem;
+                position: absolute;
+                top: 1rem;
+                left: 1.5rem;
+            }
+        }
+        .next-stage-btn:hover {
+            background-color: #83c797;
+        }
     }
 
     .documents-files {
@@ -410,6 +435,14 @@
                 }
 
             }
+        }
+    }
+    .next-stage-btn-wrapper {
+        .npp-btn {
+            color: #333;
+            float: none;
+            margin: 1em auto;
+            width: 150px
         }
     }
 }

@@ -128,4 +128,8 @@ app-opportunity-list {
     text-align: center;
     cursor: pointer;
     float: left;
+    transition: all 2s;
+}
+.npp-btn:hover {
+    background-color: #83c797;
 }

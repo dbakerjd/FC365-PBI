@@ -1,9 +1,11 @@
 <app-dialog-header title="Stage Settings"></app-dialog-header>
-<mat-dialog-content>
-    <h1>{{gate?.Title}} Settings</h1>
-    <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
-</mat-dialog-content>
-<div class="dialog-footer">
-    <div class="dialog-cancel-button" mat-dialog-close>Close</div>
-    <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial>Update</div>
-</div>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content>
+        <h1>{{model.Title ? model.Title : 'New Stage'}} Settings</h1>
+        <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
+    </mat-dialog-content>
+    <div class="dialog-footer">
+        <div class="dialog-cancel-button" mat-dialog-close>Close</div>
+        <div class="dialog-submit-button" [mat-dialog-close]="true" (click)="onSubmit()" cdkFocusInitial>{{ isEdit? 'Update' : 'Create' }}</div>
+    </div>
+</form>

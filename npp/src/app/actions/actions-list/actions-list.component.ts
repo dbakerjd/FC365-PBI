@@ -22,6 +22,7 @@ export class ActionsListComponent implements OnInit {
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
   currentGate: Stage | undefined = undefined;
+  lastStageId: number | undefined = undefined; // next stage button control
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   dateOptions: DatepickerOptions = {
@@ -75,6 +76,7 @@ export class ActionsListComponent implements OnInit {
             if(!this.currentGate) {
               this.setGate(el.ID);
             }
+            this.lastStageId = el.ID;
           }
 
         });
@@ -123,7 +125,7 @@ export class ActionsListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        gate: this.currentGate
+        stage: this.currentGate
       }
     })
   }
@@ -200,6 +202,24 @@ export class ActionsListComponent implements OnInit {
 
   onDueDateChange(actionId: number, value: string) {
     this.sharepoint.setActionDueDate(actionId, value);
+  }
+
+  async nextStage() {
+    if (!this.currentGate) return;
+    let nextStage = await this.sharepoint.getNextStage(this.currentGate.StageNameId);
+    if (nextStage) {
+      this.uploadDialogInstance = this.matDialog.open(StageSettingsComponent, {
+        height: '400px',
+        width: '405px',
+        data: {
+          next: nextStage,
+          opportunityId: this.opportunityId
+        }
+      });
+    }
+    else {
+      // TODO Complete Opportunity
+    }
   }
 
   computeProgress() {

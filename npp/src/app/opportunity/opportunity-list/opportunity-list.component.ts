@@ -4,7 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Action, Opportunity, OpportunityTest, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -87,8 +87,9 @@ export class OpportunityListComponent implements OnInit {
     console.log(this.model);
   }
 
-  navigateTo(item: OpportunityTest) {
-    this.router.navigate(['opportunities', item.Id, 'actions']);
+  navigateTo(item: Opportunity) {
+    if (item.OpportunityStatus === "Processing") return;
+    this.router.navigate(['opportunities', item.ID, 'actions']);
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {

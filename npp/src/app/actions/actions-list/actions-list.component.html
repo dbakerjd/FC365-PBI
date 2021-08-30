@@ -50,6 +50,10 @@
                 </div>
             </div>
         </div>
+        <div class="next-stage-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId">
+            <div class="complete-btn-icon"></div>
+            <span>Go to Next Stage</span>
+        </div>
     </div>
     <div class="actions-wrapper">
         <div class="gate-info-wrapper">
@@ -173,8 +177,11 @@
                         <span>{{action.status}}</span>
                         <div class="action-item-status-icon"></div>
                     </div>
-                </div>        
+                </div>
             </div>
-        </div>        
+        </div>
+        <div class="next-stage-btn-wrapper">
+            <div class="npp-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId">Go to Next Stage</div>
+        </div>
     </div>
 </div>
