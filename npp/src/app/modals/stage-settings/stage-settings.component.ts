@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { ToastrService } from 'ngx-toastr';
 import { SharepointService, Stage } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -17,8 +18,9 @@ export class StageSettingsComponent implements OnInit {
   isEdit: boolean = false;
 
   constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
     private sharepoint: SharepointService, 
-    @Inject(MAT_DIALOG_DATA) public data: any
+    private toastr: ToastrService
   ) { }
 
   ngOnInit(): void {
@@ -87,20 +89,25 @@ export class StageSettingsComponent implements OnInit {
     }
   }
 
-  onSubmit() {
+  async onSubmit() {
+    let success;
     if (this.model.ID) {
-      this.sharepoint.updateStage(this.model.ID, {
+      success = await this.sharepoint.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId
       });
+      if (success) this.toastr.success("The stage was updated");
+      else this.toastr.error("The stage couldn't be updated", "Try again");
     } else {
-      this.sharepoint.createStage({
+      success = await this.sharepoint.createStage({
         Title: this.model.Title,
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId,
         OpportunityNameId: this.model.opportunityId,
         StageNameId: this.model.nextMasterStageId
       });
+      if (success) this.toastr.success("The stage was created successfully", this.model.stageType);
+      else this.toastr.error("The stage couldn't be updated", "Try again");
     }
   }
 }

@@ -5,6 +5,7 @@ import { SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -23,7 +24,11 @@ export class CreateOpportunityComponent implements OnInit {
   firstStepCompleted: boolean = false;
 
 
-  constructor(private sharepoint: SharepointService, public matDialog: MatDialog) { }
+  constructor(
+    private sharepoint: SharepointService, 
+    private toastr: ToastrService,
+    public matDialog: MatDialog
+    ) { }
 
   async ngOnInit() {
 
@@ -178,14 +183,16 @@ export class CreateOpportunityComponent implements OnInit {
     ];
   }
 
-  async onNext() {
+  onNext() {
     this.firstStepCompleted = true;
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
   }
 
-  onSubmit() {
-    this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+  async onSubmit() {
+    const success = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+    if (success) this.toastr.success("A new opportunity was created successfully", this.model.Title);
+    else this.toastr.error("The opportunity couldn't be created", "Try again");
   }
  
   ngOnDestroy(): void {
