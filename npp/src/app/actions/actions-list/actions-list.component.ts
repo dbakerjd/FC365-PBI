@@ -64,7 +64,9 @@ export class ActionsListComponent implements OnInit {
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
-          el.folders = await this.sharepoint.getFolders(el.StageNameId);
+          el.folders = await this.sharepoint.getStageFolders(this.opportunityId, el.StageNameId);
+          // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
+          console.log('folders', el.folders);
           this.setStatus(el.actions);
 
           //set current gate
@@ -145,7 +147,8 @@ export class ActionsListComponent implements OnInit {
 
   showFolders() {
     this.currentSection = 'documents';
-    this.setFolder(this.currentFolders[0].ID);
+    if (this.currentFolders.length > 0) this.setFolder(this.currentFolders[0].ID);
+    else this.setFolder(null)
   }
 
   showModels() {
@@ -258,18 +261,26 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async setFolder(folderId: number) {
+  async setFolder(folderId: number | null) {
     this.currentFiles = [];
-    this.loading = true;
-    this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
-    this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
-    this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
-
-    this.displayingModels = false;
-    if (this.currentFolder) {
-      this.displayingModels = !!this.currentFolder.containsModels;
+    if (folderId) {
+      this.loading = true;
+      this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
+      this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
+      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+  
+      this.displayingModels = false;
+      if (this.currentFolder) {
+        this.displayingModels = !!this.currentFolder.containsModels;
+      }
+      this.loading = false;
+    } else {
+      // no folders
+      this.currentFolder = undefined;
+      this.currentFolderUri = '';
+      this.displayingModels = false;
     }
-    this.loading = false;
+
   }
 
   async openFile(fileId: number, forceDownload = false) {

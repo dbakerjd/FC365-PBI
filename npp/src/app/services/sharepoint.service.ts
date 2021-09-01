@@ -365,10 +365,9 @@ export class SharepointService {
   /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
   async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
-    let result = await this.query(
+    const result = await this.query(
       `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`, 
       '$expand=ListItemAllFields',
-      'all'
     ).toPromise();
 
     if (result.value) {
@@ -383,6 +382,18 @@ export class SharepointService {
       }
     }
     return files;
+  }
+
+  async getSubfolders(folder: string): Promise<any> {
+    let subfolders: any[] = [];
+    const result = await this.query(
+      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/folders`, 
+      '$expand=ListItemAllFields',
+    ).toPromise();
+    if (result.value) {
+      subfolders = result.value;
+    }
+    return subfolders;
   }
 
   async getFileInfo(fileId: number): Promise<NPPFile> {
@@ -413,18 +424,7 @@ export class SharepointService {
     }
   }
 
-  /**  */
-
-  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
-    return this.query(query, '', 'all', { term, field, matchCase })
-      .pipe(
-        map((res: any) => {
-          return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
-          );
-        })
-      );
-  }
+  /** OPPORTUNITIES */
 
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
     let opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
@@ -441,6 +441,21 @@ export class SharepointService {
   async getOpportunities(): Promise<Opportunity[]> {
     return await this.getAllItems(OPPORTUNITIES_LIST, "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
   }
+
+  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
+    return this.query(query, '', 'all', { term, field, matchCase })
+      .pipe(
+        map((res: any) => {
+          return res.value.map(
+            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+          );
+        })
+      );
+  }
+
+
+
+
 
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndications.find(i => i.therapy == therapy);
@@ -602,20 +617,29 @@ export class SharepointService {
     return await this.getOneItem(MASTER_STAGES_LIST, `$filter=StageNumber eq ${current.StageNumber + 1} and StageType eq '${current.StageType}'`);
   }
 
-  async getFolders(masterStageId: number): Promise<NPPFolder[]> {
+  async getStageFolders(opportunityId: number, masterStageId: number, allFolders = false): Promise<NPPFolder[]> {
+    let masterFolders = [];
     let cache = this.masterFolders.find(f => f.stage == masterStageId);
     if (cache) {
-      return cache.folders;
+      masterFolders = cache.folders;
+    } else {
+      masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
+      for (let index = 0; index < masterFolders.length; index++) {
+        masterFolders[index].containsModels = masterFolders[index].Title === 'Forecast Models';
+      }
+      this.masterFolders.push({
+        stage: masterStageId,
+        folders: masterFolders
+      });
     }
-    let folders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
-    for (let index = 0; index < folders.length; index++) {
-      folders[index].containsModels = folders[index].Title === 'Forecast Models';
+    
+    if (allFolders) {
+      return masterFolders;
+    } else {
+      // only folders user can access
+      const allowedFolders = await this.getSubfolders(`/${opportunityId}/${masterStageId}`);
+      return masterFolders.filter(f => allowedFolders.some((af: any)=> +af.Name === f.ID));
     }
-    this.masterFolders.push({
-      stage: masterStageId,
-      folders: folders
-    });
-    return folders;
   }
 
   async getCountriesList(): Promise<SelectInputList[]> {

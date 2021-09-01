@@ -80,8 +80,11 @@
             <div *ngSwitchCase="'documents'">
                 <div class="documents-files">
                     <app-progress-spinner *ngIf="loading"></app-progress-spinner>
-                    <h3 *ngIf="currentFiles.length < 1 && !loading" style="text-align: center;">
+                    <h3 *ngIf="currentFiles.length < 1 && currentFolder && !loading" style="text-align: center;">
                         No files are currently uploaded to <em>{{currentFolder.Title}}</em> folder
+                    </h3>
+                    <h3 *ngIf="currentFiles.length < 1 && !currentFolder && !loading" style="text-align: center;">
+                        There are no stage folders or you don't have access to them 
                     </h3>
                     <div class="documents-files-item" *ngFor="let file of currentFiles">
                         <!-- NORMAL DOCUMENTS -->
