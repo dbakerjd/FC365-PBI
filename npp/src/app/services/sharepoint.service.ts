@@ -153,6 +153,7 @@ const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
+const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 const FILES_FOLDER = "Current Opportunity Library";
 
 @Injectable({
@@ -204,23 +205,6 @@ export class SharepointService {
       }
       return of([]);
     }
-  }
-
-  async getCurrentUserInfo(): Promise<User> {
-    let account = localStorage.getItem('sharepointAccount');
-    if(account) {
-      return JSON.parse(account);
-    } else {
-      let account = await this.query('currentuser', '?$select=Title,Email,Id,FirstName,LastName').toPromise();
-      console.log('account sharepoint', account);
-      account['ID'] = account.Id; // set for User interface
-      localStorage.setItem('sharepointAccount', JSON.stringify(account));
-      return account;
-    }
-  }
-
-  removeCurrentUserInfo() {
-    localStorage.removeItem('sharepointAccount');
   }
 
   async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
@@ -323,6 +307,13 @@ export class SharepointService {
     return true;
   }
 
+
+  /** FILES */
+  
+  getBaseFilesFolder(): string {
+    return FILES_FOLDER;
+  }
+
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
@@ -358,19 +349,53 @@ export class SharepointService {
     return true;
   }
 
-  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
-    return this.query(query, '', 'all', { term, field, matchCase })
-      .pipe(
-        map((res: any) => {
-          return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
-          );
-        })
-      );
+  async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
+    let uploaded: any = await this.uploadFileQuery(fileData, folder, fileName);
+
+    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
+
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
+
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, metadata);
+    }
+    return uploaded;
   }
 
+  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
+  async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+    let files: NPPFile[] = []
+    let result = await this.query(
+      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`, 
+      '$expand=ListItemAllFields',
+      'all'
+    ).toPromise();
 
-  async uploadFileQuery(fileData: string, folder: string, filename: string) {
+    if (result.value) {
+      files = result.value;
+    }
+    if (expandProperties && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const fileItems = files[i].ListItemAllFields;
+        if (fileItems) {
+          Object.assign(fileItems, this.getFileInfo(fileItems.ID));
+        }
+      }
+    }
+    return files;
+  }
+
+  async getFileInfo(fileId: number): Promise<NPPFile> {
+    return await this.query(
+      `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`, 
+      '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
+        Country/Title, ModelScenario/Title \
+        &$expand=StageName,Author,TargetUser,Country,ModelScenario',
+      'all'
+    ).toPromise();
+  }
+
+  private async uploadFileQuery(fileData: string, folder: string, filename: string) {
     try {
       let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
       return await this.http.post(
@@ -388,17 +413,17 @@ export class SharepointService {
     }
   }
 
-  async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
-    let uploaded: any = await this.uploadFileQuery(fileData, folder, fileName);
+  /**  */
 
-    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
-
-      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
-      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
-
-      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, metadata);
-    }
-    return uploaded;
+  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
+    return this.query(query, '', 'all', { term, field, matchCase })
+      .pipe(
+        map((res: any) => {
+          return res.value.map(
+            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+          );
+        })
+      );
   }
 
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
@@ -556,10 +581,7 @@ export class SharepointService {
   //   return this.files.filter(f => f.parentId == id);
   // }
 
-  async getUserProfilePic(userId: number): Promise<string> {
-    let queryObj = await this.getOneItemById(userId, USER_INFO_LIST, `$select=Id,Picture`);
-    return queryObj.Picture?.Url;
-  }
+
 
   async getStageType(OpportunityTypeId: number): Promise<string> {
     let result: OpportunityType | undefined;
@@ -615,37 +637,50 @@ export class SharepointService {
     console.log('files', await this.getAllItems(`lists/getbytitle('Current Opportunity Library')`));
   }
 
-  getBaseFilesFolder(): string {
-    return FILES_FOLDER;
-  }
-
-  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
-  async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
-    let files: NPPFile[] = []
-    let result = await this.query(
-      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`, 
-      '$expand=ListItemAllFields',
-      'all'
-    ).toPromise();
-
-    if (result.value) {
-      files = result.value;
-    }
-    if (expandProperties && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        const expandedProps = await this.query(
-          `lists/getbytitle('${FILES_FOLDER}')` + `/items(${files[i].ListItemAllFields?.ID})`, 
-          '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-            Country/Title, ModelScenario/Title \
-            &$expand=StageName,Author,TargetUser,Country,ModelScenario',
-          'all'
-        ).toPromise();
-        Object.assign(files[i].ListItemAllFields, expandedProps);
-      }
-    }
-    return files;
-  }
-
   
+  /** USERS */
+
+  async getUserProfilePic(userId: number): Promise<string> {
+    let queryObj = await this.getOneItemById(userId, USER_INFO_LIST, `$select=Id,Picture`);
+    return queryObj.Picture?.Url;
+  }
+
+  async getUsersFromGroup(groupName: string): Promise<User[]> {
+    // return this.getAllItems("sitegropus/getbyname('Beta Test Group')", 
+    let users = await this.query(`sitegroups/getbyname('${groupName}')/users`).toPromise();
+    if (users && users.value.length > 0) {
+      return users.value;
+    }      
+    return [];
+  }
+
+  async getCurrentUserInfo(): Promise<User> {
+    let account = localStorage.getItem('sharepointAccount');
+    if(account) {
+      return JSON.parse(account);
+    } else {
+      let account = await this.query('currentuser', '?$select=Title,Email,Id,FirstName,LastName').toPromise();
+      console.log('account sharepoint', account);
+      account['ID'] = account.Id; // set for User interface
+      localStorage.setItem('sharepointAccount', JSON.stringify(account));
+      return account;
+    }
+  }
+
+  async getUserInfo(userId: number): Promise<User> {
+    return await this.query(`siteusers/getbyid('${userId}')`).toPromise();
+  }
+
+  removeCurrentUserInfo() {
+    localStorage.removeItem('sharepointAccount');
+  }
+
+  /** NOTIFICATIONS */
+  async createNotification(userId: number, text: string): Promise<boolean> {
+    return this.createItem(NOTIFICATIONS_LIST, {
+      Title: text,
+      TargetUserId: userId
+    });
+  }
 
 }

@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { NPPFile, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-share-document',
@@ -10,34 +11,44 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 })
 export class ShareDocumentComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
-
   form: FormGroup = new FormGroup({});
   model: any = {}; 
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: any) { }
+  file: NPPFile | undefined = undefined;
+
+  constructor(
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    private readonly sharepoint: SharepointService
+  ) { }
 
   ngOnInit(): void {
+    this.file = this.data.file;
     this.fields = [{
       fieldGroup: [{
-        key: 'fileId',
-        type: 'input',
-        defaultValue: this.data.fileId,
-        hideExpression: true
-      },{
-        key: 'StageUsersId',
+        key: 'userId',
         type: 'ngsearchable',
         templateOptions: {
             label: 'Stage Users:',
             placeholder: 'Stage Users',
-            filterLocally: false,
-            query: 'siteusers',
-            multiple: true
+            filterLocally: true,
+            options: this.data.folderUsersList,
+            multiple: false,
+            labelProp: 'Title',
+            valueProp: 'Id',
+            required: true,
         }
       }]
     }];
   }
 
-  onSubmit() {
-    console.log(this.model)
+  async onSubmit() {
+    const fileId = this.file?.ListItemAllFields?.ID;
+    if (fileId && this.model.userId) {
+      const userFrom = await this.sharepoint.getCurrentUserInfo();
+      await this.sharepoint.createNotification(
+        this.model.userId, 
+        `The file "${this.file?.Name}" was shared with you by ${userFrom.Title}`
+      );
+    }
   }
 }

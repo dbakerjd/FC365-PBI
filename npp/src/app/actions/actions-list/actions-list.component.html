@@ -106,7 +106,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
@@ -148,7 +148,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="downloadFile(file.ListItemAllFields.ID, false)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file"></div>
+                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
