@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-upload-file',
@@ -20,7 +21,8 @@ export class UploadFileComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private readonly sharepoint: SharepointService
+    private readonly sharepoint: SharepointService,
+    private readonly toastr: ToastrService
   ) { 
     
   }
@@ -61,8 +63,11 @@ export class UploadFileComponent implements OnInit {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
         this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
-          r => { console.log('upload response', r); }
-        )
+          r => { 
+            if (Object.keys(r).length > 0) this.toastr.success(`The file ${this.model.file[0].name} was uploaded successfully`, "File Uploaded");
+            else this.toastr.error("Sorry, there was a problem uploading your file");
+          }
+        );
       }
     )
   }
