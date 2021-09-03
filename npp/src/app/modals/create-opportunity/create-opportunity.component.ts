@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
@@ -22,19 +22,27 @@ export class CreateOpportunityComponent implements OnInit {
   indications: any[] = [];
   dialogInstance: any;
   firstStepCompleted: boolean = false;
-
+  isEdit = false;
 
   constructor(
     private sharepoint: SharepointService, 
     private toastr: ToastrService,
-    public matDialog: MatDialog
+    public matDialog: MatDialog,
+    @Inject(MAT_DIALOG_DATA) public data: any,
     ) { }
 
   async ngOnInit() {
 
     let therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    let indicationsList: any[] = [];
     this.firstStepCompleted = false;
+
+    if (this.data?.opportunity) {
+      this.isEdit = true;
+      indicationsList = await this.sharepoint.getIndicationsList(this.data.opportunity.Indication.TherapyArea);
+      console.log('op', this.data.opportunity);
+    }
 
     this.fields = [
       {
@@ -45,7 +53,8 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Opportunity Name:',
             placeholder: 'Opportunity Name',
             required: true,
-          }
+          },
+          defaultValue: this.data?.opportunity.Title
         }, {
           key: 'Opportunity.MoleculeName',
           type: 'input',
@@ -53,7 +62,8 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Molecule Name:',
             placeholder: 'Molecule Name',
             required: true,
-          }
+          },
+          defaultValue: this.data?.opportunity.MoleculeName
         }, {
           key: 'Opportunity.OpportunityOwnerId',
           type: 'ngsearchable',
@@ -63,7 +73,8 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
             filterLocally: false,
             query: 'siteusers',
-          }
+          },
+          defaultValue: this.data?.opportunity.OpportunityOwnerId
         }, {
           key: 'therapy',
           type: 'select',
@@ -72,14 +83,16 @@ export class CreateOpportunityComponent implements OnInit {
             options: therapies,
             required: true,
           },
+          defaultValue: this.data?.opportunity.Indication.TherapyArea,
         }, {
           key: 'Opportunity.IndicationId',
           type: 'select',
           templateOptions: {
             label: 'Indication Name:',
-            options: [],
+            options: indicationsList,
             required: true,
           },
+          defaultValue: this.data?.opportunity.IndicationId,
           hooks: {
             onInit: (field) => {
               if (!field?.parent?.fieldGroup) return;
@@ -115,20 +128,23 @@ export class CreateOpportunityComponent implements OnInit {
             );
             }
           },
+          defaultValue: this.data?.opportunity.OpportunityTypeId
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
           templateOptions: {
             label: 'Project Start Date:',
             required: true,
-          }
+          },
+          defaultValue: this.data?.opportunity.ProjectStartDate ? new Date(this.data?.opportunity.ProjectStartDate) : null
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
           templateOptions: {
             label: 'Project End Date:',
             required: true,
-          }
+          },
+          defaultValue: this.data?.opportunity.ProjectEndDate ? new Date(this.data?.opportunity.ProjectEndDate) : null
         }],
         hideExpression: this.firstStepCompleted
       },
@@ -190,9 +206,15 @@ export class CreateOpportunityComponent implements OnInit {
   }
 
   async onSubmit() {
-    const success = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
-    if (success) this.toastr.success("A new opportunity was created successfully", this.model.Title);
-    else this.toastr.error("The opportunity couldn't be created", "Try again");
+    if (this.isEdit) {
+      const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
+      if (success) this.toastr.success("A opportunity was updated successfully", this.model.Title);
+      else this.toastr.error("The opportunity couldn't be created", "Try again");
+    } else {
+      const success = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+      if (success) this.toastr.success("A new opportunity was created successfully", this.model.Title);
+      else this.toastr.error("The opportunity couldn't be created", "Try again");
+    }
   }
  
   ngOnDestroy(): void {

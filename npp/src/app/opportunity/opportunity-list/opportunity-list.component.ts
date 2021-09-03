@@ -3,6 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { ToastrService } from 'ngx-toastr';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
@@ -19,7 +20,12 @@ export class OpportunityListComponent implements OnInit {
   dialogInstance: any;
   loading = true;
 
-  constructor(private sharepoint: SharepointService, private router: Router, public matDialog: MatDialog) { }
+  constructor(
+    private sharepoint: SharepointService, 
+    private toastr: ToastrService,
+    private router: Router, 
+    public matDialog: MatDialog
+    ) { }
 
   async ngOnInit() {
 
@@ -86,7 +92,7 @@ export class OpportunityListComponent implements OnInit {
   }
 
   onSubmit() {
-    return;
+    return; // filtering done with pipes
   }
 
   navigateTo(item: Opportunity) {
@@ -116,5 +122,35 @@ export class OpportunityListComponent implements OnInit {
       return Math.round((gatesMedium.reduce((a, b) => a + b, 0) / gatesMedium.length) * 10000) / 100;
     }
     return 0;
+  }
+
+  async archive(opp: Opportunity) {
+    console.log(opp);
+    const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Archive");
+    if (success) {
+      this.toastr.success("The opportunity has been archived");
+    } else {
+      this.toastr.error("The opportunity couldn't be archived", "Try again");
+    }
+  }
+
+  async restore(opp: Opportunity) {
+    console.log(opp);
+    const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
+    if (success) {
+      this.toastr.success("The opportunity has been restored");
+    } else {
+      this.toastr.error("The opportunity couldn't be restored", "Try again");
+    }
+  }
+
+  async edit(opp: Opportunity) {
+    this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
+      height: '700px',
+      width: '405px',
+      data: {
+        opportunity: opp
+      }
+    });
   }
 }

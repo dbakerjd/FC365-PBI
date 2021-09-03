@@ -426,6 +426,13 @@ export class SharepointService {
 
   /** OPPORTUNITIES */
 
+  async getOpportunities(): Promise<Opportunity[]> {
+    return await this.getAllItems(
+      OPPORTUNITIES_LIST, 
+      "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner"
+      );
+  }
+
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
     let opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
     let stageType = await this.getStageType(op.OpportunityTypeId);
@@ -434,12 +441,27 @@ export class SharepointService {
 
     console.log(`CREATED OPPORTUNITY (ID ${opportunity.ID}) AND FIRST STAGE (ID ${stage.ID})`);
     console.log('[TOOD] Use Endpoint to create groups and actions');
+
+    let result = await this.http.get(
+      `https://demoazurefunction20210820114014.azurewebsites.net/api/Connect?stageID=${stage.ID}&OppID=${opportunity.ID}&siteUrl=${this.licensing.getSharepointUri()}`
+    ).toPromise();
     
+    console.log('result', result);
     return opportunity;
   }
 
-  async getOpportunities(): Promise<Opportunity[]> {
-    return await this.getAllItems(OPPORTUNITIES_LIST, "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail&$expand=OpportunityType,Indication,Author");
+  async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
+    return await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
+  }
+
+  async setOpportunityStatus(opportunityId: number, status: string) {
+    const allowedStatus = ["Processing", "Archive", "Active", "Approved"];
+    if (allowedStatus.includes(status)) {
+      return this.updateItem(opportunityId, OPPORTUNITIES_LIST, {
+        OpportunityStatus: status
+      });
+    }
+    return false;
   }
 
   searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
