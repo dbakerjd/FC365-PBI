@@ -41,7 +41,7 @@
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.ID === gate.ID">
-                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder === folder.ID}" (click)="setFolder(folder.ID)">
+                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder.ID === folder.ID}" (click)="setFolder(folder.ID)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
