@@ -68,6 +68,7 @@ export class FormlyFieldNgSelect extends FieldType {
         of([]), // default items
         this.textInput$.pipe(
           distinctUntilChanged(),
+          debounceTime(500),
           tap(() => this.searching = true),
           switchMap(term => this.api.searchByTermInputList(this.query, this.filterField, term).pipe(
             catchError(() => of([])), // empty list on error
