@@ -464,16 +464,6 @@ export class SharepointService {
     return false;
   }
 
-  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
-    return this.query(query, '', 'all', { term, field, matchCase })
-      .pipe(
-        map((res: any) => {
-          return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
-          );
-        })
-      );
-  }
 
 
 
@@ -728,5 +718,18 @@ export class SharepointService {
       TargetUserId: userId
     });
   }
+
+  /** LISTS */
+  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
+    return this.query(query, '', 'all', { term, field, matchCase })
+      .pipe(
+        map((res: any) => {
+          return res.value.map(
+            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+          );
+        })
+      );
+  }
+
 
 }

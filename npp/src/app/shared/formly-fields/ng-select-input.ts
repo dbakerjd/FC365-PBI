@@ -65,7 +65,7 @@ export class FormlyFieldNgSelect extends FieldType {
     if (!this.filterLocally && this.query) {
 
       this.to.options = concat(
-        of([]), // default items
+        of(this.to.options ? this.to.options : []), // default items
         this.textInput$.pipe(
           distinctUntilChanged(),
           debounceTime(500),

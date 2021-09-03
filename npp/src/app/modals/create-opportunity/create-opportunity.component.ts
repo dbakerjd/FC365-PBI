@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -36,12 +36,16 @@ export class CreateOpportunityComponent implements OnInit {
     let therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
     let indicationsList: any[] = [];
+    let defaultUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
 
     if (this.data?.opportunity) {
       this.isEdit = true;
       indicationsList = await this.sharepoint.getIndicationsList(this.data.opportunity.Indication.TherapyArea);
-      console.log('op', this.data.opportunity);
+      defaultUsersList = [{ 
+        label: this.data.opportunity.OpportunityOwner.FirstName + ' ' + this.data.opportunity.OpportunityOwner.LastName,
+        value: this.data.opportunity.OpportunityOwnerId
+      }];
     }
 
     this.fields = [
@@ -73,6 +77,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
             filterLocally: false,
             query: 'siteusers',
+            options: defaultUsersList
           },
           defaultValue: this.data?.opportunity.OpportunityOwnerId
         }, {
