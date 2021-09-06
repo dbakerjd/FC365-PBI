@@ -56,7 +56,7 @@ export class ActionsListComponent implements OnInit {
           this.router.navigate(['notfound']);
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
-        this.isOwner = this.currentUser.ID === this.opportunity.OpportunityOwnerId;
+        this.isOwner = this.currentUser.Id === this.opportunity.OpportunityOwnerId;
 
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
@@ -187,7 +187,7 @@ export class ActionsListComponent implements OnInit {
     
     if (action.Complete) done = await this.sharepoint.uncompleteAction(action.Id);
     else {
-      done = await this.sharepoint.completeAction(action.Id, this.currentUser.ID);
+      done = await this.sharepoint.completeAction(action.Id, this.currentUser.Id);
     }
 
     if (done) {
@@ -196,7 +196,7 @@ export class ActionsListComponent implements OnInit {
       if (action.Complete) {
         action.Timestamp = new Date();
         action.TargetUser = {
-          ID: this.currentUser.ID,
+          Id: this.currentUser.Id,
           FirstName: this.currentUser.Title,
           LastName: ''
         };

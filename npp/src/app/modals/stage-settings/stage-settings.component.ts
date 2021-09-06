@@ -3,7 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-stage-settings',
@@ -23,7 +23,11 @@ export class StageSettingsComponent implements OnInit {
     private toastr: ToastrService
   ) { }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    let defaultUsersList: SelectInputList[] = [];
+    if (this.data?.stage) {
+      defaultUsersList = await this.sharepoint.getUsersList(this.data?.stage.StageUsersId);
+    }
 
     this.fields = [{
       fieldGroup: [{
@@ -64,7 +68,8 @@ export class StageSettingsComponent implements OnInit {
             placeholder: 'Stage Users',
             filterLocally: false,
             query: 'siteusers',
-            multiple: true
+            multiple: true,
+            options: defaultUsersList
         }
       },{
         key: 'StageReview',

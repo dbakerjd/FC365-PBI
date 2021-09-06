@@ -73,7 +73,7 @@ export interface Indication {
 }
 
 export interface User {
-  ID: number;
+  Id: number;
   FirstName?: string;
   LastName?: string;
   Title?: string;
@@ -731,5 +731,13 @@ export class SharepointService {
       );
   }
 
+  async getUsersList(usersId: number[]): Promise<SelectInputList[]> {
+    const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
+    const users = await this.query('siteusers', '$filter='+conditions).toPromise();
+    if (users.value) {
+      return users.value.map((u: User) => { return { label: u.Title, value: u.Id }});
+    }
+    return [];
+  }
 
 }

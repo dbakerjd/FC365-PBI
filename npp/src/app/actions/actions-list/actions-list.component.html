@@ -168,7 +168,7 @@
                         <label> at </label>
                         {{action.Timestamp | date : 'HH:mm'}}
                         <label> by </label>
-                        <ng-container *ngIf="action.TargetUser && action.TargetUser.ID">{{action.TargetUser.FirstName + ' ' + action.TargetUser.LastName}}</ng-container>
+                        <ng-container *ngIf="action.TargetUser && action.TargetUser.Id">{{action.TargetUser.FirstName + ' ' + action.TargetUser.LastName}}</ng-container>
                     </div>
                     <div class="action-item-completed" *ngIf="!action.Complete">Not completed yet</div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
