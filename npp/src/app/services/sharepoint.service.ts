@@ -60,6 +60,15 @@ export interface Action {
   status?: string;
 }
 
+export interface MasterAction {
+  Id: number,
+  Title: string;
+  ActionNumber: number;
+  StageNameId: number;
+  OpportunityTypeId: number;
+  DueDays: number;
+}
+
 export interface OpportunityType {
   ID: number;
   Title: string;
@@ -87,6 +96,7 @@ export interface Stage {
   OpportunityNameId: number;
   StageNameId: number;
   StageReview: Date;
+  StageUsersId: number[];
   Created: Date;
   actions?: Action[];
   folders?: NPPFolder[];
@@ -149,6 +159,7 @@ const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
+const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
@@ -314,6 +325,23 @@ export class SharepointService {
     return FILES_FOLDER;
   }
 
+  async createFolder(newFolderUrl: string) {
+    try {
+      return await this.http.post(
+        this.licensing.getSharepointUri() + "/folders", 
+        {
+          ServerRelativeUrl: FILES_FOLDER + newFolderUrl
+        }
+      ).toPromise();
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true);
+        console.log('The folder cannot be created');
+      }
+      return false;
+    }
+  }
+
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
@@ -426,6 +454,25 @@ export class SharepointService {
 
   /** OPPORTUNITIES */
 
+  async testEndpoint() {
+    /*
+    // "e78fab3e-248e-442c-b2e1-15f309e9d276"
+    let r = await this.http.post('https://login.microsoftonline.com/e78fab3e-248e-442c-b2e1-15f309e9d276/oauth2/token', {
+      client_id: "b431132e-d7ea-4206-a0a9-5403adf64155/.default",
+      // client_secret: qDk2.~ZH0_aVijr.~2K2R4II-1~keYjwI2
+      grant_type: 'client_credentials',
+      resource: 'https://janddconsulting.onmicrosoft.com/NPPProvisioning-API',
+      // scope: b431132e-d7ea-4206-a0a9-5403adf64155./default,
+    }).toPromise();
+    console.log('r', r);
+    */
+    
+    // "eyJ0eXAiOiJKV1QiLCJub25jZSI6Im81RUREbWJaTVhuVXZ4UmU2Q05hYU0tQ2VOZkdEQXFQWGxISEVWRU5qZ1kiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9lNzhmYWIzZS0yNDhlLTQ0MmMtYjJlMS0xNWYzMDllOWQyNzYvIiwiaWF0IjoxNjMwOTQzNjczLCJuYmYiOjE2MzA5NDM2NzMsImV4cCI6MTYzMDk0NzU3MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhUQUFBQW1pL1B1M2VEcDNITlVONWF0SmFxOUZnS1Iyemp6elVEZEtxVm1qcnh6a2c9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJOUFAgRGVtbyIsImFwcGlkIjoiMTc1MzRjYTItZjRmOC00M2MwLTg2MTItNzJiZGQyOWE5ZWU4IiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJNYcOxw6kiLCJnaXZlbl9uYW1lIjoiQWxiZXJ0IiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMzcuMTQuMTA4Ljc3IiwibmFtZSI6IkFsYmVydCBNYcOxw6kiLCJvaWQiOiI5MzJiNmNkMC03ODY4LTQ4MWEtOTM3NC1hOTQ2Njg4M2M0ZjMiLCJwbGF0ZiI6IjgiLCJwdWlkIjoiMTAwMzIwMDE2QjFDMDBBMCIsInJoIjoiMC5BWUVBUHF1UDU0NGtMRVN5NFJYekNlblNkcUpNVXhmNDlNQkRoaEp5dmRLYW51aUJBQzQuIiwic2NwIjoiQWxsU2l0ZXMuRnVsbENvbnRyb2wgQWxsU2l0ZXMuTWFuYWdlIE15RmlsZXMuUmVhZCBNeUZpbGVzLldyaXRlIG9wZW5pZCBwcm9maWxlIFNpdGVzLlJlYWQuQWxsIFNpdGVzLlNlYXJjaC5BbGwgVXNlci5SZWFkIFVzZXIuUmVhZC5BbGwgZW1haWwiLCJzdWIiOiJfdG5keWdwWnRqTzV1ckhTbThyS01TQTF0VW9NS3JjRDB4aEZBczZ0TWg4IiwidGVuYW50X3JlZ2lvbl9zY29wZSI6IkVVIiwidGlkIjoiZTc4ZmFiM2UtMjQ4ZS00NDJjLWIyZTEtMTVmMzA5ZTlkMjc2IiwidW5pcXVlX25hbWUiOiJhbGJlcnRAYmV0YXNvZnR3YXJlc2wub25taWNyb3NvZnQuY29tIiwidXBuIjoiYWxiZXJ0QGJldGFzb2Z0d2FyZXNsLm9ubWljcm9zb2Z0LmNvbSIsInV0aSI6IlQ3ejV5dWx1bjBpcjB5RE5ldGU4QUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfc3QiOnsic3ViIjoiQTBCeHN4allIWXBueTJ1TzFNYWx1WF9iVDh4RjJYMXdxVHhrVmotcFNUdyJ9LCJ4bXNfdGNkdCI6MTYyMzIyODYyM30.EFMaV_HCwk6xj1Wegx0ISJs_oONuHErAwazGOV3lmbSMLqUtgF7_fYsHVEtB1giqrlwmpDLcuZTvSpcBI2UiyzFUNsn2n5OKkmJIGPX3my_ZjkkT_7uGa2YWKknBCuLW6g-nZjsJ3QkjxzNRMBQ0erZIRhrPUzSlbT3L45QfB2pY7JyzcT4K_TXVoY1tHOsrsxT5JTgV-t1O9Z8qL22qO873bmh-hvB3fAZh80gF3F8EkDcx5XB2gsWXwLB536Hr24PFWuPGoWBe-CjPFSfdoG_88hT8bbmcD__bZUntBnylqQWcxWc2Sc-N-ezgG7LZ7Cv1xgpkEkBA4c3fOv-GHQ"
+    let result = await this.http.get(
+      `https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=18&OppID=2&siteUrl=https://betasoftwaresl.sharepoint.com/sites/JDNPPApp`
+    ).toPromise();
+  }
+
   async getOpportunities(): Promise<Opportunity[]> {
     return await this.getAllItems(
       OPPORTUNITIES_LIST, 
@@ -439,14 +486,14 @@ export class SharepointService {
     let masterStage = await this.getOneItem(MASTER_STAGES_LIST, `$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
     let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
 
-    console.log(`CREATED OPPORTUNITY (ID ${opportunity.ID}) AND FIRST STAGE (ID ${stage.ID})`);
-    console.log('[TOOD] Use Endpoint to create groups and actions');
-
-    let result = await this.http.get(
-      `https://demoazurefunction20210820114014.azurewebsites.net/api/Connect?stageID=${stage.ID}&OppID=${opportunity.ID}&siteUrl=${this.licensing.getSharepointUri()}`
-    ).toPromise();
-    
-    console.log('result', result);
+    this.initializeOpportunity(opportunity, stage);
+    this.updateItem(
+      opportunity.ID,
+      OPPORTUNITIES_LIST,
+      {
+        OpportunityStatus: "Active"
+      }
+    );
     return opportunity;
   }
 
@@ -464,9 +511,79 @@ export class SharepointService {
     return false;
   }
 
+  private initializeOpportunity(opportunity: Opportunity, stage: Stage) {
+    this.createStageActions(opportunity, stage);
+    this.createStageFolders(stage);
+    return true;
+  }
+
+  private async createStageActions(opportunity: Opportunity, stage: Stage) {
+    const masterActions: MasterAction[] = await this.getAllItems(
+      MASTER_ACTION_LIST, 
+      `$filter=StageNameId eq ${stage.StageNameId} and OpportunityTypeId eq ${opportunity.OpportunityTypeId}&$orderby=ActionNumber asc`
+    );
+
+    for (const ma of masterActions) {
+      const result = await this.createAction(ma, opportunity.ID);
+    }
+  }
+
+  private async createAction(ma: MasterAction, oppId: number): Promise<Action> {
+    let dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + ma.DueDays);
+    return await this.createItem(
+      OPPORTUNITY_ACTIONS_LIST,
+      {
+        Title: ma.Title,
+        StageNameId: ma.StageNameId,
+        OpportunityNameId: oppId,
+        ActionNameId: ma.Id,
+        ActionDueDate: dueDate
+      }
+    );
+  }
+
+  private async createStageFolders(stage: Stage) {
+    const masterFolders = await this.getAllItems(
+      MASTER_FOLDER_LIST,
+      `$filter=StageNameId eq ${stage.StageNameId}`
+    );
+
+    await this.createFolder(`/${stage.OpportunityNameId}`);
+    await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
+
+    masterFolders.forEach(async (mf) => {
+      await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.Id}`);
+    });
+  }
 
 
 
+  /** PERMISSIONS */
+  async testAddGroup() {
+    const group = await this.query("sitegroups/getbyname('Beta Test Group')/id").toPromise();
+    console.log('group', group);
+
+    await this.http.post(
+      this.licensing.getSharepointUri() + `GetFolderByServerRelativeUrl('Current Opportunity Library/2/3')/ListItemAllFields/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
+      null).toPromise();
+    const result = await this.http.post(
+      this.licensing.getSharepointUri() + `GetFolderByServerRelativeUrl('Current Opportunity Library/2/3')/ListItemAllFields/roleassignments/addroleassignment(principalid=${group.value},roledefid=1073741826)`,
+      null).toPromise();
+  }
+
+  async testAddGroupToOpportunity() {
+    const group = await this.query("sitegroups/getbyname('Beta Test Group')/id").toPromise();
+    console.log('group', group);
+
+    await this.http.post(
+      this.licensing.getSharepointUri()  + OPPORTUNITIES_LIST + `/items(27)/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
+      null).toPromise();
+    const result = await this.http.post(
+      this.licensing.getSharepointUri() + OPPORTUNITIES_LIST + `/items(27)/roleassignments/addroleassignment(principalid=${group.value},roledefid=1073741826)`,
+      null).toPromise();
+
+  }
 
 
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
