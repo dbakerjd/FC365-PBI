@@ -83,6 +83,7 @@ export interface Indication {
 
 export interface User {
   Id: number;
+  LoginName?: string;
   FirstName?: string;
   LastName?: string;
   Title?: string;
@@ -151,6 +152,14 @@ export interface FilterTerm {
   term: string;
   field?: string;
   matchCase?: boolean;
+}
+
+export interface SPGroup {
+  Id: number;
+  Title: string;
+  Description: string;
+  LoginName: string;
+  OnlyAllowMembersViewMembership: boolean;
 }
 
 const OPPORTUNITIES_LIST = "lists/getbytitle('Opportunities')";
@@ -511,7 +520,13 @@ export class SharepointService {
     return false;
   }
 
-  private initializeOpportunity(opportunity: Opportunity, stage: Stage) {
+  private async initializeOpportunity(opportunity: Opportunity, stage: Stage) {
+    const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
+
+    console.log('groups created');
+    for (const gr of groups) {
+      this.addRolePermissionToLists(OPPORTUNITIES_LIST, gr.Id, opportunity.ID);
+    }
     this.createStageActions(opportunity, stage);
     this.createStageFolders(stage);
     return true;
@@ -557,9 +572,93 @@ export class SharepointService {
     });
   }
 
+  async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroup[]> {
+    let group;
+    let groups: SPGroup[] = [];
+    const owner = await this.getUserInfo(ownerId);
+    if (!owner.LoginName) return [];
+
+    // Opportunity Owner (OO)
+    group = await this.createGroup(`OO-${oppId}`);
+    if (group) {
+      groups.push(group);
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+
+    // Opportunity Users (OU)
+    group = await this.createGroup(`OU-${oppId}`);
+    if (group) {
+      groups.push(group);
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+
+    // Stage Owners (SO)
+    group = await this.createGroup(`SO-${oppId}-${masterStageId}`);
+    if (group) {
+      groups.push(group);
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+    return groups;
+  }
+
 
 
   /** PERMISSIONS */
+  async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
+    try {
+      return await this.http.post(
+        this.licensing.getSharepointUri() + 'sitegroups',
+        {
+          Title: name,
+          Description: description,
+          OnlyAllowMembersViewMembership: false
+        }
+      ).toPromise() as SPGroup;
+    } catch (e) {
+      if (e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return null;
+    }
+  }
+
+  async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointUri() + `sitegroups(${groupId})/users`,
+        { LoginName: loginName }
+      ).toPromise();
+      return true;
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+  }
+
+  async readGroups(): Promise<SPGroup[]> {
+    return await this.query('sitegroups').toPromise();
+  }
+
+  async addRolePermissionToLists(list: string, groupId: number, id: number = 0): Promise<boolean> {
+    const baseUrl = this.licensing.getSharepointUri() + list + (id === 0 ? '' : `/items(${id})`);
+    try {
+      await this.http.post(
+        baseUrl + `/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
+        null).toPromise();
+      await this.http.post(
+        baseUrl + `/roleassignments/addroleassignment(principalid=${groupId},roledefid=1073741826)`,
+        null).toPromise();
+      return true;
+    } catch (e) {
+      if (e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+  }
+
   async testAddGroup() {
     const group = await this.query("sitegroups/getbyname('Beta Test Group')/id").toPromise();
     console.log('group', group);
