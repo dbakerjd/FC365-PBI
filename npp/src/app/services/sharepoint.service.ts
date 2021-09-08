@@ -4,7 +4,6 @@ import { Observable, of } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
-import { TeamsService } from './teams.service';
 import { map } from 'rxjs/operators';
 
 
@@ -226,7 +225,7 @@ export class SharepointService {
     id: number;
   }[] = [];
 
-  constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
+  constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
   query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
@@ -540,6 +539,15 @@ export class SharepointService {
     permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
     console.log('permissions', permissions);
     await this.setPermissions(permissions, groups, stage.ID);
+
+    // add stage users to group OU
+    const OUGroup = groups.find(g => g.type === 'OU');
+    if (OUGroup) {
+      for (const userId of stage.StageUsersId) {
+        const user = await this.getUserInfo(userId);
+        if (user.LoginName) await this.addUserToGroup(user.LoginName, OUGroup.data.Id);
+      }
+    }
 
     // Actions
     const stageActions = await this.createStageActions(opportunity, stage);
