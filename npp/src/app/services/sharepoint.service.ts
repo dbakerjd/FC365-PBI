@@ -220,6 +220,10 @@ export class SharepointService {
     stage: number;
     folders: NPPFolder[]
   }[] = [];
+  SPRoleDefinitions: {
+    name: string;
+    id: number;
+  }[] = [];
 
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
@@ -687,6 +691,31 @@ export class SharepointService {
     }
   }
 
+  async getGroupId(name: string): Promise<number | null> {
+    try {
+      const result = await this.query(`sitegroups/getbyname('${name}')/id`).toPromise();
+      return result.value;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async getRoleDefinitionId(name: string): Promise<number | null> {
+    const cache = this.SPRoleDefinitions.find(g => g.name === name);
+    if (cache) {
+      return cache.id;
+    } else {
+      try {
+        const result = await this.query(`roledefinitions/getbyname('${name}')/id`).toPromise();
+        this.SPRoleDefinitions.push({name, id: result.value }); // add for local caching
+        return result.value;
+      }
+      catch (e) {
+        return null;
+      }
+    }
+  }
+
   async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
     try {
       await this.http.post(
@@ -744,7 +773,8 @@ export class SharepointService {
   }
 
   private async setRolePermission(baseUrl: string, groupId: number, roleName: string) {
-    const roleId = 1073741826;
+    // const roleId = 1073741826; // READ
+    const roleId = await this.getRoleDefinitionId(roleName);
     try {
       await this.http.post(
         baseUrl + `/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
@@ -760,6 +790,7 @@ export class SharepointService {
       return false;
     }
   }
+
 
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndications.find(i => i.therapy == therapy);
