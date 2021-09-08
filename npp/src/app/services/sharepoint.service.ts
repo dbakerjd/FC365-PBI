@@ -493,25 +493,6 @@ export class SharepointService {
 
   /** OPPORTUNITIES */
 
-  async testEndpoint() {
-    /*
-    // "e78fab3e-248e-442c-b2e1-15f309e9d276"
-    let r = await this.http.post('https://login.microsoftonline.com/e78fab3e-248e-442c-b2e1-15f309e9d276/oauth2/token', {
-      client_id: "b431132e-d7ea-4206-a0a9-5403adf64155/.default",
-      // client_secret: qDk2.~ZH0_aVijr.~2K2R4II-1~keYjwI2
-      grant_type: 'client_credentials',
-      resource: 'https://janddconsulting.onmicrosoft.com/NPPProvisioning-API',
-      // scope: b431132e-d7ea-4206-a0a9-5403adf64155./default,
-    }).toPromise();
-    console.log('r', r);
-    */
-    
-    // "eyJ0eXAiOiJKV1QiLCJub25jZSI6Im81RUREbWJaTVhuVXZ4UmU2Q05hYU0tQ2VOZkdEQXFQWGxISEVWRU5qZ1kiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9lNzhmYWIzZS0yNDhlLTQ0MmMtYjJlMS0xNWYzMDllOWQyNzYvIiwiaWF0IjoxNjMwOTQzNjczLCJuYmYiOjE2MzA5NDM2NzMsImV4cCI6MTYzMDk0NzU3MywiYWNjdCI6MCwiYWNyIjoiMSIsImFpbyI6IkFTUUEyLzhUQUFBQW1pL1B1M2VEcDNITlVONWF0SmFxOUZnS1Iyemp6elVEZEtxVm1qcnh6a2c9IiwiYW1yIjpbInB3ZCJdLCJhcHBfZGlzcGxheW5hbWUiOiJOUFAgRGVtbyIsImFwcGlkIjoiMTc1MzRjYTItZjRmOC00M2MwLTg2MTItNzJiZGQyOWE5ZWU4IiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJNYcOxw6kiLCJnaXZlbl9uYW1lIjoiQWxiZXJ0IiwiaWR0eXAiOiJ1c2VyIiwiaXBhZGRyIjoiMzcuMTQuMTA4Ljc3IiwibmFtZSI6IkFsYmVydCBNYcOxw6kiLCJvaWQiOiI5MzJiNmNkMC03ODY4LTQ4MWEtOTM3NC1hOTQ2Njg4M2M0ZjMiLCJwbGF0ZiI6IjgiLCJwdWlkIjoiMTAwMzIwMDE2QjFDMDBBMCIsInJoIjoiMC5BWUVBUHF1UDU0NGtMRVN5NFJYekNlblNkcUpNVXhmNDlNQkRoaEp5dmRLYW51aUJBQzQuIiwic2NwIjoiQWxsU2l0ZXMuRnVsbENvbnRyb2wgQWxsU2l0ZXMuTWFuYWdlIE15RmlsZXMuUmVhZCBNeUZpbGVzLldyaXRlIG9wZW5pZCBwcm9maWxlIFNpdGVzLlJlYWQuQWxsIFNpdGVzLlNlYXJjaC5BbGwgVXNlci5SZWFkIFVzZXIuUmVhZC5BbGwgZW1haWwiLCJzdWIiOiJfdG5keWdwWnRqTzV1ckhTbThyS01TQTF0VW9NS3JjRDB4aEZBczZ0TWg4IiwidGVuYW50X3JlZ2lvbl9zY29wZSI6IkVVIiwidGlkIjoiZTc4ZmFiM2UtMjQ4ZS00NDJjLWIyZTEtMTVmMzA5ZTlkMjc2IiwidW5pcXVlX25hbWUiOiJhbGJlcnRAYmV0YXNvZnR3YXJlc2wub25taWNyb3NvZnQuY29tIiwidXBuIjoiYWxiZXJ0QGJldGFzb2Z0d2FyZXNsLm9ubWljcm9zb2Z0LmNvbSIsInV0aSI6IlQ3ejV5dWx1bjBpcjB5RE5ldGU4QUEiLCJ2ZXIiOiIxLjAiLCJ3aWRzIjpbImI3OWZiZjRkLTNlZjktNDY4OS04MTQzLTc2YjE5NGU4NTUwOSJdLCJ4bXNfc3QiOnsic3ViIjoiQTBCeHN4allIWXBueTJ1TzFNYWx1WF9iVDh4RjJYMXdxVHhrVmotcFNUdyJ9LCJ4bXNfdGNkdCI6MTYyMzIyODYyM30.EFMaV_HCwk6xj1Wegx0ISJs_oONuHErAwazGOV3lmbSMLqUtgF7_fYsHVEtB1giqrlwmpDLcuZTvSpcBI2UiyzFUNsn2n5OKkmJIGPX3my_ZjkkT_7uGa2YWKknBCuLW6g-nZjsJ3QkjxzNRMBQ0erZIRhrPUzSlbT3L45QfB2pY7JyzcT4K_TXVoY1tHOsrsxT5JTgV-t1O9Z8qL22qO873bmh-hvB3fAZh80gF3F8EkDcx5XB2gsWXwLB536Hr24PFWuPGoWBe-CjPFSfdoG_88hT8bbmcD__bZUntBnylqQWcxWc2Sc-N-ezgG7LZ7Cv1xgpkEkBA4c3fOv-GHQ"
-    let result = await this.http.get(
-      `https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=18&OppID=2&siteUrl=https://betasoftwaresl.sharepoint.com/sites/JDNPPApp`
-    ).toPromise();
-  }
-
   async getOpportunities(): Promise<Opportunity[]> {
     return await this.getAllItems(
       OPPORTUNITIES_LIST, 
@@ -519,23 +500,13 @@ export class SharepointService {
       );
   }
 
-  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
+  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<{ opportunity: Opportunity, stage: Stage } | false> {
     let opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
     let stageType = await this.getStageType(op.OpportunityTypeId);
     let masterStage = await this.getOneItem(MASTER_STAGES_LIST, `$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
     let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
 
-    this.initializeOpportunity(opportunity, stage);
-
-    // set active (TODO when finished)
-    this.updateItem(
-      opportunity.ID,
-      OPPORTUNITIES_LIST,
-      {
-        OpportunityStatus: "Active"
-      }
-    );
-    return opportunity;
+    return { opportunity, stage };
   }
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
@@ -552,22 +523,22 @@ export class SharepointService {
     return false;
   }
 
-  private async initializeOpportunity(opportunity: Opportunity, stage: Stage) {
+  async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
     const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
 
     let permissions;
     // add groups to lists
     permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    this.setPermissions(permissions, groups);
+    await this.setPermissions(permissions, groups);
   
     // add groups to the Opportunity
     permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
-    this.setPermissions(permissions, groups, opportunity.ID);
+    await this.setPermissions(permissions, groups, opportunity.ID);
 
     // add groups to the Stage
     permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
     console.log('permissions', permissions);
-    this.setPermissions(permissions, groups, stage.ID);
+    await this.setPermissions(permissions, groups, stage.ID);
 
     // Actions
     const stageActions = await this.createStageActions(opportunity, stage);
@@ -575,7 +546,7 @@ export class SharepointService {
     // add groups to the Actions
     permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
     for (const action of stageActions) {
-      this.setPermissions(permissions, groups, action.Id);
+      await this.setPermissions(permissions, groups, action.Id);
     }
 
     // Folders
@@ -588,7 +559,7 @@ export class SharepointService {
         let folderGroups = [...groups]; // copy default groups
         const DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
         if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup} );
-        this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
     }
     return true;

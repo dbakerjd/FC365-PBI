@@ -29,7 +29,35 @@ export class OpportunityListComponent implements OnInit {
 
   async ngOnInit() {
 
-    this.sharepoint.getLists();
+    /**TODEL */
+    // this.sharepoint.testAddGroup();
+    // this.sharepoint.testAddGroupToOpportunity();
+    // this.sharepoint.testEndpoint();
+    // this.sharepoint.getLists();
+
+    // this.sharepoint.createStageActions(1, 1);
+    // await this.sharepoint.createFolder('/6');
+    // this.sharepoint.createOpportunityGroups(13, 5, 3);
+    
+    // const r = await this.sharepoint.getGroupPermissions("Opportunities");
+    // console.log('r', r);
+
+    // const all = await this.sharepoint.getGroupPermissions();
+    // console.log('all', all);
+    // console.log('filtered', all.filter(el => el.ListFilter === 'List'));
+
+    const folder = await this.sharepoint.createFolder('/testfolder');
+    console.log('folder', folder);
+
+    console.log('master', await this.sharepoint.getStageFolders(3));
+    this.sharepoint.readGroups();
+
+    await this.sharepoint.getRoleDefinitionId('ListEdit');
+    await this.sharepoint.getRoleDefinitionId('ListEdit');
+    await this.sharepoint.getRoleDefinitionId('ListRead');
+    /**TODEL */
+
+    
     
     let indications = await this.sharepoint.getIndicationsList();
     let opportunityTypes = await this.sharepoint.getOpportunityTypesList();
@@ -89,6 +117,42 @@ export class OpportunityListComponent implements OnInit {
       height: '700px',
       width: '405px'
     });
+
+    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+      if (result.success) {
+        this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
+        let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+        this.opportunities.push(opp);
+        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+          // set active
+          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+          opp.OpportunityStatus = 'Active';
+          this.toastr.success("The opportunity is now active", opp.Title);
+        });
+      } else {
+        this.toastr.error("The opportunity couldn't be created", "Try again");
+      }
+    });
+  }
+
+  async editOpportunity(opp: Opportunity) {
+    this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
+      height: '700px',
+      width: '405px',
+      data: {
+        opportunity: opp
+      }
+    });
+
+    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+      if (result.success) {
+        this.toastr.success("The opportunity was updated successfully", result.data.Title);
+        Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
+      } else {
+        this.toastr.error("The opportunity couldn't be updated", "Try again");
+      }
+    });
+
   }
 
   onSubmit() {
@@ -144,13 +208,5 @@ export class OpportunityListComponent implements OnInit {
     }
   }
 
-  async edit(opp: Opportunity) {
-    this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '700px',
-      width: '405px',
-      data: {
-        opportunity: opp
-      }
-    });
-  }
+
 }

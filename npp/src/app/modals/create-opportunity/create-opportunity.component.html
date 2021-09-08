@@ -6,7 +6,7 @@
     <div class="dialog-footer">
         <div class="dialog-cancel-button" mat-dialog-close>Close</div>
         <div class="dialog-submit-button" cdkFocusInitial (click)="onNext()" *ngIf="!isEdit && !firstStepCompleted">Next</div>
-        <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial (click)="onSubmit()" *ngIf="!isEdit && firstStepCompleted">Create</div>
-        <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial (click)="onSubmit()" *ngIf="isEdit">Update</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="!isEdit && firstStepCompleted">Create</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="isEdit">Update</div>
     </div>
 </form>

@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
@@ -19,6 +19,7 @@ export class StageSettingsComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<StageSettingsComponent>,
     private sharepoint: SharepointService, 
     private toastr: ToastrService
   ) { }
@@ -51,7 +52,8 @@ export class StageSettingsComponent implements OnInit {
         type: 'input',
         templateOptions: {
           label: 'Stage Name:',
-          placeholder: 'Set the next stage name`'
+          placeholder: 'Set the next stage name',
+          required: true
         },
         expressionProperties: {
           'templateOptions.label': function($viewValue, $modelValue, scope) {
@@ -64,18 +66,20 @@ export class StageSettingsComponent implements OnInit {
         key: 'StageUsersId',
         type: 'ngsearchable',
         templateOptions: {
-            label: 'Stage Users:',
+            label: 'Stage Users',
             placeholder: 'Stage Users',
             filterLocally: false,
             query: 'siteusers',
             multiple: true,
-            options: defaultUsersList
+            options: defaultUsersList,
+            required: true
         }
       },{
         key: 'StageReview',
         type: 'datepicker',
         templateOptions: {
-            label: 'Stage Review:'
+            label: 'Stage Review',
+            required: true
         }
       }]
     }];
@@ -95,6 +99,8 @@ export class StageSettingsComponent implements OnInit {
   }
 
   async onSubmit() {
+    this.dialogRef.close('hey');
+
     let success;
     if (this.model.ID) {
       success = await this.sharepoint.updateStage(this.model.ID, {
@@ -114,5 +120,6 @@ export class StageSettingsComponent implements OnInit {
       if (success) this.toastr.success("The stage was created successfully", this.model.stageType);
       else this.toastr.error("The stage couldn't be updated", "Try again");
     }
+    this.dialogRef.close({success, data: this.model});
   }
 }
