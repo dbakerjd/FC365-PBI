@@ -37,7 +37,7 @@
             <div class="opportunity-actions">
                 <div class="npp-btn" (click)="archive(item)" *ngIf="item.OpportunityStatus != 'Archive'">Archive</div>
                 <div class="npp-btn" (click)="restore(item)" *ngIf="item.OpportunityStatus == 'Archive'">Restore</div>
-                <div class="npp-btn" (click)="edit(item)">Edit</div>
+                <div class="npp-btn" (click)="editOpportunity(item)">Edit</div>
             </div>
         </div>
         <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  

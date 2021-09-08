@@ -4,8 +4,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { ToastrService } from 'ngx-toastr';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -26,9 +25,9 @@ export class CreateOpportunityComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
-    private toastr: ToastrService,
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<CreateOpportunityComponent>
     ) { }
 
   async ngOnInit() {
@@ -213,12 +212,16 @@ export class CreateOpportunityComponent implements OnInit {
   async onSubmit() {
     if (this.isEdit) {
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
-      if (success) this.toastr.success("A opportunity was updated successfully", this.model.Title);
-      else this.toastr.error("The opportunity couldn't be created", "Try again");
+      this.dialogRef.close({
+        success: success,
+        data: this.model.Opportunity
+      });
     } else {
-      const success = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
-      if (success) this.toastr.success("A new opportunity was created successfully", this.model.Title);
-      else this.toastr.error("The opportunity couldn't be created", "Try again");
+      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+      this.dialogRef.close({
+        success: newOpp ? true : false,
+        data: newOpp
+      });
     }
   }
  

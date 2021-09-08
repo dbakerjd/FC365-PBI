@@ -60,6 +60,15 @@ export interface Action {
   status?: string;
 }
 
+export interface MasterAction {
+  Id: number,
+  Title: string;
+  ActionNumber: number;
+  StageNameId: number;
+  OpportunityTypeId: number;
+  DueDays: number;
+}
+
 export interface OpportunityType {
   ID: number;
   Title: string;
@@ -74,6 +83,7 @@ export interface Indication {
 
 export interface User {
   Id: number;
+  LoginName?: string;
   FirstName?: string;
   LastName?: string;
   Title?: string;
@@ -87,6 +97,7 @@ export interface Stage {
   OpportunityNameId: number;
   StageNameId: number;
   StageReview: Date;
+  StageUsersId: number[];
   Created: Date;
   actions?: Action[];
   folders?: NPPFolder[];
@@ -118,7 +129,15 @@ export interface NPPFolder {
   ID: number;
   Title: string;
   StageNameId: number;
+  DepartmentID?: number;
   containsModels?: boolean;
+}
+
+export interface SystemFolder {
+  Name: string;
+  ServerRelativeUrl: string;
+  ItemCount: number;
+  DepartmentID?: number;
 }
 
 export interface Country {
@@ -143,13 +162,39 @@ export interface FilterTerm {
   matchCase?: boolean;
 }
 
-const OPPORTUNITIES_LIST = "lists/getbytitle('Opportunities')";
-const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('Opportunity Stages')";
-const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
+export interface SPGroup {
+  Id: number;
+  Title: string;
+  Description: string;
+  LoginName: string;
+  OnlyAllowMembersViewMembership: boolean;
+}
+
+export interface SPGroupListItem {
+  type: string;
+  data: SPGroup;
+}
+
+export interface GroupPermission {
+  Id: number;
+  Title: string;
+  ListName: string;
+  Permission: string;
+  ListFilter: 'List' | 'Item';
+}
+
+const OPPORTUNITES_LIST_NAME = 'Opportunities';
+const OPPORTUNITY_STAGES_LIST_NAME = 'Opportunity Stages';
+const OPPORTUNITY_ACTIONS_LIST_NAME = 'Opportunity Action List';
+const OPPORTUNITIES_LIST = "lists/getbytitle('"+OPPORTUNITES_LIST_NAME+"')";
+const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('"+OPPORTUNITY_STAGES_LIST_NAME+"')";
+const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('"+OPPORTUNITY_ACTIONS_LIST_NAME+"')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
+const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
+const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
@@ -163,6 +208,7 @@ export class SharepointService {
 
   // local "cache"
   masterOpportunitiesTypes: OpportunityType[] = [];
+  masterGroupTypes: GroupPermission[] = [];
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
@@ -173,6 +219,10 @@ export class SharepointService {
   masterFolders: {
     stage: number;
     folders: NPPFolder[]
+  }[] = [];
+  SPRoleDefinitions: {
+    name: string;
+    id: number;
   }[] = [];
 
   constructor(private teams: TeamsService, private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
@@ -314,6 +364,23 @@ export class SharepointService {
     return FILES_FOLDER;
   }
 
+  async createFolder(newFolderUrl: string): Promise<SystemFolder | null> {
+    try {
+      return await this.http.post(
+        this.licensing.getSharepointUri() + "folders", 
+        {
+          ServerRelativeUrl: FILES_FOLDER + newFolderUrl
+        }
+      ).toPromise() as SystemFolder;
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true);
+        console.log('The folder cannot be created');
+      }
+      return null;
+    }
+  }
+
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
@@ -433,21 +500,13 @@ export class SharepointService {
       );
   }
 
-  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<Opportunity> {
+  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<{ opportunity: Opportunity, stage: Stage } | false> {
     let opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
     let stageType = await this.getStageType(op.OpportunityTypeId);
     let masterStage = await this.getOneItem(MASTER_STAGES_LIST, `$select=ID&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`);
     let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
 
-    console.log(`CREATED OPPORTUNITY (ID ${opportunity.ID}) AND FIRST STAGE (ID ${stage.ID})`);
-    console.log('[TOOD] Use Endpoint to create groups and actions');
-
-    let result = await this.http.get(
-      `https://demoazurefunction20210820114014.azurewebsites.net/api/Connect?stageID=${stage.ID}&OppID=${opportunity.ID}&siteUrl=${this.licensing.getSharepointUri()}`
-    ).toPromise();
-    
-    console.log('result', result);
-    return opportunity;
+    return { opportunity, stage };
   }
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
@@ -464,9 +523,244 @@ export class SharepointService {
     return false;
   }
 
+  async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
+    const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
+
+    let permissions;
+    // add groups to lists
+    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    await this.setPermissions(permissions, groups);
+  
+    // add groups to the Opportunity
+    permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
+    await this.setPermissions(permissions, groups, opportunity.ID);
+
+    // add groups to the Stage
+    permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
+    console.log('permissions', permissions);
+    await this.setPermissions(permissions, groups, stage.ID);
+
+    // Actions
+    const stageActions = await this.createStageActions(opportunity, stage);
+
+    // add groups to the Actions
+    permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
+    for (const action of stageActions) {
+      await this.setPermissions(permissions, groups, action.Id);
+    }
+
+    // Folders
+    const folders = await this.createStageFolders(stage);
+
+    // add groups to folders
+    permissions = await this.getGroupPermissions(FILES_FOLDER);
+    for (const f of folders) {
+      if (f.DepartmentID) {
+        let folderGroups = [...groups]; // copy default groups
+        const DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup} );
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+      }
+    }
+    return true;
+  }
+
+  private async createStageActions(opportunity: Opportunity, stage: Stage): Promise<Action[]> {
+    const masterActions: MasterAction[] = await this.getAllItems(
+      MASTER_ACTION_LIST, 
+      `$filter=StageNameId eq ${stage.StageNameId} and OpportunityTypeId eq ${opportunity.OpportunityTypeId}&$orderby=ActionNumber asc`
+    );
+
+    let actions: Action[] = [];
+    for (const ma of masterActions) {
+      const a = await this.createAction(ma, opportunity.ID);
+      if (a.Id) actions.push(a);
+    }
+    return actions;
+  }
+
+  private async createAction(ma: MasterAction, oppId: number): Promise<Action> {
+    let dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + ma.DueDays);
+    return await this.createItem(
+      OPPORTUNITY_ACTIONS_LIST,
+      {
+        Title: ma.Title,
+        StageNameId: ma.StageNameId,
+        OpportunityNameId: oppId,
+        ActionNameId: ma.Id,
+        ActionDueDate: dueDate
+      }
+    );
+  }
+
+  private async createStageFolders(stage: Stage): Promise<SystemFolder[]> {
+    const masterFolders = await this.getStageFolders(stage.StageNameId);
+
+    await this.createFolder(`/${stage.OpportunityNameId}`);
+    await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
+
+    let folders: SystemFolder[] = [];
+
+    for (const mf of masterFolders) {
+      const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}`);
+      if (folder) {
+        folder.DepartmentID = mf.DepartmentID;
+        folders.push(folder);
+      }
+    }
+    return folders;
+  }
+
+  async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
+    let group;
+    let groups: SPGroupListItem[] = [];
+    const owner = await this.getUserInfo(ownerId);
+    if (!owner.LoginName) return [];
+
+    // Opportunity Owner (OO)
+    group = await this.createGroup(`OO-${oppId}`);
+    if (group) {
+      groups.push({ type: 'OO', data: group });
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+
+    // Opportunity Users (OU)
+    group = await this.createGroup(`OU-${oppId}`);
+    if (group) {
+      groups.push({ type: 'OU', data: group });
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+
+    // Stage Owners (SO)
+    group = await this.createGroup(`SO-${oppId}-${masterStageId}`);
+    if (group) {
+      groups.push({ type: 'SO', data: group });
+      await this.addUserToGroup(owner.LoginName, group.Id);
+    }
+    return groups;
+  }
 
 
 
+  /** PERMISSIONS */
+  async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
+    try {
+      return await this.http.post(
+        this.licensing.getSharepointUri() + 'sitegroups',
+        {
+          Title: name,
+          Description: description,
+          OnlyAllowMembersViewMembership: false
+        }
+      ).toPromise() as SPGroup;
+    } catch (e) {
+      if (e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return null;
+    }
+  }
+
+  async getGroupId(name: string): Promise<number | null> {
+    try {
+      const result = await this.query(`sitegroups/getbyname('${name}')/id`).toPromise();
+      return result.value;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async getRoleDefinitionId(name: string): Promise<number | null> {
+    const cache = this.SPRoleDefinitions.find(g => g.name === name);
+    if (cache) {
+      return cache.id;
+    } else {
+      try {
+        const result = await this.query(`roledefinitions/getbyname('${name}')/id`).toPromise();
+        this.SPRoleDefinitions.push({name, id: result.value }); // add for local caching
+        return result.value;
+      }
+      catch (e) {
+        return null;
+      }
+    }
+  }
+
+  async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointUri() + `sitegroups(${groupId})/users`,
+        { LoginName: loginName }
+      ).toPromise();
+      return true;
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+  }
+
+  async readGroups(): Promise<SPGroup[]> {
+    return await this.query('sitegroups').toPromise();
+  }
+
+  async getGroupPermissions(list: string = ''): Promise<GroupPermission[]> {
+    if (this.masterGroupTypes.length < 1) {
+      this.masterGroupTypes = await this.getAllItems(MASTER_GROUP_TYPES_LIST);
+    }
+    if (list) {
+      return this.masterGroupTypes.filter(el => el.ListName === list);
+    }
+    return this.masterGroupTypes;
+  }
+
+  /* set permissions related to working groups a list or item */
+  private async setPermissions(permissions: GroupPermission[], workingGroups: SPGroupListItem[], itemOrFolder: number | string | null = null) {
+    for (const gp of permissions) {
+      const group = workingGroups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+      if (group) {
+        if (gp.ListName === FILES_FOLDER && typeof itemOrFolder == 'string') {
+          await this.addRolePermissionToFolder(itemOrFolder, group.data.Id, gp.Permission);
+        } else {
+          if (gp.ListFilter === 'List')
+            await this.addRolePermissionToList(`lists/getbytitle('${gp.ListName}')`, group.data.Id, gp.Permission);
+          else if (typeof itemOrFolder == 'number')
+            await this.addRolePermissionToList(`lists/getbytitle('${gp.ListName}')`, group.data.Id, gp.Permission, itemOrFolder);
+        }
+      }
+    }
+  }
+
+  private async addRolePermissionToList(list: string, groupId: number, roleName: string, id: number = 0): Promise<boolean> {
+    const baseUrl = this.licensing.getSharepointUri() + list + (id === 0 ? '' : `/items(${id})`);
+    return await this.setRolePermission(baseUrl, groupId, roleName);
+  }
+
+  private async addRolePermissionToFolder(folderUrl: string, groupId: number, roleName: string): Promise<boolean> {
+    const baseUrl = this.licensing.getSharepointUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
+    return await this.setRolePermission(baseUrl, groupId, roleName);
+  }
+
+  private async setRolePermission(baseUrl: string, groupId: number, roleName: string) {
+    // const roleId = 1073741826; // READ
+    const roleId = await this.getRoleDefinitionId(roleName);
+    try {
+      await this.http.post(
+        baseUrl + `/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
+        null).toPromise();
+      await this.http.post(
+        baseUrl + `/roleassignments/addroleassignment(principalid=${groupId},roledefid=${roleId})`,
+        null).toPromise();
+      return true;
+    } catch (e) {
+      if (e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+  }
 
 
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
@@ -629,13 +923,15 @@ export class SharepointService {
     return await this.getOneItem(MASTER_STAGES_LIST, `$filter=StageNumber eq ${current.StageNumber + 1} and StageType eq '${current.StageType}'`);
   }
 
-  async getStageFolders(opportunityId: number, masterStageId: number, allFolders = false): Promise<NPPFolder[]> {
+  /** get stage folders. If opportunityId, only the folders with permission. Otherwise, all master folders of stage */
+  async getStageFolders(masterStageId: number, opportunityId: number | null = null): Promise<NPPFolder[]> {
     let masterFolders = [];
     let cache = this.masterFolders.find(f => f.stage == masterStageId);
     if (cache) {
       masterFolders = cache.folders;
     } else {
       masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
+      console.log('master folders', masterFolders);
       for (let index = 0; index < masterFolders.length; index++) {
         masterFolders[index].containsModels = masterFolders[index].Title === 'Forecast Models';
       }
@@ -645,13 +941,12 @@ export class SharepointService {
       });
     }
     
-    if (allFolders) {
-      return masterFolders;
-    } else {
+    if (opportunityId) {
       // only folders user can access
       const allowedFolders = await this.getSubfolders(`/${opportunityId}/${masterStageId}`);
       return masterFolders.filter(f => allowedFolders.some((af: any)=> +af.Name === f.ID));
     }
+    return masterFolders;
   }
 
   async getCountriesList(): Promise<SelectInputList[]> {

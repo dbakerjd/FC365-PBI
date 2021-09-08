@@ -36,7 +36,7 @@ export class ActionsListComponent implements OnInit {
   currentFolder: NPPFolder | undefined = undefined;
   currentFolderUri: string = '';
   displayingModels: boolean = false;
-  uploadDialogInstance: any; 
+  dialogInstance: any; 
   loading = false;
 
   constructor(
@@ -64,7 +64,7 @@ export class ActionsListComponent implements OnInit {
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
-          el.folders = await this.sharepoint.getStageFolders(this.opportunityId, el.StageNameId);
+          el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId);
           // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
           console.log('folders', el.folders);
           this.setStatus(el.actions);
@@ -90,7 +90,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   async openUploadDialog() {
-    this.uploadDialogInstance = this.matDialog.open(UploadFileComponent, {
+    this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
       data: {
@@ -104,7 +104,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   sendForApproval(file: NPPFile) {
-    this.uploadDialogInstance = this.matDialog.open(SendForApprovalComponent, {
+    this.dialogInstance = this.matDialog.open(SendForApprovalComponent, {
       height: '300px',
       width: '405px',
       data: {
@@ -114,7 +114,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   createScenario(file: NPPFile) {
-    this.uploadDialogInstance = this.matDialog.open(CreateScenarioComponent, {
+    this.dialogInstance = this.matDialog.open(CreateScenarioComponent, {
       height: '400px',
       width: '405px',
       data: {
@@ -124,13 +124,21 @@ export class ActionsListComponent implements OnInit {
   }
 
   openStageSettings() {
-    this.uploadDialogInstance = this.matDialog.open(StageSettingsComponent, {
+    this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
       height: '400px',
       width: '405px',
       data: {
         stage: this.currentGate
       }
-    })
+    });
+
+    this.dialogInstance.afterClosed().subscribe(async (result:any) => {
+      console.log('result', result);
+      if (this.currentGate && result.success) {
+        this.currentGate.StageUsersId = result.data.StageUsersId;
+        this.currentGate.StageReview = result.data.StageReview;
+      }
+    });
   }
 
   setUpDateListener() {
@@ -212,7 +220,7 @@ export class ActionsListComponent implements OnInit {
     if (!this.currentGate) return;
     let nextStage = await this.sharepoint.getNextStage(this.currentGate.StageNameId);
     if (nextStage) {
-      this.uploadDialogInstance = this.matDialog.open(StageSettingsComponent, {
+      this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
         height: '400px',
         width: '405px',
         data: {
