@@ -89,6 +89,7 @@ export interface User {
   Title?: string;
   Email?: string;
   profilePicUrl?: string;
+  IsSiteAdmin?: boolean;
 }
 
 export interface Stage {

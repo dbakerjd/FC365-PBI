@@ -6,7 +6,7 @@
         </form>
     </div>
     <div class="opportunity-add">
-        <div class="npp-btn" (click)="createOpportunity()">Add Opportunity</div>
+        <div class="npp-btn" (click)="createOpportunity()" *ngIf="currentUser?.IsSiteAdmin">Add Opportunity</div>
     </div>
 </div>
 <div class="opportunity-list-wrapper">
@@ -35,9 +35,15 @@
                 <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
             </div>
             <div class="opportunity-actions">
-                <div class="npp-btn" (click)="archive(item)" *ngIf="item.OpportunityStatus != 'Archive'">Archive</div>
-                <div class="npp-btn" (click)="restore(item)" *ngIf="item.OpportunityStatus == 'Archive'">Restore</div>
-                <div class="npp-btn" (click)="editOpportunity(item)">Edit</div>
+                <div class="npp-btn" (click)="archiveOpportunity(item)" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)">
+                    Archive
+                </div>
+                <div class="npp-btn" (click)="restoreOpportunity(item)" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)">
+                    Restore
+                </div>
+                <div class="npp-btn" (click)="editOpportunity(item)" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId">
+                    Edit
+                </div>
             </div>
         </div>
         <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  

@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -13,6 +13,7 @@ import { Opportunity, SharepointService } from 'src/app/services/sharepoint.serv
   styleUrls: ['./opportunity-list.component.scss']
 })
 export class OpportunityListComponent implements OnInit {
+  currentUser: User | undefined = undefined;
   opportunities: Opportunity[] = [];
   form = new FormGroup({});
   model: any = { };
@@ -58,7 +59,7 @@ export class OpportunityListComponent implements OnInit {
     /**TODEL */
 
     
-    
+    this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
     let opportunityTypes = await this.sharepoint.getOpportunityTypesList();
     let opportunityFields = await this.sharepoint.getOpportunityFields();
@@ -188,7 +189,7 @@ export class OpportunityListComponent implements OnInit {
     return 0;
   }
 
-  async archive(opp: Opportunity) {
+  async archiveOpportunity(opp: Opportunity) {
     console.log(opp);
     const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Archive");
     if (success) {
@@ -198,7 +199,7 @@ export class OpportunityListComponent implements OnInit {
     }
   }
 
-  async restore(opp: Opportunity) {
+  async restoreOpportunity(opp: Opportunity) {
     console.log(opp);
     const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
     if (success) {
