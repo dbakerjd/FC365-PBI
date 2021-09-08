@@ -162,14 +162,31 @@ export interface SPGroup {
   OnlyAllowMembersViewMembership: boolean;
 }
 
-const OPPORTUNITIES_LIST = "lists/getbytitle('Opportunities')";
-const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('Opportunity Stages')";
-const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('Opportunity Action List')";
+export interface SPGroupListItem {
+  type: string;
+  data: SPGroup;
+}
+
+export interface GroupPermission {
+  Id: number;
+  Title: string;
+  ListName: string;
+  Permission: string;
+  ListFilter: 'List' | 'Item';
+}
+
+const OPPORTUNITES_LIST_NAME = 'Opportunities';
+const OPPORTUNITY_STAGES_LIST_NAME = 'Opportunity Stages';
+const OPPORTUNITY_ACTIONS_LIST_NAME = 'Opportunity Action List';
+const OPPORTUNITIES_LIST = "lists/getbytitle('"+OPPORTUNITES_LIST_NAME+"')";
+const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('"+OPPORTUNITY_STAGES_LIST_NAME+"')";
+const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('"+OPPORTUNITY_ACTIONS_LIST_NAME+"')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
 const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
+const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
@@ -183,6 +200,7 @@ export class SharepointService {
 
   // local "cache"
   masterOpportunitiesTypes: OpportunityType[] = [];
+  masterGroupTypes: GroupPermission[] = [];
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
@@ -496,6 +514,8 @@ export class SharepointService {
     let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
 
     this.initializeOpportunity(opportunity, stage);
+
+    // set active (TODO when finished)
     this.updateItem(
       opportunity.ID,
       OPPORTUNITIES_LIST,
@@ -522,12 +542,79 @@ export class SharepointService {
 
   private async initializeOpportunity(opportunity: Opportunity, stage: Stage) {
     const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
-
     console.log('groups created');
-    for (const gr of groups) {
-      this.addRolePermissionToLists(OPPORTUNITIES_LIST, gr.Id, opportunity.ID);
+
+    let permissions;
+    // add groups to lists
+    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    this.setPermissions(permissions, groups);
+    /*
+    for (const gp of permissions) {
+      const group = groups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+      if (group) {
+        await this.addRolePermissionToList(`lists/getbytitle('${gp.ListName}')`, group.data.Id);
+      }
     }
-    this.createStageActions(opportunity, stage);
+    */
+
+    // add groups to the Opportunity
+    permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
+    console.log('permissions', permissions);
+    this.setPermissions(permissions, groups, opportunity.ID);
+
+    /*
+    for (const gp of permissions) {
+      const group = groups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+      if (group) {
+        if (gp.ListFilter === 'Item') 
+          await this.addRolePermissionToList(OPPORTUNITIES_LIST, group.data.Id, opportunity.ID);
+        else 
+          await this.addRolePermissionToList(OPPORTUNITIES_LIST, group.data.Id);
+      }
+    }
+    */
+
+    // add groups to the Stage
+    permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
+    console.log('permissions', permissions);
+    this.setPermissions(permissions, groups, stage.ID);
+
+    /*
+    for (const gp of permissions) {
+      const group = groups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+      if (group) {
+        if (gp.ListFilter === 'Item') 
+          await this.addRolePermissionToList(OPPORTUNITY_STAGES_LIST, group.data.Id, stage.ID);
+        else 
+          await this.addRolePermissionToList(OPPORTUNITY_STAGES_LIST, group.data.Id);
+      }
+    }
+    */
+
+    // Actions
+    const stageActions = await this.createStageActions(opportunity, stage);
+
+    // add groups to the Actions
+    permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
+    for (const action of stageActions) {
+      this.setPermissions(permissions, groups, action.Id);
+    }
+
+    /*
+    for (const action of stageActions) {
+      for (const gp of permissions) {
+        const group = groups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+        if (group) {
+          if (gp.ListFilter === 'Item') 
+            await this.addRolePermissionToList(OPPORTUNITY_ACTIONS_LIST, group.data.Id, action.Id);
+          else 
+            await this.addRolePermissionToList(OPPORTUNITY_ACTIONS_LIST, group.data.Id);
+        }
+      }
+    } 
+    */
+
+    // Folders
     this.createStageFolders(stage);
     return true;
   }
@@ -538,9 +625,12 @@ export class SharepointService {
       `$filter=StageNameId eq ${stage.StageNameId} and OpportunityTypeId eq ${opportunity.OpportunityTypeId}&$orderby=ActionNumber asc`
     );
 
+    let actions: Action[] = [];
     for (const ma of masterActions) {
-      const result = await this.createAction(ma, opportunity.ID);
+      const a = await this.createAction(ma, opportunity.ID);
+      if (a.Id) actions.push(a);
     }
+    return actions;
   }
 
   private async createAction(ma: MasterAction, oppId: number): Promise<Action> {
@@ -572,30 +662,30 @@ export class SharepointService {
     });
   }
 
-  async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroup[]> {
+  async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
     let group;
-    let groups: SPGroup[] = [];
+    let groups: SPGroupListItem[] = [];
     const owner = await this.getUserInfo(ownerId);
     if (!owner.LoginName) return [];
 
     // Opportunity Owner (OO)
     group = await this.createGroup(`OO-${oppId}`);
     if (group) {
-      groups.push(group);
+      groups.push({ type: 'OO', data: group });
       await this.addUserToGroup(owner.LoginName, group.Id);
     }
 
     // Opportunity Users (OU)
     group = await this.createGroup(`OU-${oppId}`);
     if (group) {
-      groups.push(group);
+      groups.push({ type: 'OU', data: group });
       await this.addUserToGroup(owner.LoginName, group.Id);
     }
 
     // Stage Owners (SO)
     group = await this.createGroup(`SO-${oppId}-${masterStageId}`);
     if (group) {
-      groups.push(group);
+      groups.push({ type: 'SO', data: group });
       await this.addUserToGroup(owner.LoginName, group.Id);
     }
     return groups;
@@ -641,7 +731,30 @@ export class SharepointService {
     return await this.query('sitegroups').toPromise();
   }
 
-  async addRolePermissionToLists(list: string, groupId: number, id: number = 0): Promise<boolean> {
+  async getGroupPermissions(list: string = ''): Promise<GroupPermission[]> {
+    if (this.masterGroupTypes.length < 1) {
+      this.masterGroupTypes = await this.getAllItems(MASTER_GROUP_TYPES_LIST);
+    }
+    if (list) {
+      return this.masterGroupTypes.filter(el => el.ListName === list);
+    }
+    return this.masterGroupTypes;
+  }
+
+  /* set permissions related to working groups a list or item */
+  private async setPermissions(permissions: GroupPermission[], workingGroups: SPGroupListItem[], id: number | null = null) {
+    for (const gp of permissions) {
+      const group = workingGroups.find(gr => gr.type === gp.Title); // get created group involved on the permission
+      if (group) {
+        if (gp.ListFilter === 'List') 
+          await this.addRolePermissionToList(`lists/getbytitle('${gp.ListName}')`, group.data.Id);
+        else if (id) 
+          await this.addRolePermissionToList(`lists/getbytitle('${gp.ListName}')`, group.data.Id, id);
+      }
+    }
+  }
+
+  private async addRolePermissionToList(list: string, groupId: number, id: number = 0): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointUri() + list + (id === 0 ? '' : `/items(${id})`);
     try {
       await this.http.post(
