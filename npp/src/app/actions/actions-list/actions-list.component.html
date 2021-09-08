@@ -173,8 +173,8 @@
                     <div class="action-item-completed" *ngIf="!action.Complete">Not completed yet</div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
                         <label>Due by </label>
-                        <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner"></ngx-datepicker>
-                        <span *ngIf="!isOwner">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
+                        <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner || currentUser?.IsSiteAdmin"></ngx-datepicker>
+                        <span *ngIf="!isOwner && !currentUser?.IsSiteAdmin">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
                     </div>
                     <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
                         <span>{{action.status}}</span>
@@ -184,7 +184,9 @@
             </div>
         </div>
         <div class="next-stage-btn-wrapper">
-            <div class="npp-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId">Go to Next Stage</div>
+            <div class="npp-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+                Go to Next Stage
+            </div>
         </div>
     </div>
 </div>
