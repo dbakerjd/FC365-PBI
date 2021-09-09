@@ -130,9 +130,10 @@ export class CreateOpportunityComponent implements OnInit {
                   });
                 }
             );
-            }
+            },
           },
-          defaultValue: this.data?.opportunity.OpportunityTypeId
+          defaultValue: this.data?.opportunity.OpportunityTypeId,
+          hideExpression: this.isEdit
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
@@ -140,7 +141,8 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Project Start Date:',
             required: true,
           },
-          defaultValue: this.data?.opportunity.ProjectStartDate ? new Date(this.data?.opportunity.ProjectStartDate) : null
+          defaultValue: this.data?.opportunity.ProjectStartDate ? new Date(this.data?.opportunity.ProjectStartDate) : null,
+          hideExpression: this.isEdit
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
