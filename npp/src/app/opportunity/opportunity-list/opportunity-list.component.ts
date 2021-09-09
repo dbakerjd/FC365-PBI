@@ -130,7 +130,7 @@ export class OpportunityListComponent implements OnInit {
           opp.OpportunityStatus = 'Active';
           this.toastr.success("The opportunity is now active", opp.Title);
         });
-      } else {
+      } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be created", "Try again");
       }
     });
