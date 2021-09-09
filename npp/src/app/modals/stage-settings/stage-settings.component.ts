@@ -21,7 +21,6 @@ export class StageSettingsComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
     private sharepoint: SharepointService, 
-    private toastr: ToastrService
   ) { }
 
   async ngOnInit() {
@@ -99,27 +98,25 @@ export class StageSettingsComponent implements OnInit {
   }
 
   async onSubmit() {
-    this.dialogRef.close('hey');
-
     let success;
     if (this.model.ID) {
       success = await this.sharepoint.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId
       });
-      if (success) this.toastr.success("The stage was updated");
-      else this.toastr.error("The stage couldn't be updated", "Try again");
+      
     } else {
-      success = await this.sharepoint.createStage({
+      const newStage = await this.sharepoint.createStage({
         Title: this.model.Title,
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId,
         OpportunityNameId: this.model.opportunityId,
         StageNameId: this.model.nextMasterStageId
       });
-      if (success) this.toastr.success("The stage was created successfully", this.model.stageType);
-      else this.toastr.error("The stage couldn't be updated", "Try again");
+      this.dialogRef.close({
+        success: newStage ? true : false, 
+        data: newStage
+      });
     }
-    this.dialogRef.close({success, data: this.model});
   }
 }

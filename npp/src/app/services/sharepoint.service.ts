@@ -491,7 +491,7 @@ export class SharepointService {
     }
   }
 
-  /** OPPORTUNITIES */
+  /** --- OPPORTUNITIES --- **/
 
   async getOpportunities(): Promise<Opportunity[]> {
     return await this.getAllItems(
@@ -535,9 +535,9 @@ export class SharepointService {
     permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
     await this.setPermissions(permissions, groups, opportunity.ID);
 
+    /*
     // add groups to the Stage
     permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
-    console.log('permissions', permissions);
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU
@@ -553,6 +553,63 @@ export class SharepointService {
     const stageActions = await this.createStageActions(opportunity, stage);
 
     // add groups to the Actions
+    permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
+    for (const action of stageActions) {
+      await this.setPermissions(permissions, groups, action.Id);
+    }
+
+    // Folders
+    const folders = await this.createStageFolders(stage);
+
+    // add groups to folders
+    permissions = await this.getGroupPermissions(FILES_FOLDER);
+    for (const f of folders) {
+      if (f.DepartmentID) {
+        let folderGroups = [...groups]; // copy default groups
+        const DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup} );
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+      }
+    }
+    */
+
+    await this.initializeStage(opportunity, stage);
+    return true;
+  }
+
+  async initializeStage(opportunity: Opportunity, stage: Stage): Promise<boolean> {
+    const OUGroup = await this.createGroup('OU-'+opportunity.ID);
+    const OOGroup = await this.createGroup('OO-'+opportunity.ID);
+    const SOGroup = await this.createGroup(`SO-${opportunity.ID}-${stage.StageNameId}`);
+
+    if (!OUGroup || ! OOGroup || !SOGroup) return false; // something happened with groups
+
+    const owner = await this.getUserInfo(opportunity.OpportunityOwnerId);
+    if (!owner.LoginName) return false;
+
+    await this.addUserToGroup(owner.LoginName, OUGroup.Id);
+    await this.addUserToGroup(owner.LoginName, OOGroup.Id);
+    await this.addUserToGroup(owner.LoginName, SOGroup.Id);
+
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'OU', data: OUGroup });
+    groups.push({ type: 'OO', data: OOGroup });
+    groups.push({ type: 'SO', data: SOGroup });
+
+    // add groups to the Stage
+    let permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
+    await this.setPermissions(permissions, groups, stage.ID);
+
+    // add stage users to group OU
+    for (const userId of stage.StageUsersId) {
+      const user = await this.getUserInfo(userId);
+      if (user.LoginName) await this.addUserToGroup(user.LoginName, OUGroup.Id);
+    }
+
+    // Actions
+    const stageActions = await this.createStageActions(opportunity, stage);
+
+    // add groups into Actions
     permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
     for (const action of stageActions) {
       await this.setPermissions(permissions, groups, action.Id);
@@ -621,7 +678,7 @@ export class SharepointService {
     return folders;
   }
 
-  async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
+  private async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
     let group;
     let groups: SPGroupListItem[] = [];
     const owner = await this.getUserInfo(ownerId);
@@ -641,19 +698,26 @@ export class SharepointService {
       await this.addUserToGroup(owner.LoginName, group.Id);
     }
 
+    /*
     // Stage Owners (SO)
     group = await this.createGroup(`SO-${oppId}-${masterStageId}`);
     if (group) {
       groups.push({ type: 'SO', data: group });
       await this.addUserToGroup(owner.LoginName, group.Id);
     }
+    */
     return groups;
   }
 
 
 
-  /** PERMISSIONS */
+  /** --- PERMISSIONS --- **/
   async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
+    // if exists, return grup
+    const group = await this.getGroup(name);
+    if (group) return group;
+
+    // otherwise, create group
     try {
       return await this.http.post(
         this.licensing.getSharepointUri() + 'sitegroups',
@@ -667,6 +731,15 @@ export class SharepointService {
       if (e.status == 401) {
         // await this.teams.refreshToken(true); 
       }
+      return null;
+    }
+  }
+
+  async getGroup(name: string): Promise<SPGroup | null> {
+    try {
+      const result = await this.query(`sitegroups/getbyname('${name}')`).toPromise();
+      return result;
+    } catch (e) {
       return null;
     }
   }
@@ -772,6 +845,8 @@ export class SharepointService {
   }
 
 
+
+
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndications.find(i => i.therapy == therapy);
     if (cache) {
@@ -848,7 +923,7 @@ export class SharepointService {
     return await this.updateItem(stageId, OPPORTUNITY_STAGES_LIST, data);
   }
 
-  async createStage(data: StageInput): Promise<boolean> {
+  async createStage(data: StageInput): Promise<Stage> {
     return await this.createItem(OPPORTUNITY_STAGES_LIST, data);
   }
 

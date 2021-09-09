@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
+import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
@@ -43,8 +44,9 @@ export class ActionsListComponent implements OnInit {
     private readonly sharepoint: SharepointService, 
     private route: ActivatedRoute, 
     private router: Router,
-    public matDialog: MatDialog
-  ) { }
+    public matDialog: MatDialog,
+    private toastr: ToastrService
+    ) { }
 
   ngOnInit(): void {
     this.sharepoint.getTest();
@@ -226,6 +228,19 @@ export class ActionsListComponent implements OnInit {
         data: {
           next: nextStage,
           opportunityId: this.opportunityId
+        }
+      });
+      this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+        if (result.success) {
+          let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+          this.sharepoint.initializeStage(opp, result.data).then(async r => {
+            // set active
+            // await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+            // opp.OpportunityStatus = 'Active';
+            this.toastr.success("Next stage has been created successfully", result.data.Title);
+          });
+        } else {
+          this.toastr.error("The next stage couldn't be created", "Try again");
         }
       });
     }

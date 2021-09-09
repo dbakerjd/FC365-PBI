@@ -6,6 +6,6 @@
     </mat-dialog-content>
     <div class="dialog-footer">
         <div class="dialog-cancel-button" mat-dialog-close>Close</div>
-        <div class="dialog-submit-button" [mat-dialog-close]="true" (click)="onSubmit()" cdkFocusInitial>{{ isEdit? 'Update' : 'Create' }}</div>
+        <div class="dialog-submit-button" (click)="onSubmit()" cdkFocusInitial>{{ isEdit? 'Update' : 'Create' }}</div>
     </div>
 </form>
