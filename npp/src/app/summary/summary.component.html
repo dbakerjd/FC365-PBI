@@ -1,2 +1,37 @@
 <app-npp-header [isHome]="false"></app-npp-header>
-Summary!
+<div class="summary-header">
+    <div>
+        <h3>Project Status</h3>
+        <div>Total Projects: <span class="value">{{projectsStats?.total}}</span></div>
+    </div>
+    <div>
+        <div>
+            <div class="icon green-signal"></div>
+            Active Projects: <span class="value">{{projectsStats?.active}}</span>
+        </div>
+        <div>
+            <div class="icon red-signal"></div>
+            Archived Projects: <span class="value">{{projectsStats?.archived}}</span>
+        </div>
+    </div>
+</div>
+<div class="summary-content-wrapper">
+    <div class="summary-graph">
+        <div class="header">
+            <h4><div class="doc-btn-icon"></div> Project Insights</h4>
+        </div>
+        <div class="graph">
+            Summary!
+        </div>
+    </div>
+    <div class="summary-notifications">
+        <div class="header">
+            <h4><div class="bell-btn-icon"></div> Notifications</h4>
+        </div>
+        <div class="notifications-column">
+            <div class="notification-item" *ngFor="let n of notificationsList">
+                {{n.Title}}
+            </div>
+        </div>
+    </div>
+</div>

@@ -145,6 +145,13 @@ export interface Country {
   Title: string;
 }
 
+export interface NPPNotification {
+  Id: number;
+  Title: string;
+  TargetUserId: number;
+  TargetUser?: User;
+}
+
 export interface SelectInputList {
   label: string;
   value: any;
@@ -332,7 +339,7 @@ export class SharepointService {
       if(e.status == 401) {
         // await this.teams.refreshToken(true);
       }
-      return {};
+      return null;
     }
   }
 
@@ -493,11 +500,14 @@ export class SharepointService {
 
   /** --- OPPORTUNITIES --- **/
 
-  async getOpportunities(): Promise<Opportunity[]> {
-    return await this.getAllItems(
-      OPPORTUNITIES_LIST, 
-      "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner"
+  async getOpportunities(expand = true): Promise<Opportunity[]> {
+    if (expand) {
+      return await this.getAllItems(
+        OPPORTUNITIES_LIST,
+        "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner"
       );
+    }
+    return await this.getAllItems(OPPORTUNITIES_LIST);
   }
 
   async createOpportunity(op: OpportunityInput, st: StageInput): Promise<{ opportunity: Opportunity, stage: Stage } | false> {
@@ -982,12 +992,6 @@ export class SharepointService {
     return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
   }
 
-  // async getFiles(id: number) {
-  //   return this.files.filter(f => f.parentId == id);
-  // }
-
-
-
   async getStageType(OpportunityTypeId: number): Promise<string> {
     let result: OpportunityType | undefined;
     if (this.masterOpportunitiesTypes.length > 0) {
@@ -1090,15 +1094,24 @@ export class SharepointService {
     localStorage.removeItem('sharepointAccount');
   }
 
-  /** NOTIFICATIONS */
-  async createNotification(userId: number, text: string): Promise<boolean> {
-    return this.createItem(NOTIFICATIONS_LIST, {
+  /** --- NOTIFICATIONS --- */
+
+  async getUserNotifications(userId: number): Promise<NPPNotification[]> {
+    return await this.getAllItems(
+      NOTIFICATIONS_LIST,
+      `$filter=TargetUserId eq '${userId}'`
+    );
+  }
+
+  async createNotification(userId: number, text: string): Promise<NPPNotification> {
+    return await this.createItem(NOTIFICATIONS_LIST, {
       Title: text,
       TargetUserId: userId
     });
   }
 
-  /** LISTS */
+  /** --- SELECT LISTS --- */
+
   searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
     return this.query(query, '', 'all', { term, field, matchCase })
       .pipe(

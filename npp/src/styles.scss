@@ -133,3 +133,24 @@ app-opportunity-list {
 .npp-btn:hover {
     background-color: #83c797;
 }
+
+// active signals
+.green-signal {
+    background-color: #bdffd1;
+    border: 1px solid #94d9a9;
+    border-radius: 50%;
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin: 0;
+}
+
+.red-signal {
+    background-color: #ffc1b8;
+    border: 1px solid #f68b7b;
+    border-radius: 50%;
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin: 0;
+}

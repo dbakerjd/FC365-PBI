@@ -17,8 +17,8 @@
         <div class="opportunity-list-item" *ngFor="let item of result">
             <div class="opportunity-status">
                 <div>
-                    <div class="opportunity-active" *ngIf="item.OpportunityStatus == 'Active'"></div>
-                    <div class="opportunity-archived" *ngIf="item.OpportunityStatus == 'Archive'"></div>
+                    <div class="green-signal" *ngIf="item.OpportunityStatus == 'Active'"></div>
+                    <div class="red-signal" *ngIf="item.OpportunityStatus == 'Archive'"></div>
                     {{item.OpportunityStatus}}
                 </div>
                 <p><label>Type: </label>{{item.OpportunityType?.Title}}</p>
