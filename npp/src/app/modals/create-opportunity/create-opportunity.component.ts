@@ -106,7 +106,7 @@ export class CreateOpportunityComponent implements OnInit {
                 takeUntil(this._destroying$),
                 tap(th => {
                   this.sharepoint.getIndicationsList(th).then(r => {
-                    field.formControl?.setValue('');
+                    if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });
                 }),
