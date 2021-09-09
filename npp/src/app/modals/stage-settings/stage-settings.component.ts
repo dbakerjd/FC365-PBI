@@ -2,7 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { ToastrService } from 'ngx-toastr';
 import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -103,6 +102,10 @@ export class StageSettingsComponent implements OnInit {
       success = await this.sharepoint.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId
+      });
+      this.dialogRef.close({
+        success, 
+        data: this.model
       });
       
     } else {

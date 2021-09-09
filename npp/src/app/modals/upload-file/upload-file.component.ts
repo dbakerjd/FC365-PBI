@@ -1,11 +1,10 @@
 import { Inject, Component, OnInit } from '@angular/core';
 import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormGroup } from '@angular/forms';
 import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
-import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-upload-file',
@@ -21,8 +20,8 @@ export class UploadFileComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
+    public dialogRef: MatDialogRef<UploadFileComponent>,
     private readonly sharepoint: SharepointService,
-    private readonly toastr: ToastrService
   ) { 
     
   }
@@ -64,8 +63,17 @@ export class UploadFileComponent implements OnInit {
       data => {
         this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
           r => { 
-            if (Object.keys(r).length > 0) this.toastr.success(`The file ${this.model.file[0].name} was uploaded successfully`, "File Uploaded");
-            else this.toastr.error("Sorry, there was a problem uploading your file");
+            if (Object.keys(r).length > 0) {
+              this.dialogRef.close({
+                success: true, 
+                name: this.model.file[0].name
+              });
+            }
+            else {
+              this.dialogRef.close({
+                success: false,
+              });
+            }
           }
         );
       }

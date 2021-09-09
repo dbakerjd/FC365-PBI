@@ -102,7 +102,18 @@ export class ActionsListComponent implements OnInit {
         masterStageId: this.currentGate?.StageNameId,
         opportunityId: this.opportunityId
       }
-    })
+    });
+
+    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+      if (result.success) {
+        this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
+        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+      } else if (result.success === false) {
+        this.toastr.error("Sorry, there was a problem uploading your file");
+      }
+    });
+
+    
   }
 
   sendForApproval(file: NPPFile) {
