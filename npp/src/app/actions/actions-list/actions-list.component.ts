@@ -49,7 +49,6 @@ export class ActionsListComponent implements OnInit {
     ) { }
 
   ngOnInit(): void {
-    this.sharepoint.getTest();
     this.route.params.subscribe(async (params) => {
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;

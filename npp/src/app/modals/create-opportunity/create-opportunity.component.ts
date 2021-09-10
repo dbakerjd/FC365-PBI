@@ -168,21 +168,6 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'stageType',
           type: 'input',
           hideExpression: true,
-        }, {
-          key: 'Stage.Title',
-          type: 'input',
-          templateOptions: {
-            label: 'Stage Name:',
-            placeholder: 'First Stage Name'
-          },
-          expressionProperties: {
-            'templateOptions.label': function($viewValue, $modelValue, scope) {
-              return `${scope?.model.stageType} Name`;
-            },
-            'templateOptions.placeholder': function($viewValue, $modelValue, scope) {
-              return `First ${scope?.model.stageType} Name`;
-            },
-          },
         },{
           key: 'Stage.StageUsersId',
           type: 'ngsearchable',

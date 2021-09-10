@@ -123,6 +123,7 @@ export class OpportunityListComponent implements OnInit {
       if (result.success) {
         this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+        opp.progress = 0;
         this.opportunities.push(opp);
         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           // set active
