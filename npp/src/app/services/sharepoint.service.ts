@@ -525,10 +525,13 @@ export class SharepointService {
     let permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
     await this.setPermissions(permissions, groups, stage.ID);
 
-    // add stage users to group OU
+    // add stage users to group OU and SU
     for (const userId of stage.StageUsersId) {
       const user = await this.getUserInfo(userId);
-      if (user.LoginName) await this.addUserToGroup(user.LoginName, OUGroup.Id);
+      if (user.LoginName) {
+        await this.addUserToGroup(user.LoginName, OUGroup.Id);
+        await this.addUserToGroup(user.LoginName, SUGroup.Id);
+      }
     }
 
     // Actions
@@ -857,6 +860,14 @@ export class SharepointService {
     }
   }
 
+  async getGroups(): Promise<SPGroup[]> {
+    const groups = await this.query('sitegroups').toPromise();
+    if (groups.value) {
+      return groups.value;
+    }
+    return [];
+  }
+
   async getRoleDefinitionId(name: string): Promise<number | null> {
     const cache = this.SPRoleDefinitions.find(g => g.name === name);
     if (cache) {
@@ -888,8 +899,33 @@ export class SharepointService {
     }
   }
 
-  async readGroups(): Promise<SPGroup[]> {
-    return await this.query('sitegroups').toPromise();
+  /** todel */
+  async deleteAllGroups() {
+    const groups = await this.getGroups();
+    console.log('groups', groups);
+    for (const g of groups) {
+      if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SO')) {
+        this.deleteGroup(g.Id);
+      }
+    }
+  }
+
+  async deleteGroup(id: number) {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointUri() + `/sitegroups/removebyid(${id})`, 
+        null,
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "DELETE"
+          })
+        }
+      ).toPromise();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   async getGroupPermissions(list: string = ''): Promise<GroupPermission[]> {
