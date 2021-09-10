@@ -111,11 +111,11 @@ export interface NPPFile {
 
 export interface NPPFileMetadata {
   ID: number;
-  ApprovalStatusId: number;
   OpportunityNameId: number;
   StageNameId: number;
   ModelApprovalComments: string;
-  ApprovalStatus: string;
+  ApprovalStatusId?: number;
+  ApprovalStatus?: any;
   CountryId?: number[];
   ModelScenarioId?: number[];
   AuthorId: number;
@@ -201,6 +201,7 @@ const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
 const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
+const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
@@ -586,7 +587,6 @@ export class SharepointService {
       masterFolders = cache.folders;
     } else {
       masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
-      console.log('master folders', masterFolders);
       for (let index = 0; index < masterFolders.length; index++) {
         masterFolders[index].containsModels = masterFolders[index].Title === 'Forecast Models';
       }
@@ -768,9 +768,9 @@ export class SharepointService {
     }
     if (expandProperties && files.length > 0) {
       for (let i = 0; i < files.length; i++) {
-        const fileItems = files[i].ListItemAllFields;
+        let fileItems = files[i].ListItemAllFields;
         if (fileItems) {
-          Object.assign(fileItems, this.getFileInfo(fileItems.ID));
+          fileItems = Object.assign(fileItems, await this.getFileInfo(fileItems.ID));
         }
       }
     }
@@ -793,10 +793,29 @@ export class SharepointService {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`, 
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        Country/Title, ModelScenario/Title \
-        &$expand=StageName,Author,TargetUser,Country,ModelScenario',
+        Country/Title, ModelScenario/Title, ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,Country,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
+  }
+
+  async setApprovalStatus(fileId: number, status: string, comments: string | null = null): Promise<boolean> {
+    const statusId = this.getApprovalStatusId(status);
+    if (!statusId) return false;
+
+    let data = { ApprovalStatusId: statusId };
+    if (comments) Object.assign(data, { ModelApprovalComments: comments });
+
+    return await this.updateItem(fileId, `lists/getbytitle('${FILES_FOLDER}')`, data);
+  }
+
+  getApprovalStatusId(status: string): number | null {
+    switch (status) {
+      case "In Progress": return 1;
+      case "Submitted": return 2;
+      case "Approved": return 3;
+    }
+    return null;
   }
 
   private async uploadFileQuery(fileData: string, folder: string, filename: string) {

@@ -138,15 +138,24 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus}}</p>
+                                <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="npp-btn" (click)="sendForApproval(file)">Send for approval</div>
+                                    <div class="npp-btn" (click)="sendForApproval(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress'">
+                                        Send for approval
+                                    </div>
+                                    <div class="npp-btn" (click)="approve(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
+                                        Approve
+                                    </div>
                                     <div class="npp-btn" (click)="createScenario(file)">Create Scenario</div>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">
-                                <p><label>Description: </label>{{file.description}}</p>
-                                <p><label>Comments: </label>{{file.ListItemAllFields?.ModelApprovalComments}}</p>
+                                <p *ngIf="file.Description">
+                                    <label>Description: </label>{{file.Description}}
+                                </p>
+                                <p *ngIf="file.ListItemAllFields?.ModelApprovalComments">
+                                    <label>Comments: </label>{{file.ListItemAllFields?.ModelApprovalComments}}
+                                </p>
                             </div>
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>

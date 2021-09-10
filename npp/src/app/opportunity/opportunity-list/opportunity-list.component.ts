@@ -4,6 +4,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
+import { take } from 'rxjs/operators';
+import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 
@@ -47,15 +49,19 @@ export class OpportunityListComponent implements OnInit {
     // console.log('all', all);
     // console.log('filtered', all.filter(el => el.ListFilter === 'List'));
 
-    const folder = await this.sharepoint.createFolder('/testfolder');
-    console.log('folder', folder);
+    // const folder = await this.sharepoint.createFolder('/testfolder');
+    // console.log('folder', folder);
 
-    console.log('master', await this.sharepoint.getStageFolders(3));
-    this.sharepoint.readGroups();
+    // console.log('master', await this.sharepoint.getStageFolders(3));
+    // this.sharepoint.readGroups();
 
-    await this.sharepoint.getRoleDefinitionId('ListEdit');
-    await this.sharepoint.getRoleDefinitionId('ListEdit');
-    await this.sharepoint.getRoleDefinitionId('ListRead');
+    // await this.sharepoint.getRoleDefinitionId('ListEdit');
+    // await this.sharepoint.getRoleDefinitionId('ListEdit');
+    // await this.sharepoint.getRoleDefinitionId('ListRead');
+    const groups = await this.sharepoint.getGroups();
+    console.log(groups);
+    // await this.sharepoint.deleteAllGroups();
+    // await this.sharepoint.deleteGroup(17);
     /**TODEL */
 
     
@@ -76,10 +82,10 @@ export class OpportunityListComponent implements OnInit {
         templateOptions: {
           placeholder: 'All',
           options: [
-            { value: 'processing', label: 'Processing' },
-            { value: 'active', label: 'Active' },
-            { value: 'archived', label: 'Archived' },
-            { value: 'approved', label: 'Approved' },
+            { value: 'Processing', label: 'Processing' },
+            { value: 'Active', label: 'Active' },
+            { value: 'Archive', label: 'Archived' },
+            { value: 'Approved', label: 'Approved' },
           ]
         }
       },{
@@ -113,13 +119,15 @@ export class OpportunityListComponent implements OnInit {
     }
   }
 
-  createOpportunity() {
+  createOpportunity(opp: Opportunity) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
       height: '700px',
       width: '405px'
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+    this.dialogInstance.afterClosed()
+    .pipe(take(1))
+    .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
@@ -146,7 +154,9 @@ export class OpportunityListComponent implements OnInit {
       }
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+    this.dialogInstance.afterClosed()
+    .pipe(take(1))
+    .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
@@ -154,7 +164,6 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.error("The opportunity couldn't be updated", "Try again");
       }
     });
-
   }
 
   onSubmit() {
@@ -191,9 +200,9 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async archiveOpportunity(opp: Opportunity) {
-    console.log(opp);
     const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Archive");
     if (success) {
+      opp.OpportunityStatus = 'Archive';
       this.toastr.success("The opportunity has been archived");
     } else {
       this.toastr.error("The opportunity couldn't be archived", "Try again");
@@ -202,12 +211,31 @@ export class OpportunityListComponent implements OnInit {
 
   async restoreOpportunity(opp: Opportunity) {
     console.log(opp);
-    const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
-    if (success) {
-      this.toastr.success("The opportunity has been restored");
-    } else {
-      this.toastr.error("The opportunity couldn't be restored", "Try again");
-    }
+    const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      maxWidth: "400px",
+      height: "200px",
+      data: {
+        message: `The opportunity <em>${opp.Title}</em> will be restored.<br />Do you want to create a new copy of the opportunity to do so?`,
+        confirmButtonText: 'Yes, create a new one',
+        cancelButtonText: 'No, restore only'
+      }
+    });
+
+    dialogRef.afterClosed()
+      .pipe(take(1))
+      .subscribe(async response => {
+        if (response) {
+          // create new
+        } else if (response === false) {
+          const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
+          if (success) {
+            opp.OpportunityStatus = 'Active';
+            this.toastr.success("The opportunity has been restored");
+          } else {
+            this.toastr.error("The opportunity couldn't be restored", "Try again");
+          }
+        }
+      });
   }
 
 

@@ -48,8 +48,11 @@ export class UploadFileComponent implements OnInit {
       Object.assign(fileData, {
         CountryId: this.model.country,
         ModelScenarioId: this.model.scenario,
-        ModelApprovalComments: this.model.description
+        ModelApprovalComments: this.model.description,
+        ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
+        // GeographyId: 1 // TODO 
       });
+
     } else {
       // regular file
       Object.assign(fileData, {

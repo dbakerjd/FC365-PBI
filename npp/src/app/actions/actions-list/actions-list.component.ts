@@ -103,7 +103,9 @@ export class ActionsListComponent implements OnInit {
       }
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+    this.dialogInstance.afterClosed()
+    .pipe(take(1))
+    .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
         this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
@@ -120,9 +122,36 @@ export class ActionsListComponent implements OnInit {
       height: '300px',
       width: '405px',
       data: {
-        file: file
+        fileId: file.ListItemAllFields?.ID
       }
-    })
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          if (file.ListItemAllFields?.ApprovalStatus?.Title) {
+            file.ListItemAllFields.ApprovalStatus.Title = 'Submitted';
+            if (result.comments) {
+              file.ListItemAllFields.ModelApprovalComments = result.comments;
+            }
+          }
+          this.toastr.success("The model has been sent for approval", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("The model couldn't be sent for approval");
+        }
+      });
+  }
+
+  async approve(file: NPPFile) {
+    if (!file.ListItemAllFields) return;
+    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
+      file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
+      this.toastr.success("The model has been approved!", "Forecast Model");
+    } else {
+      this.toastr.error("There were a problem approving the forecast model", 'Try again');
+    }
   }
 
   createScenario(file: NPPFile) {
@@ -144,13 +173,14 @@ export class ActionsListComponent implements OnInit {
       }
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result:any) => {
-      console.log('result', result);
-      if (this.currentGate && result.success) {
-        this.currentGate.StageUsersId = result.data.StageUsersId;
-        this.currentGate.StageReview = result.data.StageReview;
-      }
-    });
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (this.currentGate && result.success) {
+          this.currentGate.StageUsersId = result.data.StageUsersId;
+          this.currentGate.StageReview = result.data.StageReview;
+        }
+      });
   }
 
   setUpDateListener() {
@@ -240,7 +270,9 @@ export class ActionsListComponent implements OnInit {
           opportunityId: this.opportunityId
         }
       });
-      this.dialogInstance.afterClosed().subscribe(async (result: any) => {
+      this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
         if (result.success) {
           let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
           this.sharepoint.initializeStage(opp, result.data).then(async r => {
@@ -301,6 +333,7 @@ export class ActionsListComponent implements OnInit {
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
       this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+      console.log('current files', this.currentFiles);
   
       this.displayingModels = false;
       if (this.currentFolder) {
@@ -373,7 +406,9 @@ export class ActionsListComponent implements OnInit {
           if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
-            console.log('File deleted');
+            this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
+          } else {
+            this.toastr.error("Sorry, there was a problem deleting the file");
           }
         }
       });
