@@ -160,7 +160,7 @@ export class OpportunityListComponent implements OnInit {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
-      } else {
+      } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");
       }
     });

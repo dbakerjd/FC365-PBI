@@ -414,7 +414,14 @@ export class SharepointService {
   }
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
-    return await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
+    const oppBeforeChanges: Opportunity = await this.getOneItemById(oppId, OPPORTUNITIES_LIST);
+    const success = await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
+
+    if (success && oppBeforeChanges.OpportunityOwnerId !== oppData.OpportunityOwnerId) { // owner changed
+      return this.changeOpportunityOwnerPermissions(oppId, oppBeforeChanges.OpportunityOwnerId, oppData.OpportunityOwnerId);
+    }
+
+    return success;
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
@@ -496,7 +503,15 @@ export class SharepointService {
   }
 
   async updateStage(stageId: number, data: any): Promise<boolean> {
-    return await this.updateItem(stageId, OPPORTUNITY_STAGES_LIST, data);
+    const currentStage = await this.getOneItemById(stageId, OPPORTUNITY_STAGES_LIST);
+    let success = await this.updateItem(stageId, OPPORTUNITY_STAGES_LIST, data);
+
+    return success && await this.changeStageUsersPermissions(
+      currentStage.OpportunityNameId,
+      currentStage.StageNameId,
+      currentStage.StageUsersId,
+      data.StageUsersId
+    );
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
@@ -515,7 +530,7 @@ export class SharepointService {
 
     await this.addUserToGroup(owner.LoginName, OUGroup.Id);
     await this.addUserToGroup(owner.LoginName, OOGroup.Id);
-    await this.addUserToGroup(owner.LoginName, SUGroup.Id);
+    // await this.addUserToGroup(owner.LoginName, SUGroup.Id); // not needed
 
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OU', data: OUGroup });
@@ -918,6 +933,41 @@ export class SharepointService {
     }
   }
 
+  async removeUserFromGroup(group: string | number, userId: number): Promise<boolean> {
+    let url = '';
+    if (typeof group == 'string') {
+      url = this.licensing.getSharepointUri() + `sitegroups//getbyname('${group}')/users/removebyid(${userId})`;
+    } else if (typeof group == 'number') {
+      url = this.licensing.getSharepointUri() + `sitegroups(${group})/users/removebyid(${userId})`;
+    }
+    try {
+      await this.http.post(
+        url,
+        null,
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "DELETE"
+          })
+        }
+      ).toPromise();
+      return true;
+    } catch (e) {
+      if(e.status == 401) {
+        // await this.teams.refreshToken(true); 
+      }
+      return false;
+    }
+  }
+
+  async getUserGroups(userId: number): Promise<SPGroup[]> {
+    const user = await this.query(`siteusers/getbyid('${userId}')?$expand=groups`).toPromise();
+    if (user.Groups.length > 0) {
+      return user.Groups;
+    }
+    return [];
+  }
+
   /** todel */
   async deleteAllGroups() {
     const groups = await this.getGroups();
@@ -1001,6 +1051,77 @@ export class SharepointService {
       }
       return false;
     }
+  }
+
+  private async changeOpportunityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
+
+    const newOwner = await this.getUserInfo(newOwnerId);
+    const OOGroup = await this.getGroup('OO-'+oppId); // Opportunity Owner (OO)
+    const OUGroup = await this.getGroup('OU-'+oppId); // Opportunity Users (OO)
+    if (!newOwner.LoginName || !OOGroup || !OUGroup) return false;
+
+    let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
+    
+    success = await this.addUserToGroup(newOwner.LoginName, OOGroup.Id) && success;
+    return await this.addUserToGroup(newOwner.LoginName, OUGroup.Id) && success;
+  }
+
+  private async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsers: number[], newUsers: number[]): Promise<boolean> {
+    const removedUsers = currentUsers.filter(item => newUsers.indexOf(item) < 0);
+    const addedUsers = newUsers.filter(item => currentUsers.indexOf(item) < 0);
+
+    let success = true;
+    for (const userId of removedUsers) {
+      success = success && await this.removeUserFromAllGroups(oppId, userId, ['SU'], masterStageId.toString());
+      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU groud
+    }
+
+    if (!success) return false;
+
+    if (addedUsers.length > 0) {
+      const OUGroup = await this.getGroup('OU-' + oppId);
+      const SUGroup = await this.getGroup(`SU-${oppId}-${masterStageId}`);
+      if (!OUGroup || !SUGroup) return false;
+
+      for (const userId of addedUsers) {
+        const user = await this.getUserInfo(userId);
+        if (user.LoginName) {
+          success = success && await this.addUserToGroup(user.LoginName, OUGroup.Id);
+          success = success && await this.addUserToGroup(user.LoginName, SUGroup.Id);
+          if (!success) return false;
+        }
+      }
+    }
+    return success;
+  }
+
+  private async removeUserFromAllGroups(oppId: number, userId: number, groups: string[], sufix: string = ''): Promise<boolean> {
+    const userGroups = await this.getUserGroups(userId);
+    console.log('user groups', userGroups);
+    const involvedGroups = userGroups.filter(userGroup => {
+      for (const groupType of groups) {
+        if (userGroup.Title.startsWith(groupType + '-' + oppId + (sufix ? '-' + sufix : ''))) return true;
+      }
+      return false;
+    });
+    console.log('involved', involvedGroups);
+    let success = true;
+    for (const ig of involvedGroups) {
+      if (!ig.Title.startsWith('OU')) success = await this.removeUserFromGroup(ig.Title, userId) && success;
+    }
+
+    if (!success) return false;
+
+    // has to be removed of OU -> extra check if the user is not in any opportunity group
+    if (involvedGroups.some(ig => ig.Title.startsWith('OU'))) {
+      const updatedGroups = await this.getUserGroups(userId);
+      console.log('group type', updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()));
+      if (updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()).length === 1) {
+        // not involved in any group of the opportunity
+        success = await this.removeUserFromGroup('OU-' + oppId, userId);
+      }
+    }
+    return success;
   }
   
   /** --- USERS --- **/
