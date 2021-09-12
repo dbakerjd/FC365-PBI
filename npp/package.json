@@ -27,6 +27,8 @@
     "@ngx-formly/bootstrap": "^5.0.0",
     "@ngx-formly/core": "^5.0.0",
     "adal-angular": "^1.0.18",
+    "angular-highcharts": "^12.0.0",
+    "highcharts": "^9.2.2",
     "ng2-datepicker": "^12.0.0",
     "ngx-toastr": "^14.1.0",
     "rxjs": "~6.6.0",

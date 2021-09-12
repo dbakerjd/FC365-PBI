@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NPPNotification, SharepointService } from '../services/sharepoint.service';
+import * as Highcharts from 'highcharts';
 
 @Component({
   selector: 'app-summary',
@@ -29,6 +30,50 @@ export class SummaryComponent implements OnInit {
       active: opportunities.filter(o => o.OpportunityStatus === 'Active').length,
       archived: opportunities.filter(o => o.OpportunityStatus === 'Archive').length
     }
+
+    let options = {
+      chart: {
+          plotShadow: true,
+          type: 'pie'
+      },
+      title: {
+          text: 'Current Project Stats'
+      },
+      tooltip: {
+          pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      },
+      accessibility: {
+          point: {
+              valueSuffix: '%'
+          }
+      },
+      plotOptions: {
+          pie: {
+              allowPointSelect: true,
+              cursor: 'pointer',
+              dataLabels: {
+                  enabled: true,
+                  format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+              }
+          }
+      },
+      series: [{
+          name: 'Project Status',
+          colorByPoint: true,
+          data: [{
+              name: 'Active',
+              y: this.projectsStats.active * 100 / this.projectsStats.total,
+              sliced: true,
+              selected: true
+          }, {
+              name: 'Archived',
+              y: this.projectsStats.archived * 100 / this.projectsStats.total,
+          }]
+      }]
+    };
+
+    //@ts-ignore
+    Highcharts.chart('chart', options);
   }
 
 }
