@@ -37,10 +37,10 @@ export class SummaryComponent implements OnInit {
           type: 'pie'
       },
       title: {
-          text: 'Current Project Stats'
+          text: 'Current Project Stats: '+this.projectsStats.total+' Projects'
       },
       tooltip: {
-          pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+          pointFormat: '{series.name}: <b>{point.value}</b>'
       },
       accessibility: {
           point: {
@@ -53,20 +53,23 @@ export class SummaryComponent implements OnInit {
               cursor: 'pointer',
               dataLabels: {
                   enabled: true,
-                  format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+                  format: '<b>{point.name}</b>: {point.value}'
               }
           }
       },
       series: [{
-          name: 'Project Status',
+          name: 'Projects',
           colorByPoint: true,
           data: [{
               name: 'Active',
               y: this.projectsStats.active * 100 / this.projectsStats.total,
+              value: this.projectsStats.active,
               sliced: true,
-              selected: true
+              selected: true,
+              color: '#ffa13e'
           }, {
               name: 'Archived',
+              value: this.projectsStats.archived,
               y: this.projectsStats.archived * 100 / this.projectsStats.total,
           }]
       }]

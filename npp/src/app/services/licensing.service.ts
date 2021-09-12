@@ -1,5 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { MsalService } from '@azure/msal-angular';
+import { TeamsService } from './teams.service';
 
 export interface JDLicense {
   Tier: string;
@@ -16,7 +19,7 @@ export class LicensingService {
 
   private license: JDLicense | null = null;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private teams: TeamsService, private router: Router, private authService: MsalService) { }
 
   async askLicensingApi(token: string): Promise<JDLicense> {
 
@@ -59,7 +62,27 @@ export class LicensingService {
 
   isValidJDLicense() {
     if (!this.license) return false;
-    return /*this.license.Tier == "silver" && */this.license.Expiration.getTime() >= new Date().getTime();
+    /*this.license.Tier == "silver" && */
+    return (new Date(this.license.Expiration)).getTime() >= new Date().getTime();
+  }
+
+  async validateLicense() {
+    let activeAccount = this.authService.instance.getActiveAccount();
+
+    if(activeAccount) {
+      this.teams.getStorageToken();
+
+      if(this.teams.token) {
+        if(!this.license) {
+          await this.setJDLicense(this.teams.token);
+        }
+        if(!this.isValidJDLicense()) {
+          this.router.navigate(['expired-license']);
+        }
+      }
+    }
+    
+    return true;
   }
 
   getSharepointUri() {

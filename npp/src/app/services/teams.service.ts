@@ -35,6 +35,7 @@ export class TeamsService {
 
   getStorageToken() {
     this.token = localStorage.getItem('teamsAccessToken');
+    return this.token;
   }
 
   async refreshToken(force = false) {
