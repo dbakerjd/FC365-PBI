@@ -32,7 +32,7 @@ export class DashboardComponent implements OnInit {
   constructor(private readonly teams: TeamsService, private router: Router, private licensing: LicensingService) { }
 
   ngOnInit(): void {
-    if(this.licensing.license && this.licensing.license.PowerBI) {
+    if(this.licensing.license && this.licensing.license.PowerBi) {
       this.items.push(this.powerBiItem);
     }
   }

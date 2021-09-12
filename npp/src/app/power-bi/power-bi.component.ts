@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { LicensingService } from '../services/licensing.service';
 
 @Component({
   selector: 'app-power-bi',
@@ -7,7 +8,7 @@ import { Component, OnInit } from '@angular/core';
 })
 export class PowerBiComponent implements OnInit {
 
-  constructor() { }
+  constructor(public licensing: LicensingService) { }
 
   ngOnInit(): void {
   }

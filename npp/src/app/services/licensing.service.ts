@@ -8,7 +8,7 @@ export interface JDLicense {
   Tier: string;
   Expiration: Date;
   SharePointUri: string;
-  PowerBI?:  any;
+  PowerBi?:  any;
 }
 
 @Injectable({

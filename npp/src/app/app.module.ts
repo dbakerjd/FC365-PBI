@@ -48,6 +48,7 @@ import { ToastrModule } from 'ngx-toastr';
 import { ChartModule, HIGHCHARTS_MODULES } from 'angular-highcharts';
 import * as xrange from 'highcharts/modules/xrange.src';
 import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
+import { SafePipe } from './shared/safe.pipe';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -145,7 +146,8 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     ConfirmDialogComponent,
     ProgressSpinnerComponent,
     NotFoundComponent,
-    ExpiredLicenseComponent
+    ExpiredLicenseComponent,
+    SafePipe
   ],
   providers: [
     {
