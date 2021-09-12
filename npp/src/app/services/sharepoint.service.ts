@@ -234,6 +234,16 @@ export class SharepointService {
 
   constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
+  async test() {
+    // const r = await this.query('siteusers').toPromise();
+    // const r = await this.query('siteusers', "$filter=isSiteAdmin eq true").toPromise();
+    // const r = await this.query("/_vti_bin/ListData.svc/UserInformationList?$filter=IsSiteAdmin eq true").toPromise();
+    // const r = await this.getAllItems(USER_INFO_LIST, "$filter=IsSiteAdmin eq true");
+    const siteTitle = await this.query('title').toPromise();
+    const r = await this.getGroupMembers(siteTitle.value + ' Owners');
+    console.log('users', r);
+  }
+
   query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
 
@@ -968,6 +978,15 @@ export class SharepointService {
     return [];
   }
 
+  async getGroupMembers(groupName: string): Promise<User[]> {
+    let users = await this.query(`sitegroups/getbyname('${groupName}')/users`).toPromise();
+    if (users && users.value.length > 0) {
+      return users.value;
+    }      
+    return [];
+  }
+
+
   /** todel */
   async deleteAllGroups() {
     const groups = await this.getGroups();
@@ -1131,21 +1150,12 @@ export class SharepointService {
     return queryObj.Picture?.Url;
   }
 
-  async getUsersFromGroup(groupName: string): Promise<User[]> {
-    // return this.getAllItems("sitegropus/getbyname('Beta Test Group')", 
-    let users = await this.query(`sitegroups/getbyname('${groupName}')/users`).toPromise();
-    if (users && users.value.length > 0) {
-      return users.value;
-    }      
-    return [];
-  }
-
   async getCurrentUserInfo(): Promise<User> {
     let account = localStorage.getItem('sharepointAccount');
     if(account) {
       return JSON.parse(account);
     } else {
-      let account = await this.query('currentuser', '?$select=Title,Email,Id,FirstName,LastName').toPromise();
+      let account = await this.query('currentuser', '$select=Title,Email,Id,FirstName,LastName,IsSiteAdmin').toPromise();
       console.log('account sharepoint', account);
       account['ID'] = account.Id; // set for User interface
       localStorage.setItem('sharepointAccount', JSON.stringify(account));
@@ -1155,6 +1165,15 @@ export class SharepointService {
 
   async getUserInfo(userId: number): Promise<User> {
     return await this.query(`siteusers/getbyid('${userId}')`).toPromise();
+  }
+
+  async getSiteOwners(): Promise<User[]> {
+    const siteTitle = await this.query('title').toPromise();
+    if (siteTitle.value) {
+      return (await this.getGroupMembers(siteTitle.value + ' Owners'))
+      .filter((m: any) => m.Title != 'System Account' && m.UserId); // only "real" users
+    }
+    return [];
   }
 
   removeCurrentUserInfo() {
@@ -1237,6 +1256,12 @@ export class SharepointService {
         .map(v => { return { label: v, value: v }});
     }
     return this.masterTherapiesList;
+  }
+
+  async getSiteOwnersList(): Promise<SelectInputList[]> {
+    const owners = await this.getSiteOwners();
+    console.log('owners', owners);
+    return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id }})
   }
 
 }

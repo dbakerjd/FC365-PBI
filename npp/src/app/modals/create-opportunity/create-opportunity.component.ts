@@ -35,16 +35,20 @@ export class CreateOpportunityComponent implements OnInit {
     let therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
     let indicationsList: any[] = [];
-    let defaultUsersList: SelectInputList[] = [];
+    let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     this.firstStepCompleted = false;
 
     if (this.data?.opportunity) {
       this.isEdit = true;
       indicationsList = await this.sharepoint.getIndicationsList(this.data.opportunity.Indication.TherapyArea);
+
+      /** Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
+      /*
       defaultUsersList = [{ 
         label: this.data.opportunity.OpportunityOwner.FirstName + ' ' + this.data.opportunity.OpportunityOwner.LastName,
         value: this.data.opportunity.OpportunityOwnerId
       }];
+      */
     }
 
     this.fields = [
@@ -74,9 +78,12 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Opportunity Owner:',
             placeholder: 'Opportunity Owner',
             required: true,
-            filterLocally: false,
-            query: 'siteusers',
             options: defaultUsersList
+            /** Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
+            /*
+            filterLocally: false,
+            query: 'siteusers'
+            */
           },
           defaultValue: this.data?.opportunity.OpportunityOwnerId
         }, {

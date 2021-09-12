@@ -375,7 +375,7 @@ export class ActionsListComponent implements OnInit {
     if (!file) return;
     let folderGroup = `${this.opportunityId}-${this.currentGate?.StageNameId}-${folderId}`;
     folderGroup = 'Beta Test Group'; // TODO
-    let folderUsersList = await this.sharepoint.getUsersFromGroup(folderGroup);
+    let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',
       width: '405px',
