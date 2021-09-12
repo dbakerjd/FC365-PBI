@@ -11,7 +11,7 @@ export interface JDLicense {
   providedIn: 'root'
 })
 export class LicensingService {
-  siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/_api/web/';
+  siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/';
   licensingApiUrl: string = ' https://jdlicensingfunctions.azurewebsites.net/api/license?code=0R6EUPw28eUEVmBU9gNfi1yEwEpX28kOUWXZtEIjxavv5qV6VacwDw==';
 
   private license: JDLicense | null = null;
@@ -20,27 +20,12 @@ export class LicensingService {
 
   async askLicensingApi(token: string): Promise<JDLicense> {
 
-      
-      // let headers = new HttpHeaders();
-      // return await this.http.get(this.licensingApiUrl, { 
-      //   headers: headers
-      // }).toPromise() as JDLicense;
-      
-
      /** OK */
       let headers = new HttpHeaders({
         'token': token,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
-        // 'Access-Control-Request-Headers': 'access-control-allow-methods,access-control-allow-origin'
       });
-      // let headers = new HttpHeaders({
-      //   'token':token,
-      //   // 'Content-Type': 'text/plain', 
-      //   'Access-Control-Allow-Origin': '*',
-      //   'Access-Control-Allow-Methods': 'GET'
-      // });
-      console.log('headers license', headers);
       return await this.http.get(this.licensingApiUrl, { 
         headers: headers
       }).toPromise() as JDLicense;
@@ -65,5 +50,9 @@ export class LicensingService {
   getSharepointUri() {
     return this.siteUrl; // temporal
     return this.license?.SharePointUri;
+  }
+
+  getSharepointApiUri() {
+    return this.getSharepointUri() + '/_api/web/';
   }
 }

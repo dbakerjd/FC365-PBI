@@ -259,7 +259,7 @@ export class SharepointService {
         filterUri = `$filter=substringof('${filter.term}',${filter.field}) or substringof('${capitalized}',${filter.field})`;
       }
     }
-    let endpoint = this.licensing.getSharepointUri() + partial;
+    let endpoint = this.licensing.getSharepointApiUri() + partial;
     if (conditions || filterUri) endpoint += '?';
     if (conditions) endpoint += conditions;
     if (filterUri) endpoint += conditions ? '&' + filterUri : filterUri;
@@ -276,7 +276,7 @@ export class SharepointService {
 
   private async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
-      let endpoint = this.licensing.getSharepointUri() + list + '/items';
+      let endpoint = this.licensing.getSharepointApiUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value && lists.value.length > 0) {
@@ -293,7 +293,7 @@ export class SharepointService {
 
   private async getOneItem(list: string, conditions: string = ''): Promise<any> {
     try {
-      let endpoint = this.licensing.getSharepointUri() + list + '/items';
+      let endpoint = this.licensing.getSharepointApiUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value && lists.value.length == 1) {
@@ -310,7 +310,7 @@ export class SharepointService {
 
   private async getOneItemById(id: number, list: string, conditions: string = ''): Promise<any> {
     try {
-      let endpoint = this.licensing.getSharepointUri() + list + `/items(${id})`;
+      let endpoint = this.licensing.getSharepointApiUri() + list + `/items(${id})`;
       if (conditions) endpoint += '?' + conditions;
       return await this.http.get(endpoint).toPromise(); 
     } catch (e) {
@@ -324,7 +324,7 @@ export class SharepointService {
 
   private async countItems(list: string, conditions: string = ''): Promise<number> {
     try {
-      let endpoint = this.licensing.getSharepointUri() + list + '/ItemCount';
+      let endpoint = this.licensing.getSharepointApiUri() + list + '/ItemCount';
       if (conditions) endpoint += '?' + conditions;
       let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
       if (lists.value) {
@@ -342,7 +342,7 @@ export class SharepointService {
   private async createItem(list: string, data: any): Promise<any> {
     try {
       return await this.http.post(
-        this.licensing.getSharepointUri() + list + "/items", 
+        this.licensing.getSharepointApiUri() + list + "/items", 
         data
       ).toPromise();
     } catch (e) {
@@ -356,7 +356,7 @@ export class SharepointService {
   private async updateItem(id: number, list: string, data: any): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointUri() + list + `/items(${id})`, 
+        this.licensing.getSharepointApiUri() + list + `/items(${id})`, 
         data,
         {
           headers: new HttpHeaders({
@@ -718,7 +718,7 @@ export class SharepointService {
   async createFolder(newFolderUrl: string): Promise<SystemFolder | null> {
     try {
       return await this.http.post(
-        this.licensing.getSharepointUri() + "folders", 
+        this.licensing.getSharepointApiUri() + "folders", 
         {
           ServerRelativeUrl: FILES_FOLDER + newFolderUrl
         }
@@ -735,7 +735,7 @@ export class SharepointService {
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
-        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
         { responseType: 'arraybuffer' }
       ).toPromise();
     } catch (e) {
@@ -749,7 +749,7 @@ export class SharepointService {
   async deleteFile(fileUri: string): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointUri() + `GetFileByServerRelativeUrl('${fileUri}')`, 
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')`, 
         null,
         {
           headers: new HttpHeaders({
@@ -847,7 +847,7 @@ export class SharepointService {
     try {
       let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
       return await this.http.post(
-        this.licensing.getSharepointUri() + url, 
+        this.licensing.getSharepointApiUri() + url, 
         fileData,
         {
           headers: { 'Content-Type': 'blob' }
@@ -871,7 +871,7 @@ export class SharepointService {
     // otherwise, create group
     try {
       return await this.http.post(
-        this.licensing.getSharepointUri() + 'sitegroups',
+        this.licensing.getSharepointApiUri() + 'sitegroups',
         {
           Title: name,
           Description: description,
@@ -931,7 +931,7 @@ export class SharepointService {
   async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointUri() + `sitegroups(${groupId})/users`,
+        this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
         { LoginName: loginName }
       ).toPromise();
       return true;
@@ -946,9 +946,9 @@ export class SharepointService {
   async removeUserFromGroup(group: string | number, userId: number): Promise<boolean> {
     let url = '';
     if (typeof group == 'string') {
-      url = this.licensing.getSharepointUri() + `sitegroups//getbyname('${group}')/users/removebyid(${userId})`;
+      url = this.licensing.getSharepointApiUri() + `sitegroups//getbyname('${group}')/users/removebyid(${userId})`;
     } else if (typeof group == 'number') {
-      url = this.licensing.getSharepointUri() + `sitegroups(${group})/users/removebyid(${userId})`;
+      url = this.licensing.getSharepointApiUri() + `sitegroups(${group})/users/removebyid(${userId})`;
     }
     try {
       await this.http.post(
@@ -1001,7 +1001,7 @@ export class SharepointService {
   async deleteGroup(id: number) {
     try {
       await this.http.post(
-        this.licensing.getSharepointUri() + `/sitegroups/removebyid(${id})`, 
+        this.licensing.getSharepointApiUri() + `/sitegroups/removebyid(${id})`, 
         null,
         {
           headers: new HttpHeaders({
@@ -1044,12 +1044,12 @@ export class SharepointService {
   }
 
   private async addRolePermissionToList(list: string, groupId: number, roleName: string, id: number = 0): Promise<boolean> {
-    const baseUrl = this.licensing.getSharepointUri() + list + (id === 0 ? '' : `/items(${id})`);
+    const baseUrl = this.licensing.getSharepointApiUri() + list + (id === 0 ? '' : `/items(${id})`);
     return await this.setRolePermission(baseUrl, groupId, roleName);
   }
 
   private async addRolePermissionToFolder(folderUrl: string, groupId: number, roleName: string): Promise<boolean> {
-    const baseUrl = this.licensing.getSharepointUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
+    const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
     return await this.setRolePermission(baseUrl, groupId, roleName);
   }
 
