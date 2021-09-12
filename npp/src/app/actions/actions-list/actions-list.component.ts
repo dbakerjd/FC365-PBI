@@ -40,6 +40,7 @@ export class ActionsListComponent implements OnInit {
   displayingModels: boolean = false;
   dialogInstance: any; 
   loading = false;
+  profilePic: string = '/assets/user.svg';
 
   constructor(
     private readonly sharepoint: SharepointService, 
@@ -62,6 +63,7 @@ export class ActionsListComponent implements OnInit {
 
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {

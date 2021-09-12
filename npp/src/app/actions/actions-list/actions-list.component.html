@@ -21,7 +21,7 @@
     <div class="opportunity-owner">
         <div class="opportunity-owner-pic">
             <div class="opportunity-owner-pic-background"></div>
-            <img [src]="opportunity.OpportunityOwner?.profilePicUrl"/>
+            <img [src]="profilePic" *ngIf="profilePic"/>
         </div>
         <div class="opportunity-owner-info">
             <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
