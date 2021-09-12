@@ -18,7 +18,8 @@ export class WorkInProgressService {
   public working = new Subject<NPPJob[]>();
   public idle = new Subject<boolean>();
 
-  constructor() { }
+  constructor() { 
+  }
 
   startJob(name: string) {
     let id = Date.now() + ' ' + Math.floor(Math.random() * 100);
@@ -50,14 +51,22 @@ export class WorkInProgressService {
     if(this.jobs.length) {
       this.working.next(this.jobs);
 
-      window.onbeforeunload = () => {
-        return "Some content is still being created/updated, if you close now you will lose data."
-      }
-
+      window.onbeforeunload = function (e: any) {
+        e = e || window.event;
+    
+        // For IE and Firefox prior to version 4
+        if (e) {
+            e.returnValue = 'Some content is still being created/updated, please wait a moment to avoid inconsistent data.';
+        }
+    
+        // For Safari
+        return 'Some content is still being created/updated, please wait a moment to avoid inconsistent data.';
+      };
     } else {
+      
       this.idle.next(true);
-
       window.onbeforeunload = null;
+
     }
   }
 

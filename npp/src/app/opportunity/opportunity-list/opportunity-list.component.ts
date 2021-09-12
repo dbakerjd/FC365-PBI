@@ -8,6 +8,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -27,7 +28,8 @@ export class OpportunityListComponent implements OnInit {
     private sharepoint: SharepointService, 
     private toastr: ToastrService,
     private router: Router, 
-    public matDialog: MatDialog
+    public matDialog: MatDialog,
+    public jobs: WorkInProgressService
     ) { }
 
   async ngOnInit() {
@@ -133,11 +135,15 @@ export class OpportunityListComponent implements OnInit {
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         this.opportunities.push(opp);
+        let job = this.jobs.startJob("initialize opportunity "+result.data.opportunity.id);
         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           // set active
           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
           opp.OpportunityStatus = 'Active';
+          this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
+        }).catch(e => {
+          this.jobs.finishJob(job.id);
         });
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be created", "Try again");
