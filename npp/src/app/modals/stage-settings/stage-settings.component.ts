@@ -15,6 +15,7 @@ export class StageSettingsComponent implements OnInit {
   model: any = { };
   fields: FormlyFieldConfig[] = [];
   isEdit: boolean = false;
+  canSetUsers: boolean = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -27,6 +28,7 @@ export class StageSettingsComponent implements OnInit {
     if (this.data?.stage) {
       defaultUsersList = await this.sharepoint.getUsersList(this.data?.stage.StageUsersId);
     }
+    this.canSetUsers = this.data?.canSetUsers ? this.data.canSetUsers : false;
 
     this.fields = [{
       fieldGroup: [{
@@ -46,21 +48,6 @@ export class StageSettingsComponent implements OnInit {
         type: 'input',
         hideExpression: true,
       },{
-        key: 'Title',
-        type: 'input',
-        templateOptions: {
-          label: 'Stage Name:',
-          placeholder: 'Set the next stage name',
-          required: true
-        },
-        expressionProperties: {
-          'templateOptions.label': function($viewValue, $modelValue, scope) {
-            if (scope?.model.stageType) return `${scope?.model.stageType} Name`;
-            else return '';
-          },
-        },
-        hideExpression: 'model.ID'
-      },{
         key: 'StageUsersId',
         type: 'ngsearchable',
         templateOptions: {
@@ -71,7 +58,8 @@ export class StageSettingsComponent implements OnInit {
             multiple: true,
             options: defaultUsersList,
             required: true
-        }
+        },
+        hideExpression: !this.canSetUsers
       },{
         key: 'StageReview',
         type: 'datepicker',
@@ -101,7 +89,7 @@ export class StageSettingsComponent implements OnInit {
     if (this.model.ID) {
       success = await this.sharepoint.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
-        StageUsersId: this.model.StageUsersId
+        StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
       });
       this.dialogRef.close({
         success, 

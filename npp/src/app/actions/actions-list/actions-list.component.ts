@@ -20,6 +20,7 @@ import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User
 export class ActionsListComponent implements OnInit {
   currentUser: User | undefined = undefined;
   isOwner = false;
+  isStageUser = false;
   gates: Stage[] = [];
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
@@ -169,7 +170,8 @@ export class ActionsListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        stage: this.currentGate
+        stage: this.currentGate,
+        canSetUsers: this.isOwner || this.currentUser?.IsSiteAdmin // only until set permission problem is resolved
       }
     });
 
@@ -305,6 +307,7 @@ export class ActionsListComponent implements OnInit {
     if(gate && gate != this.currentGate) {
       this.currentGate = gate;
       this.currentActions = gate.actions;
+      this.isStageUser = gate.StageUsersId.some(userId => userId === this.currentUser?.Id);
       this.computeProgress();
       this.getFolders();
     } else if(gate && gate == this.currentGate) {

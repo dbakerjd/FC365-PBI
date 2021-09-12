@@ -72,7 +72,7 @@
                 <div class="gate-info-icons-documents" title="Documents" (click)="showFolders()"></div>
                 <div class="gate-info-icons-models" title="Models" (click)="showModels()"></div>
                 <div class="gate-info-icons-refresh-bi" title="Refresh Power BI"></div>
-                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()"></div>
+                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
