@@ -163,7 +163,18 @@ export class ActionsListComponent implements OnInit {
       data: {
         file: file
       }
-    })
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (success: any) => {
+        if (success) {
+          this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
+          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+        } else if (success === false) {
+          this.toastr.error('The new model scenario could not be created', 'Try Again');
+        }
+      });
   }
 
   openStageSettings() {

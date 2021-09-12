@@ -1,9 +1,10 @@
 <app-dialog-header title="Create Scenario"></app-dialog-header>
 <mat-dialog-content>
+    <p class="filename"><strong>File:</strong> {{ file?.Name }}</p>
     <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
 </mat-dialog-content>
 <div class="dialog-footer">
     <div class="dialog-cancel-button" mat-dialog-close>Close</div>
-    <div class="dialog-submit-button" [mat-dialog-close]="true" cdkFocusInitial>Create</div>
+    <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()">Create Scenario</div>
 </div>
 

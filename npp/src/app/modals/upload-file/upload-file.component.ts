@@ -99,7 +99,7 @@ export class UploadFileComponent implements OnInit {
     });
   }
 
-  validateAllFormFields(formGroup: FormGroup) {
+  private validateAllFormFields(formGroup: FormGroup) {
     Object.keys(formGroup.controls).forEach(field => {
       const control = formGroup.get(field);
       if (control instanceof FormControl) {

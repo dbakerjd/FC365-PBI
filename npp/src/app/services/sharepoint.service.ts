@@ -780,6 +780,82 @@ export class SharepointService {
     return uploaded;
   }
 
+  async cloneForecastModel(originFile: NPPFile, scenario: number, comments = ''): Promise<boolean> {
+
+    console.log('comentaris', comments);
+    const scenarios = await this.getScenariosList();
+    const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
+    const extension = originFile.Name.split('.').pop();
+    if (!extension) return false;
+
+    const baseFileName = originFile.Name.substring(0, originFile.Name.length - (extension.length + 1));
+    const newFileName = baseFileName
+      + '-' + scenarios.find(el => el.value === scenario)?.label.replace(/ /g, '').toLocaleLowerCase()
+      + '.' + extension;
+
+    let success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFileName);
+    if (!success) return false;
+
+    let newFileInfo = await this.query(
+      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
+      `$expand=ListItemAllFields&$filter=Name eq '${newFileName}'`,
+    ).toPromise();
+
+    console.log('nfv', newFileInfo.value);
+
+    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
+      // add new scenario
+      console.log('inside');
+      let newScenarios = originFile.ListItemAllFields.ModelScenarioId ? originFile.ListItemAllFields.ModelScenarioId : [];
+      if (!newScenarios.includes(scenario)) {
+        newScenarios.push(scenario);
+      }
+
+      const newData = {
+        ModelScenarioId: newScenarios,
+        ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
+        ApprovalStatusId: this.getApprovalStatusId("In Progress")
+      }
+      console.log('MAC', newData);
+      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
+    }
+    return success;
+  }
+
+  async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
+    const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
+    let destinationUrl = `copyTo('${destinationFolder + newFileName}')`;
+    try {
+      const r = await this.http.post(
+        this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
+        null
+      ).toPromise();
+      console.log('r copy', r);
+      return true;
+    }
+    catch (e) {
+      if(e.status == 400) {
+        /*
+        const extension = newFileName.split('.').pop();
+        if (!extension) return false;
+
+        newFileName = newFileName.substring(0, newFileName.length - (extension.length + 1)) + '-1.' + extension;
+        destinationUrl = `copyTo('${destinationFolder + newFileName}')`;
+        try {
+          await this.http.post(
+            this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
+            null
+          ).toPromise();
+          return true;
+        } catch (e) {
+          return false;
+        }
+        */
+      }
+      return false;
+    }
+  }
+
   /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
   async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
