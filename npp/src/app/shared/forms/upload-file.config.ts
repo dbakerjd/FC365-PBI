@@ -11,6 +11,7 @@ export class UploadFileConfig {
     opportunityId: number, 
     stageId: number, 
     folders: NPPFolder[], 
+    selectedFolder: number | null,
     countriesList: SelectInputList[], 
     scenariosList: SelectInputList[]): FormlyFieldConfig[] {
     let {categories, countries, scenarios} = this;
@@ -32,9 +33,10 @@ export class UploadFileConfig {
             templateOptions: {
                 label: 'File',
                 placeholder: 'File',
+                required: true
             },
           },
-          categories(folders),
+          categories(folders, selectedFolder),
           countries(countriesList, folders),
           scenarios(scenariosList, folders),
           {
@@ -54,7 +56,7 @@ export class UploadFileConfig {
     return config;
   }
 
-  categories(folders: NPPFolder[]) {
+  categories(folders: NPPFolder[], defaultFolder: number | null) {
     return {
         key: 'category',
         type: 'select',
@@ -68,7 +70,9 @@ export class UploadFileConfig {
             }),
             valueProp: 'value',
             labelProp: 'name',
-        }
+            required: true,
+        },
+        defaultValue: defaultFolder
     }
   }
 
@@ -97,7 +101,8 @@ export class UploadFileConfig {
             label: 'Scenarios:',
             options: options,
             multiple: true,
-            placeholder: 'Choose scenarios'
+            placeholder: 'Choose scenarios',
+            required: true
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;

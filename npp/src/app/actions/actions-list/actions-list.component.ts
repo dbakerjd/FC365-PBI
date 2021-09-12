@@ -97,6 +97,7 @@ export class ActionsListComponent implements OnInit {
       width: '405px',
       data: {
         folderList: this.currentFolders,
+        selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.ID : null,
         countries: await this.sharepoint.getCountriesList(),
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,

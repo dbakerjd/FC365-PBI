@@ -12,11 +12,14 @@ import { FormlyFieldSearchableSelectApi } from "./sharepoint-searchable-select";
 
 export const FORMLY_CONFIG = {
   types: [
-    { name: 'file-input', component: FormlyFieldFile, wrappers: ['form-field']  },
-    { name: 'datepicker', component: FormlyFieldDatePicker, wrappers: ['form-field']  },
-    { name: 'searchable', component: FormlyFieldSearchableSelectApi, wrappers: ['form-field']  },
-    { name: 'ngsearchable', component: FormlyFieldNgSelect, wrappers: ['form-field']  },
+    { name: 'file-input', component: FormlyFieldFile, wrappers: ['form-field'] },
+    { name: 'datepicker', component: FormlyFieldDatePicker, wrappers: ['form-field'] },
+    { name: 'searchable', component: FormlyFieldSearchableSelectApi, wrappers: ['form-field'] },
+    { name: 'ngsearchable', component: FormlyFieldNgSelect, wrappers: ['form-field'] },
   ],
+  validationMessages: [
+    { name: 'required', message: 'This field is required' },
+  ]
 };
 
 @NgModule({

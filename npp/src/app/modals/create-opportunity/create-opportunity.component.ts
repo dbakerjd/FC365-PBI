@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
@@ -183,13 +183,20 @@ export class CreateOpportunityComponent implements OnInit {
               placeholder: 'Stage Users',
               filterLocally: false,
               query: 'siteusers',
-              multiple: true
-          }
+              multiple: true,
+              required: true
+          },
+          validation: {
+            messages: {
+              required: (error) => 'You must enter one or more users',
+            },
+          },
         },{
           key: 'Stage.StageReview',
           type: 'datepicker',
           templateOptions: {
-              label: 'Stage Review:'
+              label: 'Stage Review',
+              required: true
           }
         },],
         hideExpression: !this.firstStepCompleted
@@ -198,12 +205,22 @@ export class CreateOpportunityComponent implements OnInit {
   }
 
   onNext() {
+    if (this.form.invalid) {
+      this.validateAllFormFields(this.form);
+      return;
+    }
+
     this.firstStepCompleted = true;
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
   }
 
   async onSubmit() {
+    if (this.form.invalid) {
+      this.validateAllFormFields(this.form);
+      return;
+    }
+
     if (this.isEdit) {
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.dialogRef.close({
@@ -222,6 +239,18 @@ export class CreateOpportunityComponent implements OnInit {
   ngOnDestroy(): void {
     this._destroying$.next();
     this._destroying$.complete();
+  }
+
+  private validateAllFormFields(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(field => {
+      const control = formGroup.get(field);
+      if (control instanceof FormControl) {
+        control.markAsTouched({ onlySelf: true });
+        control.markAsDirty({ onlySelf: true });
+      } else if (control instanceof FormGroup) {
+        this.validateAllFormFields(control);
+      }
+    });
   }
 }
 

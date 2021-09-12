@@ -2,7 +2,7 @@ import { Inject, Component, OnInit } from '@angular/core';
 import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 
@@ -32,12 +32,17 @@ export class UploadFileComponent implements OnInit {
       this.data.opportunityId, 
       this.data.masterStageId, 
       this.data.folderList,
+      this.data.selectedFolder,
       this.data.countries,
       this.data.scenarios);
     this.form = new FormGroup({});
   }
 
   onSubmit() {
+    if (this.form.invalid) {
+      this.validateAllFormFields(this.form);
+      return;
+    }
     let fileData = {
       StageNameId: this.model.StageNameId,
       OpportunityNameId: this.model.OpportunityNameId,
@@ -91,6 +96,18 @@ export class UploadFileComponent implements OnInit {
         obs.complete();
       }
       reader.readAsArrayBuffer(file);
+    });
+  }
+
+  validateAllFormFields(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(field => {
+      const control = formGroup.get(field);
+      if (control instanceof FormControl) {
+        control.markAsTouched({ onlySelf: true });
+        control.markAsDirty({ onlySelf: true });
+      } else if (control instanceof FormGroup) {
+        this.validateAllFormFields(control);
+      }
     });
   }
 }

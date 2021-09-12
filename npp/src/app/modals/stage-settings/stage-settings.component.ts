@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
@@ -59,6 +59,11 @@ export class StageSettingsComponent implements OnInit {
             options: defaultUsersList,
             required: true
         },
+        validation: {
+          messages: {
+            required: (error) => 'You must enter one or more users',
+          },
+        },
         hideExpression: !this.canSetUsers
       },{
         key: 'StageReview',
@@ -85,6 +90,10 @@ export class StageSettingsComponent implements OnInit {
   }
 
   async onSubmit() {
+    if (this.form.invalid) {
+      this.validateAllFormFields(this.form);
+      return;
+    }
     let success;
     if (this.model.ID) {
       success = await this.sharepoint.updateStage(this.model.ID, {
@@ -110,4 +119,17 @@ export class StageSettingsComponent implements OnInit {
       });
     }
   }
+
+  validateAllFormFields(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(field => {
+      const control = formGroup.get(field);
+      if (control instanceof FormControl) {
+        control.markAsTouched({ onlySelf: true });
+        control.markAsDirty({ onlySelf: true });
+      } else if (control instanceof FormGroup) {
+        this.validateAllFormFields(control);
+      }
+    });
+  }
+
 }

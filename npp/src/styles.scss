@@ -154,3 +154,17 @@ app-opportunity-list {
     height: 0.6rem;
     margin: 0;
 }
+
+/** validation errors **/
+
+.form-control.is-invalid, .was-validated .form-control:invalid {
+    border-color: #dc3545;
+    &::placeholder {
+        color: #dc3545;
+    }
+}
+
+.invalid-feedback {
+    font-size: 80%;
+    color: #dc3545;
+}
