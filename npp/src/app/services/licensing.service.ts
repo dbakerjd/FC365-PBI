@@ -8,6 +8,7 @@ export interface JDLicense {
   Tier: string;
   Expiration: Date;
   SharePointUri: string;
+  PowerBI?:  any;
 }
 
 @Injectable({
@@ -17,7 +18,7 @@ export class LicensingService {
   siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/_api/web/';
   licensingApiUrl: string = ' https://jdlicensingfunctions.azurewebsites.net/api/license?code=0R6EUPw28eUEVmBU9gNfi1yEwEpX28kOUWXZtEIjxavv5qV6VacwDw==';
 
-  private license: JDLicense | null = null;
+  public license: JDLicense | null = null;
 
   constructor(private http: HttpClient, private teams: TeamsService, private router: Router, private authService: MsalService) { }
 

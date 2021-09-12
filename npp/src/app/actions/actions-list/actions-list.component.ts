@@ -10,6 +10,7 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { LicensingService } from 'src/app/services/licensing.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -47,7 +48,8 @@ export class ActionsListComponent implements OnInit {
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    public licensing: LicensingService
     ) { }
 
   ngOnInit(): void {
