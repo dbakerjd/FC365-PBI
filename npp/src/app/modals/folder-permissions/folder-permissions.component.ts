@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { ToastrService } from 'ngx-toastr';
 import { NPPFolder, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -16,11 +17,14 @@ export class FolderPermissionsComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   opportunityId: number | null = null;
   currentUsersList: any[] = []; // save departments users before changes
+  loading = true;
+  updating = false;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<FolderPermissionsComponent>,
     private sharepoint: SharepointService, 
+    private readonly toastr: ToastrService
   ) { }
 
   async ngOnInit() {
@@ -80,13 +84,15 @@ export class FolderPermissionsComponent implements OnInit {
       }
     ];
 
+    this.loading = false;
   }
 
   async onSubmit() {
-    if (this.form.invalid || !this.opportunityId) {
+    if (this.form.invalid || !this.opportunityId || this.updating) {
       return;
     }
 
+    this.updating = this.dialogRef.disableClose = true;
     let success = true;
     for (const key in this.model.DepartmentUsersId) {
       success = success && await this.sharepoint.updateDepartmentUsers(
@@ -98,6 +104,11 @@ export class FolderPermissionsComponent implements OnInit {
       if (success) this.currentUsersList[+key] = this.model.DepartmentUsersId[key]; // update current list
       else break;
     }
+
+    this.updating = this.dialogRef.disableClose = false;
+
+    if (success) this.toastr.success('All the Department user permissions has been updated', 'Folder access');
+    else this.toastr.error('An error occurred updating users permissions', 'Try Again!');
   }
 
 }

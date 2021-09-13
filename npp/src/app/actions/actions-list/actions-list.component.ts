@@ -219,15 +219,6 @@ export class ActionsListComponent implements OnInit {
           opportunityId: this.opportunity?.ID
         }
       });
-  
-      this.dialogInstance.afterClosed()
-        .pipe(take(1))
-        .subscribe(async (result: any) => {
-          if (this.currentGate && result.success) {
-            this.currentGate.StageUsersId = result.data.StageUsersId;
-            this.currentGate.StageReview = result.data.StageReview;
-          }
-        });
     }
   }
 

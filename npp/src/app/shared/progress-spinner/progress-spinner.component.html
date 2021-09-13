@@ -1,1 +1,2 @@
-<mat-spinner diameter="40" style="margin: 2em auto" color="warn"></mat-spinner>
+<mat-spinner diameter="40" style="margin: 2em auto" color="warn" *ngIf="size == 'normal'"></mat-spinner>
+<mat-spinner diameter="20" style="margin: 0.75em auto" color="warn" *ngIf="size != 'normal'"></mat-spinner>
