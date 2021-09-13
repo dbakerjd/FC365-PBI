@@ -107,7 +107,6 @@ export class StageSettingsComponent implements OnInit {
       
     } else {
       const newStage = await this.sharepoint.createStage({
-        Title: this.model.Title,
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId,
         OpportunityNameId: this.model.opportunityId,

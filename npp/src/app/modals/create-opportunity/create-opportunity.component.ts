@@ -1,10 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
+import { Opportunity, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { StageSettingsComponent } from '../stage-settings/stage-settings.component';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -17,11 +18,19 @@ export class CreateOpportunityComponent implements OnInit {
   
   form = new FormGroup({});
   model: any = { };
+  options: FormlyFormOptions = {
+    formState: {
+      hideStageNumbers: true,
+    },
+  };
   fields: FormlyFieldConfig[] = [];
   indications: any[] = [];
   dialogInstance: any;
   firstStepCompleted: boolean = false;
   isEdit = false;
+  opportunity: Opportunity | null = null;
+  stage: Stage | null = null;
+  loading = true;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -35,21 +44,46 @@ export class CreateOpportunityComponent implements OnInit {
     let therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
     let indicationsList: any[] = [];
+    let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
+    let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
+    this.opportunity = this.data?.opportunity;
 
-    if (this.data?.opportunity) {
-      this.isEdit = true;
-      indicationsList = await this.sharepoint.getIndicationsList(this.data.opportunity.Indication.TherapyArea);
+    if (this.opportunity) {
+      this.isEdit = !this.data?.createFrom;
 
-      /** Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
+      if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
+        oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
+        this.opportunity.OpportunityTypeId = -1;
+        if (oppTypes.length > 0) {
+          this.opportunity.OpportunityTypeId = oppTypes[0].value;
+          this.model.stageType = 'Phase';
+          stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
+        }
+      }
+
+      // default indications for the therapy selected
+      indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication.TherapyArea);
+
+      // if we are cloning opportunity, get first stage info
+      if (this.data?.createFrom && !this.data?.forceType) {
+        this.stage = await this.sharepoint.getFirstStage(this.opportunity);
+        if (this.stage) {
+          defaultStageUsersList = await this.sharepoint.getUsersList(this.stage.StageUsersId);
+        }
+      }
+
+      /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
       /*
       defaultUsersList = [{ 
-        label: this.data.opportunity.OpportunityOwner.FirstName + ' ' + this.data.opportunity.OpportunityOwner.LastName,
-        value: this.data.opportunity.OpportunityOwnerId
+        label: this.opportunity.OpportunityOwner.FirstName + ' ' + this.opportunity.OpportunityOwner.LastName,
+        value: this.opportunity.OpportunityOwnerId
       }];
       */
     }
+
+    this.loading = false;
 
     this.fields = [
       {
@@ -61,7 +95,7 @@ export class CreateOpportunityComponent implements OnInit {
             placeholder: 'Opportunity Name',
             required: true,
           },
-          defaultValue: this.data?.opportunity.Title
+          defaultValue: this.opportunity?.Title
         }, {
           key: 'Opportunity.MoleculeName',
           type: 'input',
@@ -70,7 +104,7 @@ export class CreateOpportunityComponent implements OnInit {
             placeholder: 'Molecule Name',
             required: true,
           },
-          defaultValue: this.data?.opportunity.MoleculeName
+          defaultValue: this.opportunity?.MoleculeName
         }, {
           key: 'Opportunity.OpportunityOwnerId',
           type: 'ngsearchable',
@@ -79,13 +113,13 @@ export class CreateOpportunityComponent implements OnInit {
             placeholder: 'Opportunity Owner',
             required: true,
             options: defaultUsersList
-            /** Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
+            /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
             /*
             filterLocally: false,
             query: 'siteusers'
             */
           },
-          defaultValue: this.data?.opportunity.OpportunityOwnerId
+          defaultValue: this.opportunity?.OpportunityOwnerId
         }, {
           key: 'therapy',
           type: 'select',
@@ -94,7 +128,7 @@ export class CreateOpportunityComponent implements OnInit {
             options: therapies,
             required: true,
           },
-          defaultValue: this.data?.opportunity.Indication.TherapyArea,
+          defaultValue: this.opportunity?.Indication.TherapyArea,
         }, {
           key: 'Opportunity.IndicationId',
           type: 'select',
@@ -103,7 +137,7 @@ export class CreateOpportunityComponent implements OnInit {
             options: indicationsList,
             required: true,
           },
-          defaultValue: this.data?.opportunity.IndicationId,
+          defaultValue: this.opportunity?.IndicationId,
           hooks: {
             onInit: (field) => {
               if (!field?.parent?.fieldGroup) return;
@@ -139,7 +173,7 @@ export class CreateOpportunityComponent implements OnInit {
             );
             },
           },
-          defaultValue: this.data?.opportunity.OpportunityTypeId,
+          defaultValue: this.opportunity?.OpportunityTypeId !== -1 ? this.opportunity?.OpportunityTypeId : null,
           hideExpression: this.isEdit
         }, {
           key: 'Opportunity.ProjectStartDate',
@@ -148,7 +182,7 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Project Start Date:',
             required: true,
           },
-          defaultValue: this.data?.opportunity.ProjectStartDate ? new Date(this.data?.opportunity.ProjectStartDate) : null,
+          defaultValue: this.opportunity?.ProjectStartDate ? new Date(this.opportunity?.ProjectStartDate) : null,
           hideExpression: this.isEdit
         }, {
           key: 'Opportunity.ProjectEndDate',
@@ -157,7 +191,7 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Project End Date:',
             required: true,
           },
-          defaultValue: this.data?.opportunity.ProjectEndDate ? new Date(this.data?.opportunity.ProjectEndDate) : null
+          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
         }],
         hideExpression: this.firstStepCompleted
       },
@@ -176,6 +210,15 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'input',
           hideExpression: true,
         },{
+          key: 'StageNumber',
+          type: 'select',
+          templateOptions: {
+            label: 'Start Stage Number:',
+            options: stageNumbersList,
+            required: true,
+          },
+          hideExpression: (m, fs) => fs.hideStageNumbers,
+        },{
           key: 'Stage.StageUsersId',
           type: 'ngsearchable',
           templateOptions: {
@@ -184,22 +227,25 @@ export class CreateOpportunityComponent implements OnInit {
               filterLocally: false,
               query: 'siteusers',
               multiple: true,
-              required: true
+              required: true,
+              options: defaultStageUsersList,
           },
           validation: {
             messages: {
               required: (error) => 'You must enter one or more users',
             },
           },
+          defaultValue: this.stage?.StageUsersId
         },{
           key: 'Stage.StageReview',
           type: 'datepicker',
           templateOptions: {
               label: 'Stage Review',
               required: true
-          }
+          },
+          defaultValue: this.stage?.StageReview ? new Date(this.stage.StageReview) : null
         },],
-        hideExpression: !this.firstStepCompleted
+        hideExpression: !this.firstStepCompleted,
       }
     ];
   }
@@ -213,6 +259,10 @@ export class CreateOpportunityComponent implements OnInit {
     this.firstStepCompleted = true;
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
+
+    if (this.data?.forceType) {
+      this.options.formState.hideStageNumbers = !this.data.forceType;
+    }
   }
 
   async onSubmit() {
@@ -228,7 +278,7 @@ export class CreateOpportunityComponent implements OnInit {
         data: this.model.Opportunity
       });
     } else {
-      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage, this.model.StageNumber);
       this.dialogRef.close({
         success: newOpp ? true : false,
         data: newOpp

@@ -157,7 +157,9 @@ app-opportunity-list {
 
 /** validation errors **/
 
-.form-control.is-invalid, .was-validated .form-control:invalid {
+.form-control.is-invalid, .was-validated .form-control:invalid,
+div.has-error input,
+div.has-error .ng-select-container {
     border-color: #dc3545;
     &::placeholder {
         color: #dc3545;

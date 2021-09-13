@@ -1,4 +1,3 @@
-import { removeSummaryDuplicates } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,6 +5,7 @@ import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
+import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
@@ -45,6 +45,7 @@ export class ActionsListComponent implements OnInit {
   dialogInstance: any; 
   loading = false;
   profilePic: string = '/assets/user.svg';
+  nextStage: Stage | null = null;
 
   constructor(
     private readonly sharepoint: SharepointService, 
@@ -90,6 +91,7 @@ export class ActionsListComponent implements OnInit {
               this.setGate(el.ID);
             }
             this.lastStageId = el.ID;
+            this.nextStage = await this.sharepoint.getNextStage(el.StageNameId);
           }
 
         });
@@ -226,7 +228,7 @@ export class ActionsListComponent implements OnInit {
   showModels() {
     this.setSection('documents');
     let modelsFolder = this.currentFolders.find(el => el.containsModels === true);
-    if (modelsFolder)  this.setFolder(modelsFolder.ID);
+    if (modelsFolder) this.setFolder(modelsFolder.ID);
   }
 
   setStatus(actions: Action[]) {
@@ -239,10 +241,10 @@ export class ActionsListComponent implements OnInit {
     let today = new Date().getTime();
     if (a.ActionDueDate) a.ActionDueDate = new Date(a.ActionDueDate); // set to date format for datepicker
 
-    if(a.Complete) a.status = 'completed';
+    if (a.Complete) a.status = 'completed';
     else if (a.ActionDueDate) {
       let dueDate = a.ActionDueDate.getTime();
-      if(dueDate < today) {
+      if (dueDate < today) {
         a.status = 'late';
       } else {
         a.status = 'pending';
@@ -256,7 +258,7 @@ export class ActionsListComponent implements OnInit {
   async toggleStatus(action: Action) {
     let done = false;
     if (!this.currentUser) this.currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
-    
+
     if (action.Complete) done = await this.sharepoint.uncompleteAction(action.Id);
     else {
       done = await this.sharepoint.completeAction(action.Id, this.currentUser.Id);
@@ -280,47 +282,130 @@ export class ActionsListComponent implements OnInit {
     this.sharepoint.setActionDueDate(actionId, value);
   }
 
-  async nextStage() {
+  async goNextStage() {
     if (!this.currentGate || this.alreadyGoingNextStage) return;
-    let nextStage = await this.sharepoint.getNextStage(this.currentGate.StageNameId);
-    if (nextStage) {
+
+    if (this.nextStage) {
       this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
         height: '400px',
         width: '405px',
         data: {
-          next: nextStage,
-          opportunityId: this.opportunityId
+          next: this.nextStage,
+          opportunityId: this.opportunityId,
+          canSetUsers: this.isOwner || this.currentUser?.IsSiteAdmin // only until set permission problem is resolved
         }
       });
       this.dialogInstance.afterClosed()
+        .pipe(take(1))
+        .subscribe(async (result: any) => {
+          if (result.success) {
+            let job = this.jobs.startJob('initialize stage ' + result.data.ID);
+            let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+            this.alreadyGoingNextStage = true;
+            this.sharepoint.initializeStage(opp, result.data).then(async r => {
+              this.jobs.finishJob(job.id);
+              this.toastr.success("Next stage has been created successfully", result.data.Title);
+              this.alreadyGoingNextStage = false;
+              setTimeout(() => {
+                window.location.reload();
+              }, 1000);
+            }).catch(e => {
+              this.alreadyGoingNextStage = false;
+              this.jobs.finishJob(job.id);
+            });
+          } else if (result.success === false) {
+            this.toastr.error("The next stage couldn't be created", "Try again");
+          }
+        });
+    }
+  }
+
+  async complete() {
+    // Complete Opportunity
+    if (!this.opportunity) return;
+
+    const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      maxWidth: "400px",
+      height: "200px",
+      data: {
+        message: `Do you want to complete the opportunity <em>${this.opportunity.Title}</em>?`,
+        confirmButtonText: 'Yes, complete',
+      }
+    });
+
+    dialogRef.afterClosed()
       .pipe(take(1))
-      .subscribe(async (result: any) => {
-        if (result.success) {
-          let job = this.jobs.startJob('initialize stage '+result.data.ID);
-          let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
-          this.alreadyGoingNextStage = true;
-          this.sharepoint.initializeStage(opp, result.data).then(async r => {
-            // set active
-            // await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
-            // opp.OpportunityStatus = 'Active';
-            this.jobs.finishJob(job.id);
-            this.toastr.success("Next stage has been created successfully", result.data.Title);
-            this.alreadyGoingNextStage = false;
-            setTimeout(()=>{
-              window.location.reload();
-            }, 1000);
-          }).catch(e => {
-            this.alreadyGoingNextStage = false;
-            this.jobs.finishJob(job.id);
-          });
-        } else {
-          this.toastr.error("The next stage couldn't be created", "Try again");
+      .subscribe(async response => {
+        if (response) {
+          // complete opportunity
+          if (!this.opportunity) return;
+
+          const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
+          if (await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId) !== 'Phase') {
+            const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
+              maxWidth: "400px",
+              height: "200px",
+              data: {
+                message: `You can move to a Phase process from this opportunity. Do you want to start it?`,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No, complete only'
+              }
+            });
+
+            newPhaseDialog.afterClosed()
+              .pipe(take(1))
+              .subscribe(async response => {
+                if (!this.opportunity) return;
+
+                if (response) {
+
+                  // create new
+                  this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
+                    height: '700px',
+                    width: '405px',
+                    data: {
+                      opportunity: { ...this.opportunity },
+                      createFrom: true,
+                      forceType: true
+                    }
+                  });
+
+                  this.dialogInstance.afterClosed()
+                    .pipe(take(1))
+                    .subscribe(async (result: any) => {
+                      if (!result || !this.opportunity) return;
+
+                      if (result.success) {
+                        // complete current opp
+                        await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+
+                        this.toastr.success("A opportunity of type 'phase' was created successfully", result.data.opportunity.Title);
+                        let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+                        opp.progress = 0;
+                        let job = this.jobs.startJob("initialize opportunity " + result.data.opportunity.id);
+                        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+                          // set active
+                          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+                          this.jobs.finishJob(job.id);
+                          this.toastr.success("The opportunity is now active", opp.Title);
+                        }).catch(e => {
+                          this.jobs.finishJob(job.id);
+                        });
+                      } else if (result.success === false) {
+                        this.toastr.error("The opportunity couldn't be created", "Try again");
+                      }
+                    });
+                } else if (response === false) {
+                  // complete
+                  await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+                }
+              });
+          } else {
+            // complete
+            await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+          }
         }
       });
-    }
-    else {
-      // TODO Complete Opportunity
-    }
   }
 
   computeProgress() {

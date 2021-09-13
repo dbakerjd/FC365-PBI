@@ -386,18 +386,16 @@ export class SharepointService {
     return await this.getAllItems(OPPORTUNITIES_LIST);
   }
 
-  async createOpportunity(op: OpportunityInput, st: StageInput): Promise<{ opportunity: Opportunity, stage: Stage } | false> {
-    const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...op });
+  async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
+    Promise<{ opportunity: Opportunity, stage: Stage } | false> {
+
+    const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
     // get master stage info
-    const stageType = await this.getStageType(op.OpportunityTypeId);
-    const masterStage = await this.getOneItem(
-      MASTER_STAGES_LIST, 
-      `$select=ID,Title&$filter=(StageType eq '${stageType}') and (StageNumber eq 1)`
-    );
-    
-    // let stage = await this.createItem(OPPORTUNITY_STAGES_LIST, { ...st, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID });
+    const stageType = await this.getStageType(opp.OpportunityTypeId);
+    const masterStage = await this.getMasterStage(stageType, stageStartNumber);
+
     const stage = await this.createStage(
       { ...st, Title: masterStage.Title, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID }
     );
@@ -438,14 +436,10 @@ export class SharepointService {
     return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
   }
 
-  async setOpportunityStatus(opportunityId: number, status: string) {
-    const allowedStatus = ["Processing", "Archive", "Active", "Approved"];
-    if (allowedStatus.includes(status)) {
-      return this.updateItem(opportunityId, OPPORTUNITIES_LIST, {
-        OpportunityStatus: status
-      });
-    }
-    return false;
+  async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
+    return this.updateItem(opportunityId, OPPORTUNITIES_LIST, {
+      OpportunityStatus: status
+    });
   }
 
   async getIndications(therapy: string = 'all'): Promise<Indication[]> {
@@ -489,9 +483,12 @@ export class SharepointService {
     return groups;
   }
 
-  async getOpportunityTypes(): Promise<OpportunityType[]> {
+  async getOpportunityTypes(type: string | null = null): Promise<OpportunityType[]> {
     if (this.masterOpportunitiesTypes.length < 1) {
       this.masterOpportunitiesTypes = await this.getAllItems(MASTER_OPPORTUNITY_TYPES_LIST);
+    }
+    if (type) {
+      return this.masterOpportunitiesTypes.filter(el => el.StageType === type);
     }
     return this.masterOpportunitiesTypes;
   }
@@ -509,6 +506,11 @@ export class SharepointService {
   /** --- STAGES --- **/
 
   async createStage(data: StageInput): Promise<Stage | null> {
+    if (!data.Title && data.StageNameId) {
+      // get from master list
+      const masterStage = await this.getOneItemById(data.StageNameId, MASTER_STAGES_LIST);
+      Object.assign(data, { Title: masterStage.Title });
+    }
     return await this.createItem(OPPORTUNITY_STAGES_LIST, data);
   }
 
@@ -526,6 +528,15 @@ export class SharepointService {
 
   async getStages(opportunityId: number): Promise<Stage[]> {
     return await this.getAllItems(OPPORTUNITY_STAGES_LIST, "$filter=OpportunityNameId eq "+opportunityId);
+  }
+
+  async getFirstStage(opp: Opportunity) {
+    const stageType = await this.getStageType(opp.OpportunityTypeId);
+    const firstMasterStage = await this.getMasterStage(stageType, 1);
+    return await this.getOneItem(
+      OPPORTUNITY_STAGES_LIST, 
+      `$filter=OpportunityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
+    );
   }
 
   async initializeStage(opportunity: Opportunity, stage: Stage): Promise<boolean> {
@@ -600,8 +611,7 @@ export class SharepointService {
 
   async getNextStage(stageId: number): Promise<Stage | null> {
     let current = await this.getOneItemById(stageId, MASTER_STAGES_LIST);
-    console.log('current', current);
-    return await this.getOneItem(MASTER_STAGES_LIST, `$filter=StageNumber eq ${current.StageNumber + 1} and StageType eq '${current.StageType}'`);
+    return await this.getMasterStage(current.StageType, current.StageNumber + 1);
   }
 
   /** get stage folders. If opportunityId, only the folders with permission. Otherwise, all master folders of stage */
@@ -627,6 +637,13 @@ export class SharepointService {
       return masterFolders.filter(f => allowedFolders.some((af: any)=> +af.Name === f.ID));
     }
     return masterFolders;
+  }
+
+  private async getMasterStage(stageType: string, stageNumber: number = 1): Promise<any> {
+    return await this.getOneItem(
+      MASTER_STAGES_LIST, 
+      `$select=ID,Title&$filter=(StageType eq '${stageType}') and (StageNumber eq ${stageNumber})`
+    );
   }
 
   private async createStageActions(opportunity: Opportunity, stage: Stage): Promise<Action[]> {
@@ -782,7 +799,6 @@ export class SharepointService {
 
   async cloneForecastModel(originFile: NPPFile, scenario: number, comments = ''): Promise<boolean> {
 
-    console.log('comentaris', comments);
     const scenarios = await this.getScenariosList();
     const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
     const extension = originFile.Name.split('.').pop();
@@ -801,11 +817,8 @@ export class SharepointService {
       `$expand=ListItemAllFields&$filter=Name eq '${newFileName}'`,
     ).toPromise();
 
-    console.log('nfv', newFileInfo.value);
-
     if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
       // add new scenario
-      console.log('inside');
       let newScenarios = originFile.ListItemAllFields.ModelScenarioId ? originFile.ListItemAllFields.ModelScenarioId : [];
       if (!newScenarios.includes(scenario)) {
         newScenarios.push(scenario);
@@ -816,7 +829,6 @@ export class SharepointService {
         ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
         ApprovalStatusId: this.getApprovalStatusId("In Progress")
       }
-      console.log('MAC', newData);
       success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
     }
     return success;
@@ -830,7 +842,6 @@ export class SharepointService {
         this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
         null
       ).toPromise();
-      console.log('r copy', r);
       return true;
     }
     catch (e) {
@@ -1285,8 +1296,8 @@ export class SharepointService {
       );
   }
 
-  async getOpportunityTypesList(): Promise<SelectInputList[]> {
-    return (await this.getOpportunityTypes()).map(t => {return {value: t.ID, label: t.Title}});
+  async getOpportunityTypesList(type: string | null = null): Promise<SelectInputList[]> {
+    return (await this.getOpportunityTypes(type)).map(t => {return {value: t.ID, label: t.Title}});
   }
 
   async getUsersList(usersId: number[]): Promise<SelectInputList[]> {
@@ -1338,6 +1349,11 @@ export class SharepointService {
     const owners = await this.getSiteOwners();
     console.log('owners', owners);
     return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id }})
+  }
+
+  async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
+    const stages = await this.getAllItems(MASTER_STAGES_LIST, `$filter=StageType eq '${stageType}'`);
+    return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
   }
 
 }

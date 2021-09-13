@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
+import { from } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
@@ -125,10 +126,15 @@ export class OpportunityListComponent implements OnInit {
     }
   }
 
-  createOpportunity(opp: Opportunity) {
+  createOpportunity(fromOpp: Opportunity | null, forceType = false) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
       height: '700px',
-      width: '405px'
+      width: '405px',
+      data: {
+        opportunity: fromOpp ? fromOpp : null,
+        createFrom: fromOpp ? true : false,
+        forceType
+      }
     });
 
     this.dialogInstance.afterClosed()
@@ -220,7 +226,6 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async restoreOpportunity(opp: Opportunity) {
-    console.log(opp);
     const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
       maxWidth: "400px",
       height: "200px",
@@ -236,6 +241,7 @@ export class OpportunityListComponent implements OnInit {
       .subscribe(async response => {
         if (response) {
           // create new
+          this.createOpportunity(opp);
         } else if (response === false) {
           const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
           if (success) {

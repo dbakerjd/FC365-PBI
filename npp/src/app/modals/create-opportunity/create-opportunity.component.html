@@ -1,9 +1,12 @@
 <app-dialog-header title="Create Opportunity"></app-dialog-header>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <mat-dialog-content>
-        <formly-form [fields]="fields" [form]="form" [model]="model"></formly-form>
+        <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
+        <ng-template #isLoaded>
+            <formly-form [fields]="fields" [options]="options" [form]="form" [model]="model"></formly-form>
+        </ng-template>
     </mat-dialog-content>
-    <div class="dialog-footer">
+    <div class="dialog-footer" *ngIf="!loading">
         <div class="dialog-cancel-button" mat-dialog-close>Close</div>
         <div class="dialog-submit-button" cdkFocusInitial (click)="onNext()" *ngIf="!isEdit && !firstStepCompleted">Next</div>
         <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="!isEdit && firstStepCompleted">Create</div>

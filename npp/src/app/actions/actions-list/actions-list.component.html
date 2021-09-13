@@ -50,7 +50,7 @@
                 </div>
             </div>
         </div>
-        <div class="next-stage-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId">
+        <div class="next-stage-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId">
             <div class="complete-btn-icon"></div>
             <span>Go to Next Stage</span>
         </div>
@@ -193,8 +193,11 @@
             </div>
         </div>
         <div class="next-stage-btn-wrapper">
-            <div class="npp-btn" (click)="nextStage()" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+            <div class="npp-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 Go to Next Stage
+            </div>
+            <div class="npp-btn" (click)="complete()" *ngIf="!nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+                Complete Opportunity
             </div>
         </div>
     </div>
