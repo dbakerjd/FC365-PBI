@@ -58,10 +58,14 @@ export class OpportunityListComponent implements OnInit {
     // await this.sharepoint.getRoleDefinitionId('ListEdit');
     // await this.sharepoint.getRoleDefinitionId('ListEdit');
     // await this.sharepoint.getRoleDefinitionId('ListRead');
-    const groups = await this.sharepoint.getGroups();
-    console.log(groups);
+    // const groups = await this.sharepoint.getGroups();
+    // console.log(groups);
     // await this.sharepoint.deleteAllGroups();
     // await this.sharepoint.deleteGroup(17);
+    // await this.sharepoint.test();
+    // console.log('user 13', await this.sharepoint.getUserInfo(13));
+    
+    // await this.sharepoint.cloneFile();
     /**TODEL */
 
     
