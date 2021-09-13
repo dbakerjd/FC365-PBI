@@ -1,3 +1,4 @@
+import { removeSummaryDuplicates } from '@angular/compiler';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +11,9 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { LicensingService } from 'src/app/services/licensing.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -19,6 +22,7 @@ import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User
 })
 export class ActionsListComponent implements OnInit {
   currentUser: User | undefined = undefined;
+  alreadyGoingNextStage = false;
   isOwner = false;
   isStageUser = false;
   gates: Stage[] = [];
@@ -40,13 +44,16 @@ export class ActionsListComponent implements OnInit {
   displayingModels: boolean = false;
   dialogInstance: any; 
   loading = false;
+  profilePic: string = '/assets/user.svg';
 
   constructor(
     private readonly sharepoint: SharepointService, 
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    public licensing: LicensingService,
+    public jobs: WorkInProgressService
     ) { }
 
   ngOnInit(): void {
@@ -62,6 +69,7 @@ export class ActionsListComponent implements OnInit {
 
         if (this.opportunity.OpportunityOwner) {
           this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
@@ -273,7 +281,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   async nextStage() {
-    if (!this.currentGate) return;
+    if (!this.currentGate || this.alreadyGoingNextStage) return;
     let nextStage = await this.sharepoint.getNextStage(this.currentGate.StageNameId);
     if (nextStage) {
       this.dialogInstance = this.matDialog.open(StageSettingsComponent, {
@@ -288,12 +296,22 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (result: any) => {
         if (result.success) {
+          let job = this.jobs.startJob('initialize stage '+result.data.ID);
           let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+          this.alreadyGoingNextStage = true;
           this.sharepoint.initializeStage(opp, result.data).then(async r => {
             // set active
             // await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
             // opp.OpportunityStatus = 'Active';
+            this.jobs.finishJob(job.id);
             this.toastr.success("Next stage has been created successfully", result.data.Title);
+            this.alreadyGoingNextStage = false;
+            setTimeout(()=>{
+              window.location.reload();
+            }, 1000);
+          }).catch(e => {
+            this.alreadyGoingNextStage = false;
+            this.jobs.finishJob(job.id);
           });
         } else {
           this.toastr.error("The next stage couldn't be created", "Try again");

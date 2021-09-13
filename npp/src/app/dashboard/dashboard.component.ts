@@ -4,6 +4,7 @@ import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AuthenticationResult, EventMessage, EventType } from '@azure/msal-browser';
 import { filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { LicensingService } from '../services/licensing.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,16 +21,20 @@ export class DashboardComponent implements OnInit {
     src: 'assets/opportunities.svg',
     text: 'Your Opportunities',
     route: ['opportunities']
-  }, {
+  }];
+
+  powerBiItem = {
     src: 'assets/power-bi.svg',
     text: 'Power BI Report',
     route: ['power-bi']
-  }];
+  };
 
-  constructor(private readonly teams: TeamsService, private router: Router) { }
+  constructor(private readonly teams: TeamsService, private router: Router, private licensing: LicensingService) { }
 
   ngOnInit(): void {
-    
+    if(this.licensing.license && this.licensing.license.PowerBi) {
+      this.items.push(this.powerBiItem);
+    }
   }
 
   getUser() {

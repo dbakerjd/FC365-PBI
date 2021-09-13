@@ -45,6 +45,11 @@ import { ProgressSpinnerComponent } from './shared/progress-spinner/progress-spi
 import { NotFoundComponent } from './not-found/not-found.component';
 import { ShareDocumentComponent } from './modals/share-document/share-document.component';
 import { ToastrModule } from 'ngx-toastr';
+import { ChartModule, HIGHCHARTS_MODULES } from 'angular-highcharts';
+import * as xrange from 'highcharts/modules/xrange.src';
+import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
+import { SafePipe } from './shared/safe.pipe';
+import { WorkInProgressService } from './services/work-in-progress.service';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -108,6 +113,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     ReactiveFormsModule,
     DatepickerModule,
     FormlyTypesModule,
+    ChartModule,
     FormlyModule.forRoot(FORMLY_CONFIG),
     FormlyBootstrapModule,
     MatButtonModule,
@@ -140,7 +146,9 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     SortPipe,
     ConfirmDialogComponent,
     ProgressSpinnerComponent,
-    NotFoundComponent
+    NotFoundComponent,
+    ExpiredLicenseComponent,
+    SafePipe
   ],
   providers: [
     {
@@ -160,13 +168,15 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
       provide: MSAL_INTERCEPTOR_CONFIG,
       useFactory: MSALInterceptorConfigFactory
     },
+    { provide: HIGHCHARTS_MODULES, useFactory: () => [ xrange ] }, // add as factory to your providers
     MsalService,
     MsalGuard,
     MsalBroadcastService,
     TeamsService,
     ErrorService,
     SharepointService,
-    LicensingService
+    LicensingService,
+    WorkInProgressService
   ],
   bootstrap: [AppComponent, MsalRedirectComponent]
 })

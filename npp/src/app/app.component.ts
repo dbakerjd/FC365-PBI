@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AuthenticationResult, EventMessage, EventType, InteractionStatus } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
@@ -22,13 +23,16 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly sharepoint: SharepointService, 
     private authService: MsalService, 
     private msalBroadcastService: MsalBroadcastService, 
-    private licensing: LicensingService
+    private licensing: LicensingService,
+    private router: Router
   ) {
 
   }
   ngOnInit(): void {
     this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal
     this.setLoginDisplay();
+
+    this.licensing.validateLicense();
 
     this.msalBroadcastService.msalSubject$
       .pipe(
@@ -42,9 +46,10 @@ export class AppComponent implements OnInit, OnDestroy {
         console.log('sharepoint uri', this.licensing.getSharepointUri());
         if (this.licensing.isValidJDLicense()) {
           this.teams.setActiveAccount(payload.account);
-          // this.teams.setToken(payload.accessToken);
+          this.teams.setToken(payload.accessToken);
         } else {
           console.log('NO VALID LICENSE');
+          this.router.navigate(['expired-license']);
         }
         
       });

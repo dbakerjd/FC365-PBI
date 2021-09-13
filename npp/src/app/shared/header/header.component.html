@@ -7,7 +7,9 @@
   </div>
   <div class="header-title">NPP Opportunity Assessment</div>
   <div class="header-logo">
-    <img src="assets/fc365.svg"/>
+    
+    <img src="assets/fc365.svg" *ngIf="!workInProgress"/>
+    <img src="/assets/gears.gif" class="header-gears" *ngIf="workInProgress"/>
   </div>
   <div style="clear: both"></div>
 </div> 
