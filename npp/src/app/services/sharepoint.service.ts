@@ -1015,6 +1015,33 @@ export class SharepointService {
     }
   }
 
+  async updateDepartmentUsers(oppId: number, groupName: string, currentUsersList: number[], newUsersList: number[]): Promise<boolean> {
+    const DUGroup = await this.getGroup(groupName);
+    const OUGroup = await this.getGroup('OU-' + oppId);
+    if (!DUGroup || !OUGroup) return false;
+
+    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
+    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
+
+    let success = true;
+    for (const userId of removedUsers) {
+      success = success && await this.removeUserFromGroup(DUGroup.Id, userId);
+      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU group
+    }
+
+    if (!success) return success;
+
+    for (const userId of addedUsers) {
+      const user = await this.getUserInfo(userId);
+      if (user.LoginName) {
+        success = success && await this.addUserToGroup(user.LoginName, DUGroup.Id);
+        success = success && await this.addUserToGroup(user.LoginName, OUGroup.Id);
+        if (!success) return success;
+      }
+    }
+    return success;
+  }
+
   async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
     try {
       await this.http.post(
@@ -1050,8 +1077,8 @@ export class SharepointService {
       ).toPromise();
       return true;
     } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
+      if(e.status == 400) {
+        return true;
       }
       return false;
     }
@@ -1079,7 +1106,7 @@ export class SharepointService {
     const groups = await this.getGroups();
     console.log('groups', groups);
     for (const g of groups) {
-      if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SO')) {
+      if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SU')) {
         this.deleteGroup(g.Id);
       }
     }
@@ -1179,7 +1206,7 @@ export class SharepointService {
     let success = true;
     for (const userId of removedUsers) {
       success = success && await this.removeUserFromAllGroups(oppId, userId, ['SU'], masterStageId.toString());
-      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU groud
+      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU group
     }
 
     if (!success) return false;

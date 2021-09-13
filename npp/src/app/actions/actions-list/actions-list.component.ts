@@ -7,6 +7,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
+import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
@@ -30,6 +31,7 @@ export class ActionsListComponent implements OnInit {
   opportunity: Opportunity | undefined = undefined;
   currentGate: Stage | undefined = undefined;
   lastStageId: number | undefined = undefined; // next stage button control
+  nextStage: Stage | null = null;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   dateOptions: DatepickerOptions = {
@@ -45,7 +47,6 @@ export class ActionsListComponent implements OnInit {
   dialogInstance: any; 
   loading = false;
   profilePic: string = '/assets/user.svg';
-  nextStage: Stage | null = null;
 
   constructor(
     private readonly sharepoint: SharepointService, 
@@ -205,6 +206,29 @@ export class ActionsListComponent implements OnInit {
           this.currentGate.StageReview = result.data.StageReview;
         }
       });
+  }
+
+  openFolderPermissions() {
+    if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
+      console.log('cf', this.currentFolders);
+      this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
+        height: '400px',
+        width: '405px',
+        data: {
+          folderList: this.currentFolders,
+          opportunityId: this.opportunity?.ID
+        }
+      });
+  
+      this.dialogInstance.afterClosed()
+        .pipe(take(1))
+        .subscribe(async (result: any) => {
+          if (this.currentGate && result.success) {
+            this.currentGate.StageUsersId = result.data.StageUsersId;
+            this.currentGate.StageReview = result.data.StageReview;
+          }
+        });
+    }
   }
 
   setUpDateListener() {

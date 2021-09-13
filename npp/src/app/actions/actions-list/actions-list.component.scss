@@ -324,7 +324,7 @@
                 width: 17.06%;
                 height: 100%;
                 &>div {
-                    width: 16.66%;
+                    width: 13.66%;
                     height: 100%;
                     cursor: pointer;
                     float: left;
@@ -346,6 +346,9 @@
                 }
                 .gate-info-icons-stage-settings {
                     background: url("/assets/settings.svg") no-repeat 0.5rem center;
+                }
+                .gate-info-icons-department-users {
+                    background: url("/assets/user.svg") no-repeat 0.5rem center;
                 }
             }
         }
