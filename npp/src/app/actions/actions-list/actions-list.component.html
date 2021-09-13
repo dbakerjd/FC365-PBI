@@ -196,7 +196,7 @@
             <div class="npp-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 Go to Next Stage
             </div>
-            <div class="npp-btn" (click)="complete()" *ngIf="!nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+            <div class="npp-btn" (click)="completeOpportunity()" *ngIf="!nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 Complete Opportunity
             </div>
         </div>

@@ -344,7 +344,7 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async complete() {
+  async completeOpportunity() {
     // Complete Opportunity
     if (!this.opportunity) return;
 
@@ -412,6 +412,7 @@ export class ActionsListComponent implements OnInit {
                           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
                           this.jobs.finishJob(job.id);
                           this.toastr.success("The opportunity is now active", opp.Title);
+                          this.router.navigate(['opportunities', opp.ID, 'actions']);
                         }).catch(e => {
                           this.jobs.finishJob(job.id);
                         });
