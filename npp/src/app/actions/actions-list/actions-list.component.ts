@@ -510,9 +510,30 @@ export class ActionsListComponent implements OnInit {
       ms-spd:
       ms-infopath:
       */
+      
+      let arrUrl = fileInfo.LinkingUri.split("?");
+      let url = arrUrl[0];
+      const arrFile = url.split(".");
+      const extension = arrFile[arrFile.length - 1];
 
-      // const url = 'ms-excel: ofe|u|' + fileInfo.LinkingUri + '?web=1';
-      let url = fileInfo.LinkingUri;
+      switch(extension) {
+        case "xlsx":
+        case "xls":
+        case "csv":
+          url = "ms-excel:"+url;
+          break;
+        case "docx":
+        case "doc":
+          url = "ms-word:"+url;
+          break;
+        case "pptx":
+        case "ppt":
+          url = "ms-powerpoint"+url;
+          break;
+        default:
+          url = fileInfo.LinkingUri;
+      }
+      
       const data = window.open(url, '_blank');
     }
   }
