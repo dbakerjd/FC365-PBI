@@ -79,4 +79,8 @@ export class LicensingService {
   getSharepointApiUri() {
     return this.getSharepointUri() + '/_api/web/';
   }
+
+  getSharepointDomain() {
+    return this.getSharepointUri()?.split('/')[2];
+  }
 }

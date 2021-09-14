@@ -485,6 +485,7 @@ export class ActionsListComponent implements OnInit {
 
   async openFile(fileId: number, forceDownload = false) {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    console.log('file info', fileInfo);
     if (!fileInfo) return;
 
     const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
@@ -498,8 +499,25 @@ export class ActionsListComponent implements OnInit {
       link.click();
       document.body.removeChild(link);
     } else {
-      const data = window.URL.createObjectURL(newBlob);
-      window.open(data);
+      // get sharepoint base url TODO
+
+      console.log('file info', fileInfo);
+      
+      /*
+      ms-word:
+      ms-powerpoint:
+      ms-excel:
+      ms-visio:
+      ms-access:
+      ms-project:
+      ms-publisher:
+      ms-spd:
+      ms-infopath:
+      */
+
+      // const url = 'ms-excel: ofe|u|' + fileInfo.LinkingUri + '?web=1';
+      let url = fileInfo.LinkingUri;
+      const data = window.open(url, '_blank');
     }
   }
 

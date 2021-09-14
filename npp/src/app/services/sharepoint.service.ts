@@ -105,6 +105,7 @@ export interface Stage {
 export interface NPPFile {
   Name: string;
   ServerRelativeUrl: string;
+  LinkingUri: string;
   TimeLastModified: Date;
   ListItemAllFields?: NPPFileMetadata;
 }
