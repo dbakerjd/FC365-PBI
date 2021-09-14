@@ -138,6 +138,7 @@ export interface SystemFolder {
   ServerRelativeUrl: string;
   ItemCount: number;
   DepartmentID?: number;
+  GeographyID?: boolean;
 }
 
 export interface Country {
@@ -204,10 +205,12 @@ const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
+const GEOGRAPHIES_LIST = "lists/getByTitle('Opportunity Geographies')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 const FILES_FOLDER = "Current Opportunity Library";
+const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 
 @Injectable({
   providedIn: 'root'
@@ -589,7 +592,14 @@ export class SharepointService {
     for (const f of folders) {
       if (f.DepartmentID) {
         let folderGroups = [...groups]; // copy default groups
-        const DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        let DUGroup;
+        if (f.GeographyID) {
+          DUGroup = await this.createGroup(
+            `DU-${opportunity.ID}-${f.DepartmentID}-${f.GeographyID}`, 
+            'Department ID ' + f.DepartmentID + ' / Geography ID ' + f.GeographyID);
+        } else {
+          DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        }
         if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup} );
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
@@ -624,7 +634,7 @@ export class SharepointService {
     } else {
       masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
       for (let index = 0; index < masterFolders.length; index++) {
-        masterFolders[index].containsModels = masterFolders[index].Title === 'Forecast Models';
+        masterFolders[index].containsModels = masterFolders[index].Title === FORECAST_MODELS_FOLDER_NAME;
       }
       this.masterFolders.push({
         stage: masterStageId,
@@ -672,8 +682,23 @@ export class SharepointService {
     for (const mf of masterFolders) {
       const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
-        folder.DepartmentID = mf.DepartmentID;
-        folders.push(folder);
+        if (mf.Title === FORECAST_MODELS_FOLDER_NAME) {
+          const geographies = await this.getAllItems(
+            GEOGRAPHIES_LIST,
+            `$filter=StageID eq 1`, // hacked for now
+          );
+          for (const geo of geographies) {
+            const geoFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
+            if (geoFolder) {
+              geoFolder.DepartmentID = mf.DepartmentID;
+              geoFolder.GeographyID = geo.Id;
+              folders.push(geoFolder);
+            }
+          }
+        } else {
+          folder.DepartmentID = mf.DepartmentID;
+          folders.push(folder);
+        }
       }
     }
     return folders;
