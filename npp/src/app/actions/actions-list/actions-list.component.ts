@@ -487,7 +487,6 @@ export class ActionsListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-
     const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
     var newBlob = new Blob([response]);
 
@@ -504,11 +503,10 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, folderId: number) {
+  async shareFile(fileId: number, departmentId: number) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
-    let folderGroup = `${this.opportunityId}-${this.currentGate?.StageNameId}-${folderId}`;
-    folderGroup = 'Beta Test Group'; // TODO
+    let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',
