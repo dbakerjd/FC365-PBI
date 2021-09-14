@@ -72,7 +72,7 @@
                 <div class="gate-info-icons-models" title="Models" (click)="showModels()"></div>
                 <div class="gate-info-icons-refresh-bi" title="Refresh Power BI" *ngIf="licensing.license?.PowerBi"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-department-users" title="Department Users" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin">U</div>
+                <div class="gate-info-icons-department-users" title="Department Users" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
