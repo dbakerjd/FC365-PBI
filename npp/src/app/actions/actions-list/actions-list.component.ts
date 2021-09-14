@@ -78,7 +78,6 @@ export class ActionsListComponent implements OnInit {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
           el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId);
           // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
-          console.log('folders', el.folders);
           this.setStatus(el.actions);
 
           //set current gate
@@ -210,7 +209,6 @@ export class ActionsListComponent implements OnInit {
 
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
-      console.log('cf', this.currentFolders);
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
         height: '400px',
         width: '405px',
@@ -467,7 +465,6 @@ export class ActionsListComponent implements OnInit {
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
       this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
-      console.log('current files', this.currentFiles);
   
       this.displayingModels = false;
       if (this.currentFolder) {
@@ -485,7 +482,6 @@ export class ActionsListComponent implements OnInit {
 
   async openFile(fileId: number, forceDownload = false) {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
-    console.log('file info', fileInfo);
     if (!fileInfo) return;
 
     const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);

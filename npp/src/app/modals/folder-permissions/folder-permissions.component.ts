@@ -17,6 +17,7 @@ export class FolderPermissionsComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   opportunityId: number | null = null;
   currentUsersList: any[] = []; // save departments users before changes
+  modelKeys: number[] = [];
   loading = true;
   updating = false;
 
@@ -29,6 +30,8 @@ export class FolderPermissionsComponent implements OnInit {
 
   async ngOnInit() {
     if (!this.data.opportunityId) return;
+
+    const geographiesList = (await this.sharepoint.getGeographies(1)).map(el => { return { label: el.Title, value: el.Id }});
 
     this.opportunityId = this.data.opportunityId; // pot ser només ID?
 
@@ -48,34 +51,78 @@ export class FolderPermissionsComponent implements OnInit {
           labelProp: 'name',
           required: true,
         }
-      }
+      },
+      {
+        key: 'geography',
+        type: 'select',
+        templateOptions: {
+          label: 'Geography:',
+          options: geographiesList,
+          required: true,
+        },
+        "hideExpression": (model: any) => {
+          return !this.data?.folderList.find((f: NPPFolder) => { return f.DepartmentID === model.category})?.containsModels;
+        },
+      },
     ];
 
+    let stageGroups = [];
     for (const f of this.data?.folderList) {
-      const DUGroupName = `DU-${this.opportunityId}-${f.DepartmentID}`;
-      const defaultUsersList: SelectInputList[] = (await this.sharepoint.getGroupMembers(DUGroupName))
-        .map(el => { return { value: el.Id, label: el.Title ? el.Title : '' }});
+      if (f.containsModels) {
+        this.modelKeys.push(f.DepartmentID); // needed in onSubmit() to identify the key has subkeys
+        for (const geo of geographiesList) {
+          stageGroups.push({ 
+            departmentID: f.DepartmentID,
+            geoID: geo.value,
+            group: `DU-${this.opportunityId}-${f.DepartmentID}-${geo.value}`,
+            folder: f
+          });
+        }
+      } else {
+        stageGroups.push({ 
+          departmentID: f.DepartmentID,
+          group: `DU-${this.opportunityId}-${f.DepartmentID}`,
+          folder: f
+        });
+      }
+    }
+
+    for (const sg of stageGroups) {
+      const defaultUsersList: SelectInputList[] = (await this.sharepoint.getGroupMembers(sg.group))
+        .map(el => { return { value: el.Id, label: el.Title ? el.Title : '' } });
 
       // save current users list for department
-      this.currentUsersList[f.DepartmentID] = defaultUsersList.map(el => el.value);
-      
+      this.currentUsersList.push({ 
+        departmentID: sg.departmentID, 
+        geoID: sg.geoID, 
+        list: defaultUsersList.map(el => el.value) 
+      });
+
+      // create formly field
+      let hideExpression = 'model.category != ' + sg.folder.DepartmentID;
+      let formlyKey = 'DepartmentUsersId.' + sg.departmentID;
+      if (sg.geoID) {
+        hideExpression += ' || model.geography != ' + sg.geoID;
+        formlyKey += '.' + sg.geoID;
+      }
+
       formlyFields.push({
-        key: 'DepartmentUsersId.' + f.DepartmentID,
+        key: formlyKey,
         type: 'ngsearchable',
         templateOptions: {
-            label: 'Department Users:',
-            placeholder: 'Users with access to ' + f.Title + ' files',
-            filterLocally: false,
-            query: 'siteusers',
-            multiple: true,
-            options: defaultUsersList,
+          label: 'Department Users:',
+          placeholder: 'Users with access to ' + sg.folder.Title + ' files',
+          filterLocally: false,
+          query: 'siteusers',
+          multiple: true,
+          options: defaultUsersList,
         },
         expressionProperties: {
           'templateOptions.disabled': '!model.category'
         },
-        hideExpression: 'model.category != ' + f.DepartmentID,
+        hideExpression: hideExpression,
         defaultValue: defaultUsersList.map(el => el.value)
-      })
+      });
     }
 
     this.fields = [
@@ -93,16 +140,33 @@ export class FolderPermissionsComponent implements OnInit {
     }
 
     this.updating = this.dialogRef.disableClose = true;
+
     let success = true;
     for (const key in this.model.DepartmentUsersId) {
-      success = success && await this.sharepoint.updateDepartmentUsers(
-        this.opportunityId, 
-        `DU-${this.opportunityId}-${key}`, 
-        this.currentUsersList[+key], 
-        this.model.DepartmentUsersId[key]
-      );
-      if (success) this.currentUsersList[+key] = this.model.DepartmentUsersId[key]; // update current list
-      else break;
+      if (this.modelKeys.includes(+key)) {
+        // is a department with geographies
+        for (const geoKey in this.model.DepartmentUsersId[key]) {
+          const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
+          success = success && await this.sharepoint.updateDepartmentUsers(
+            this.opportunityId,
+            `DU-${this.opportunityId}-${key}-${geoKey}`,
+            currentList.list,
+            this.model.DepartmentUsersId[key][geoKey]
+          );
+          if (success) currentList.list = this.model.DepartmentUsersId[key][geoKey]; // update current list
+          else break;
+        }
+      } else {
+        const currentList = this.currentUsersList.find(el => el.departmentID == key);
+        success = success && await this.sharepoint.updateDepartmentUsers(
+          this.opportunityId,
+          `DU-${this.opportunityId}-${key}`,
+          currentList.list,
+          this.model.DepartmentUsersId[key]
+        );
+        if (success) currentList.list = this.model.DepartmentUsersId[key]; // update current list
+        else break;
+      }
     }
 
     this.updating = this.dialogRef.disableClose = false;

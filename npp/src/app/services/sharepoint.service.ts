@@ -683,10 +683,7 @@ export class SharepointService {
       const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
         if (mf.Title === FORECAST_MODELS_FOLDER_NAME) {
-          const geographies = await this.getAllItems(
-            GEOGRAPHIES_LIST,
-            `$filter=StageID eq 1`, // hacked for now
-          );
+          const geographies = await this.getGeographies(1); // 1 = stage id would be dynamic in the future
           for (const geo of geographies) {
             const geoFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
             if (geoFolder) {
@@ -1407,6 +1404,13 @@ export class SharepointService {
   async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
     const stages = await this.getAllItems(MASTER_STAGES_LIST, `$filter=StageType eq '${stageType}'`);
     return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
+  }
+
+  async getGeographies(stageId = 1) { // stage hacked for now
+    return await this.getAllItems(
+      GEOGRAPHIES_LIST,
+      `$filter=StageID eq ${stageId}`,
+    );
   }
 
 }
