@@ -31,6 +31,7 @@ export class CreateOpportunityComponent implements OnInit {
   opportunity: Opportunity | null = null;
   stage: Stage | null = null;
   loading = true;
+  updating = false;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -272,7 +273,9 @@ export class CreateOpportunityComponent implements OnInit {
     }
 
     if (this.isEdit) {
+      this.updating = this.dialogRef.disableClose = true;
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
+      this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
         success: success,
         data: this.model.Opportunity

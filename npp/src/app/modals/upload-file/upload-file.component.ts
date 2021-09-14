@@ -17,6 +17,7 @@ export class UploadFileComponent implements OnInit {
   form: FormGroup = new FormGroup({});
   model: any = { };
   folders: NPPFolder[] = [];
+  uploading = false; // spinner control
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -48,6 +49,8 @@ export class UploadFileComponent implements OnInit {
       OpportunityNameId: this.model.OpportunityNameId,
     };
 
+    this.uploading = this.dialogRef.disableClose = true;
+
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // forecast model file
       Object.assign(fileData, {
@@ -72,6 +75,8 @@ export class UploadFileComponent implements OnInit {
         this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
+              this.uploading = this.dialogRef.disableClose = false; // finished
+
               this.dialogRef.close({
                 success: true, 
                 name: this.model.file[0].name
@@ -85,7 +90,7 @@ export class UploadFileComponent implements OnInit {
           }
         );
       }
-    )
+    );
   }
 
   private readFileDataAsText(file: any): Observable<string> {

@@ -7,9 +7,13 @@
         </ng-template>
     </mat-dialog-content>
     <div class="dialog-footer" *ngIf="!loading">
-        <div class="dialog-cancel-button" mat-dialog-close>Close</div>
+        <div class="dialog-cancel-button" mat-dialog-close *ngIf="!updating">Close</div>
+        <div class="dialog-cancel-button" *ngIf="updating">Close</div>
         <div class="dialog-submit-button" cdkFocusInitial (click)="onNext()" *ngIf="!isEdit && !firstStepCompleted">Next</div>
         <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="!isEdit && firstStepCompleted">Create</div>
-        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="isEdit">Update</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="isEdit && !updating">Update</div>
+        <div class="dialog-submit-button" *ngIf="isEdit && updating">
+            <app-progress-spinner [size]="small"></app-progress-spinner>
+        </div>
     </div>
 </form>

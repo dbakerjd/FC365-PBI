@@ -17,6 +17,10 @@ export class StageSettingsComponent implements OnInit {
   isEdit: boolean = false;
   canSetUsers: boolean = false;
 
+  // spinner control
+  loading = true;
+  updating = false;
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
@@ -87,6 +91,7 @@ export class StageSettingsComponent implements OnInit {
       this.model.nextMasterStageId = this.data.next.ID;
       this.model.opportunityId = this.data.opportunityId;
     }
+    this.loading = false;
   }
 
   async onSubmit() {
@@ -95,16 +100,19 @@ export class StageSettingsComponent implements OnInit {
       return;
     }
     let success;
-    if (this.model.ID) {
+    if (this.model.ID) { // update
+      this.updating = this.dialogRef.disableClose = true;
       success = await this.sharepoint.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
       });
+      this.updating = this.dialogRef.disableClose = false;
+
       this.dialogRef.close({
-        success, 
+        success,
         data: this.model
       });
-      
+
     } else {
       const newStage = await this.sharepoint.createStage({
         StageReview: this.model.StageReview,
