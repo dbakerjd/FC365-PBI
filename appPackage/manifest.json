@@ -6,9 +6,9 @@
     "packageName": "com.microsoft.teams.extension",
     "developer": {
         "name": "Beta Software S.L.",
-        "websiteUrl": "https://npp.staging.beta.barcelona/#",
-        "privacyUrl": "https://npp.staging.beta.barcelona/#",
-        "termsOfUseUrl": "https://npp.staging.beta.barcelona/#"
+        "websiteUrl": "https://npp-beta.staging.beta.barcelona/#",
+        "privacyUrl": "https://npp-beta.staging.beta.barcelona/#",
+        "termsOfUseUrl": "https://npp-beta.staging.beta.barcelona/#"
     },
     "icons": {
         "color": "color.png",
@@ -27,8 +27,8 @@
         {
             "entityId": "index",
             "name": "NPP",
-            "contentUrl": "https://npp.staging.beta.barcelona/#tab",
-            "websiteUrl": "https://npp.staging.beta.barcelona/#tab",
+            "contentUrl": "https://npp-beta.staging.beta.barcelona/#tab",
+            "websiteUrl": "https://npp-beta.staging.beta.barcelona/#tab",
             "scopes": [
                 "personal"
             ]
@@ -38,7 +38,8 @@
         "identity"
     ],
     "validDomains": [
-        "npp.staging.beta.barcelona",
+        "localhost:4200",
+        "npp-beta.staging.beta.barcelona",
         "betasoftwaresl.sharepoint.com"
     ],
     "webApplicationInfo": {

@@ -1,4 +1,4 @@
 export const environment = {
-  ssoRedirectUrl: 'https://npp.staging.beta.barcelona',
+  ssoRedirectUrl: 'https://npp-beta.staging.beta.barcelona',
   production: true
 };
