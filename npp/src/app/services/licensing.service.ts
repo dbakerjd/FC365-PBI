@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
+import { ErrorService } from './error.service';
 import { TeamsService } from './teams.service';
 
 export interface JDLicense {
@@ -20,7 +21,12 @@ export class LicensingService {
 
   public license: JDLicense | null = null;
 
-  constructor(private http: HttpClient, private teams: TeamsService, private router: Router, private authService: MsalService) { }
+  constructor(private error: ErrorService, private http: HttpClient, private teams: TeamsService, private router: Router, private authService: MsalService) { 
+    let license = localStorage.getItem("JDLicense");
+    if(license) {
+      this.license = JSON.parse(license);
+    }
+  }
 
   async askLicensingApi(token: string): Promise<JDLicense> {
 
@@ -43,7 +49,7 @@ export class LicensingService {
 
   async setJDLicense(token: string) {
     this.license = await this.askLicensingApi(token);
-    console.log("license", this.license);
+    localStorage.setItem("JDLicense", JSON.stringify(this.license));
   }
 
   isValidJDLicense() {
@@ -53,26 +59,33 @@ export class LicensingService {
   }
 
   async validateLicense() {
-    let activeAccount = this.authService.instance.getActiveAccount();
+    try {
+      let activeAccount = this.authService.instance.getActiveAccount();
 
-    if(activeAccount) {
-      this.teams.getStorageToken();
-
-      if(this.teams.token) {
-        if(!this.license) {
-          await this.setJDLicense(this.teams.token);
-        }
-        if(!this.isValidJDLicense()) {
-          this.router.navigate(['expired-license']);
+      if(activeAccount) {
+        this.teams.getStorageToken();
+  
+        if(this.teams.token) {
+          if(!this.license) {
+            await this.setJDLicense(this.teams.token);
+          }
+          if(!this.isValidJDLicense()) {
+            this.router.navigate(['expired-license']);
+          }
         }
       }
+      
+      return true;
+    } catch(e) {
+      this.router.navigate(['expired-license']);
+      this.error.handleError(e as Error);
+      return false;
     }
     
-    return true;
   }
 
   getSharepointUri() {
-    return this.siteUrl; // temporal
+    //return this.siteUrl; // temporal
     return this.license?.SharePointUri;
   }
 
