@@ -23,7 +23,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private readonly sharepoint: SharepointService, 
     private authService: MsalService, 
     private msalBroadcastService: MsalBroadcastService, 
-    private licensing: LicensingService,
+    public licensing: LicensingService,
     private router: Router
   ) {
 
