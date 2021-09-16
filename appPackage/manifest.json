@@ -1,14 +1,14 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.9/MicrosoftTeams.schema.json",
     "manifestVersion": "1.9",
-    "version": "1.0.5",
+    "version": "1.0.7",
     "id": "17534ca2-f4f8-43c0-8612-72bdd29a9ee8",
     "packageName": "com.microsoft.teams.extension",
     "developer": {
         "name": "Beta Software S.L.",
-        "websiteUrl": "https://npp-beta.staging.beta.barcelona/#",
-        "privacyUrl": "https://npp-beta.staging.beta.barcelona/#",
-        "termsOfUseUrl": "https://npp-beta.staging.beta.barcelona/#"
+        "websiteUrl": "https://npp-beta.staging.beta.barcelona",
+        "privacyUrl": "https://npp-beta.staging.beta.barcelona",
+        "termsOfUseUrl": "https://npp-beta.staging.beta.barcelona"
     },
     "icons": {
         "color": "color.png",
@@ -27,8 +27,8 @@
         {
             "entityId": "index",
             "name": "NPP",
-            "contentUrl": "https://npp-beta.staging.beta.barcelona/#tab",
-            "websiteUrl": "https://npp-beta.staging.beta.barcelona/#tab",
+            "contentUrl": "https://npp-beta.staging.beta.barcelona",
+            "websiteUrl": "https://npp-beta.staging.beta.barcelona",
             "scopes": [
                 "personal"
             ]
