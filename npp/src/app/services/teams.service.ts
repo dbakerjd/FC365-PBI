@@ -1,8 +1,11 @@
 import { Inject, Injectable } from '@angular/core';
+import { tick } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG } from '@azure/msal-angular';
-import { PopupRequest, AccountInfo, RedirectRequest } from '@azure/msal-browser';
+import { PopupRequest, AccountInfo, RedirectRequest, AuthenticationResult } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { ErrorService } from './error.service';
+import { LicensingService } from './licensing.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,9 +15,10 @@ export class TeamsService {
   public user: any = false;
   public token: any = false;
   public context: any = false;
+  public currentlyLoginIn = false;
 
-  constructor( @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
-               private errorService: ErrorService, private authService: MsalService) { 
+  constructor( @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration, private router: Router,
+               private errorService: ErrorService, private authService: MsalService, private licensing: LicensingService) { 
 
     microsoftTeams.initialize();
     
@@ -73,10 +77,36 @@ export class TeamsService {
   }
 
   async login() {
-    if (this.msalGuardConfig.authRequest){
-      this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as RedirectRequest);
-    } else {
-      this.authService.loginRedirect();
+    if(!this.currentlyLoginIn) {
+      this.currentlyLoginIn = true;
+      microsoftTeams.authentication.authenticate({
+        url: window.location.origin + "/auth-start",
+        width: 600,
+        height: 535,
+        successCallback: async (result) => {
+          this.currentlyLoginIn = false;
+          let objRes = JSON.parse(result ? result : '');
+          const payload = objRes.payload as AuthenticationResult;
+          await this.licensing.setJDLicense(payload.accessToken);
+          if (this.licensing.isValidJDLicense()) {
+            this.setActiveAccount(payload.account);
+            this.setToken(payload.accessToken);
+          } else {
+            this.router.navigate(['expired-license']);
+          }
+        },
+        failureCallback: (error) => {
+            this.currentlyLoginIn = false;
+            this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
+        }
+      });
+    }
+  }
+
+  async validateLicense() {
+    let token = this.getStorageToken();
+    if(token) {
+      this.licensing.validateLicense(token);
     }
   }
 

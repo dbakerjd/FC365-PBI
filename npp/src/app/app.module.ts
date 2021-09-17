@@ -51,6 +51,8 @@ import { ExpiredLicenseComponent } from './expired-license/expired-license.compo
 import { SafePipe } from './shared/safe.pipe';
 import { WorkInProgressService } from './services/work-in-progress.service';
 import { FolderPermissionsComponent } from './modals/folder-permissions/folder-permissions.component';
+import { AuthStartComponent } from './auth/auth-start/auth-start.component';
+import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -100,7 +102,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     authRequest: {
       scopes: ['https://betasoftwaresl.sharepoint.com/.default']
     },
-    loginFailedRoute: '/'
+    loginFailedRoute: '/auth-end'
   };
 }
 
@@ -150,7 +152,9 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     ProgressSpinnerComponent,
     NotFoundComponent,
     ExpiredLicenseComponent,
-    SafePipe
+    SafePipe,
+    AuthStartComponent,
+    AuthEndComponent
   ],
   providers: [
     {

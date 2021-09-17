@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
 import { ErrorService } from './error.service';
-import { TeamsService } from './teams.service';
 
 export interface JDLicense {
   Tier: string;
@@ -21,7 +20,7 @@ export class LicensingService {
 
   public license: JDLicense | null = null;
 
-  constructor(private error: ErrorService, private http: HttpClient, private teams: TeamsService, private router: Router, private authService: MsalService) { 
+  constructor(private error: ErrorService, private http: HttpClient, private router: Router, private authService: MsalService) { 
     let license = localStorage.getItem("JDLicense");
     if(license) {
       this.license = JSON.parse(license);
@@ -58,21 +57,17 @@ export class LicensingService {
     return (new Date(this.license.Expiration)).getTime() >= new Date().getTime();
   }
 
-  async validateLicense() {
+  async validateLicense(token: string) {
     try {
       let activeAccount = this.authService.instance.getActiveAccount();
 
-      if(activeAccount) {
-        this.teams.getStorageToken();
-  
-        if(this.teams.token) {
+      if(activeAccount && token) {
           if(!this.license) {
-            await this.setJDLicense(this.teams.token);
+            await this.setJDLicense(token);
           }
           if(!this.isValidJDLicense()) {
             this.router.navigate(['expired-license']);
           }
-        }
       }
       
       return true;

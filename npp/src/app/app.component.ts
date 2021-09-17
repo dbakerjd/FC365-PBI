@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
 import { AuthenticationResult, EventMessage, EventType, InteractionStatus } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
@@ -24,47 +24,19 @@ export class AppComponent implements OnInit, OnDestroy {
     private authService: MsalService, 
     private msalBroadcastService: MsalBroadcastService, 
     public licensing: LicensingService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {
 
   }
-  ngOnInit(): void {
+  async ngOnInit() {
     this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal
     this.setLoginDisplay();
-
-    this.licensing.validateLicense();
-
-    this.msalBroadcastService.msalSubject$
-      .pipe(
-        filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
-      )
-      .subscribe(async (result: EventMessage) => {
-        console.log('result login', result);
-        const payload = result.payload as AuthenticationResult;
-        await this.licensing.setJDLicense(payload.accessToken);
-        console.log('isvalid', this.licensing.isValidJDLicense());
-        console.log('sharepoint uri', this.licensing.getSharepointUri());
-        if (this.licensing.isValidJDLicense()) {
-          this.teams.setActiveAccount(payload.account);
-          this.teams.setToken(payload.accessToken);
-        } else {
-          console.log('NO VALID LICENSE');
-          this.router.navigate(['expired-license']);
-        }
-        
-      });
-
-    this.msalBroadcastService.inProgress$
-      .pipe(
-        filter((status: InteractionStatus) => status === InteractionStatus.None),
-        takeUntil(this._destroying$)
-      )
-      .subscribe(() => {
-        this.setLoginDisplay();
-        this.teams.checkAndSetActiveAccount();
-      })
-
-    this.teams.checkAndSetActiveAccount();
+    
+    if(window.location.href.indexOf("auth") == -1) {
+      await this.teams.validateLicense();
+      await this.teams.checkAndSetActiveAccount();
+    }
 
   }
 

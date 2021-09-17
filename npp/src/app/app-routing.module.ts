@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ActionsListComponent } from './actions/actions-list/actions-list.component';
+import { AuthEndComponent } from './auth/auth-end/auth-end.component';
+import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
 import { NotFoundComponent } from './not-found/not-found.component';
@@ -15,6 +17,8 @@ const routes: Routes = [
   { path: 'opportunities/:id/actions', component: ActionsListComponent },
   { path: 'power-bi', component: PowerBiComponent },
   { path: 'expired-license', component: ExpiredLicenseComponent },
+  { path: 'auth-start', component: AuthStartComponent },
+  { path: 'auth-end', component: AuthEndComponent },
   { path: '**', pathMatch: 'full', component: NotFoundComponent },
 ];
 
