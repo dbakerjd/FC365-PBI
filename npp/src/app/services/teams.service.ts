@@ -32,6 +32,7 @@ export class TeamsService {
     (window as any).jdTeamsHackMethod = (auth: any) => {
       console.log("Hackity hack!")
       console.log(auth);
+      microsoftTeams.authentication.notifySuccess(auth);
     }
   }
 
