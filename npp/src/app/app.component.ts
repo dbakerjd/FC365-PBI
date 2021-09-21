@@ -27,7 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute
   ) {
-
+    
   }
   async ngOnInit() {
     this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal

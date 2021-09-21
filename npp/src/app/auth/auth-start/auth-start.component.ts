@@ -1,6 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG } from '@azure/msal-angular';
-import { RedirectRequest } from '@azure/msal-browser';
+import { MsalBroadcastService, MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG, MSAL_INSTANCE } from '@azure/msal-angular';
+import { EventMessage, EventType, IPublicClientApplication, RedirectRequest } from '@azure/msal-browser';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-auth-start',
@@ -9,7 +10,9 @@ import { RedirectRequest } from '@azure/msal-browser';
 })
 export class AuthStartComponent implements OnInit {
 
-  constructor(@Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration, private authService: MsalService) { }
+  constructor(@Inject(MSAL_INSTANCE) private msalInstance: IPublicClientApplication, public msalBroadcastService: MsalBroadcastService, @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration, private authService: MsalService) {
+    
+  }
 
   ngOnInit(): void {
     if (this.msalGuardConfig.authRequest){

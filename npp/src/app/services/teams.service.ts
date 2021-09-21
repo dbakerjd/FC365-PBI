@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG } from '@azure/msal-angular';
 import { PopupRequest, AccountInfo, RedirectRequest, AuthenticationResult } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
+import { Subject } from 'rxjs';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 
@@ -16,6 +17,7 @@ export class TeamsService {
   public token: any = false;
   public context: any = false;
   public currentlyLoginIn = false;
+  public statusSubject = new Subject<string>();
 
   constructor( @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration, private router: Router,
                private errorService: ErrorService, private authService: MsalService, private licensing: LicensingService) { 
@@ -26,6 +28,11 @@ export class TeamsService {
       this.context = context;
       console.log(context);
     });
+
+    (window as any).jdTeamsHackMethod = (auth: any) => {
+      console.log("Hackity hack!")
+      console.log(auth);
+    }
   }
 
   setToken(token: string) {
@@ -40,25 +47,6 @@ export class TeamsService {
   getStorageToken() {
     this.token = localStorage.getItem('teamsAccessToken');
     return this.token;
-  }
-
-  async refreshToken(force = false) {
-    this.authService.logoutRedirect();
-    if (this.getStorageToken() == null || force) {
-      console.log('no token found in storage');
-      /*
-      let activeAccount = this.authService.instance.getActiveAccount();
-      if (activeAccount) {
-        let newToken = await this.authService.instance.acquireTokenSilent({scopes: ["https://betasoftwaresl.sharepoint.com/.default"], account: activeAccount['name'] as AccountInfo | undefined}).then(function(accessTokenResponse) {
-          return accessTokenResponse;
-        });
-        // this.setToken(newToken.accessToken);
-        console.log('setted new token', this.token);
-      } else {
-        this.authService.loginRedirect();
-      }
-      */
-    }
   }
 
   async checkAndSetActiveAccount(){
@@ -84,6 +72,8 @@ export class TeamsService {
         width: 600,
         height: 535,
         successCallback: async (result) => {
+          console.log("sucess callback called!");
+          console.log(result);
           this.currentlyLoginIn = false;
           let objRes = JSON.parse(result ? result : '');
           const payload = objRes.payload as AuthenticationResult;
@@ -96,6 +86,8 @@ export class TeamsService {
           }
         },
         failureCallback: (error) => {
+          console.log("failure callback called!");
+          console.log(error);
             this.currentlyLoginIn = false;
             this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
         }
@@ -119,36 +111,7 @@ export class TeamsService {
   async getActiveAccount() {
     return await this.authService.instance.getActiveAccount();
   }
-  /** UNUSED */
-  /*
-  getActiveAccount() {
-    let activeAccount = this.authService.instance.getActiveAccount();
-
-    if(!activeAccount) {
-      activeAccount = this.getStorageAccount();
-      if(activeAccount) this.authService.instance.setActiveAccount(activeAccount);
-      activeAccount = this.authService.instance.getActiveAccount();
-    }
-
-    if (!activeAccount) {
-      let accounts = this.authService.instance.getAllAccounts();
-      if (!accounts || accounts.length == 0) {
-        if(this.msalGuardConfig.authRequest){
-          this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as PopupRequest);
-        } else {
-          this.authService.loginRedirect();
-        }
-        return false;
-      } else {
-        this.setActiveAccount(accounts[0]);
-        activeAccount = this.authService.instance.getActiveAccount();
-      }
-    }
-
-    return activeAccount;  
-  }
-  */
-
+  
   setActiveAccount(account: AccountInfo | null) {
     if (account) {
       this.authService.instance.setActiveAccount(account);

@@ -270,10 +270,8 @@ export class SharepointService {
     console.log('endpoint query', endpoint);
     try {
       return this.http.get(endpoint);
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return of([]);
     }
   }
@@ -287,10 +285,8 @@ export class SharepointService {
         return lists.value;
       }
       return [];
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return [];
     }
   }
@@ -304,10 +300,8 @@ export class SharepointService {
         return lists.value[0];
       }
       return null;
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return null;
     }
   }
@@ -317,10 +311,8 @@ export class SharepointService {
       let endpoint = this.licensing.getSharepointApiUri() + list + `/items(${id})`;
       if (conditions) endpoint += '?' + conditions;
       return await this.http.get(endpoint).toPromise(); 
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return null;
     }
     return null;
@@ -335,10 +327,8 @@ export class SharepointService {
         return lists.value;
       }
       return 0;
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return 0;
     }
   }
@@ -349,10 +339,8 @@ export class SharepointService {
         this.licensing.getSharepointApiUri() + list + "/items", 
         data
       ).toPromise();
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true);
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return null;
     }
   }
@@ -369,10 +357,8 @@ export class SharepointService {
           })
         }
       ).toPromise();
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true);
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return false;
     }
     return true;
@@ -763,11 +749,8 @@ export class SharepointService {
           ServerRelativeUrl: FILES_FOLDER + newFolderUrl
         }
       ).toPromise() as SystemFolder;
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true);
-        console.log('The folder cannot be created');
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return null;
     }
   }
@@ -778,10 +761,8 @@ export class SharepointService {
         this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
         { responseType: 'arraybuffer' }
       ).toPromise();
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return [];
     }
   }
@@ -798,10 +779,8 @@ export class SharepointService {
           }),
         }
       ).toPromise();
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return false;
     }
     return true;
@@ -963,10 +942,8 @@ export class SharepointService {
           headers: { 'Content-Type': 'blob' }
         }
       ).toPromise();
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true);
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return {};
     }
   }
@@ -988,10 +965,8 @@ export class SharepointService {
           OnlyAllowMembersViewMembership: false
         }
       ).toPromise() as SPGroup;
-    } catch (e) {
-      if (e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return null;
     }
   }
@@ -1072,10 +1047,8 @@ export class SharepointService {
         { LoginName: loginName }
       ).toPromise();
       return true;
-    } catch (e) {
-      if(e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return false;
     }
   }
@@ -1201,10 +1174,8 @@ export class SharepointService {
         baseUrl + `/roleassignments/addroleassignment(principalid=${groupId},roledefid=${roleId})`,
         null).toPromise();
       return true;
-    } catch (e) {
-      if (e.status == 401) {
-        // await this.teams.refreshToken(true); 
-      }
+    } catch (e: any) {
+      this.error.handleError(e);
       return false;
     }
   }

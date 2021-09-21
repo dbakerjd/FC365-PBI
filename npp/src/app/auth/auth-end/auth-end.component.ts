@@ -1,25 +1,44 @@
-import { Component, OnInit } from '@angular/core';
-import { MsalBroadcastService } from '@azure/msal-angular';
-import { EventMessage, EventType } from '@azure/msal-browser';
+import { Component, Inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { MsalBroadcastService, MsalService, MSAL_INSTANCE } from '@azure/msal-angular';
+import { EventMessage, EventType, IPublicClientApplication } from '@azure/msal-browser';
 import { filter } from 'rxjs/operators';
+import * as microsoftTeams from "@microsoft/teams-js";
 
 @Component({
   selector: 'app-auth-end',
   templateUrl: './auth-end.component.html',
   styleUrls: ['./auth-end.component.scss']
 })
-export class AuthEndComponent implements OnInit {
-  success = false;
-  constructor(private msalBroadcastService: MsalBroadcastService) { }
+export class AuthEndComponent {
+  
+  constructor(@Inject(MSAL_INSTANCE) private msalInstance: IPublicClientApplication, public msalBroadcastService: MsalBroadcastService, public router: Router) { 
+    msalInstance.handleRedirectPromise().then((tokenResponse) => {
+      let res = JSON.stringify(tokenResponse);
+      console.log(res);
+      microsoftTeams.authentication.notifySuccess(res);
 
-  ngOnInit(): void {
+      setTimeout(() => {
+        window.opener.jdTeamsHackMethod(res);
+        window.close();
+      }, 500);
+    }).catch((error) => {
+      console.log("Login failure");
+      microsoftTeams.authentication.notifyFailure(JSON.stringify(error));
+    });
+
     this.msalBroadcastService.msalSubject$
       .pipe(
         filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_SUCCESS),
       )
       .subscribe(async (result: EventMessage) => {
-        this.success = true;
-        microsoftTeams.authentication.notifySuccess(JSON.stringify(result));
+        let res = JSON.stringify(result);
+        console.log(res);
+        microsoftTeams.authentication.notifySuccess(res);
+        setTimeout(() => {
+          window.opener.jdTeamsHackMethod(res);
+          window.close();
+        }, 500);
       });
 
       this.msalBroadcastService.msalSubject$
@@ -27,12 +46,19 @@ export class AuthEndComponent implements OnInit {
         filter((msg: EventMessage) => msg.eventType === EventType.LOGIN_FAILURE),
       )
       .subscribe(async (result: EventMessage) => {
-        this.success = false;
+        console.log("Login failure");
         microsoftTeams.authentication.notifyFailure(JSON.stringify(result));
       });
-    setTimeout(() => {
-      microsoftTeams.authentication.notifyFailure("login timeout");
-    }, 10000)
+  
+      setTimeout(() => {
+        console.log("Login failure TIMEOUT");
+        microsoftTeams.authentication.notifyFailure("login timeout");
+      }, 10000)
   }
 
+  ngOnInit() {
+    if(!window.opener) {
+      this.router.navigate(['/']);
+    }
+  }
 }
