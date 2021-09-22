@@ -1,3 +1,4 @@
 <button (click)="logout()" *ngIf="loginDisplay">Logout</button>
-<div>{{ licensing?.license | json }}</div>
+<div><b>License: </b>{{ licensing?.license | json }}</div>
+<div><b>Context: </b>{{ teams?.context | json }}</div>
 <router-outlet></router-outlet>

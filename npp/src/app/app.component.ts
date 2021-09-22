@@ -19,7 +19,7 @@ export class AppComponent implements OnInit, OnDestroy {
   private readonly _destroying$ = new Subject<void>();
   
   constructor(
-    private readonly teams: TeamsService, 
+    public teams: TeamsService, 
     private readonly sharepoint: SharepointService, 
     private authService: MsalService, 
     private msalBroadcastService: MsalBroadcastService, 
