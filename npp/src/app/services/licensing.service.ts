@@ -54,9 +54,12 @@ export class LicensingService {
 
   async validateLicense(context: any) {
     try {
+      this.error.toastr.success(context.entityId+" , "+context.teamSiteDomain);
+
       await this.setJDLicense(context);
       
       if(!this.isValidJDLicense()) {
+        this.error.toastr.error("License not valid: "+JSON.stringify(this.license));
         this.router.navigate(['expired-license']);
       }
       return true;

@@ -30,7 +30,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.setLoginDisplay();
     
         if(window.location.href.indexOf("auth") == -1) {
-          await this.teams.validateLicense();
           await this.teams.checkAndSetActiveAccount();
         }
       }
