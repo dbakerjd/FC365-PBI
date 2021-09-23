@@ -1,8 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { TeamsService } from '../services/teams.service';
-import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
-import { AuthenticationResult, EventMessage, EventType } from '@azure/msal-browser';
-import { filter } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
 

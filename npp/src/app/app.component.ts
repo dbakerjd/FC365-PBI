@@ -1,9 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MsalBroadcastService, MsalService } from '@azure/msal-angular';
-import { AuthenticationResult, EventMessage, EventType, InteractionStatus } from '@azure/msal-browser';
 import { Subject } from 'rxjs';
-import { filter, takeUntil } from 'rxjs/operators';
 import { LicensingService } from './services/licensing.service';
 import { SharepointService } from './services/sharepoint.service';
 import { TeamsService } from './services/teams.service';
@@ -21,11 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public teams: TeamsService, 
     private readonly sharepoint: SharepointService, 
-    private authService: MsalService, 
-    private msalBroadcastService: MsalBroadcastService, 
-    public licensing: LicensingService,
-    private router: Router,
-    private route: ActivatedRoute
+    public licensing: LicensingService
   ) {
     
   }
@@ -41,7 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   setLoginDisplay() {
-    this.loginDisplay = this.authService.instance.getAllAccounts().length > 0;
+    this.loginDisplay = this.teams.msalInstance.getAllAccounts().length > 0;
   }
 
   logout() {

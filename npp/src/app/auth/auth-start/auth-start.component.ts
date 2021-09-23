@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MsalBroadcastService, MsalGuardConfiguration, MsalService, MSAL_GUARD_CONFIG, MSAL_INSTANCE } from '@azure/msal-angular';
 import { EventMessage, EventType, IPublicClientApplication, RedirectRequest } from '@azure/msal-browser';
-import { filter } from 'rxjs/operators';
+import { ErrorService } from 'src/app/services/error.service';
+import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
   selector: 'app-auth-start',
@@ -10,15 +10,16 @@ import { filter } from 'rxjs/operators';
 })
 export class AuthStartComponent implements OnInit {
 
-  constructor(@Inject(MSAL_INSTANCE) private msalInstance: IPublicClientApplication, public msalBroadcastService: MsalBroadcastService, @Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration, private authService: MsalService) {
+  constructor(public teams: TeamsService, public error: ErrorService) {
     
   }
 
   ngOnInit(): void {
-    if (this.msalGuardConfig.authRequest){
-      this.authService.loginRedirect({...this.msalGuardConfig.authRequest} as RedirectRequest);
+    let config = this.teams.getMSALGuardConfig();
+    if (config && config.authRequest){
+      this.teams.msalInstance.loginRedirect({...config.authRequest} as RedirectRequest);
     } else {
-      this.authService.loginRedirect();
+      this.teams.msalInstance.loginRedirect();
     }
   }
 

@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { MsalService } from '@azure/msal-angular';
 import { ErrorService } from './error.service';
 
 export interface JDLicense {
@@ -20,16 +19,15 @@ export class LicensingService {
 
   public license: JDLicense | null = null;
 
-  constructor(private error: ErrorService, private http: HttpClient, private router: Router, private authService: MsalService) { 
+  constructor(private error: ErrorService, private http: HttpClient, private router: Router) { 
     let license = localStorage.getItem("JDLicense");
     if(license) {
       this.license = JSON.parse(license);
     }
   }
-
+/*
   async askLicensingApi(token: string): Promise<JDLicense> {
 
-     /** OK */
       let headers = new HttpHeaders({
         'token': token,
         'Access-Control-Allow-Origin': '*',
@@ -53,11 +51,10 @@ export class LicensingService {
 
   isValidJDLicense() {
     if (!this.license) return false;
-    /*this.license.Tier == "silver" && */
     return (new Date(this.license.Expiration)).getTime() >= new Date().getTime();
   }
 
-  async validateLicense(token: string) {
+  async validateLicense(context: ) {
     try {
       let activeAccount = this.authService.instance.getActiveAccount();
 
@@ -78,10 +75,10 @@ export class LicensingService {
     }
     
   }
-
+*/
   getSharepointUri() {
-    //return this.siteUrl; // temporal
-    return this.license?.SharePointUri;
+    return this.siteUrl; // temporal
+    //return this.license?.SharePointUri;
   }
 
   getSharepointApiUri() {
@@ -91,4 +88,5 @@ export class LicensingService {
   getSharepointDomain() {
     return this.getSharepointUri()?.split('/')[2];
   }
+  
 }
