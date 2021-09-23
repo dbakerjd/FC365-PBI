@@ -14,7 +14,8 @@ export interface JDLicense {
   providedIn: 'root'
 })
 export class LicensingService {
-  siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/';
+  //siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/';
+  siteUrl: string = 'https://janddconsulting.sharepoint.com/sites/JDNPPApp/';
   licensingApiUrl: string = ' https://jdlicensingfunctions.azurewebsites.net/api/license?code=0R6EUPw28eUEVmBU9gNfi1yEwEpX28kOUWXZtEIjxavv5qV6VacwDw==';
 
   public license: JDLicense | null = null;
