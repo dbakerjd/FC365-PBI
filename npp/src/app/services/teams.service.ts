@@ -84,14 +84,14 @@ export class TeamsService {
   }
 
   getResourceMap() {
-    if(!this.licensing.license) {
+    /*if(!this.licensing.license) {
       console.log("Trying to get resources without an active license, failing silently.");
       return;
-    }
+    }*/
 
     const protectedResourceMap = new Map<string, Array<string>>();
-    // protectedResourceMap.set('https://betasoftwaresl.sharepoint.com', ['AllSites.FullControl', 'AllSites.Manage', 'Sites.Search.All']);
     protectedResourceMap.set('janddconsulting.sharepoint.com', ['https://janddconsulting.sharepoint.com/.default']);
+    //protectedResourceMap.set('betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
   
     return {
       interactionType: InteractionType.Redirect,
@@ -106,15 +106,16 @@ export class TeamsService {
   }
 
   getMSALGuardConfig() {
-    if(!this.licensing.license) {
+    /*if(!this.licensing.license) {
       console.log("Trying to get guard config without an active license, failing silently.");
       return;
-    }
+    }*/
 
     return { 
       interactionType: InteractionType.Redirect,
       authRequest: {
-        scopes: ['https://betasoftwaresl.sharepoint.com/.default']
+        //scopes: ['https://betasoftwaresl.sharepoint.com/.default']
+        scopes: ['https://janddconsulting.sharepoint.com/.default']
       },
       loginFailedRoute: '/auth-end'
     };
@@ -140,12 +141,15 @@ export class TeamsService {
      * To use active account set here, subscribe to inProgress$ first in your component
      */
     let activeAccount = this.msalInstance.getActiveAccount();
-
+    this.hackyConsole += "********** CHECK ACCOUNT ************  ACTIVE ACCOUNT: "+JSON.stringify(activeAccount) +"      --------------          ";
     if (!activeAccount && this.msalInstance.getAllAccounts().length > 0) {
       let accounts = this.msalInstance.getAllAccounts();
+      this.hackyConsole += "********** CHECK ACCOUNT ************ SETTING ACTIVE ACCOUNT: "+JSON.stringify(accounts[0]) +"      --------------          ";
       this.msalInstance.setActiveAccount(accounts[0]);
     } else if(!activeAccount) {
       await this.login();
+    } else {
+      this.hackyConsole += "********** CHECK ACCOUNT ************  NOTHING TO DO      --------------          ";
     }
   }
 

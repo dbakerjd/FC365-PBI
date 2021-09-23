@@ -20,14 +20,15 @@ export class AuthInterceptor implements HttpInterceptor {
             console.log("trying to obtain token for domain: "+domain);
             let scopes = this.teams.getResourceByDomain(domain);
             console.log(scopes);
-            
+            this.teams.hackyConsole += "********** INTERCEPTOR ************  DOMAIN: "+ domain +"      --------------          ";
+            this.teams.hackyConsole += "********** INTERCEPTOR ************  SCOPES: "+JSON.stringify(scopes) +"      --------------          ";
             if(scopes) {
                 let request = {
                     scopes
                 }
         
                 let tokenResponse = await this.teams.msalInstance.acquireTokenSilent(request);
-                console.log(tokenResponse);
+                this.teams.hackyConsole += "********** INTERCEPTOR ************  TOKEN: "+JSON.stringify(tokenResponse) +"      --------------          ";
                 const token = tokenResponse.accessToken;
                 if (!token) {
                     return next.handle(req).toPromise();
@@ -42,7 +43,7 @@ export class AuthInterceptor implements HttpInterceptor {
                 return next.handle(req).toPromise();
             }
         } catch(e) {
-            console.log(e);
+            this.teams.hackyConsole += "********** INTERCEPTOR ************  ERROR: "+JSON.stringify(e) +"      --------------          ";
             if (e instanceof InteractionRequiredAuthError) {
                 // fallback to interaction when silent call fails
                 this.teams.login();
