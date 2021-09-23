@@ -23,6 +23,8 @@ export class TeamsService {
   public token: any = false;
   public context: any = false;
   public currentlyLoginIn = false;
+  public authObj: string = '';
+  public hackyConsole: string = '';
   public statusSubject = new Subject<string>();
   public msalInstance = new PublicClientApplication({
     auth: {
@@ -48,18 +50,14 @@ export class TeamsService {
 
   constructor( private router: Router, private errorService: ErrorService, private licensing: LicensingService) { 
 
-    microsoftTeams.initialize();
+    microsoftTeams.initialize(() => {
+      this.statusSubject.next("initialized");
+    });
     
     microsoftTeams.getContext((context) => {
       this.context = context;
       console.log(context);
     });
-
-    (window as any).jdTeamsHackMethod = (auth: any) => {
-      console.log("Hackity hack!")
-      console.log(auth);
-      microsoftTeams.authentication.notifySuccess(auth);
-    }
 
     this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
       if(tokenResponse) {
@@ -151,22 +149,30 @@ export class TeamsService {
         width: 600,
         height: 535,
         successCallback: async (result) => {
-          console.log("sucess callback called!");
-          console.log(result);
-          this.currentlyLoginIn = false;
-          let objRes = JSON.parse(result ? result : '');
-          const payload = objRes.payload as AuthenticationResult;
-          /*await this.licensing.setJDLicense(payload.accessToken);
-          if (this.licensing.isValidJDLicense()) {*/
-            this.setActiveAccount(payload.account);
-            this.setToken(payload.accessToken);
-          /*} else {
-            this.router.navigate(['expired-license']);
-          }*/
+          try {
+            console.log("sucess callback called!");
+            console.log(result);
+            this.hackyConsole += "got success called: "+result+"     -     ";
+            this.currentlyLoginIn = false;
+            const payload = JSON.parse(result ? result : '')  as AuthenticationResult;
+            this.authObj = JSON.stringify(payload);
+            /*await this.licensing.setJDLicense(payload.accessToken);
+            if (this.licensing.isValidJDLicense()) {*/
+              this.setActiveAccount(payload.account);
+              this.setToken(payload.accessToken);
+            /*} else {
+              this.router.navigate(['expired-license']);
+            }*/
+          } catch(e: any) {
+            this.hackyConsole += "*************ERROR************* -> "+e+"      -      ";
+            this.errorService.handleError(e);
+          }
+          
         },
         failureCallback: (error) => {
           console.log("failure callback called!");
           console.log(error);
+          this.hackyConsole += "got error called: "+error+"     -     ";
             this.currentlyLoginIn = false;
             this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
         }

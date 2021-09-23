@@ -24,12 +24,18 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   async ngOnInit() {
     this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal
-    this.setLoginDisplay();
     
-    if(window.location.href.indexOf("auth") == -1) {
-      await this.teams.validateLicense();
-      await this.teams.checkAndSetActiveAccount();
-    }
+    this.teams.statusSubject.subscribe(async (msg) => {
+      if(msg == 'initialized') {
+        this.setLoginDisplay();
+    
+        if(window.location.href.indexOf("auth") == -1) {
+          await this.teams.validateLicense();
+          await this.teams.checkAndSetActiveAccount();
+        }
+      }
+    })
+    
 
   }
 
