@@ -64,7 +64,7 @@ export class TeamsService {
     
     microsoftTeams.getContext((context) => {
       this.context = context;
-      console.log(context);
+      this.validateLicense();
     });
 
     this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
@@ -192,7 +192,7 @@ export class TeamsService {
   }
 
   async validateLicense() {
-    //this.licensing.validateLicense(this.context);
+    this.licensing.validateLicense(this.context);
   }
 
   async logout() {
