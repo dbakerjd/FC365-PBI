@@ -108,7 +108,7 @@ export class ActionsListComponent implements OnInit {
       data: {
         folderList: this.currentFolders,
         selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.ID : null,
-        countries: await this.sharepoint.getCountriesList(),
+        geographies: await this.sharepoint.getGeographiesList(),
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
         opportunityId: this.opportunityId
@@ -465,6 +465,7 @@ export class ActionsListComponent implements OnInit {
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
       this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+      console.log('files', this.currentFiles);
   
       this.displayingModels = false;
       if (this.currentFolder) {

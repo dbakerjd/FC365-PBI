@@ -118,6 +118,8 @@ export interface NPPFileMetadata {
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
   CountryId?: number[];
+  GeographyId?: number;
+  Geography?: OpportunityGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
@@ -144,6 +146,20 @@ export interface SystemFolder {
 export interface Country {
   ID: number;
   Title: string;
+}
+
+export interface OpportunityGeography {
+  Id: number;
+  Title: string;
+  GeographyId: number;
+  Geography?: MasterGeography;
+  StageId: number;
+}
+
+export interface MasterGeography {
+  Id: number;
+  Title: string;
+  CountryId: number[];
 }
 
 export interface NPPNotification {
@@ -928,8 +944,8 @@ export class SharepointService {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`, 
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        Country/Title, ModelScenario/Title, ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,Country,ModelScenario,ApprovalStatus',
+        Geography/Title, ModelScenario/Title, ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,Geography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
@@ -1366,6 +1382,11 @@ export class SharepointService {
     return this.masterCountriesList;
   }
 
+  // stage hacked for now
+  async getGeographiesList(stage = 1): Promise<SelectInputList[]> {
+    return (await this.getGeographies(stage)).map(t => {return {value: t.ID, label: t.Title}});
+  }
+
   async getScenariosList(): Promise<SelectInputList[]> {
     if (this.masterScenariosList.length < 1) {
       this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => {return {value: t.ID, label: t.Title}});
@@ -1407,6 +1428,7 @@ export class SharepointService {
   }
 
   async getGeographies(stageId = 1) { // stage hacked for now
+    // save at variable to speed up ?
     return await this.getAllItems(
       GEOGRAPHIES_LIST,
       `$filter=StageID eq ${stageId}`,

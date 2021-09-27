@@ -12,9 +12,9 @@ export class UploadFileConfig {
     stageId: number, 
     folders: NPPFolder[], 
     selectedFolder: number | null,
-    countriesList: SelectInputList[], 
+    geographiesList: SelectInputList[], 
     scenariosList: SelectInputList[]): FormlyFieldConfig[] {
-    let {categories, countries, scenarios} = this;
+    let {categories, geographies, scenarios} = this;
 
     let config = [
       {
@@ -37,7 +37,7 @@ export class UploadFileConfig {
             },
           },
           categories(folders, selectedFolder),
-          countries(countriesList, folders),
+          geographies(geographiesList, folders),
           scenarios(scenariosList, folders),
           {
             key: 'description',
@@ -76,15 +76,15 @@ export class UploadFileConfig {
     }
   }
 
-  countries(options: SelectInputList[], folders: NPPFolder[]) {
+  geographies(options: SelectInputList[], folders: NPPFolder[]) {
     return {
-        key: 'country',
+        key: 'geography',
         type: 'ngsearchable',
         templateOptions: {
-            label: 'Countries:',
+            label: 'Geography:',
             filterLocally: true,
             options: options,
-            multiple: true,
+            multiple: false,
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;

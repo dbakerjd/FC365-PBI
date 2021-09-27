@@ -34,7 +34,7 @@ export class UploadFileComponent implements OnInit {
       this.data.masterStageId, 
       this.data.folderList,
       this.data.selectedFolder,
-      this.data.countries,
+      this.data.geographies,
       this.data.scenarios);
     this.form = new FormGroup({});
   }
@@ -55,10 +55,10 @@ export class UploadFileComponent implements OnInit {
       // forecast model file
       Object.assign(fileData, {
         CountryId: this.model.country,
+        GeographyId: this.model.geography,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
         ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
-        // GeographyId: 1 // TODO 
       });
 
     } else {
