@@ -117,12 +117,8 @@ export class TeamsService {
     return { 
       interactionType: InteractionType.Redirect,
       authRequest: {
-<<<<<<< HEAD
-        //scopes: ['https://betasoftwaresl.sharepoint.com/.default']
-        scopes: ['https://janddconsulting.sharepoint.com/.default']
-=======
-        scopes: ['https://betasoftwaresl.sharepoint.com/.default', 'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']
->>>>>>> feature/teams-login
+        scopes: ['https://janddconsulting.sharepoint.com/.default', 'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']
+        //scopes: ['https://betasoftwaresl.sharepoint.com/.default', 'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']
       },
       loginFailedRoute: '/auth-end'
     };

@@ -67,6 +67,7 @@ import { AuthInterceptor } from './auth/auth.interceptor';
     MatProgressSpinnerModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
+      timeOut: 7000,
     }),
   ],
   declarations: [
