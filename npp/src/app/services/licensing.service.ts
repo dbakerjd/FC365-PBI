@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { IndividualConfig } from 'ngx-toastr';
 import { ErrorService } from './error.service';
 
 export interface JDLicense {
@@ -16,8 +17,9 @@ export interface JDLicense {
 export class LicensingService {
   siteUrl: string = 'https://betasoftwaresl.sharepoint.com/sites/JDNPPApp/';
   //siteUrl: string = 'https://janddconsulting.sharepoint.com/sites/JDNPPApp/';
-  licensingApiUrl: string = 'https://jdlicensingfunctions.azurewebsites.net/api/license?code=tFs/KoE40qeTvQlsYUTA6GmgF88G3QF9RXxX51kasNV2Z8nzr2Y/hA==';
-
+  //licensingApiUrl: string = 'https://jdlicensingfunctions.azurewebsites.net/api/license?code=tFs/KoE40qeTvQlsYUTA6GmgF88G3QF9RXxX51kasNV2Z8nzr2Y/hA==';
+  licensingApiUrl: string = 'https://jdlicensingfunctions.azurewebsites.net/api/license';
+  
   public license: JDLicense | null = null;
 
   constructor(private error: ErrorService, private http: HttpClient, private router: Router) { 
@@ -36,7 +38,7 @@ export class LicensingService {
       });
       return await this.http.post(this.licensingApiUrl, {
         "appId" : context.entityId,
-        "teamSiteDomain" : "http://"+context.teamSiteDomain
+        "teamSiteDomain" : context.teamSiteDomain
       }, { 
         headers: headers
       }).toPromise() as JDLicense;
@@ -54,8 +56,6 @@ export class LicensingService {
 
   async validateLicense(context: any) {
     try {
-      this.error.toastr.success(context.entityId+" , "+context.teamSiteDomain);
-
       await this.setJDLicense(context);
       
       if(!this.isValidJDLicense()) {

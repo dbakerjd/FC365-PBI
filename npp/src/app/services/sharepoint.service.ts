@@ -235,7 +235,7 @@ export class SharepointService {
     name: string;
     id: number;
   }[] = [];
-
+  provisioningAPI = "https://nppprovisioning20210831.azurewebsites.net/api/";
   constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
   async test() {
@@ -409,6 +409,18 @@ export class SharepointService {
     await this.initializeStage(opportunity, stage);
 
     return true;
+  }
+
+  async initializeOpportunityAPI(opportunity: Opportunity, stage: Stage) {
+    //NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
+    let sharepoint = this.licensing.getSharepointUri();
+    return await this.http.get(this.provisioningAPI,{
+      params: {
+        StageID: stage.ID,
+        OppID: opportunity.ID,
+        siteUrl: sharepoint ? sharepoint : ''
+      }
+    }).toPromise();
   }
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
