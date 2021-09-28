@@ -64,7 +64,7 @@ export class TeamsService {
     
     microsoftTeams.getContext((context) => {
       this.context = context;
-      console.log(context);
+      this.validateLicense();
     });
 
     this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
@@ -92,6 +92,9 @@ export class TeamsService {
     const protectedResourceMap = new Map<string, Array<string>>();
     protectedResourceMap.set('janddconsulting.sharepoint.com', ['https://janddconsulting.sharepoint.com/.default']);
     //protectedResourceMap.set('betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
+    // protectedResourceMap.set('https://betasoftwaresl.sharepoint.com', ['AllSites.FullControl', 'AllSites.Manage', 'Sites.Search.All']);
+    //https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
+    protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
   
     return {
       interactionType: InteractionType.Redirect,
@@ -114,8 +117,12 @@ export class TeamsService {
     return { 
       interactionType: InteractionType.Redirect,
       authRequest: {
+<<<<<<< HEAD
         //scopes: ['https://betasoftwaresl.sharepoint.com/.default']
         scopes: ['https://janddconsulting.sharepoint.com/.default']
+=======
+        scopes: ['https://betasoftwaresl.sharepoint.com/.default', 'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']
+>>>>>>> feature/teams-login
       },
       loginFailedRoute: '/auth-end'
     };
@@ -141,16 +148,12 @@ export class TeamsService {
      * To use active account set here, subscribe to inProgress$ first in your component
      */
     let activeAccount = this.msalInstance.getActiveAccount();
-    this.hackyConsole += "********** CHECK ACCOUNT ************  ACTIVE ACCOUNT: "+JSON.stringify(activeAccount) +"      --------------          ";
     if (!activeAccount && this.msalInstance.getAllAccounts().length > 0) {
       let accounts = this.msalInstance.getAllAccounts();
-      this.hackyConsole += "********** CHECK ACCOUNT ************ SETTING ACTIVE ACCOUNT: "+JSON.stringify(accounts[0]) +"      --------------          ";
       this.msalInstance.setActiveAccount(accounts[0]);
     } else if(!activeAccount) {
       await this.login();
-    } else {
-      this.hackyConsole += "********** CHECK ACCOUNT ************  NOTHING TO DO      --------------          ";
-    }
+    } 
   }
 
   async login() {
@@ -162,19 +165,11 @@ export class TeamsService {
         height: 535,
         successCallback: async (result) => {
           try {
-            console.log("sucess callback called!");
-            console.log(result);
-            this.hackyConsole += "got success called: "+result+"     -     ";
             this.currentlyLoginIn = false;
             const payload = JSON.parse(result ? result : '')  as AuthenticationResult;
             this.authObj = JSON.stringify(payload);
-            /*await this.licensing.setJDLicense(payload.accessToken);
-            if (this.licensing.isValidJDLicense()) {*/
-              this.setActiveAccount(payload.account);
-              this.setToken(payload.accessToken);
-            /*} else {
-              this.router.navigate(['expired-license']);
-            }*/
+            this.setActiveAccount(payload.account);
+            this.setToken(payload.accessToken);
           } catch(e: any) {
             this.hackyConsole += "*************ERROR************* -> "+e+"      -      ";
             this.errorService.handleError(e);
@@ -182,8 +177,6 @@ export class TeamsService {
           
         },
         failureCallback: (error) => {
-          console.log("failure callback called!");
-          console.log(error);
           this.hackyConsole += "got error called: "+error+"     -     ";
             this.currentlyLoginIn = false;
             this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
@@ -193,7 +186,7 @@ export class TeamsService {
   }
 
   async validateLicense() {
-    //this.licensing.validateLicense(this.context);
+    this.licensing.validateLicense(this.context);
   }
 
   async logout() {

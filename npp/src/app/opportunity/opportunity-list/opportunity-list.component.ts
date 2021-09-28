@@ -9,6 +9,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -30,7 +31,8 @@ export class OpportunityListComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router, 
     public matDialog: MatDialog,
-    public jobs: WorkInProgressService
+    public jobs: WorkInProgressService,
+    public teams: TeamsService
     ) { }
 
   async ngOnInit() {
@@ -140,24 +142,32 @@ export class OpportunityListComponent implements OnInit {
     this.dialogInstance.afterClosed()
     .pipe(take(1))
     .subscribe(async (result: any) => {
+     
       if (result.success) {
         this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         this.opportunities.push(opp);
         let job = this.jobs.startJob("initialize opportunity "+result.data.opportunity.id);
-        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
-          // set active
-          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
-          opp.OpportunityStatus = 'Active';
+        try {
+          //await this.sharepoint.initializeOpportunityAPI(result.data.opportunity, result.data.stage);
+          this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+            // set active
+            await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+            opp.OpportunityStatus = 'Active';
+            this.jobs.finishJob(job.id);
+            this.toastr.success("The opportunity is now active", opp.Title);
+          }).catch(e => {
+            this.jobs.finishJob(job.id);
+          });
+        } catch(e) {
           this.jobs.finishJob(job.id);
-          this.toastr.success("The opportunity is now active", opp.Title);
-        }).catch(e => {
-          this.jobs.finishJob(job.id);
-        });
+          this.toastr.error((e as Error).message);
+        }
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be created", "Try again");
       }
+      
     });
   }
 
