@@ -77,6 +77,14 @@ export class UploadFileConfig {
   }
 
   geographies(options: SelectInputList[], folders: NPPFolder[]) {
+    if (options.length === 1) {
+      return {
+        key: 'geography',
+        type: 'input',
+        defaultValue: options[0].value,
+        "hideExpression": true,
+      };
+    }
     return {
         key: 'geography',
         type: 'ngsearchable',
@@ -89,7 +97,7 @@ export class UploadFileConfig {
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;
         },
-    }
+    };
   }
 
 

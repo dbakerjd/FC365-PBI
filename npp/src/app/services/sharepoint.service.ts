@@ -220,6 +220,7 @@ const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
+const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const GEOGRAPHIES_LIST = "lists/getByTitle('Opportunity Geographies')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
@@ -239,6 +240,7 @@ export class SharepointService {
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
+  masterGeographies: MasterGeography[] = [];
   masterIndications: {
     therapy: string;
     indications: Indication[]
@@ -1382,9 +1384,14 @@ export class SharepointService {
     return this.masterCountriesList;
   }
 
-  // stage hacked for now
-  async getGeographiesList(stage = 1): Promise<SelectInputList[]> {
-    return (await this.getGeographies(stage)).map(t => {return {value: t.ID, label: t.Title}});
+  /** Accessible Geographies for the user (subfolders with read/write permission) */
+  async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
+    if (this.masterGeographies.length < 1) {
+      this.masterGeographies = await this.getAllItems(MASTER_GEOGRAPHIES_LIST);
+    }
+    const geoFoldersWithAccess = await this.getSubfolders(`/${oppId}/${stageId}/${departmentID}`);
+    return this.masterGeographies.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
+      .map(t => {return {value: t.Id, label: t.Title}});
   }
 
   async getScenariosList(): Promise<SelectInputList[]> {

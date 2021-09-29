@@ -13,7 +13,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { LicensingService } from 'src/app/services/licensing.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -102,13 +102,24 @@ export class ActionsListComponent implements OnInit {
   }
 
   async openUploadDialog() {
+    if (!this.currentGate) return;
+
+    let geographiesList: SelectInputList[] = [];
+    const modelFolder = this.currentFolders.find(f => f.containsModels);
+    if (modelFolder) {
+      geographiesList = await this.sharepoint.getAccessibleGeographiesList(
+        this.opportunityId, 
+        this.currentGate.StageNameId,
+        modelFolder.ID
+      )
+    }
     this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
       data: {
         folderList: this.currentFolders,
         selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.ID : null,
-        geographies: await this.sharepoint.getGeographiesList(),
+        geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
         opportunityId: this.opportunityId
@@ -464,7 +475,16 @@ export class ActionsListComponent implements OnInit {
       this.loading = true;
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
       this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
-      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+      if (this.currentFolder?.containsModels) {
+        const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+        console.log('geoFolders', geoFolders);
+        this.currentFiles = [];
+        for (const geofolder of geoFolders) {
+          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+        }
+      } else {
+        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+      }
       console.log('files', this.currentFiles);
   
       this.displayingModels = false;
