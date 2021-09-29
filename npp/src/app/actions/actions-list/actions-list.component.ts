@@ -559,10 +559,13 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number) {
+  async shareFile(fileId: number, departmentId: number, geographyId = null) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
+    if (geographyId) {
+      folderGroup += '-' + geographyId;
+    }
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',
