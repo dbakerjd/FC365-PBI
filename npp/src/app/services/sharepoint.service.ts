@@ -118,6 +118,8 @@ export interface NPPFileMetadata {
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
   CountryId?: number[];
+  GeographyId?: number;
+  Geography?: OpportunityGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
@@ -144,6 +146,20 @@ export interface SystemFolder {
 export interface Country {
   ID: number;
   Title: string;
+}
+
+export interface OpportunityGeography {
+  Id: number;
+  Title: string;
+  GeographyId: number;
+  Geography?: MasterGeography;
+  StageId: number;
+}
+
+export interface MasterGeography {
+  Id: number;
+  Title: string;
+  CountryId: number[];
 }
 
 export interface NPPNotification {
@@ -204,6 +220,7 @@ const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
 const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
+const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const GEOGRAPHIES_LIST = "lists/getByTitle('Opportunity Geographies')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
@@ -223,6 +240,7 @@ export class SharepointService {
   masterCountriesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
+  masterGeographies: MasterGeography[] = [];
   masterIndications: {
     therapy: string;
     indications: Indication[]
@@ -919,8 +937,8 @@ export class SharepointService {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`, 
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        Country/Title, ModelScenario/Title, ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,Country,ModelScenario,ApprovalStatus',
+        Geography/Title, ModelScenario/Title, ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,Geography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
@@ -1349,6 +1367,16 @@ export class SharepointService {
     return this.masterCountriesList;
   }
 
+  /** Accessible Geographies for the user (subfolders with read/write permission) */
+  async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
+    if (this.masterGeographies.length < 1) {
+      this.masterGeographies = await this.getAllItems(MASTER_GEOGRAPHIES_LIST);
+    }
+    const geoFoldersWithAccess = await this.getSubfolders(`/${oppId}/${stageId}/${departmentID}`);
+    return this.masterGeographies.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
+      .map(t => {return {value: t.Id, label: t.Title}});
+  }
+
   async getScenariosList(): Promise<SelectInputList[]> {
     if (this.masterScenariosList.length < 1) {
       this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => {return {value: t.ID, label: t.Title}});
@@ -1390,6 +1418,7 @@ export class SharepointService {
   }
 
   async getGeographies(stageId = 1) { // stage hacked for now
+    // save at variable to speed up ?
     return await this.getAllItems(
       GEOGRAPHIES_LIST,
       `$filter=StageID eq ${stageId}`,
