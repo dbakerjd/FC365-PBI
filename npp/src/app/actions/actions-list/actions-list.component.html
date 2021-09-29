@@ -192,7 +192,7 @@
                 </div>
             </div>
         </div>
-        <div class="next-stage-btn-wrapper">
+        <div class="next-stage-btn-wrapper" *ngIf="currentSection == 'actions'">
             <div class="npp-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 Go to Next Stage
             </div>
