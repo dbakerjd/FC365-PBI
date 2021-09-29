@@ -84,15 +84,18 @@ export class TeamsService {
   }
 
   getResourceMap() {
-    /*if(!this.licensing.license) {
-      console.log("Trying to get resources without an active license, failing silently.");
+    if(!this.licensing.license) {
+      this.errorService.toastr.error("Trying to get resources without an active license");
       return;
-    }*/
+    }
 
     const protectedResourceMap = new Map<string, Array<string>>();
     // protectedResourceMap.set('https://betasoftwaresl.sharepoint.com', ['AllSites.FullControl', 'AllSites.Manage', 'Sites.Search.All']);
     //https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
-    protectedResourceMap.set('betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
+    let sharepointUri = this.licensing.getSharepointDomain();
+    if(sharepointUri) {
+      protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
+    }
     protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
   
     return {
@@ -108,15 +111,20 @@ export class TeamsService {
   }
 
   getMSALGuardConfig() {
-    /*if(!this.licensing.license) {
-      console.log("Trying to get guard config without an active license, failing silently.");
+    if(!this.licensing.license) {
+      this.errorService.toastr.error("Trying to get resources without an active license");
       return;
-    }*/
+    }
+    let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'];
+    let sharepointUri = this.licensing.getSharepointDomain();
+    if(sharepointUri) {
+      scopes.push('https://'+sharepointUri+'/.default');
+    }
 
     return { 
       interactionType: InteractionType.Redirect,
       authRequest: {
-        scopes: ['https://betasoftwaresl.sharepoint.com/.default', 'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']
+        scopes
       },
       loginFailedRoute: '/auth-end'
     };
