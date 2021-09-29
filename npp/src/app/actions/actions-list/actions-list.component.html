@@ -67,12 +67,12 @@
             </div>
             <div class="gate-info-icons">
                 <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
-                <div class="gate-info-icons-actions" title="Actions list" (click)="setSection('actions')"></div>
-                <div class="gate-info-icons-documents" title="Documents" (click)="showFolders()"></div>
-                <div class="gate-info-icons-models" title="Models" (click)="showModels()"></div>
+                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')"></div>
+                <div class="gate-info-icons-documents" title="Supporting Docs" (click)="showFolders()"></div>
+                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()"></div>
                 <div class="gate-info-icons-refresh-bi" title="Refresh Power BI" *ngIf="licensing.license?.PowerBi"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-department-users" title="Department Users" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
