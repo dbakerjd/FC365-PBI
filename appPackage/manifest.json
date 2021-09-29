@@ -25,7 +25,7 @@
     "accentColor": "#FFFFFF",
     "staticTabs": [
         {
-            "entityId": "MadridEsLaCapital",
+            "entityId": "JDInternalDemo",
             "name": "NPP",
             "contentUrl": "https://localhost:4200",
             "websiteUrl": "https://localhost:4200",

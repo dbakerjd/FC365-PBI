@@ -1,4 +1,4 @@
 export const environment = {
-  ssoRedirectUrl: 'https://npp-beta.staging.beta.barcelona/auth-end',
+  ssoRedirectUrl: 'https://salmon-smoke-09bd51703.azurestaticapps.net/auth-end',
   production: true
 };
