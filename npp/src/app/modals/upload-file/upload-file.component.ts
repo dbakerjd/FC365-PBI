@@ -34,7 +34,7 @@ export class UploadFileComponent implements OnInit {
       this.data.masterStageId, 
       this.data.folderList,
       this.data.selectedFolder,
-      this.data.countries,
+      this.data.geographies,
       this.data.scenarios);
     this.form = new FormGroup({});
   }
@@ -51,16 +51,17 @@ export class UploadFileComponent implements OnInit {
 
     this.uploading = this.dialogRef.disableClose = true;
 
+    let fileFolder = '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // forecast model file
       Object.assign(fileData, {
         CountryId: this.model.country,
+        GeographyId: this.model.geography,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
         ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
-        // GeographyId: 1 // TODO 
       });
-
+      fileFolder += '/' + this.model.geography;
     } else {
       // regular file
       Object.assign(fileData, {
@@ -69,7 +70,7 @@ export class UploadFileComponent implements OnInit {
     }
 
     // upload file to correspondent folder
-    let folder = this.sharepoint.getBaseFilesFolder() + '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category
+    const folder = this.sharepoint.getBaseFilesFolder() + fileFolder;
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
         this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
