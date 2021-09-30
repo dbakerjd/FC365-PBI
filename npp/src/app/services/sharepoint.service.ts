@@ -838,41 +838,47 @@ export class SharepointService {
     return uploaded;
   }
 
-  async cloneForecastModel(originFile: NPPFile, scenario: number, comments = ''): Promise<boolean> {
+  async cloneForecastModel(originFile: NPPFile, newScenarios: number[], comments = ''): Promise<boolean> {
 
-    const scenarios = await this.getScenariosList();
     const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
-    const extension = originFile.Name.split('.').pop();
+
+    let success = true;
+    for (const scenId of newScenarios) {
+      const newFileName = await this.addScenarioSufixToFilename(originFile.Name, scenId);
+      if (!newFileName) return false;
+  
+      success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFileName);
+      if (!success) return false;
+  
+      let newFileInfo = await this.query(
+        `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
+        `$expand=ListItemAllFields&$filter=Name eq '${newFileName}'`,
+      ).toPromise();
+  
+      if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
+        const newData = {
+          ModelScenarioId: [scenId],
+          ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
+          ApprovalStatusId: this.getApprovalStatusId("In Progress")
+        }
+        success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
+      }
+
+      if (!success) return false;
+    }
+
+    return success;
+  }
+
+  async addScenarioSufixToFilename(originFilename: string, scenarioId: number): Promise<string | false> {
+    const scenarios = await this.getScenariosList();
+    const extension = originFilename.split('.').pop();
     if (!extension) return false;
 
-    const baseFileName = originFile.Name.substring(0, originFile.Name.length - (extension.length + 1));
-    const newFileName = baseFileName
-      + '-' + scenarios.find(el => el.value === scenario)?.label.replace(/ /g, '').toLocaleLowerCase()
-      + '.' + extension;
-
-    let success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFileName);
-    if (!success) return false;
-
-    let newFileInfo = await this.query(
-      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
-      `$expand=ListItemAllFields&$filter=Name eq '${newFileName}'`,
-    ).toPromise();
-
-    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
-      // add new scenario
-      let newScenarios = originFile.ListItemAllFields.ModelScenarioId ? originFile.ListItemAllFields.ModelScenarioId : [];
-      if (!newScenarios.includes(scenario)) {
-        newScenarios.push(scenario);
-      }
-
-      const newData = {
-        ModelScenarioId: newScenarios,
-        ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
-        ApprovalStatusId: this.getApprovalStatusId("In Progress")
-      }
-      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
-    }
-    return success;
+    const baseFileName = originFilename.substring(0, originFilename.length - (extension.length + 1));
+    return baseFileName
+        + '-' + scenarios.find(el => el.value === scenarioId)?.label.replace(/ /g, '').toLocaleLowerCase()
+        + '.' + extension;
   }
 
   async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
