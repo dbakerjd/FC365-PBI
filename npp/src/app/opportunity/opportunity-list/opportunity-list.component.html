@@ -29,7 +29,7 @@
                 <p><label>Indication: </label> {{item.Indication?.Title}}</p>
             </div>
             <div class="opportunity-progress" (click)="navigateTo(item)">
-                <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
+                <p><label>Progress:</label> <span class="opportunity-progress-value">{{item.progress}}%</span> <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
                 <p *ngIf="item.OpportunityOwner"><label>Opportunity Owner: </label> {{item.OpportunityOwner.FirstName + ' ' + item.OpportunityOwner.LastName}}</p>
                 <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
                 <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
