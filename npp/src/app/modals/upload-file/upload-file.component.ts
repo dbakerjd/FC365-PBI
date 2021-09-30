@@ -66,7 +66,8 @@ export class UploadFileComponent implements OnInit {
           ModelApprovalComments: this.model.description,
           ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
         });
-        let scenarioFileName = this.model.file[0].name;
+        let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
+
         if (this.model.scenario.length > 1) {
           // add sufix to every copy
           scenarioFileName = await this.sharepoint.addScenarioSufixToFilename(scenarioFileName, scen);
@@ -78,7 +79,7 @@ export class UploadFileComponent implements OnInit {
       Object.assign(fileData, {
         ModelApprovalComments: this.model.description
       });
-      this.uploadFileToFolder(fileData, this.model.file[0].name, this.sharepoint.getBaseFilesFolder() + fileFolder);
+      this.uploadFileToFolder(fileData, this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, ""), this.sharepoint.getBaseFilesFolder() + fileFolder);
     }
   }
 
