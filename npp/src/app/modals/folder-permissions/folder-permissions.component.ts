@@ -33,7 +33,7 @@ export class FolderPermissionsComponent implements OnInit {
 
     const geographiesList = (await this.sharepoint.getGeographies(1)).map(el => { return { label: el.Title, value: el.Id }});
 
-    this.opportunityId = this.data.opportunityId; // pot ser només ID?
+    this.opportunityId = this.data.opportunityId;
 
     let formlyFields: any = [
       {
