@@ -89,3 +89,31 @@ formly-form {
         }
     }
 }
+
+.opportunity-actions {
+    width: calc(11.5% - 1px);
+    overflow: hidden;
+    height: 100%;
+    padding: 0 !important;
+    margin-left: 2%;
+    
+    &>div {
+        width: 25%;
+        height: 2rem;
+        padding-top: 1rem;
+        cursor: pointer;
+        float: left;
+        margin: 0 !important;
+    }
+    .opportunity-icon-edit {
+        background: url("/assets/edit.svg") no-repeat 1.35rem center;
+    }
+
+    .opportunity-icon-archive {
+        background: url("/assets/files.svg") no-repeat 1.35rem center;
+    }
+
+    .opportunity-icon-restore {
+        background: url("/assets/restore.svg") no-repeat 1.35rem center;
+    }
+}
