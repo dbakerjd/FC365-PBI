@@ -25,7 +25,7 @@
     }
 
     .opportunity-name {
-        width: calc(50% - 1px);
+        width: calc(45% - 1px);
         float: left;
         cursor: pointer;
 
@@ -35,7 +35,7 @@
     }
 
     .opportunity-progress {
-        width: calc(35% -1px);
+        width: calc(25% - 1px);
         float: left;
         cursor: pointer;
         padding-right: 2%;
@@ -57,7 +57,7 @@
     }
 
     .opportunity-actions {
-        width: calc(11.5% - 1px);
+        width: calc(8% - 1px);
         overflow: hidden;
         height: 100%;
         padding-left: 1rem;
