@@ -392,7 +392,7 @@ export class SharepointService {
       filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner";
     }
     if(onlyActive) {
-      if(filter) filter = "$filter=OpportunityStatus eq 'Active'";
+      if(!filter) filter = "$filter=OpportunityStatus eq 'Active'";
       else filter+="&$filter=OpportunityStatus eq 'Active'";
     }
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
