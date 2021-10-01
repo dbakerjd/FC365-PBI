@@ -24,6 +24,8 @@ export interface Opportunity {
   AuthorId: number;
   Author?: User;
   progress?: number;
+  gates?: Stage[];
+  isGateType?: boolean;
 }
 
 export interface OpportunityInput {
@@ -384,14 +386,20 @@ export class SharepointService {
 
   /** --- OPPORTUNITIES --- **/
 
-  async getOpportunities(expand = true): Promise<Opportunity[]> {
+  async getOpportunities(expand = true, onlyActive = false): Promise<Opportunity[]> {
+    let filter = undefined;
     if (expand) {
-      return await this.getAllItems(
-        OPPORTUNITIES_LIST,
-        "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner"
-      );
+      filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner";
     }
-    return await this.getAllItems(OPPORTUNITIES_LIST);
+    if(onlyActive) {
+      if(filter) filter = "$filter=OpportunityStatus eq 'Active'";
+      else filter+="&$filter=OpportunityStatus eq 'Active'";
+    }
+    return await this.getAllItems(OPPORTUNITIES_LIST, filter);
+  }
+
+  async getAllStages(): Promise<Stage[]> {
+    return await this.getAllItems(OPPORTUNITY_STAGES_LIST);
   }
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
