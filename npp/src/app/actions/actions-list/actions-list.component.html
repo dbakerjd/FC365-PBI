@@ -190,10 +190,11 @@
             <div class="actions-list-button" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 <div class="action-item-next-button" (click)="goNextStage()" *ngIf="nextStage">
                     Go to Next Stage
-                    <div class="action-item-status-icon"></div>
+                    <div class="action-item-next-button-icon"></div>
                 </div>
-                <div class="action-item-next-button" (click)="completeOpportunity()" *ngIf="!nextStage">
+                <div class="action-item-next-button" (click)="completeOpportunity()" *ngIf="!nextStage && opportunity.OpportunityStatus == 'Active'">
                     Complete Opportunity
+                    <div class="action-item-next-button-icon"></div>
                 </div>
             </div>
         </div>
