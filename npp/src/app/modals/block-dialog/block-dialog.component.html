@@ -1,0 +1,7 @@
+<app-dialog-header title="Action in progress" [close]="false"></app-dialog-header>
+
+<mat-dialog-content>
+    <p [innerHtml]="message"></p>
+    <p [innerHtml]="wait" class="wait"></p>
+    <app-progress-spinner></app-progress-spinner>
+</mat-dialog-content>
