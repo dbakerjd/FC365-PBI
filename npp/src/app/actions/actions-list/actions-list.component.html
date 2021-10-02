@@ -49,10 +49,6 @@
                 </div>
             </div>
         </div>
-        <div class="next-stage-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId">
-            <div class="complete-btn-icon"></div>
-            <span>Go to Next Stage</span>
-        </div>
     </div>
     <div class="actions-wrapper">
         <div class="gate-info-wrapper">
@@ -191,14 +187,16 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="next-stage-btn-wrapper" *ngIf="currentSection == 'actions'">
-            <div class="npp-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
-                Go to Next Stage
+            <div class="actions-list-button" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+                <div class="action-item-next-button" (click)="goNextStage()" *ngIf="nextStage">
+                    Go to Next Stage
+                    <div class="action-item-status-icon"></div>
+                </div>
+                <div class="action-item-next-button" (click)="completeOpportunity()" *ngIf="!nextStage">
+                    Complete Opportunity
+                </div>
             </div>
-            <div class="npp-btn" (click)="completeOpportunity()" *ngIf="!nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
-                Complete Opportunity
-            </div>
         </div>
+        
     </div>
 </div>

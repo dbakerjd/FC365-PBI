@@ -186,31 +186,6 @@
                 top: 1rem;
             }
         }
-
-        .next-stage-btn {
-            background-color: #bdffd1;
-            color: rgba(0, 0, 0, 0.6);
-            height: 3.42rem;
-            line-height: 3.42rem;
-            text-align: center;
-            color: #000;
-            cursor: pointer;
-            border: 1px solid #fff;
-            position: relative;
-            transition: all 2s;
-            .complete-btn-icon {
-                background: url('/assets/Check.svg') no-repeat;
-                background-size: cover;
-                width: 1.5rem;
-                height: 1.5rem;
-                position: absolute;
-                top: 1rem;
-                left: 1.5rem;
-            }
-        }
-        .next-stage-btn:hover {
-            background-color: #83c797;
-        }
     }
 
     .documents-files {
@@ -354,11 +329,14 @@
             }
         }
 
-        .action-item {
+        .action-item,
+        .actions-list-button {
             width: 100%;
             height: 3.42rem;
             clear: left;
-            &:last-child {
+        }
+        .action-item {
+            &:last-child > div {
                 border-bottom: 1px solid #fff;
             } 
 
@@ -439,14 +417,43 @@
                 }
 
             }
+
+            
+            .action-item-blank {
+                width: auto;
+            }
         }
-    }
-    .next-stage-btn-wrapper {
-        .npp-btn {
-            color: #333;
-            float: none;
-            margin: 1em auto;
-            width: 150px
+
+        .actions-list-button {
+            .action-item-next-button {
+                width: calc(17.06% - 1.59rem);
+                float: right;
+                background-color: #000;
+                color: #fff;
+                line-height: 3.42rem;
+                padding-left: 1.59rem;
+                position: relative;
+                cursor: pointer;
+                transition: background-color 0.5s ease;
+
+                .action-item-status-icon {
+                    background: url('/assets/left-arrow.svg') no-repeat;
+                    // transform: rotate(180deg);
+                    transform: rotate(180deg) scale(0.75);
+                    background-size: cover;
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    position: absolute;
+                    top: 1rem;
+                    right: 2rem;
+                }
+            }
+
+            .action-item-next-button:hover {
+                background-color: #ea5817;
+            }
         }
+        
     }
+
 }
