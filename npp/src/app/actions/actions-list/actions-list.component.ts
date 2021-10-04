@@ -176,13 +176,23 @@ export class ActionsListComponent implements OnInit {
       });
   }
 
-  async approve(file: NPPFile) {
+  async approveModel(file: NPPFile) {
     if (!file.ListItemAllFields) return;
     if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
       file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
-      this.toastr.success("The model has been approved!", "Forecast Model");
+      this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
     } else {
       this.toastr.error("There were a problem approving the forecast model", 'Try again');
+    }
+  }
+
+  async rejectModel(file: NPPFile) {
+    if (!file.ListItemAllFields) return;
+    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "In Progress")) {
+      file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
+      this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+    } else {
+      this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
     }
   }
 

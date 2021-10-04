@@ -143,8 +143,8 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        <span (click)="approve(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
-                                        <span class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span (click)="rejectModel(file)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
