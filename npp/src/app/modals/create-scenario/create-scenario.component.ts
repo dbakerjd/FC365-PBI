@@ -32,11 +32,12 @@ export class CreateScenarioComponent implements OnInit {
     this.fields = [{
       fieldGroup: [{
         key: 'scenario',
-        type: 'select',
+        type: 'ngsearchable',
         templateOptions: {
             label: 'New Scenario',
             options: this.scenarios,
-            required: true
+            required: true,
+            multiple: true
         }
       },
       {
@@ -74,6 +75,5 @@ export class CreateScenarioComponent implements OnInit {
       }
     });
   }
-  
 
 }

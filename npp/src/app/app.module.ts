@@ -49,6 +49,7 @@ import { FolderPermissionsComponent } from './modals/folder-permissions/folder-p
 import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
+import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
 
 @NgModule({
   imports: [
@@ -93,6 +94,7 @@ import { AuthInterceptor } from './auth/auth.interceptor';
     FilterPipe,
     SortPipe,
     ConfirmDialogComponent,
+    BlockDialogComponent,
     ProgressSpinnerComponent,
     NotFoundComponent,
     ExpiredLicenseComponent,

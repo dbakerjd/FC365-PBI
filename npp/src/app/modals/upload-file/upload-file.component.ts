@@ -39,7 +39,7 @@ export class UploadFileComponent implements OnInit {
     this.form = new FormGroup({});
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (this.form.invalid) {
       this.validateAllFormFields(this.form);
       return;
@@ -53,34 +53,47 @@ export class UploadFileComponent implements OnInit {
 
     let fileFolder = '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
-      // forecast model file
-      Object.assign(fileData, {
-        CountryId: this.model.country,
-        GeographyId: this.model.geography,
-        ModelScenarioId: this.model.scenario,
-        ModelApprovalComments: this.model.description,
-        ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
-      });
+      // add geography to folder route
       fileFolder += '/' + this.model.geography;
+
+      for (const scen of this.model.scenario) {
+        // forecast model file
+        let newFileData = {...fileData};
+        Object.assign(newFileData, {
+          // CountryId: this.model.country,
+          GeographyId: this.model.geography,
+          ModelScenarioId: [scen],
+          ModelApprovalComments: this.model.description,
+          ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
+        });
+        let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
+
+        if (this.model.scenario.length > 1) {
+          // add sufix to every copy
+          scenarioFileName = await this.sharepoint.addScenarioSufixToFilename(scenarioFileName, scen);
+        }
+        this.uploadFileToFolder(newFileData, scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder);
+      }
     } else {
       // regular file
       Object.assign(fileData, {
         ModelApprovalComments: this.model.description
       });
+      this.uploadFileToFolder(fileData, this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, ""), this.sharepoint.getBaseFilesFolder() + fileFolder);
     }
+  }
 
-    // upload file to correspondent folder
-    const folder = this.sharepoint.getBaseFilesFolder() + fileFolder;
+  private uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.sharepoint.uploadFile(data, folder, this.model.file[0].name, fileData).then(
+        this.sharepoint.uploadFile(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished
 
               this.dialogRef.close({
                 success: true, 
-                name: this.model.file[0].name
+                name: fileName
               });
             }
             else {

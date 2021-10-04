@@ -36,7 +36,7 @@ export class TeamsService {
 
   public msalInstance = new PublicClientApplication({
     auth: {
-      // clientId: '6226576d-37e9-49eb-b201-ec1eeb0029b6', // Prod enviroment. Uncomment to use. 
+      //clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // Prod enviroment. Uncomment to use. 
       clientId: 'e504af88-0105-426f-bd33-9990e49c8122', // PPE testing environment
       authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
@@ -116,7 +116,8 @@ export class TeamsService {
       this.errorService.toastr.error("Trying to get resources without an active license");
       return;
     }
-    let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'];
+    //let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'];
+    let scopes = [];
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       scopes.push('https://'+sharepointUri+'/.default');

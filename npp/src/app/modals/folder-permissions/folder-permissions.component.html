@@ -1,7 +1,7 @@
-<app-dialog-header title="Department Users"></app-dialog-header>
+<app-dialog-header title="Users Access"></app-dialog-header>
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <mat-dialog-content>
-        <h1>Users with access</h1>
+        <h1>Assign users to departments</h1>
         <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
         <ng-template #isLoaded>
             <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>

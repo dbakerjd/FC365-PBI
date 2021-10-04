@@ -131,7 +131,15 @@ export class ActionsListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
-        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+        if (this.currentFolder?.containsModels) {
+          const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+          this.currentFiles = [];
+          for (const geofolder of geoFolders) {
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+          }
+        } else {
+          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+        }
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
       }
@@ -191,7 +199,10 @@ export class ActionsListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
-          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+          const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+          for (const geofolder of geoFolders) {
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+          }
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
         }
@@ -323,11 +334,14 @@ export class ActionsListComponent implements OnInit {
         .pipe(take(1))
         .subscribe(async (result: any) => {
           if (result.success) {
-            let job = this.jobs.startJob('initialize stage ' + result.data.ID);
+            let job = this.jobs.startJob(
+              'initialize stage ' + result.data.ID, 
+              'The stage is being initialized. The list of actions and starter permissions are being created.'
+            );
             let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
             this.alreadyGoingNextStage = true;
             this.sharepoint.initializeStage(opp, result.data).then(async r => {
-              this.jobs.finishJob(job.id);
+              await this.jobs.finishJob(job.id);
               this.toastr.success("Next stage has been created successfully", result.data.Title);
               this.alreadyGoingNextStage = false;
               setTimeout(() => {
@@ -406,7 +420,10 @@ export class ActionsListComponent implements OnInit {
                         this.toastr.success("A opportunity of type 'phase' was created successfully", result.data.opportunity.Title);
                         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
                         opp.progress = 0;
-                        let job = this.jobs.startJob("initialize opportunity " + result.data.opportunity.id);
+                        let job = this.jobs.startJob(
+                          "initialize opportunity " + result.data.opportunity.id,
+                          'The new opportunity is being initialized. First stage and permissions are being created.'
+                        );
                         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           // set active
                           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
@@ -477,7 +494,6 @@ export class ActionsListComponent implements OnInit {
       this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       if (this.currentFolder?.containsModels) {
         const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
-        console.log('geoFolders', geoFolders);
         this.currentFiles = [];
         for (const geofolder of geoFolders) {
           this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
@@ -485,7 +501,6 @@ export class ActionsListComponent implements OnInit {
       } else {
         this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
       }
-      console.log('files', this.currentFiles);
   
       this.displayingModels = false;
       if (this.currentFolder) {
@@ -559,10 +574,13 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number) {
+  async shareFile(fileId: number, departmentId: number, geographyId = null) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
+    if (geographyId) {
+      folderGroup += '-' + geographyId;
+    }
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',

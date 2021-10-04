@@ -29,21 +29,15 @@
                 <p><label>Indication: </label> {{item.Indication?.Title}}</p>
             </div>
             <div class="opportunity-progress" (click)="navigateTo(item)">
-                <p><label>Progress:</label> {{item.progress}}% <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
+                <p><label>Progress:</label> <span class="opportunity-progress-value">{{item.progress}}%</span> <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
                 <p *ngIf="item.OpportunityOwner"><label>Opportunity Owner: </label> {{item.OpportunityOwner.FirstName + ' ' + item.OpportunityOwner.LastName}}</p>
                 <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
                 <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
             </div>
             <div class="opportunity-actions">
-                <div class="npp-btn" (click)="archiveOpportunity(item)" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)">
-                    Archive
-                </div>
-                <div class="npp-btn" (click)="restoreOpportunity(item)" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)">
-                    Restore
-                </div>
-                <div class="npp-btn" (click)="editOpportunity(item)" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId">
-                    Edit
-                </div>
+                <div class="opportunity-icon-edit" title="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId" (click)="editOpportunity(item)"></div>
+                <div class="opportunity-icon-archive" title="Archive Opportunity" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)" (click)="archiveOpportunity(item)"></div>
+                <div class="opportunity-icon-restore" title="Restore Opportunity" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)" (click)="restoreOpportunity(item)"></div>
             </div>
         </div>
         <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  

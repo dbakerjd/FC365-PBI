@@ -186,31 +186,6 @@
                 top: 1rem;
             }
         }
-
-        .next-stage-btn {
-            background-color: #bdffd1;
-            color: rgba(0, 0, 0, 0.6);
-            height: 3.42rem;
-            line-height: 3.42rem;
-            text-align: center;
-            color: #000;
-            cursor: pointer;
-            border: 1px solid #fff;
-            position: relative;
-            transition: all 2s;
-            .complete-btn-icon {
-                background: url('/assets/Check.svg') no-repeat;
-                background-size: cover;
-                width: 1.5rem;
-                height: 1.5rem;
-                position: absolute;
-                top: 1rem;
-                left: 1.5rem;
-            }
-        }
-        .next-stage-btn:hover {
-            background-color: #83c797;
-        }
     }
 
     .documents-files {
@@ -221,11 +196,6 @@
             clear: left;
             border-top: 1px solid #fff;
             overflow: hidden;
-
-            .documents-files-item-model-actions {
-                width: calc(100% - 2.7rem);
-                padding: 1rem 1.35rem;
-            }
 
             &:last-child {
                 border-bottom: 1px solid #fff;
@@ -238,21 +208,53 @@
             }
             .documents-files-item-name {
                 clear: left;
-                width: calc(25% - 1px);
+                width: calc(35% - 1px);
                 p {
                     padding-left: 1.35rem;
                 }
             }
 
             .documents-files-item-uploaded {
-                width: calc(25% - 1px);
+                & > div {
+                    float: left;
+                }
+                width: calc(23% - 1px);
                 p {
                     padding-left: 1.35rem;
+                }
+
+                .documents-files-item-model-actions {
+                    padding-left: 1.35rem;
+    
+                    &>div {
+                        width: 20px;
+                        height: 16px;
+                        padding-left: 0.5rem;
+                        cursor: pointer;
+                        float: left;
+                        margin: 0 !important;
+                    }
+                    .model-send-approve-icon {
+                        background: url("/assets/send.svg") no-repeat center;
+                    }
+                
+                    .model-create-scenario-icon {
+                        background: url("/assets/duplicate.svg") no-repeat center;
+                    }
+                }
+
+                span.model-approve-btn {
+                    cursor: pointer;
+                    color: green;
+                }
+                span.model-reject-btn {
+                    cursor: pointer;
+                    color: red;
                 }
             }
             
             .documents-files-item-comments {
-                width: calc(38.5% - 1px);
+                width: calc(30.5% - 1px);
                 p {
                     padding-left: 1.35rem;
                 }
@@ -312,7 +314,7 @@
                 }
             }
             .gate-info-progress {
-                width: 53.69%;
+                width: 45.69%;
                 app-progress-bar {
                     display: inline-block;
                     margin-left: 1rem;
@@ -321,43 +323,72 @@
                 }
             }
             .gate-info-icons {
-                width: 17.06%;
+                width: 25.06%;
                 height: 100%;
+                text-align: right;
                 &>div {
-                    width: 13.66%;
+                    width: 18px;
                     height: 100%;
                     cursor: pointer;
-                    float: left;
+                    float: right;
+                    margin-right: 1.25rem;
+                }
+                &>div:first-child {
+                    margin-right: 2rem;
+                }
+                &>div:hover {
+                    opacity: 0.6;
                 }
                 .gate-info-icons-upload {
-                    background: url("/assets/up.svg") no-repeat 1.35rem center;
+                    background: url("/assets/up.svg") no-repeat center;
                 }
                 .gate-info-icons-actions {
-                    background: url("/assets/menu.svg") no-repeat 1.1rem center;
+                    min-width: 16px !important;
+                    background: url("/assets/menu.svg") no-repeat center;
+                    &:hover .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-documents {
-                    background: url("/assets/folder.svg") no-repeat 1.1rem center;
+                    background: url("/assets/folder.svg") no-repeat center;
+
+                    &:has(.gate-section-selected) .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-models {
-                    background: url("/assets/share.svg") no-repeat 1.1rem center;
+                    background: url("/assets/alldocuments.svg") no-repeat center;
+                    &:hover .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-refresh-bi {
-                    background: url("/assets/cilindro.svg") no-repeat 1.1rem center;
+                    background: url("/assets/cilindro.svg") no-repeat center;
                 }
                 .gate-info-icons-stage-settings {
-                    background: url("/assets/settings.svg") no-repeat 0.5rem center;
+                    background: url("/assets/settings.svg") no-repeat center;
                 }
                 .gate-info-icons-department-users {
-                    background: url("/assets/user.svg") no-repeat 0.5rem center;
+                    background: url("/assets/addpeople.svg") no-repeat center;
+                    padding-top: 3px;
+                }
+
+                .gate-section-selected .gate-info-icons-selected-section {
+                    display: block;
+                    border-bottom: 2px solid black;
+                    height: 95%;
                 }
             }
         }
 
-        .action-item {
+        .action-item,
+        .actions-list-button {
             width: 100%;
             height: 3.42rem;
             clear: left;
-            &:last-child {
+        }
+        .action-item {
+            &:last-child > div {
                 border-bottom: 1px solid #fff;
             } 
 
@@ -438,14 +469,43 @@
                 }
 
             }
+
+            
+            .action-item-blank {
+                width: auto;
+            }
         }
-    }
-    .next-stage-btn-wrapper {
-        .npp-btn {
-            color: #333;
-            float: none;
-            margin: 1em auto;
-            width: 150px
+
+        .actions-list-button {
+            .action-item-next-button {
+                width: calc(17.06% - 1.59rem);
+                float: right;
+                background-color: #000;
+                color: #fff;
+                line-height: 3.42rem;
+                padding-left: 1.59rem;
+                position: relative;
+                cursor: pointer;
+                transition: background-color 0.5s ease;
+
+                .action-item-next-button-icon {
+                    background: url('/assets/left-arrow.svg') no-repeat;
+                    // transform: rotate(180deg);
+                    transform: rotate(180deg) scale(0.75);
+                    background-size: cover;
+                    width: 1.5rem;
+                    height: 1.5rem;
+                    position: absolute;
+                    top: 1rem;
+                    right: 2rem;
+                }
+            }
+
+            .action-item-next-button:hover {
+                background-color: #ea5817;
+            }
         }
+        
     }
+
 }
