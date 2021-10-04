@@ -298,33 +298,59 @@
             .gate-info-icons {
                 width: 17.06%;
                 height: 100%;
+                text-align: right;
                 &>div {
-                    width: 13.66%;
+                    width: 18px;
                     height: 100%;
                     cursor: pointer;
-                    float: left;
+                    float: right;
+                    margin-right: 1.25rem;
+                }
+                &>div:first-child {
+                    margin-right: 2rem;
+                }
+                &>div:hover {
+                    opacity: 0.6;
                 }
                 .gate-info-icons-upload {
-                    background: url("/assets/up.svg") no-repeat 1.35rem center;
+                    background: url("/assets/up.svg") no-repeat center;
                 }
                 .gate-info-icons-actions {
-                    background: url("/assets/menu.svg") no-repeat 1.1rem center;
+                    min-width: 16px !important;
+                    background: url("/assets/menu.svg") no-repeat center;
+                    &:hover .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-documents {
-                    background: url("/assets/folder.svg") no-repeat 1.1rem center;
+                    background: url("/assets/folder.svg") no-repeat center;
+
+                    &:has(.gate-section-selected) .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-models {
-                    background: url("/assets/alldocuments.svg") no-repeat 1.1rem center;
+                    background: url("/assets/alldocuments.svg") no-repeat center;
+                    &:hover .gate-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .gate-info-icons-refresh-bi {
-                    background: url("/assets/cilindro.svg") no-repeat 1.1rem center;
+                    background: url("/assets/cilindro.svg") no-repeat center;
                 }
                 .gate-info-icons-stage-settings {
-                    background: url("/assets/settings.svg") no-repeat 0.5rem center;
+                    background: url("/assets/settings.svg") no-repeat center;
                 }
                 .gate-info-icons-department-users {
-                    background: url("/assets/addpeople.svg") no-repeat 0.5rem center;
+                    background: url("/assets/addpeople.svg") no-repeat center;
                     padding-top: 3px;
+                }
+
+                .gate-section-selected .gate-info-icons-selected-section {
+                    display: block;
+                    border-bottom: 2px solid black;
+                    height: 95%;
+                    // margin: 0 0.8rem;
                 }
             }
         }
