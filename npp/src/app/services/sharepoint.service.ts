@@ -751,6 +751,15 @@ export class SharepointService {
     );
   }
 
+  async getActionsRaw(opportunityId: number, stageId?: number): Promise<Action[]> {
+    let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
+    if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
+    return await this.getAllItems(
+      OPPORTUNITY_ACTIONS_LIST, 
+      `$filter=${filterConditions}&$orderby=Timestamp%20asc`
+    );
+  }
+
   async completeAction(actionId: number, userId: number): Promise<boolean> {
     const data = {
       TargetUserId: userId,

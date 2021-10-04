@@ -17,6 +17,12 @@ export class SummaryComponent implements OnInit {
   phaseCount: any = {};
   therapyAreasData: any = {};
   currentTherapyArea: string = '';
+  opportunities: Opportunity[] = [];
+  currentTasks: {
+    opportunityName: string,
+    taskName: string;
+    taskDeadLine: Date | undefined;
+  }[] = [];
   projectsStats: {
     total: number,
     active: number,
@@ -33,12 +39,12 @@ export class SummaryComponent implements OnInit {
       const user = await this.sharepoint.getCurrentUserInfo();
       this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
 
-      const opportunities = await this.sharepoint.getOpportunities(true, true);
+      this.opportunities = await this.sharepoint.getOpportunities(true, true);
       const gates = await this.sharepoint.getAllStages();
 
       this.therapyAreasData  = { areas: {}, total: 0 };
-
-      opportunities.forEach(el => {
+      this.currentTasks = [];
+      this.opportunities.forEach(async (el, index) => {
         //populate gates/phases and isGateType
         let filteredGates = gates.filter(g => {
           return g.OpportunityNameId == el.ID;
@@ -66,14 +72,51 @@ export class SummaryComponent implements OnInit {
             this.therapyAreasData.areas[el.Indication.TherapyArea].indications[el.Indication.Title] = 1;
           }
         }
-        
+
+        let lastGate = el.gates[el.gates.length - 1];
+        let lastGateTasks = await this.sharepoint.getActionsRaw(lastGate.OpportunityNameId, lastGate.StageNameId);
+        let lastTask = lastGateTasks.find(el => !el.Complete);
+        let taskInfo = {
+          opportunityName: el.Title,
+          taskName: lastGate.Title+" - "+lastTask?.Title,
+          taskDeadLine: lastTask?.ActionDueDate
+        }
+        this.currentTasks.push(taskInfo);
+
+        this.currentTasks = this.currentTasks.sort((obj1, obj2) => {
+          if(obj1.taskDeadLine && !obj2.taskDeadLine) {
+            return 1;
+          }
+
+          if(!obj1.taskDeadLine && obj2.taskDeadLine) {
+            return -1;
+          }
+
+          if(!obj1.taskDeadLine && !obj2.taskDeadLine) {
+            return 0;
+          }
+
+          if(!obj1.taskDeadLine || !obj2.taskDeadLine) {
+            return 0;
+          }
+
+          if (obj1.taskDeadLine > obj2.taskDeadLine) {
+              return 1;
+          }
+      
+          if (obj1.taskDeadLine < obj2.taskDeadLine) {
+              return -1;
+          }
+      
+          return 0;
+        })
       });
 
-      
-      this.teams.hackyConsole += "       **********Therapy Areas*************      "+JSON.stringify(this.therapyAreasData)+ "        **********************     ";
+      //@ts-ignore
+      window.SummaryComponent = this;
 
-      this.gateProjects = opportunities.filter(el => el.isGateType);
-      this.phaseProjects = opportunities.filter(el => !el.isGateType);
+      this.gateProjects = this.opportunities.filter(el => el.isGateType);
+      this.phaseProjects = this.opportunities.filter(el => !el.isGateType);
 
       this.gateCount = {gates: {}, Total: 0};
       this.gateProjects.forEach(p => {
@@ -208,6 +251,16 @@ export class SummaryComponent implements OnInit {
                     enabled: true,
                     format: '<b>{point.name}</b>: {point.value} projects'
                 }
+            },
+            series: {
+              events: {
+                click: function (event: any) {
+                  //@ts-ignore
+                  window.SummaryComponent.currentTherapyArea = event.point.name;
+                  //@ts-ignore
+                  window.SummaryComponent.renderIndicationsGraph();
+                }
+              }
             }
         },
         series: [{
@@ -231,56 +284,72 @@ export class SummaryComponent implements OnInit {
       //@ts-ignore
       if(this.phaseProjects.length) Highcharts.chart('chart-2', optionsPhaseProjects);
       //@ts-ignore
-      
       if(Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chart-3', optionsTherapyAreas);
       
       if(this.currentTherapyArea) {
-        this.currentTherapyArea = 'Haematology';
-        let optionsIndications = {
-          chart: {
-              plotShadow: true,
-              type: 'pie'
-          },
-          title: {
-              text: 'Indications for '+this.currentTherapyArea+': '+this.therapyAreasData.areas[this.currentTherapyArea].count+' Projects'
-          },
-          tooltip: {
-              pointFormat: '{series.name}: <b>{point.value} projects</b>'
-          },
-          accessibility: {
-              point: {
-                  valueSuffix: '%'
-              }
-          },
-          plotOptions: {
-              pie: {
-                  allowPointSelect: true,
-                  cursor: 'pointer',
-                  dataLabels: {
-                      enabled: true,
-                      format: '<b>{point.name}</b>: {point.value} projects'
-                  }
-              }
-          },
-          series: [{
-              name: 'Indications for '+this.currentTherapyArea,
-              colorByPoint: true,
-              data: Object.keys(this.therapyAreasData.areas[this.currentTherapyArea].indications).map(key => {
-                return {
-                  name: key,
-                  y: this.therapyAreasData.areas[this.currentTherapyArea].indications[key] * 100 / this.therapyAreasData.areas[this.currentTherapyArea].count,
-                  value: this.therapyAreasData.areas[this.currentTherapyArea].indications[key],
-                  sliced: true
-                }
-              })
-          }]
-        };
-        //@ts-ignore
-        if(Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chart-4', optionsIndications);  
+        if(Object.keys(this.therapyAreasData.areas).length) this.renderIndicationsGraph();
       }
 
     } catch(e) {
       this.teams.hackyConsole += "********RUNTIME ERROR********    "+JSON.stringify(e);
     }
   } 
+
+  async getOpportunityCurrentTaskName(op: Opportunity) {
+    if(!op.gates) return;
+
+    let currentGate = op.gates[op.gates.length - 1];
+
+
+  }
+
+  async getOpportunityCurrentTaskDeadline(op: Opportunity) {
+
+  }
+  
+  renderIndicationsGraph() {
+    //@ts-ignore
+    let self = window.SummaryComponent;
+    let optionsIndications = {
+      chart: {
+          plotShadow: true,
+          type: 'pie'
+      },
+      title: {
+          text: 'Indications for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' Projects'
+      },
+      tooltip: {
+          pointFormat: '{series.name}: <b>{point.value} projects</b>'
+      },
+      accessibility: {
+          point: {
+              valueSuffix: '%'
+          }
+      },
+      plotOptions: {
+          pie: {
+              allowPointSelect: true,
+              cursor: 'pointer',
+              dataLabels: {
+                  enabled: true,
+                  format: '<b>{point.name}</b>: {point.value} projects'
+              }
+          }
+      },
+      series: [{
+          name: 'Indications for '+self.currentTherapyArea,
+          colorByPoint: true,
+          data: Object.keys(self.therapyAreasData.areas[self.currentTherapyArea].indications).map(key => {
+            return {
+              name: key,
+              y: self.therapyAreasData.areas[self.currentTherapyArea].indications[key] * 100 / self.therapyAreasData.areas[self.currentTherapyArea].count,
+              value: self.therapyAreasData.areas[self.currentTherapyArea].indications[key],
+              sliced: true
+            }
+          })
+      }]
+    };
+    //@ts-ignore
+    if(Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chart-4', optionsIndications);  
+  }
 }
