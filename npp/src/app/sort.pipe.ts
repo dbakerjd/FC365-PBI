@@ -11,6 +11,12 @@ export class SortPipe implements PipeTransform {
       case 'title': 
         list.sort((a: Opportunity, b: Opportunity) => { return a.Title.toLocaleLowerCase() < b.Title.toLocaleLowerCase() ? -1 : 1 });
         break;
+      case 'molecule': 
+        list.sort((a: Opportunity, b: Opportunity) => { return a.MoleculeName.toLocaleLowerCase() < b.MoleculeName.toLocaleLowerCase() ? -1 : 1 });
+        break;
+      case 'indication': 
+        list.sort((a: Opportunity, b: Opportunity) => { return a.Indication?.Title.toLocaleLowerCase() < b.Indication?.Title.toLocaleLowerCase() ? -1 : 1 });
+        break;
       case 'projectStart':
         list.sort((a: Opportunity, b: Opportunity) => { 
           let aDate = new Date(a.ProjectStartDate).getTime();

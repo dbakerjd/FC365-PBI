@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
+import { BlockDialogComponent } from '../modals/block-dialog/block-dialog.component';
 
 export interface NPPJob {
   id: string;
   name: string;
   startTime: Date;
+  dialogInstance: any;
   error?: Error;
   status?: string;
 }
@@ -18,14 +21,23 @@ export class WorkInProgressService {
   public working = new Subject<NPPJob[]>();
   public idle = new Subject<boolean>();
 
-  constructor() { 
+  constructor(public matDialog: MatDialog) { 
   }
 
-  startJob(name: string) {
+  startJob(name: string, dialogMessage: string | null = null) {
     let id = Date.now() + ' ' + Math.floor(Math.random() * 100);
+    const dialogInstance = this.matDialog.open(BlockDialogComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        message: dialogMessage ? dialogMessage : null
+      }
+    });
+
     let job = {
       id,
       name,
+      dialogInstance,
       startTime: new Date()
     }
 
@@ -34,12 +46,16 @@ export class WorkInProgressService {
     return job;
   }
 
-  finishJob(id: string) {
-    this.jobs = this.jobs.filter(el => el.id != id);
+  async finishJob(id: string) {
+    const job = this.jobs.find(el => el.id === id);
+    if (job) {
+      await job.dialogInstance.close();
+      this.jobs = this.jobs.filter(el => el.id != id);
+    }
     this.notify();
   }
 
-  getWrokingSubject() {
+  getWorkingSubject() {
     return this.working;
   }
 
@@ -63,7 +79,6 @@ export class WorkInProgressService {
         return 'Some content is still being created/updated, please wait a moment to avoid inconsistent data.';
       };
     } else {
-      
       this.idle.next(true);
       window.onbeforeunload = null;
 

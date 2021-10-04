@@ -25,7 +25,7 @@
     }
 
     .opportunity-name {
-        width: calc(50% - 1px);
+        width: calc(45% - 1px);
         float: left;
         cursor: pointer;
 
@@ -35,13 +35,51 @@
     }
 
     .opportunity-progress {
-        width: calc(35% -1px);
+        width: calc(25% - 1px);
         float: left;
         cursor: pointer;
+        padding-right: 2%;
+
+        &>p {
+            width: 100%;
+        }
+
+        .opportunity-progress-value {
+            display: inline-block;
+            width: 2.5em;
+            padding: 0 0.5em;
+        }
 
         app-progress-bar {
             display: inline-block;
             margin-left: 1rem;
+        }
+    }
+
+    .opportunity-actions {
+        width: calc(8% - 1px);
+        overflow: hidden;
+        height: 100%;
+        padding-left: 1rem;
+        
+        &>div {
+            width: 20px;
+            height: 16px;
+            padding-left: 0.5rem;
+            cursor: pointer;
+            float: left;
+            margin: 0 !important;
+        }
+        .opportunity-icon-edit {
+            background: url("/assets/edit.svg") no-repeat center;
+        }
+    
+        .opportunity-icon-archive {
+            background: url("/assets/files.svg") no-repeat center;
+        }
+    
+        .opportunity-icon-restore {
+            background: url("/assets/restore.svg") no-repeat center;
         }
     }
 }
@@ -90,30 +128,3 @@ formly-form {
     }
 }
 
-.opportunity-actions {
-    width: calc(11.5% - 1px);
-    overflow: hidden;
-    height: 100%;
-    padding: 0 !important;
-    margin-left: 2%;
-    
-    &>div {
-        width: 25%;
-        height: 2rem;
-        padding-top: 1rem;
-        cursor: pointer;
-        float: left;
-        margin: 0 !important;
-    }
-    .opportunity-icon-edit {
-        background: url("/assets/edit.svg") no-repeat 1.35rem center;
-    }
-
-    .opportunity-icon-archive {
-        background: url("/assets/files.svg") no-repeat 1.35rem center;
-    }
-
-    .opportunity-icon-restore {
-        background: url("/assets/restore.svg") no-repeat 1.35rem center;
-    }
-}

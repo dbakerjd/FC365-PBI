@@ -91,25 +91,26 @@ export class OpportunityListComponent implements OnInit {
         templateOptions: {
           placeholder: 'All',
           options: [
-            { value: 'Processing', label: 'Processing' },
+            // { value: 'Processing', label: 'Processing' },
             { value: 'Active', label: 'Active' },
             { value: 'Archive', label: 'Archived' },
             { value: 'Approved', label: 'Approved' },
-          ]
-        }
+          ],        
+        },
+        defaultValue: 'Active'
       },{
         key: 'type',
         type: 'select',
         templateOptions: {
-          placeholder: 'Filter by type',
+          placeholder: 'All types',
           options: opportunityTypes
         }
       },{
         key: 'indication',
         type: 'select',
         templateOptions: {
-          placeholder: 'Filter by indication',
-          options: indications
+          placeholder: 'All indications',
+          options: indications,
         }
       },{
         key: 'sort_by',
@@ -148,22 +149,20 @@ export class OpportunityListComponent implements OnInit {
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         this.opportunities.push(opp);
-        let job = this.jobs.startJob("initialize opportunity "+result.data.opportunity.id);
-        try {
-          //await this.sharepoint.initializeOpportunityAPI(result.data.opportunity, result.data.stage);
-          this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
-            // set active
-            await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
-            opp.OpportunityStatus = 'Active';
-            this.jobs.finishJob(job.id);
-            this.toastr.success("The opportunity is now active", opp.Title);
-          }).catch(e => {
-            this.jobs.finishJob(job.id);
-          });
-        } catch(e) {
+        let job = this.jobs.startJob(
+          "initialize opportunity "+result.data.opportunity.id,
+          'The new opportunity is being initialized. Stages and permissions are being created.'
+          );
+        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+          // set active
+          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+          opp.OpportunityStatus = 'Active';
+          this.jobs.finishJob(job.id);
+          this.toastr.success("The opportunity is now active", opp.Title);
+        }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);
-        }
+        });
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be created", "Try again");
       }

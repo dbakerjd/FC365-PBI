@@ -7,6 +7,7 @@ import { Component, Input, OnInit } from '@angular/core';
 })
 export class DialogHeaderComponent implements OnInit {
   @Input() title: string = '';
+  @Input() close = true;
   constructor() { }
 
   ngOnInit(): void {

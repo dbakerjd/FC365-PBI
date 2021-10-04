@@ -527,6 +527,8 @@ export class SharepointService {
       { value: 'projectStart', label: 'Project Start Date' },
       { value: 'projectEnd', label: 'Project End Date' },
       { value: 'opportunityType', label: 'Project Type' },
+      { value: 'molecule', label: 'Molecule' },
+      { value: 'indication', label: 'Indication' },
     ];
   }
 

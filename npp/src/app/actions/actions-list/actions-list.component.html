@@ -49,10 +49,6 @@
                 </div>
             </div>
         </div>
-        <div class="next-stage-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId">
-            <div class="complete-btn-icon"></div>
-            <span>Go to Next Stage</span>
-        </div>
     </div>
     <div class="actions-wrapper">
         <div class="gate-info-wrapper">
@@ -66,13 +62,19 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
-                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
-                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')"></div>
-                <div class="gate-info-icons-documents" title="Supporting Docs" (click)="showFolders()"></div>
-                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()"></div>
-                <div class="gate-info-icons-refresh-bi" title="Refresh Power BI" *ngIf="licensing.license?.PowerBi"></div>
-                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-refresh-bi" title="Refresh Power BI" *ngIf="licensing.license?.PowerBi"></div>
+                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
+                    <div class="gate-info-icons-selected-section"></div>
+                </div>
+                <div class="gate-info-icons-documents" title="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
+                    <div class="gate-info-icons-selected-section"></div>
+                </div>
+                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
+                    <div class="gate-info-icons-selected-section"></div>
+                </div>
+                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
@@ -138,15 +140,16 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                <div>
+                                    <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                    <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
+                                        <span (click)="approve(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                    </p>
+                                </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="npp-btn" (click)="sendForApproval(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress'">
-                                        Send for approval
-                                    </div>
-                                    <div class="npp-btn" (click)="approve(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        Approve
-                                    </div>
-                                    <div class="npp-btn" (click)="createScenario(file)">Create Scenario</div>
+                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file)"></div>
+                                    <div class="model-create-scenario-icon" title="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">
@@ -191,14 +194,17 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="next-stage-btn-wrapper" *ngIf="currentSection == 'actions'">
-            <div class="npp-btn" (click)="goNextStage()" *ngIf="nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
-                Go to Next Stage
+            <div class="actions-list-button" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+                <div class="action-item-next-button" (click)="goNextStage()" *ngIf="nextStage">
+                    Go to Next Stage
+                    <div class="action-item-next-button-icon"></div>
+                </div>
+                <div class="action-item-next-button" (click)="completeOpportunity()" *ngIf="!nextStage && opportunity.OpportunityStatus == 'Active'">
+                    Complete Opportunity
+                    <div class="action-item-next-button-icon"></div>
+                </div>
             </div>
-            <div class="npp-btn" (click)="completeOpportunity()" *ngIf="!nextStage && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
-                Complete Opportunity
-            </div>
         </div>
+        
     </div>
 </div>
