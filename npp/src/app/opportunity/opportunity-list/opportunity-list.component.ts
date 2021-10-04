@@ -89,25 +89,26 @@ export class OpportunityListComponent implements OnInit {
         templateOptions: {
           placeholder: 'All',
           options: [
-            { value: 'Processing', label: 'Processing' },
+            // { value: 'Processing', label: 'Processing' },
             { value: 'Active', label: 'Active' },
             { value: 'Archive', label: 'Archived' },
             { value: 'Approved', label: 'Approved' },
-          ]
-        }
+          ],        
+        },
+        defaultValue: 'Active'
       },{
         key: 'type',
         type: 'select',
         templateOptions: {
-          placeholder: 'Filter by type',
+          placeholder: 'All types',
           options: opportunityTypes
         }
       },{
         key: 'indication',
         type: 'select',
         templateOptions: {
-          placeholder: 'Filter by indication',
-          options: indications
+          placeholder: 'All indications',
+          options: indications,
         }
       },{
         key: 'sort_by',
