@@ -148,8 +148,13 @@ export class SummaryComponent implements OnInit {
       });
 
       let optionsGateProjects = {
+        credits: {
+          enabled: false
+        },
         chart: {
             plotShadow: true,
+            plotBorderColor: "#ff0000",
+            backgroundColor: "#ebebeb",
             type: 'pie'
         },
         title: {
@@ -188,8 +193,12 @@ export class SummaryComponent implements OnInit {
       };
 
       let optionsPhaseProjects = {
+        credits: {
+          enabled: false
+        },
         chart: {
             plotShadow: true,
+            backgroundColor: "#ebebeb",
             type: 'pie'
         },
         title: {
@@ -228,8 +237,12 @@ export class SummaryComponent implements OnInit {
       };
 
       let optionsTherapyAreas = {
+        credits: {
+          enabled: false
+        },
         chart: {
             plotShadow: true,
+            backgroundColor: "#ebebeb",
             type: 'pie'
         },
         title: {
@@ -311,8 +324,12 @@ export class SummaryComponent implements OnInit {
     //@ts-ignore
     let self = window.SummaryComponent;
     let optionsIndications = {
+      credits: {
+        enabled: false
+      },
       chart: {
           plotShadow: true,
+          backgroundColor: "#ebebeb",
           type: 'pie'
       },
       title: {

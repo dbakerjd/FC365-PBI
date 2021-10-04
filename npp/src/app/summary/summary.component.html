@@ -42,7 +42,7 @@
             <div class="next-tasks-content" *ngFor="let t of currentTasks">
                 <div class="next-tasks-opportunity-name">{{t.opportunityName}}</div>
                 <div class="next-tasks-task-name">{{t.taskName}}</div>
-                <div class="next-tasks-deadline" *ngIf="t.taskDeadLine">{{t.taskDeadLine | date : 'MMM y' }}</div>
+                <div class="next-tasks-deadline" *ngIf="t.taskDeadLine">{{t.taskDeadLine | date : 'd MMM y' }}</div>
                 <div class="next-tasks-deadline" *ngIf="!t.taskDeadLine"> - </div>
             </div>
         </div>
