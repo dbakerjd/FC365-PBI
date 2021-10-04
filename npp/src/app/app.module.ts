@@ -52,6 +52,7 @@ import { SafePipe } from './shared/safe.pipe';
 import { WorkInProgressService } from './services/work-in-progress.service';
 import { FolderPermissionsComponent } from './modals/folder-permissions/folder-permissions.component';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
+import { EditFileComponent } from './modals/edit-file/edit-file.component';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -138,6 +139,7 @@ export function MSALGuardConfigFactory(): MsalGuardConfiguration {
     PowerBiComponent,
     ProgressBarComponent,
     UploadFileComponent,
+    EditFileComponent,
     DialogHeaderComponent,
     SendForApprovalComponent,
     CreateScenarioComponent,

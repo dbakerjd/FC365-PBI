@@ -254,39 +254,44 @@
             }
             
             .documents-files-item-comments {
-                width: calc(30.5% - 1px);
+                width: calc(27.5% - 1px);
                 p {
                     padding-left: 1.35rem;
                 }
             }
 
             .documents-files-item-icons {
-                width: calc(11.5% - 1px);
+                width: calc(14.5% - 1px);
                 overflow: hidden;
                 height: 100%;
                 padding: 0;
                 
                 &>div {
-                    width: 25%;
+                    width: 19%;
                     height: 2rem;
                     padding-top: 1rem;
                     cursor: pointer;
                     float: left;
+                    margin-left: 1%;
                 }
                 .documents-files-item-icons-file {
-                    background: url("/assets/doc.svg") no-repeat 1.35rem center;
+                    background: url("/assets/doc.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-download {
-                    background: url("/assets/down.png") no-repeat 1.35rem center;
+                    background: url("/assets/down.png") no-repeat center;
                 }
 
                 .documents-files-item-icons-share {
-                    background: url("/assets/share.svg") no-repeat 1.35rem center;
+                    background: url("/assets/share.svg") no-repeat center;
+                }
+
+                .documents-files-item-icons-edit {
+                    background: url("/assets/edit.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-remove {
-                    background: url("/assets/bin.svg") no-repeat 0.7rem center;
+                    background: url("/assets/bin.svg") no-repeat center;
                 }            }
         }
     }

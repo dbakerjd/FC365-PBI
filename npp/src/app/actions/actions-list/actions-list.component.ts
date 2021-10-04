@@ -7,6 +7,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
+import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
@@ -590,6 +591,30 @@ export class ActionsListComponent implements OnInit {
         folderUsersList
       }
     });
+  }
+
+  async editFile(fileId: number) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    const dialogRef = this.matDialog.open(EditFileComponent, {
+      width: "300px",
+      height: "225px",
+      data: {
+        fileInfo,
+      }
+    });
+
+    dialogRef.afterClosed()
+      .pipe(take(1))
+      .subscribe(async result => {
+        if (result.success) {
+          fileInfo.Name = result.filename;
+          this.toastr.success(`The file has been renamed`, "File Renamed");
+        } else {
+          this.toastr.error("Sorry, there was a problem renaming the file");
+        }
+      });
   }
 
   async deleteFile(fileId: number) {
