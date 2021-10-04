@@ -140,15 +140,16 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                <div>
+                                    <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                    <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
+                                        <span (click)="approve(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                    </p>
+                                </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="npp-btn" (click)="sendForApproval(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress'">
-                                        Send for approval
-                                    </div>
-                                    <div class="npp-btn" (click)="approve(file)" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        Approve
-                                    </div>
-                                    <div class="npp-btn" (click)="createScenario(file)">Create Scenario</div>
+                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file)"></div>
+                                    <div class="model-create-scenario-icon" title="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">

@@ -197,11 +197,6 @@
             border-top: 1px solid #fff;
             overflow: hidden;
 
-            .documents-files-item-model-actions {
-                width: calc(100% - 2.7rem);
-                padding: 1rem 1.35rem;
-            }
-
             &:last-child {
                 border-bottom: 1px solid #fff;
             }
@@ -213,21 +208,53 @@
             }
             .documents-files-item-name {
                 clear: left;
-                width: calc(25% - 1px);
+                width: calc(35% - 1px);
                 p {
                     padding-left: 1.35rem;
                 }
             }
 
             .documents-files-item-uploaded {
-                width: calc(25% - 1px);
+                & > div {
+                    float: left;
+                }
+                width: calc(23% - 1px);
                 p {
                     padding-left: 1.35rem;
+                }
+
+                .documents-files-item-model-actions {
+                    padding-left: 1.35rem;
+    
+                    &>div {
+                        width: 20px;
+                        height: 16px;
+                        padding-left: 0.5rem;
+                        cursor: pointer;
+                        float: left;
+                        margin: 0 !important;
+                    }
+                    .model-send-approve-icon {
+                        background: url("/assets/send.svg") no-repeat center;
+                    }
+                
+                    .model-create-scenario-icon {
+                        background: url("/assets/duplicate.svg") no-repeat center;
+                    }
+                }
+
+                span.model-approve-btn {
+                    cursor: pointer;
+                    color: green;
+                }
+                span.model-reject-btn {
+                    cursor: pointer;
+                    color: red;
                 }
             }
             
             .documents-files-item-comments {
-                width: calc(38.5% - 1px);
+                width: calc(30.5% - 1px);
                 p {
                     padding-left: 1.35rem;
                 }
@@ -287,7 +314,7 @@
                 }
             }
             .gate-info-progress {
-                width: 53.69%;
+                width: 45.69%;
                 app-progress-bar {
                     display: inline-block;
                     margin-left: 1rem;
@@ -296,7 +323,7 @@
                 }
             }
             .gate-info-icons {
-                width: 17.06%;
+                width: 25.06%;
                 height: 100%;
                 text-align: right;
                 &>div {
@@ -350,7 +377,6 @@
                     display: block;
                     border-bottom: 2px solid black;
                     height: 95%;
-                    // margin: 0 0.8rem;
                 }
             }
         }
