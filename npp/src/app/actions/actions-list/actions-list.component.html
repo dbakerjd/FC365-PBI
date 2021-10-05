@@ -112,6 +112,7 @@
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
                                 <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
+                                <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
