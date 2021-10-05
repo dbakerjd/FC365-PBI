@@ -7,10 +7,27 @@
   </div>
   <div class="header-title">NPP Opportunity Assessment</div>
   <div class="header-logo">
-    
     <a href="/" [routerLink]="['/']" class="nav-link active">
       <img src="assets/fc365.svg" alt="FC365" />
     </a>
   </div>
+  <div class="header-menu">
+    <div class="header-menu-link" title="Summary">
+      <a href="/summary" [routerLink]="['/summary']" class="nav-link active">
+        <img src="assets/npp-summary.svg" alt="Summary"/>
+      </a>
+    </div>
+    <div class="header-menu-link" title="Opportunities">
+      <a href="/opportunities" [routerLink]="['/opportunities']" class="nav-link active">
+        <img src="assets/opportunities.svg" alt="Opportunities"/>
+      </a>
+    </div>
+    <div class="header-menu-link" title="Power BI">
+      <a href="/power-bi" [routerLink]="['/power-bi']" class="nav-link active">
+        <img src="assets/power-bi.svg" alt="Power BI"/>
+      </a>
+    </div>
+  </div>
+  
   <div style="clear: both"></div>
 </div> 

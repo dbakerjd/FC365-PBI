@@ -39,3 +39,17 @@
     max-height: 3rem;
     width: auto;
 }
+
+.header-menu {
+    float: right;
+    
+    .header-menu-link {
+        display: inline-block;
+        cursor: pointer;
+        padding: 0.8rem 1.75rem 0.6rem 1.75rem;
+        border-right: 1px solid #fff;
+        img {
+            height: 35px;
+        }
+    }
+}
