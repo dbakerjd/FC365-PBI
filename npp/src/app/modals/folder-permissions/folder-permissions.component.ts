@@ -31,7 +31,7 @@ export class FolderPermissionsComponent implements OnInit {
   async ngOnInit() {
     if (!this.data.opportunityId) return;
 
-    const geographiesList = (await this.sharepoint.getGeographies(1)).map(el => { return { label: el.Title, value: el.Id }});
+    const geographiesList = (await this.sharepoint.getOpportunityGeographies(1)).map(el => { return { label: el.Title, value: el.Id }});
 
     this.opportunityId = this.data.opportunityId;
 

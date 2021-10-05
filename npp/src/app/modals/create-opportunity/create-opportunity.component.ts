@@ -42,8 +42,11 @@ export class CreateOpportunityComponent implements OnInit {
 
   async ngOnInit() {
 
-    let therapies = await this.sharepoint.getTherapiesList();
+    const therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    const geo = await this.sharepoint.getGeographiesList();
+    const countries = await this.sharepoint.getCountriesList();
+    const locationsList = geo.concat(countries);
     let indicationsList: any[] = [];
     let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
@@ -179,6 +182,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
+          className: 'date-input',
           templateOptions: {
             label: 'Project Start Date:',
             required: true,
@@ -188,9 +192,22 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
+          className: 'date-input',
           templateOptions: {
             label: 'Project End Date:',
             required: true,
+          },
+          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
+        },
+        {
+          key: 'Opportunity.geographies',
+          type: 'ngsearchable',
+          templateOptions: {
+            label: 'Geographies:',
+            placeholder: 'Related geographies and countries',
+            required: true,
+            multiple: true,
+            options: locationsList
           },
           defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
         }],

@@ -1,5 +1,5 @@
 <app-dialog-header title="Create Opportunity"></app-dialog-header>
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="opportunity-form">
     <mat-dialog-content>
         <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
         <ng-template #isLoaded>

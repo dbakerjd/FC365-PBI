@@ -34,44 +34,7 @@ export class OpportunityListComponent implements OnInit {
     ) { }
 
   async ngOnInit() {
-
-    /**TODEL */
-    // this.sharepoint.testAddGroup();
-    // this.sharepoint.testAddGroupToOpportunity();
-    // this.sharepoint.testEndpoint();
-    // this.sharepoint.getLists();
-
-    // this.sharepoint.createStageActions(1, 1);
-    // await this.sharepoint.createFolder('/6');
-    // this.sharepoint.createOpportunityGroups(13, 5, 3);
-    
-    // const r = await this.sharepoint.getGroupPermissions("Opportunities");
-    // console.log('r', r);
-
-    // const all = await this.sharepoint.getGroupPermissions();
-    // console.log('all', all);
-    // console.log('filtered', all.filter(el => el.ListFilter === 'List'));
-
-    // const folder = await this.sharepoint.createFolder('/testfolder');
-    // console.log('folder', folder);
-
-    // console.log('master', await this.sharepoint.getStageFolders(3));
-    // this.sharepoint.readGroups();
-
-    // await this.sharepoint.getRoleDefinitionId('ListEdit');
-    // await this.sharepoint.getRoleDefinitionId('ListEdit');
-    // await this.sharepoint.getRoleDefinitionId('ListRead');
-    // const groups = await this.sharepoint.getGroups();
-    // console.log(groups);
-    // await this.sharepoint.deleteAllGroups();
-    // await this.sharepoint.deleteGroup(17);
-    // await this.sharepoint.test();
-    // console.log('user 13', await this.sharepoint.getUserInfo(13));
-    
-    // await this.sharepoint.cloneFile();
-    /**TODEL */
-
-    
+ 
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
     let opportunityTypes = await this.sharepoint.getOpportunityTypesList();

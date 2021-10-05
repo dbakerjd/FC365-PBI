@@ -238,6 +238,7 @@ export class SharepointService {
   masterOpportunitiesTypes: OpportunityType[] = [];
   masterGroupTypes: GroupPermission[] = [];
   masterCountriesList: SelectInputList[] = [];
+  masterGeographiesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
   masterGeographies: MasterGeography[] = [];
@@ -482,6 +483,14 @@ export class SharepointService {
     return results;
   }
 
+  async getOpportunityGeographies(oppId: number) { // stage hacked for now
+    // save at variable to speed up ?
+    return await this.getAllItems(
+      GEOGRAPHIES_LIST,
+      `$filter=OpportunityId eq ${oppId}`,
+    );
+  }
+
   private async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
     let group;
     let groups: SPGroupListItem[] = [];
@@ -703,7 +712,7 @@ export class SharepointService {
       const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
         if (mf.Title === FORECAST_MODELS_FOLDER_NAME) {
-          const geographies = await this.getGeographies(1); // 1 = stage id would be dynamic in the future
+          const geographies = await this.getOpportunityGeographies(1); // 1 = stage id would be dynamic in the future
           for (const geo of geographies) {
             const geoFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
             if (geoFolder) {
@@ -1399,6 +1408,13 @@ export class SharepointService {
     return this.masterCountriesList;
   }
 
+  async getGeographiesList(): Promise<SelectInputList[]> {
+    if (this.masterGeographiesList.length < 1) {
+      this.masterGeographiesList = (await this.getAllItems(MASTER_GEOGRAPHIES_LIST, "$orderby=Title asc")).map(t => {return {value: t.ID, label: t.Title}});
+    }
+    return this.masterGeographiesList;
+  }
+
   /** Accessible Geographies for the user (subfolders with read/write permission) */
   async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
     if (this.masterGeographies.length < 1) {
@@ -1449,12 +1465,6 @@ export class SharepointService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
   }
 
-  async getGeographies(stageId = 1) { // stage hacked for now
-    // save at variable to speed up ?
-    return await this.getAllItems(
-      GEOGRAPHIES_LIST,
-      `$filter=StageID eq ${stageId}`,
-    );
-  }
+
 
 }
