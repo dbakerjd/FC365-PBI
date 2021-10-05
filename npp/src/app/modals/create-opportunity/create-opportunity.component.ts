@@ -44,8 +44,8 @@ export class CreateOpportunityComponent implements OnInit {
 
     const therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
-    const geo = await this.sharepoint.getGeographiesList();
-    const countries = await this.sharepoint.getCountriesList();
+    const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: any[] = [];
     let stageNumbersList: SelectInputList[] = [];
@@ -200,7 +200,7 @@ export class CreateOpportunityComponent implements OnInit {
           defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
         },
         {
-          key: 'Opportunity.geographies',
+          key: 'geographies',
           type: 'ngsearchable',
           templateOptions: {
             label: 'Geographies:',
@@ -299,6 +299,13 @@ export class CreateOpportunityComponent implements OnInit {
       });
     } else {
       const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage, this.model.StageNumber);
+      if (newOpp) {
+        await this.sharepoint.createGeographies(
+          newOpp.opportunity.ID,
+          this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
+          this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))
+        );
+      }
       this.dialogRef.close({
         success: newOpp ? true : false,
         data: newOpp

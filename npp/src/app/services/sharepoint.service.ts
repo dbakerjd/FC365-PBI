@@ -427,6 +427,25 @@ export class SharepointService {
     return { opportunity, stage };
   }
 
+  async createGeographies(oppId: number, geographies: number[], countries: number[]) {
+    const geographiesList = await this.getGeographiesList();
+    const countriesList = await this.getCountriesList();
+    for (const g of geographies) {
+      await this.createItem(GEOGRAPHIES_LIST, {
+        Title: geographiesList.find(el => el.value == g)?.label,
+        OpportunityId: oppId,
+        GeographyId: g
+      });
+    }
+    for (const c of countries) {
+      await this.createItem(GEOGRAPHIES_LIST, {
+        Title: countriesList.find(el => el.value == c)?.label,
+        OpportunityId: oppId,
+        CountryId: c
+      });
+    }
+  }
+
   async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
     const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
 
