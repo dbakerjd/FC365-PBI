@@ -36,7 +36,7 @@
         <div class="gates-item-wrapper" *ngFor="let gate of gates">
             <div class="gates-item"  [ngClass]="{'selected-gate': currentGate && currentGate.ID === gate.ID, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.ID)">
                 <span>{{gate.Title}}</span>
-                <svg *ngIf=" currentSection == 'documents' ">
+                <svg *ngIf="currentSection == 'documents'">
                     <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
                 </svg>
             </div>
@@ -143,8 +143,8 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        <span (click)="approve(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
-                                        <span class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span (click)="rejectModel(file)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
@@ -164,6 +164,7 @@
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
                                 <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID, file.ListItemAllFields.GeographyId)"></div>
+                                <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
@@ -194,7 +195,7 @@
                     </div>
                 </div>
             </div>
-            <div class="actions-list-button" *ngIf="currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
+            <div class="actions-list-button" *ngIf="currentSection == 'actions' && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 <div class="action-item-next-button" (click)="goNextStage()" *ngIf="nextStage">
                     Go to Next Stage
                     <div class="action-item-next-button-icon"></div>
