@@ -835,6 +835,27 @@ export class SharepointService {
     return true;
   }
 
+  async renameFile(fileUri: string, newName: string): Promise<boolean> {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/ListItemAllFields`, 
+        {
+          Title: newName,
+          FileLeafRef: newName
+        },
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "MERGE"
+          }),
+        }
+      ).toPromise();
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
     let uploaded: any = await this.uploadFileQuery(fileData, folder, fileName);
 

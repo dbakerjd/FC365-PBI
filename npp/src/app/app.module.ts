@@ -50,6 +50,7 @@ import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
+import { EditFileComponent } from './modals/edit-file/edit-file.component';
 
 @NgModule({
   imports: [
@@ -84,6 +85,7 @@ import { BlockDialogComponent } from './modals/block-dialog/block-dialog.compone
     PowerBiComponent,
     ProgressBarComponent,
     UploadFileComponent,
+    EditFileComponent,
     DialogHeaderComponent,
     SendForApprovalComponent,
     CreateScenarioComponent,
