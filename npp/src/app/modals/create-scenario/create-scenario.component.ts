@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { NPPFile, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
@@ -18,9 +18,13 @@ export class CreateScenarioComponent implements OnInit {
   scenarios: SelectInputList[] = [];
   file: NPPFile | null = null;
 
+  // flow control
+  updating = false;
+
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateScenarioComponent>,
+    public matDialog: MatDialog,
     private readonly sharepoint: SharepointService
   ) { }
 
@@ -41,6 +45,17 @@ export class CreateScenarioComponent implements OnInit {
         }
       },
       {
+        key: 'multipleFiles',
+        type: 'checkbox',
+        templateOptions: {
+            label: 'Create one copy per scenario',
+        },
+        hideExpression: (model: any) => {
+          return model.scenario ? model.scenario.length < 2 : true;
+        },
+        defaultValue: false
+      },
+      {
         key: 'comments',
         type: 'textarea',
         templateOptions: {
@@ -59,10 +74,51 @@ export class CreateScenarioComponent implements OnInit {
       return;
     }
 
-    const success = await this.sharepoint.cloneForecastModel(this.file, this.model.scenario, this.model.comments);
+    this.updating = this.dialogRef.disableClose = true;
+    let success = false;
+
+    const destinationFolder = this.file.ServerRelativeUrl.replace('/' + this.file.Name, '/');
+    if (this.model.multipleFiles) {
+      success = true;
+      for (const scenId of this.model.scenario) {
+        const newFileName = await this.sharepoint.addScenarioSufixToFilename(this.file.Name, scenId);
+        if (newFileName) {
+          success = success && await this.createScenario(newFileName, destinationFolder, [scenId]);
+        }
+      }
+    } else {
+      // clone in one file
+      let newFileName = this.file.Name;
+      for (const scenId of this.model.scenario) {
+        const filenameSuffixed = await this.sharepoint.addScenarioSufixToFilename(newFileName, scenId);
+        if (filenameSuffixed) newFileName = filenameSuffixed;
+      }
+      success = await this.createScenario(newFileName, destinationFolder, this.model.scenario);
+    }
+    this.updating = this.dialogRef.disableClose = false;
     this.dialogRef.close(success);
   }
 
+  private async createScenario(fileName: string, destinationFolder: string, scenarios: number[]): Promise<boolean> {
+    let success = false;
+    let attemps = 0;
+    const extension = fileName.split('.').pop();
+    if (!extension) return false;
+    const baseFileName = fileName.substring(0, fileName.length - (extension.length + 1));
+
+    while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
+      fileName = baseFileName + '-copy-' + attemps + '.' + extension;
+    }
+
+    if (attemps > 10) {
+      success = false;
+    } else {
+      if (this.file) {
+        success = await this.sharepoint.cloneForecastModel(this.file, fileName, scenarios, this.model.comments);
+      }
+    }
+    return success;
+  }
 
   private validateAllFormFields(formGroup: FormGroup) {
     Object.keys(formGroup.controls).forEach(field => {

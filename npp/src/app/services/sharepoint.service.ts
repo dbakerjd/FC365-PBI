@@ -869,33 +869,37 @@ export class SharepointService {
     return uploaded;
   }
 
-  async cloneForecastModel(originFile: NPPFile, newScenarios: number[], comments = ''): Promise<boolean> {
+  async existsFile(filename: string, folder: string): Promise<boolean> {
+    try {
+      let file = await this.query(
+        `GetFolderByServerRelativeUrl('${folder}')/Files`,
+        `$expand=ListItemAllFields&$filter=Name eq '${filename}'`,
+      ).toPromise();
+      return file.value.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async cloneForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], comments = ''): Promise<boolean> {
 
     const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
 
-    let success = true;
-    for (const scenId of newScenarios) {
-      const newFileName = await this.addScenarioSufixToFilename(originFile.Name, scenId);
-      if (!newFileName) return false;
-  
-      success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFileName);
-      if (!success) return false;
-  
-      let newFileInfo = await this.query(
-        `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
-        `$expand=ListItemAllFields&$filter=Name eq '${newFileName}'`,
-      ).toPromise();
-  
-      if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
-        const newData = {
-          ModelScenarioId: [scenId],
-          ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
-          ApprovalStatusId: this.getApprovalStatusId("In Progress")
-        }
-        success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
-      }
+    let success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
+    if (!success) return false;
 
-      if (!success) return false;
+    let newFileInfo = await this.query(
+      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
+      `$expand=ListItemAllFields&$filter=Name eq '${newFilename}'`,
+    ).toPromise();
+
+    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
+      const newData = {
+        ModelScenarioId: newScenarios,
+        ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
+        ApprovalStatusId: this.getApprovalStatusId("In Progress")
+      }
+      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
     }
 
     return success;
@@ -923,24 +927,6 @@ export class SharepointService {
       return true;
     }
     catch (e) {
-      if(e.status == 400) {
-        /*
-        const extension = newFileName.split('.').pop();
-        if (!extension) return false;
-
-        newFileName = newFileName.substring(0, newFileName.length - (extension.length + 1)) + '-1.' + extension;
-        destinationUrl = `copyTo('${destinationFolder + newFileName}')`;
-        try {
-          await this.http.post(
-            this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
-            null
-          ).toPromise();
-          return true;
-        } catch (e) {
-          return false;
-        }
-        */
-      }
       return false;
     }
   }
