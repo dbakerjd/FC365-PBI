@@ -14,6 +14,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { LicensingService } from 'src/app/services/licensing.service';
+import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
@@ -35,6 +36,7 @@ export class ActionsListComponent implements OnInit {
   nextStage: Stage | null = null;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
+  refreshingPowerBi = false;
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
@@ -56,7 +58,8 @@ export class ActionsListComponent implements OnInit {
     public matDialog: MatDialog,
     private toastr: ToastrService,
     public licensing: LicensingService,
-    public jobs: WorkInProgressService
+    public jobs: WorkInProgressService,
+    public powerBi: PowerBiService
     ) { }
 
   ngOnInit(): void {
@@ -657,5 +660,22 @@ export class ActionsListComponent implements OnInit {
 
   ngOnDestroy() {
     clearTimeout(this.dateListener);
+  }
+
+  async refreshPowerBi() {
+    try {
+      if(!this.refreshingPowerBi) {
+        this.refreshingPowerBi = true;
+        let res = await this.powerBi.refreshReport();
+        this.refreshingPowerBi = false;   
+        if(res) {
+          this.toastr.success("Power Bi report succesfully refreshed.");
+        }
+      }  
+    } catch(e: any) {
+      this.refreshingPowerBi = false;
+      this.toastr.error(e.message);
+    }
+    
   }
 }

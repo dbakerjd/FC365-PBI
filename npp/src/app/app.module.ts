@@ -51,6 +51,7 @@ import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
 import { EditFileComponent } from './modals/edit-file/edit-file.component';
+import { PowerBiService } from './services/power-bi.service';
 
 @NgModule({
   imports: [
@@ -111,7 +112,8 @@ import { EditFileComponent } from './modals/edit-file/edit-file.component';
     ErrorService,
     SharepointService,
     LicensingService,
-    WorkInProgressService
+    WorkInProgressService,
+    PowerBiService
   ],
   bootstrap: [AppComponent]
 })
