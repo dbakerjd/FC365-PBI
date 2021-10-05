@@ -20,6 +20,16 @@ input, select, textarea {
     width: calc(100% - 1rem);
 }
 
+div.custom-checkbox {
+    input {
+        float: left;
+        width: auto;
+    }
+    label {
+        clear: none;
+    }
+}
+
 p {
     margin: 0;
     padding: 0;

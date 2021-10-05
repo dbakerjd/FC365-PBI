@@ -130,7 +130,7 @@ export class ActionsListComponent implements OnInit {
     this.dialogInstance.afterClosed()
     .pipe(take(1))
     .subscribe(async (result: any) => {
-      if (result.success) {
+      if (result.success && result.uploaded) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
         if (this.currentFolder?.containsModels) {
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
@@ -208,9 +208,10 @@ export class ActionsListComponent implements OnInit {
     this.dialogInstance.afterClosed()
       .pipe(take(1))
       .subscribe(async (success: any) => {
-        if (success) {
+        if (success === true) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+          this.currentFiles = [];
           for (const geofolder of geoFolders) {
             this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
           }
