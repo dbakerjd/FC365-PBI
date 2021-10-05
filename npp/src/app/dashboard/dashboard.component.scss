@@ -44,7 +44,8 @@
         padding-left: 5.17rem;
 
         .dashboard-item {
-            width: 31rem;
+            max-width: 31rem;
+            width: 25%;
             height: 17.42rem;
             border: solid 1px #ffffff;
             display: inline-block;
