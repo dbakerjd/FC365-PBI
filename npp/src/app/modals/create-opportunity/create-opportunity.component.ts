@@ -42,8 +42,11 @@ export class CreateOpportunityComponent implements OnInit {
 
   async ngOnInit() {
 
-    let therapies = await this.sharepoint.getTherapiesList();
+    const therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    const locationsList = geo.concat(countries);
     let indicationsList: any[] = [];
     let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
@@ -179,6 +182,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
+          className: 'date-input',
           templateOptions: {
             label: 'Project Start Date:',
             required: true,
@@ -188,9 +192,22 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
+          className: 'date-input',
           templateOptions: {
             label: 'Project End Date:',
             required: true,
+          },
+          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
+        },
+        {
+          key: 'geographies',
+          type: 'ngsearchable',
+          templateOptions: {
+            label: 'Geographies:',
+            placeholder: 'Related geographies and countries',
+            required: true,
+            multiple: true,
+            options: locationsList
           },
           defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
         }],
@@ -282,6 +299,13 @@ export class CreateOpportunityComponent implements OnInit {
       });
     } else {
       const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage, this.model.StageNumber);
+      if (newOpp) {
+        await this.sharepoint.createGeographies(
+          newOpp.opportunity.ID,
+          this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
+          this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))
+        );
+      }
       this.dialogRef.close({
         success: newOpp ? true : false,
         data: newOpp

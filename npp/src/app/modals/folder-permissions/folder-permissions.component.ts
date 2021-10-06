@@ -15,7 +15,8 @@ export class FolderPermissionsComponent implements OnInit {
   form = new FormGroup({});
   model: any = { };
   fields: FormlyFieldConfig[] = [];
-  opportunityId: number | null = null;
+  opportunityId: number = 0;
+  stageId: number = 0;
   currentUsersList: any[] = []; // save departments users before changes
   modelKeys: number[] = [];
   loading = true;
@@ -29,11 +30,13 @@ export class FolderPermissionsComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    if (!this.data.opportunityId) return;
+    if (!this.data.opportunityId || !this.data.stageId) return;
 
-    const geographiesList = (await this.sharepoint.getGeographies(1)).map(el => { return { label: el.Title, value: el.Id }});
+    const geographiesList = (await this.sharepoint.getOpportunityGeographies(this.data.opportunityId))
+      .map(el => { return { label: el.Title, value: el.Id } });
 
     this.opportunityId = this.data.opportunityId;
+    this.stageId = this.data.stageId;
 
     let formlyFields: any = [
       {
@@ -149,7 +152,10 @@ export class FolderPermissionsComponent implements OnInit {
           const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
           success = success && await this.sharepoint.updateDepartmentUsers(
             this.opportunityId,
-            `DU-${this.opportunityId}-${key}-${geoKey}`,
+            this.stageId,
+            +key,
+            this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
+            +geoKey,
             currentList.list,
             this.model.DepartmentUsersId[key][geoKey]
           );
@@ -160,7 +166,10 @@ export class FolderPermissionsComponent implements OnInit {
         const currentList = this.currentUsersList.find(el => el.departmentID == key);
         success = success && await this.sharepoint.updateDepartmentUsers(
           this.opportunityId,
-          `DU-${this.opportunityId}-${key}`,
+          this.stageId,
+          +key,
+          this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
+          null,
           currentList.list,
           this.model.DepartmentUsersId[key]
         );
