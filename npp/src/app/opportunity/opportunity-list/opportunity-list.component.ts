@@ -35,13 +35,6 @@ export class OpportunityListComponent implements OnInit {
 
   async ngOnInit() {
 
-    // this.sharepoint.deleteAllGroups();
-    // await this.sharepoint.createGeographies(
-    //   108,
-    //   geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
-    //   geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))
-    // );
- 
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
     let opportunityTypes = await this.sharepoint.getOpportunityTypesList();

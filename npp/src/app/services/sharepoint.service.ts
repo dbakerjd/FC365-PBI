@@ -163,7 +163,7 @@ export interface OpportunityGeography {
   ServerRedirectedEmbedUri: string;
   ServerRedirectedEmbedUrl: string;
   Title: string;
-  deleted: boolean;
+  Deleted: "true" | "false";
 }
 
 export interface MasterGeography {
@@ -441,21 +441,25 @@ export class SharepointService {
   async createGeographies(oppId: number, geographies: number[], countries: number[]) {
     const geographiesList = await this.getGeographiesList();
     const countriesList = await this.getCountriesList();
-    
+    let res = [];
     for (const g of geographies) {
-      const newGeo = await this.createItem(GEOGRAPHIES_LIST, {
+      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
         OpportunityId: oppId,
         GeographyId: g
       });
+      res.push(newGeo);
     }
     for (const c of countries) {
-      await this.createItem(GEOGRAPHIES_LIST, {
+      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
         OpportunityId: oppId,
         CountryId: c
       });
+      res.push(newGeo);
     }
+
+    return res;
   }
 
   async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
@@ -523,9 +527,9 @@ export class SharepointService {
 
   async getOpportunityGeographies(oppId: number, all?: boolean) {
     let filter = `$filter=OpportunityId eq ${oppId}`;
-    if(!all) {
-        filter += ' and deleted ne 1';
-    }
+    /*if(!all) {
+        filter += ' and Deleted ne true';
+    }*/
     return await this.getAllItems(
       GEOGRAPHIES_LIST, filter,
     );
@@ -1529,11 +1533,11 @@ export class SharepointService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
   }
 
-  async updateOpportunityGeographies(opportunityId: number, newGeographies: {label: string, value: string}[]) {
+  async updateOpportunityGeographies(opportunityId: number, newGeographies: string[]) {
     let allGeo: OpportunityGeography[] = await this.getOpportunityGeographies(opportunityId, true);
 
     let neoGeo = newGeographies.filter(el => {
-      let arrId = el.value.split("-");
+      let arrId = el.split("-");
       let kindOfGeo = arrId[0];
       let id = arrId[1]; 
       let geo = allGeo.find(el => {
@@ -1547,8 +1551,27 @@ export class SharepointService {
       return !geo;
     });
 
-    let restoreGeo = newGeographies.filter(el => {
-      let arrId = el.value.split("-");
+    let neoCountry = neoGeo.filter(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      return kindOfGeo == 'C';
+    }).map(el => {
+      let arrId = el.split("-");
+      return parseInt(arrId[1]);
+    });
+
+    let neoGeography = neoGeo.filter(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      return kindOfGeo == 'G';
+    }).map(el => {
+      let arrId = el.split("-");
+      return parseInt(arrId[1]);
+    })
+
+    let restoreGeo: OpportunityGeography[] = [];
+    newGeographies.forEach(el => {
+      let arrId = el.split("-");
       let kindOfGeo = arrId[0];
       let id = arrId[1]; 
       let geo = allGeo.find(el => {
@@ -1559,20 +1582,78 @@ export class SharepointService {
         }
       });
 
-      return geo && geo.deleted;
+      if (geo && geo.Deleted == "true") {
+        restoreGeo.push(geo);
+      }
     });
 
     let removeGeo = allGeo.filter(el => {
       let isCountry = !!el.CountryId;
       let geo = newGeographies.find(g => {
         if (isCountry) {
-          return g.value == 'C-'+el.CountryId;
+          return g == 'C-'+el.CountryId;
         } else {
-          return g.value == 'G-'+el.GeographyId;
+          return g == 'G-'+el.GeographyId;
         }
       });
 
-      return !geo && !el.deleted;
+      return !geo && el.Deleted != "true";
     });
+
+    await this.deleteGeographies(removeGeo);
+    await this.restoreGeographies(restoreGeo);
+    let newGeos = await this.createGeographies(opportunityId, neoGeography, neoCountry);
+
+    let OOGroup = await this.getGroup(`OO-${opportunityId}`);
+    let OUGroup = await this.getGroup(`OU-${opportunityId}`);
+    if(!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
+
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'OO', data: OOGroup });
+
+    let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
+    let stages = await this.getStages(opportunityId);
+    
+    for (const oppGeo of newGeos) {
+      await this.setPermissions(permissions, groups, oppGeo.Id);
+      for(let index=0; index < stages.length; index++) {
+        let stage = stages[index];
+        let stageFolders = await this.getStageFolders(stage.StageNameId, opportunityId);
+        let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
+        
+        if(!mf) throw new Error("Could not find Models folder");
+
+        const folder = await this.createFolder(`/${opportunityId}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
+        if (folder) {
+          // department group name
+          let groupName = `DU-${opportunityId}-${mf.ID}-${oppGeo.Id}`;
+          const permissions = await this.getGroupPermissions(FILES_FOLDER);
+          let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
+            
+          if (DUGroup) {
+            let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
+            await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
+          } else {
+            throw new Error("Error creating geography group permissions.")
+          }
+        }
+      }
+    }
+  }
+
+  async deleteGeographies(removeGeo: OpportunityGeography[]) {
+    for(let i=0; i<removeGeo.length; i++) {
+      await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
+        Deleted: "true"
+      });
+    }
+  }
+
+  async restoreGeographies(restoreGeo: OpportunityGeography[]) {
+    for(let i=0; i<restoreGeo.length; i++) {
+      await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
+        Deleted: "false"
+      });
+    }
   }
 }
