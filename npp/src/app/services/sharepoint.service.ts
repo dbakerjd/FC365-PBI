@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, filter } from 'rxjs/operators';
+import { catchError, filter, ignoreElements } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
@@ -149,11 +149,21 @@ export interface Country {
 }
 
 export interface OpportunityGeography {
-  Id: number;
-  Title: string;
+  Attachments: boolean;
+  AuthorId: number;
+  ContentTypeId: number;
+  CountryId: number;
+  Created: Date;
+  EditorId: number;
   GeographyId: number;
-  Geography?: MasterGeography;
-  StageId: number;
+  ID: number;
+  Id: number;
+  Modified: Date;
+  OpportunityId: number;
+  ServerRedirectedEmbedUri: string;
+  ServerRedirectedEmbedUrl: string;
+  Title: string;
+  deleted: boolean;
 }
 
 export interface MasterGeography {
@@ -511,10 +521,13 @@ export class SharepointService {
     return results;
   }
 
-  async getOpportunityGeographies(oppId: number) {
+  async getOpportunityGeographies(oppId: number, all?: boolean) {
+    let filter = `$filter=OpportunityId eq ${oppId}`;
+    if(!all) {
+        filter += ' and deleted ne 1';
+    }
     return await this.getAllItems(
-      GEOGRAPHIES_LIST,
-      `$filter=OpportunityId eq ${oppId}`,
+      GEOGRAPHIES_LIST, filter,
     );
   }
 
@@ -1470,7 +1483,7 @@ export class SharepointService {
   /** Accessible Geographies for the user (subfolders with read/write permission) */
   async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
     
-    const geographiesList = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityId eq ' + oppId);
+    const geographiesList = await this.getOpportunityGeographies(oppId);
     
     const geoFoldersWithAccess = await this.getSubfolders(`/${oppId}/${stageId}/${departmentID}`);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
@@ -1516,6 +1529,50 @@ export class SharepointService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
   }
 
+  async updateOpportunityGeographies(opportunityId: number, newGeographies: {label: string, value: string}[]) {
+    let allGeo: OpportunityGeography[] = await this.getOpportunityGeographies(opportunityId, true);
 
+    let neoGeo = newGeographies.filter(el => {
+      let arrId = el.value.split("-");
+      let kindOfGeo = arrId[0];
+      let id = arrId[1]; 
+      let geo = allGeo.find(el => {
+        if(kindOfGeo == 'G') {
+          return el.GeographyId == parseInt(id);
+        } else {
+          return el.CountryId == parseInt(id);
+        }
+      });
 
+      return !geo;
+    });
+
+    let restoreGeo = newGeographies.filter(el => {
+      let arrId = el.value.split("-");
+      let kindOfGeo = arrId[0];
+      let id = arrId[1]; 
+      let geo = allGeo.find(el => {
+        if(kindOfGeo == 'G') {
+          return el.GeographyId == parseInt(id);
+        } else {
+          return el.CountryId == parseInt(id);
+        }
+      });
+
+      return geo && geo.deleted;
+    });
+
+    let removeGeo = allGeo.filter(el => {
+      let isCountry = !!el.CountryId;
+      let geo = newGeographies.find(g => {
+        if (isCountry) {
+          return g.value == 'C-'+el.CountryId;
+        } else {
+          return g.value == 'G-'+el.GeographyId;
+        }
+      });
+
+      return !geo && !el.deleted;
+    });
+  }
 }
