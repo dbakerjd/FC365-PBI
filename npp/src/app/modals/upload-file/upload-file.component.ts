@@ -59,12 +59,16 @@ export class UploadFileComponent implements OnInit {
       // add geography to folder route
       fileFolder += '/' + this.model.geography;
 
+      // read opp geography to get master ID of country / geography
+      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.OpportunityNameId);
+      const geography = oppGeographies.find(el => el.Id == this.model.geography);
+
       Object.assign(fileData, {
-        // CountryId: this.model.country,
-        GeographyId: this.model.geography,
+        CountryId: geography.CountryId ? [geography.CountryId] : [],
+        GeographyId: geography.GeographyId ? geography.GeographyId : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
-        ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
+        ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
 

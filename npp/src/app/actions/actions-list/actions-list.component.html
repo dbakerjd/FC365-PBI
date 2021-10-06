@@ -121,10 +121,16 @@
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
-                                <p>
+                                <p *ngIf="file.ListItemAllFields.GeographyId">
                                     <label>Geography: </label>
                                     <ng-container>
                                         {{file.ListItemAllFields.Geography.Title}}
+                                    </ng-container>
+                                </p>
+                                <p *ngIf="file.ListItemAllFields.Country.length > 0">
+                                    <label>Country: </label>
+                                    <ng-container *ngFor="let s of file.ListItemAllFields.Country; let $last = last">
+                                        {{s.Title}}
                                     </ng-container>
                                 </p>
                                 <p>
