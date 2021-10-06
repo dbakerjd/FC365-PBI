@@ -242,6 +242,7 @@ export class SharepointService {
   masterGeographiesList: SelectInputList[] = [];
   masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
+  masterApprovalStatusList: any[] = [];
   masterGeographies: MasterGeography[] = [];
   masterIndications: {
     therapy: string;
@@ -908,7 +909,7 @@ export class SharepointService {
       const newData = {
         ModelScenarioId: newScenarios,
         ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
-        ApprovalStatusId: this.getApprovalStatusId("In Progress")
+        ApprovalStatusId: await this.getApprovalStatusId("In Progress")
       }
       success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
     }
@@ -987,7 +988,7 @@ export class SharepointService {
   }
 
   async setApprovalStatus(fileId: number, status: string, comments: string | null = null): Promise<boolean> {
-    const statusId = this.getApprovalStatusId(status);
+    const statusId = await this.getApprovalStatusId(status);
     if (!statusId) return false;
 
     let data = { ApprovalStatusId: statusId };
@@ -996,11 +997,14 @@ export class SharepointService {
     return await this.updateItem(fileId, `lists/getbytitle('${FILES_FOLDER}')`, data);
   }
 
-  getApprovalStatusId(status: string): number | null {
-    switch (status) {
-      case "In Progress": return 1;
-      case "Submitted": return 2;
-      case "Approved": return 3;
+  async getApprovalStatusId(status: string): Promise <number | null> {
+    if (this.masterApprovalStatusList.length < 1) {
+      this.masterApprovalStatusList = await this.getAllItems(MASTER_APPROVAL_STATUS_LIST);
+    }
+
+    const approvalStatus = this.masterApprovalStatusList.find(el => el.Title == status);
+    if (approvalStatus) {
+      return approvalStatus.Id;
     }
     return null;
   }

@@ -68,7 +68,7 @@ export class UploadFileComponent implements OnInit {
         GeographyId: geography.GeographyId ? geography.GeographyId : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
-        ApprovalStatusId: this.sharepoint.getApprovalStatusId("In Progress"),
+        ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
 
