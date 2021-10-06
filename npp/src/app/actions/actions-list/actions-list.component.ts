@@ -355,8 +355,9 @@ export class ActionsListComponent implements OnInit {
               'The stage is being initialized. The list of actions and starter permissions are being created.'
             );
             let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+            const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
-            this.sharepoint.initializeStage(opp, result.data).then(async r => {
+            this.sharepoint.initializeStage(opp, result.data,oppGeographies).then(async r => {
               await this.jobs.finishJob(job.id);
               this.toastr.success("Next stage has been created successfully", result.data.Title);
               this.alreadyGoingNextStage = false;
