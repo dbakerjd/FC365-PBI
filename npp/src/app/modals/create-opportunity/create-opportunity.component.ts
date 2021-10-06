@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { Opportunity, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { Opportunity, OpportunityGeography, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -32,6 +32,7 @@ export class CreateOpportunityComponent implements OnInit {
   stage: Stage | null = null;
   loading = true;
   updating = false;
+  geographies: OpportunityGeography[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
@@ -41,6 +42,8 @@ export class CreateOpportunityComponent implements OnInit {
     ) { }
 
   async ngOnInit() {
+    this.opportunity = this.data?.opportunity;
+    this.isEdit = !this.data?.createFrom;
 
     const therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
@@ -52,11 +55,11 @@ export class CreateOpportunityComponent implements OnInit {
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
-    this.opportunity = this.data?.opportunity;
-
+    
     if (this.opportunity) {
-      this.isEdit = !this.data?.createFrom;
-
+      this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
+      this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
+    
       if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
         oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
         this.opportunity.OpportunityTypeId = -1;
@@ -208,8 +211,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
             multiple: true,
             options: locationsList
-          },
-          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
+          }
         }],
         hideExpression: this.firstStepCompleted
       },
@@ -290,7 +292,9 @@ export class CreateOpportunityComponent implements OnInit {
     }
 
     if (this.isEdit) {
+
       this.updating = this.dialogRef.disableClose = true;
+      await this.sharepoint.updateOpportunityGeographies(this.data.opportunity.ID, this.model.geographies);
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
