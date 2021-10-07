@@ -1395,8 +1395,10 @@ export class SharepointService {
   /** --- USERS --- **/
 
   async getUserProfilePic(userId: number): Promise<string> {
-    let queryObj = await this.getOneItem(USER_INFO_LIST, `$filter=Id eq ${userId}&$select=Picture`);
-    return queryObj.Picture.Url;
+    const user = await this.getUserInfo(userId);
+    if (!user) return '';
+    
+    return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
   }
 
   async getCurrentUserInfo(): Promise<User> {
