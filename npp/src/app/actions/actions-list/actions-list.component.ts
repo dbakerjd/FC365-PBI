@@ -483,6 +483,8 @@ export class ActionsListComponent implements OnInit {
           } else {
             // complete
             await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+            this.opportunity.OpportunityStatus = 'Approved';
+            this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }
         }
       });
