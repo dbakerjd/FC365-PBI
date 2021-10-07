@@ -9,6 +9,7 @@ import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/cr
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
+import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
@@ -191,12 +192,30 @@ export class ActionsListComponent implements OnInit {
 
   async rejectModel(file: NPPFile) {
     if (!file.ListItemAllFields) return;
-    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "In Progress")) {
-      file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
-      this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
-    } else {
-      this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
-    }
+    this.dialogInstance = this.matDialog.open(RejectModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        fileId: file.ListItemAllFields?.ID
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          if (file.ListItemAllFields?.ApprovalStatus?.Title) {
+            file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
+            if (result.comments) {
+              file.ListItemAllFields.ModelApprovalComments = result.comments;
+            }
+          }
+          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+        }
+      });
   }
 
   createScenario(file: NPPFile) {
@@ -457,6 +476,8 @@ export class ActionsListComponent implements OnInit {
                 } else if (response === false) {
                   // complete
                   await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+                  this.opportunity.OpportunityStatus = 'Approved';
+                  this.toastr.success("The opportunity has been completed", this.opportunity.Title);
                 }
               });
           } else {
@@ -591,14 +612,36 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number, geographyId = null) {
+  async shareFile(fileId: number, departmentId: number, geoId: number | null = null, countryId: number | null = null) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
-    let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
-    if (geographyId) {
-      folderGroup += '-' + geographyId;
+    
+    const oppGeo = await this.sharepoint.getOpportunityGeographies(this.opportunityId);
+
+    let involvedGeo = null;
+    if (geoId) {
+      involvedGeo = oppGeo.find(el => el.GeographyId == geoId);
+    } else if (countryId) {
+      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
     }
+    if (!involvedGeo && (geoId || countryId)) return;
+
+    let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
+    if (involvedGeo) {
+      folderGroup += '-' + involvedGeo.Id;
+    }
+    
+    // users with access
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    folderUsersList = folderUsersList.concat(
+      await this.sharepoint.getGroupMembers('OO-' + this.opportunityId),
+      await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
+    );
+
+    // remove own user
+    const currentUser = await this.sharepoint.getCurrentUserInfo();
+    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',
       width: '405px',
