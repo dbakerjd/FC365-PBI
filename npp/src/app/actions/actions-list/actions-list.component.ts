@@ -9,6 +9,7 @@ import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/cr
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
+import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
@@ -188,12 +189,30 @@ export class ActionsListComponent implements OnInit {
 
   async rejectModel(file: NPPFile) {
     if (!file.ListItemAllFields) return;
-    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "In Progress")) {
-      file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
-      this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
-    } else {
-      this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
-    }
+    this.dialogInstance = this.matDialog.open(RejectModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        fileId: file.ListItemAllFields?.ID
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          if (file.ListItemAllFields?.ApprovalStatus?.Title) {
+            file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
+            if (result.comments) {
+              file.ListItemAllFields.ModelApprovalComments = result.comments;
+            }
+          }
+          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+        }
+      });
   }
 
   createScenario(file: NPPFile) {
