@@ -43,7 +43,7 @@ export class CreateOpportunityComponent implements OnInit {
 
   async ngOnInit() {
     this.opportunity = this.data?.opportunity;
-    this.isEdit = !this.data?.createFrom;
+    this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
     const therapies = await this.sharepoint.getTherapiesList();
     let oppTypes = await this.sharepoint.getOpportunityTypesList();
