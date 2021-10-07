@@ -947,7 +947,7 @@ export class SharepointService {
     if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
       const newData = {
         ModelScenarioId: newScenarios,
-        ModelApprovalComments: comments ? comments : originFile.ListItemAllFields?.ModelApprovalComments,
+        ModelApprovalComments: comments ? comments : null,
         ApprovalStatusId: await this.getApprovalStatusId("In Progress")
       }
       success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
