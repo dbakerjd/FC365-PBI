@@ -30,8 +30,8 @@ export class ShareDocumentComponent implements OnInit {
         key: 'userId',
         type: 'ngsearchable',
         templateOptions: {
-            label: 'Stage Users:',
-            placeholder: 'Stage Users',
+            label: 'Document Users:',
+            placeholder: 'Users with access',
             filterLocally: true,
             options: this.data.folderUsersList,
             multiple: false,

@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
@@ -52,6 +51,7 @@ import { AuthInterceptor } from './auth/auth.interceptor';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
 import { EditFileComponent } from './modals/edit-file/edit-file.component';
 import { PowerBiService } from './services/power-bi.service';
+import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 
 @NgModule({
   imports: [
@@ -89,6 +89,7 @@ import { PowerBiService } from './services/power-bi.service';
     EditFileComponent,
     DialogHeaderComponent,
     SendForApprovalComponent,
+    RejectModelComponent,
     CreateScenarioComponent,
     CreateOpportunityComponent,
     StageSettingsComponent,
