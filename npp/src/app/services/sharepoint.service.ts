@@ -1395,8 +1395,10 @@ export class SharepointService {
   /** --- USERS --- **/
 
   async getUserProfilePic(userId: number): Promise<string> {
-    let queryObj = await this.getOneItem(USER_INFO_LIST, `$filter=Id eq ${userId}&$select=Picture`);
-    return queryObj.Picture.Url;
+    const user = await this.getUserInfo(userId);
+    if (!user) return '';
+    
+    return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
   }
 
   async getCurrentUserInfo(): Promise<User> {
@@ -1433,7 +1435,7 @@ export class SharepointService {
   async getUserNotifications(userId: number): Promise<NPPNotification[]> {
     return await this.getAllItems(
       NOTIFICATIONS_LIST,
-      `$filter=TargetUserId eq '${userId}'`
+      `$filter=TargetUserId eq '${userId}'&$orderby=Created desc`
     );
   }
 
