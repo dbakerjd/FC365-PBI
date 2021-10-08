@@ -75,7 +75,8 @@ export class ActionsListComponent implements OnInit {
         this.isOwner = this.currentUser.Id === this.opportunity.OpportunityOwnerId;
 
         if (this.opportunity.OpportunityOwner) {
-          this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          this.opportunity.OpportunityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
           this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);

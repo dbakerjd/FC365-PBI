@@ -81,6 +81,12 @@ export class TeamsService {
         // handle error, either in the library or coming back from the server
         this.errorService.handleError(error);
     });
+
+    errorService.subject.subscribe(msg => {
+      if(msg == 'unauthorized') {
+        this.login();
+      }
+    })
   }
 
   getResourceMap() {
@@ -100,7 +106,7 @@ export class TeamsService {
     protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
     protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    https://api.powerbi.com/v1.0/myorg/datasets/2cd0262f-28c4-4ed1-94c1-671293777a62/refreshes
+    //https://api.powerbi.com/v1.0/myorg/datasets/2cd0262f-28c4-4ed1-94c1-671293777a62/refreshes
     return {
       interactionType: InteractionType.Redirect,
       protectedResourceMap

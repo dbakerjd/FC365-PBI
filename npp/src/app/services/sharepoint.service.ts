@@ -1394,11 +1394,12 @@ export class SharepointService {
   
   /** --- USERS --- **/
 
-  async getUserProfilePic(userId: number): Promise<string> {
+  async getUserProfilePic(userId: number): Promise<string|boolean> {
     const user = await this.getUserInfo(userId);
-    if (!user) return '';
-    
-    return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
+    if (!user) return false;
+    //TODO check why graph call is failing...
+    return false;
+    //return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
   }
 
   async getCurrentUserInfo(): Promise<User> {
