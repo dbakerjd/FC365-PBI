@@ -439,7 +439,7 @@ export class SharepointService {
     for (const g of geographies) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
-        OpportunityId: oppId,
+        OpportunityNameId: oppId,
         GeographyId: g
       });
       res.push(newGeo);
@@ -447,7 +447,7 @@ export class SharepointService {
     for (const c of countries) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
-        OpportunityId: oppId,
+        OpportunityNameId: oppId,
         CountryId: c
       });
       res.push(newGeo);
@@ -470,7 +470,7 @@ export class SharepointService {
 
     // add groups to the Opp geographies
     permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityId eq ' + opportunity.ID);
+    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityNameId eq ' + opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
@@ -532,10 +532,10 @@ export class SharepointService {
   }
 
   async getOpportunityGeographies(oppId: number, all?: boolean) {
-    let filter = `$filter=OpportunityId eq ${oppId}`;
-    /*if(!all) {
+    let filter = `$filter=OpportunityNameId eq ${oppId}`;
+    if(!all) {
         filter += ' and Deleted ne true';
-    }*/
+    }
     return await this.getAllItems(
       GEOGRAPHIES_LIST, filter,
     );
