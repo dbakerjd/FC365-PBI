@@ -570,6 +570,7 @@ export class ActionsListComponent implements OnInit {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      this.toastr.success("File downloaded to your Downloads folder.");
     } else {
       // get sharepoint base url TODO
 
@@ -586,6 +587,11 @@ export class ActionsListComponent implements OnInit {
       ms-spd:
       ms-infopath:
       */
+
+      if(!fileInfo.LinkingUri) {
+        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        return;
+      }
       
       let arrUrl = fileInfo.LinkingUri.split("?");
       let url = arrUrl[0];
