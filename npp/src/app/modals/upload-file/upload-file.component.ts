@@ -64,7 +64,7 @@ export class UploadFileComponent implements OnInit {
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
 
       Object.assign(fileData, {
-        CountryId: geography.CountryId ? [geography.CountryId] : [],
+        CountryId: geography.CountryId ? geography.CountryId : [],
         GeographyId: geography.GeographyId ? geography.GeographyId : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
