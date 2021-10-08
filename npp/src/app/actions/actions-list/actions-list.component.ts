@@ -617,6 +617,7 @@ export class ActionsListComponent implements OnInit {
       }
       
       const data = window.open(url, '_blank');
+      this.toastr.success("Trying to open file with your local Office installation.");
     }
   }
 
