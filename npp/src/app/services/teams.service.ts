@@ -103,7 +103,7 @@ export class TeamsService {
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
     }
-    protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
+    //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
     protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
     //https://api.powerbi.com/v1.0/myorg/datasets/2cd0262f-28c4-4ed1-94c1-671293777a62/refreshes
@@ -124,7 +124,8 @@ export class TeamsService {
       this.errorService.toastr.error("Trying to get resources without an active license");
       return;
     }
-    let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default', 'User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
+    //'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'
+    let scopes = ['User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
     //let scopes = [];
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
