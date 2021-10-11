@@ -125,8 +125,8 @@ export class TeamsService {
       return;
     }
     //'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'
-    let scopes = ['User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
-    //let scopes = [];
+    //let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default', 'User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
+    let scopes = [];
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       scopes.push('https://'+sharepointUri+'/.default');
