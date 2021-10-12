@@ -534,7 +534,7 @@ export class SharepointService {
   async getOpportunityGeographies(oppId: number, all?: boolean) {
     let filter = `$filter=OpportunityNameId eq ${oppId}`;
     if(!all) {
-        filter += ' and Deleted ne true';
+        filter += ' and Deleted ne 1';
     }
     return await this.getAllItems(
       GEOGRAPHIES_LIST, filter,
