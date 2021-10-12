@@ -111,7 +111,6 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
-        this.opportunities.push(opp);
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id,
           'The new opportunity is being initialized. Stages and permissions are being created.'
@@ -120,6 +119,7 @@ export class OpportunityListComponent implements OnInit {
           // set active
           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
           opp.OpportunityStatus = 'Active';
+          this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
         }).catch(e => {
