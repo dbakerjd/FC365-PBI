@@ -119,9 +119,8 @@ export interface NPPFileMetadata {
   ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
-  CountryId?: number[];
-  GeographyId?: number;
-  Geography?: OpportunityGeography;
+  OpportunityGeographyId?: number;
+  OpportunityGeography?: OpportunityGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
@@ -162,6 +161,7 @@ export interface OpportunityGeography {
   Id: number;
   Modified: Date;
   OpportunityId: number;
+  OpportunityGeographyType: string;
   ServerRedirectedEmbedUri: string;
   ServerRedirectedEmbedUrl: string;
   Title: string;
@@ -754,6 +754,10 @@ export class SharepointService {
     const stageFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
     if (!oppFolder || !stageFolder) throw new Error("Error creating opportunity folders.");
 
+    // assign OU to parent folders
+    await this.addRolePermissionToFolder(oppFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
+    await this.addRolePermissionToFolder(stageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
+
     let folders: SystemFolder[] = [];
 
     for (const mf of masterFolders) {
@@ -786,10 +790,6 @@ export class SharepointService {
         }
       }
     }
-
-    // assign OU to parent folders
-    await this.addRolePermissionToFolder(oppFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
-    await this.addRolePermissionToFolder(stageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
 
     return folders;
   }
@@ -1036,8 +1036,8 @@ export class SharepointService {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        Country/Title, Geography/Title, ModelScenario/Title, ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,Country,Geography,ModelScenario,ApprovalStatus',
+        OpportunityGeography/Title,OpportunityGeography/OpportunityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,OpportunityGeography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
