@@ -1220,7 +1220,7 @@ export class SharepointService {
         }
       ).toPromise();
       return true;
-    } catch (e) {
+    } catch (e: any) {
       if (e.status == 400) {
         return true;
       }
@@ -1312,7 +1312,9 @@ export class SharepointService {
 
   private async addRolePermissionToFolder(folderUrl: string, groupId: number, roleName: string): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
-    return await this.setRolePermission(baseUrl, groupId, roleName, false);
+    // permissions to folders without inherit
+    let success = await this.setRolePermission(baseUrl, groupId, roleName, false);
+    return success && await this.removeRolePermission(baseUrl, (await this.getCurrentUserInfo()).Id);
   }
 
   private async setRolePermission(baseUrl: string, groupId: number, roleName: string, inherit = true) {
@@ -1320,10 +1322,22 @@ export class SharepointService {
     const roleId = await this.getRoleDefinitionId(roleName);
     try {
       await this.http.post(
-        baseUrl + `/breakroleinheritance(copyRoleAssignments=${inherit ? 'true' : 'false'},clearSubscopes=true)`,
+        baseUrl + `/breakroleinheritance(copyRoleAssignments=${inherit ? 'true' : 'false'},clearSubscopes=${inherit ? 'true' : 'false'})`,
         null).toPromise();
       await this.http.post(
         baseUrl + `/roleassignments/addroleassignment(principalid=${groupId},roledefid=${roleId})`,
+        null).toPromise();
+      return true;
+    } catch (e: any) {
+      this.error.handleError(e);
+      return false;
+    }
+  }
+
+  private async removeRolePermission(baseUrl: string, groupId: number) {
+    try {
+      await this.http.post(
+        baseUrl + `/roleassignments/removeroleassignment(principalid=${groupId})`,
         null).toPromise();
       return true;
     } catch (e: any) {
