@@ -775,9 +775,9 @@ export class SharepointService {
               if (!OUGroup || !OOGroup || !SUGroup) throw new Error("Error creating group permissions.");
 
               // department group name
-              let groupName = `DU-${oppId}-${mf.ID}-${geo.Id}`;
+              let groupName = `DU-${oppId}-${mf.DepartmentID}-${geo.Id}`;
               const permissions = await this.getGroupPermissions(FILES_FOLDER);
-              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + geo.Id);
+              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + geo.Id);
 
               if (DUGroup) {
                 let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
