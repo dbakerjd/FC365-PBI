@@ -725,7 +725,7 @@ export class ActionsListComponent implements OnInit {
         let res = await this.powerBi.refreshReport();
         this.refreshingPowerBi = false;   
         if(res) {
-          this.toastr.success("Power Bi report succesfully refreshed.");
+          this.toastr.success("Analytics report succesfully refreshed.");
         }
       }  
     } catch(e: any) {
