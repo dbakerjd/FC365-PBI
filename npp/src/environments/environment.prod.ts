@@ -1,4 +1,4 @@
 export const environment = {
-  ssoRedirectUrl: 'https://salmon-smoke-09bd51703.azurestaticapps.net/auth-end',
+  ssoRedirectUrl: 'https://nice-beach-021ec5303.azurestaticapps.net/auth-end',
   production: true
 };
