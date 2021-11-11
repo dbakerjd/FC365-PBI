@@ -21,6 +21,8 @@ export class PowerBiComponent implements OnInit {
     
     let reportFromLicencingAPI:string = this.licensing.license?.PowerBi?.Report!
     var encodedReportFromLicencingAPI = encodeURIComponent(reportFromLicencingAPI);
+    var opportunity = 'Acquisition of Nucala for COPD';
+    var filter = encodeURIComponent(`?filter=Opportunities/Opportunity eq ${opportunity}`)
     var entity = encodeURI('1c4340de-2a85-40e5-8eb0-4f295368978b/Home');
     var deepLink = `https://teams.microsoft.com/l/entity/${entity}?context={"subEntityId":"${encodedReportFromLicencingAPI}%3Faction%3DOpenReport%26pbi_source%3DMSTeams"}`;
 
