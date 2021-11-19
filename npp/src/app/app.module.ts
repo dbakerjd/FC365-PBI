@@ -52,6 +52,7 @@ import { BlockDialogComponent } from './modals/block-dialog/block-dialog.compone
 import { EditFileComponent } from './modals/edit-file/edit-file.component';
 import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
+import { PowerBIEmbedModule } from 'powerbi-client-angular';
 
 @NgModule({
   imports: [
@@ -68,6 +69,7 @@ import { RejectModelComponent } from './modals/reject-model/reject-model.compone
     MatButtonModule,
     MatDialogModule,
     MatProgressSpinnerModule,
+    PowerBIEmbedModule,  
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 7000,

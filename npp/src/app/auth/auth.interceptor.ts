@@ -30,6 +30,7 @@ export class AuthInterceptor implements HttpInterceptor {
                 let tokenResponse = await this.teams.msalInstance.acquireTokenSilent(request);
                 this.teams.hackyConsole += "********** INTERCEPTOR ************  TOKEN: "+JSON.stringify(tokenResponse) +"      --------------          ";
                 const token = tokenResponse.accessToken;
+                
                 if (!token) {
                     return next.handle(req).toPromise();
                 }

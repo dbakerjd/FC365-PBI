@@ -64,7 +64,8 @@
             <div class="gate-info-icons">
                 <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.PowerBi" (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.PowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.PowerBi"  (click)="navigateTo(opportunity)"></div>
                 <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>

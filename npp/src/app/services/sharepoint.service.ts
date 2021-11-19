@@ -219,6 +219,14 @@ export interface GroupPermission {
   ListFilter: 'List' | 'Item';
 }
 
+export interface PBIReport {
+  ID: number;
+  ReportId: string;
+  GroupId: string;
+  pageName: string;
+  Title: string;
+}
+
 const OPPORTUNITES_LIST_NAME = 'Opportunities';
 const OPPORTUNITY_STAGES_LIST_NAME = 'Opportunity Stages';
 const OPPORTUNITY_ACTIONS_LIST_NAME = 'Opportunity Action List';
@@ -241,6 +249,7 @@ const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 const FILES_FOLDER = "Current Opportunity Library";
 const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
+const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
 
 @Injectable({
   providedIn: 'root'
@@ -407,6 +416,7 @@ export class SharepointService {
       if (!filter) filter = "$filter=OpportunityStatus eq 'Active'";
       else filter += "&$filter=OpportunityStatus eq 'Active'";
     }
+    console.log(await this.getAllItems(OPPORTUNITIES_LIST,filter));
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
   }
 
@@ -1681,4 +1691,13 @@ export class SharepointService {
       });
     }
   }
+
+  async getReports(): Promise<PBIReport[]>{
+    return await this.getAllItems(MASTER_POWER_BI);
+  }
+
+  async getReport(id:number): Promise<PBIReport>{
+    return await this.getOneItemById(id,MASTER_POWER_BI);
+  }
+
 }

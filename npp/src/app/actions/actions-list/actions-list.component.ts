@@ -723,6 +723,7 @@ export class ActionsListComponent implements OnInit {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
         let res = await this.powerBi.refreshReport();
+        console.log(res);
         this.refreshingPowerBi = false;   
         if(res) {
           this.toastr.success("Analytics report succesfully refreshed.");
@@ -734,4 +735,12 @@ export class ActionsListComponent implements OnInit {
     }
     
   }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
+    
+  }
+
 }
