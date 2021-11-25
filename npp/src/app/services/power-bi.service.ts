@@ -32,17 +32,7 @@ export class PowerBiService {
 
   async refreshReport() {
     try {
-      /*
-      const SPOURL = this.licensing.getSharepointUri();
-      const reportName = encodeURIComponent("Epi+");
-      const token = await this.getPBIToken();
-      const url = `http://localhost:7071/api/PowerBIRefresh?siteUrl=${SPOURL}&reportName=${reportName}&token=${token}`
-
-      let res = await this.http.post(url, {}).toPromise();
-
-      this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
-      return true;
-      */
+      
       let url = this.licensing.license?.PowerBi?.Refresh;
       if (url) {
         let res = await this.http.post(url, {}).toPromise();
