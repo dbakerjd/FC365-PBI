@@ -23,13 +23,13 @@ export class PowerBiComponent implements OnInit {
 
   pagesList: PageDetails[] = [];
   page!: PageDetails;
-  
+
   pbireports: PBIReport[] = [];
   pbireport: PBIReport | undefined = undefined;
-  
+
   oppID: number[] = []
   ID!: number;
-  
+
   DisplayName!: string;
 
   displayMessage!: string;
@@ -70,7 +70,7 @@ export class PowerBiComponent implements OnInit {
   constructor(
     public licensing: LicensingService,
     private sharepoint: SharepointService,
-    private pbi: PowerBiService,
+    private powerBi: PowerBiService,
     public teams: TeamsService,
     private error: ErrorService,
     private toastr: ToastrService,
@@ -88,29 +88,29 @@ export class PowerBiComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.getReportNames().then(getReports => this.embedReport(this.highContrastMode, getReports[0].ID))
-    
+    this.getReportNames().then(getReports => this.embedReport(this.highContrastMode, getReports[0].ID));
+
   }
 
-  async getReportNames(): Promise<PBIReport[]> {
+  async getReportNames() {
     return this.pbireports = await this.sharepoint.getReports();
   }
 
   async setEmbed(ID: number) {
-    
+
     if (ID && ID != this.ID) {
       console.log("change report");
       await this.embedReport(this.highContrastMode, ID);
-     
+
     } else if (ID && ID == this.ID) {
-      
+
       if (this.showPages) {
         this.showPages = false;
       }
       else {
         await this.getPages();
         this.showPages = true;
-        
+
       }
     }
 
@@ -118,14 +118,14 @@ export class PowerBiComponent implements OnInit {
 
   }
 
-  async getPages(){
+  async getPages() {
 
     const report: Report = this.reportObj.getReport();
     let pages = await report.getPages();
     let pagesList: PageDetails[] = [];
-    
+
     console.log(this.pageName);
-    
+
     let DisplayName!: string;
     let currentpageName: string = this.pageName;
     let newPageName!: string;
@@ -159,50 +159,60 @@ export class PowerBiComponent implements OnInit {
 
   async embedReport(highContrastMode: models.ContrastMode, ID: number): Promise<void> {
     //set pbi report
-    
+
     this.pbireport = await this.sharepoint.getReport(ID);
     //get token
-    const token = await this.pbi.getPBIToken();
-    
-    //set embedUrl
-    let embedUrl: string = `https://app.powerbi.com/reportEmbed?reportId=${this.pbireport.ReportId}groupId=${this.pbireport.GroupId}`;
+    const token = await this.powerBi.getPBIToken();
 
-    //set required filters. Based on OppID
-    this.filters = {
-      $schema: "http://powerbi.com/product/schema#basic",
-      target: {
-        table: "Opportunities",
-        column: "OpportunityID"
-      },
-      operator: "In",
-      values: this.oppID,
-      filterType: models.FilterType.Basic
-    }
-    //set report config
-    this.reportConfig = {
-      type: 'report',
-      tokenType: models.TokenType.Aad,
-      accessToken: token,
-      embedUrl: embedUrl,
-      id: this.pbireport.ReportId,
-      pageName: this.pbireport.pageName,
-      settings: {
-        navContentPaneEnabled: false,
-        filterPaneEnabled: this.filtersVisible,
-        background: models.BackgroundType.Transparent
-      },
-      contrastMode: highContrastMode
+    const pbiReportObject = await this.powerBi.getReportId(this.pbireport.GroupId, "reports", this.pbireport.name)
+
+    if (!pbiReportObject) {
+      this.toastr.error(`Error loading ${this.pbireport.Title} report`)
+    } else {
+      //set embedUrl
+      let embedUrl: string = pbiReportObject.embedUrl
+
+      //set required filters. Based on OppID
+      this.filters = {
+        $schema: "http://powerbi.com/product/schema#basic",
+        target: {
+          table: "Opportunities",
+          column: "OpportunityID"
+        },
+        operator: "In",
+        values: this.oppID,
+        filterType: models.FilterType.Basic
+      }
+      //set report config
+      this.reportConfig = {
+        type: 'report',
+        tokenType: models.TokenType.Aad,
+        accessToken: token,
+        embedUrl: embedUrl,
+        id: pbiReportObject.id,
+        pageName: this.pbireport.pageName,
+        settings: {
+          navContentPaneEnabled: false,
+          filterPaneEnabled: this.filtersVisible,
+          background: models.BackgroundType.Transparent
+        },
+        contrastMode: highContrastMode
+      }
+
+      //if navigating from an opportunity then this.OppID is a number and filters are applied.
+      if (!Number.isNaN(this.oppID[0])) {
+        this.reportConfig.filters = [this.filters]
+      };
+
+      this.pageName = this.pbireport.pageName;
+      this.ID = ID;
     }
 
-    //if navigating from an opportunity then this.OppID is a number and filters are applied.
-    if (!Number.isNaN(this.oppID[0])) {
-      this.reportConfig.filters = [this.filters]
-    };
-    
-    this.pageName = this.pbireport.pageName;
-    this.ID = ID;
+
+
+
   }
-  
+
   async removeFilters() {
     const report: Report = this.reportObj.getReport();
 
@@ -250,7 +260,7 @@ export class PowerBiComponent implements OnInit {
       return;
     }
   }
-  
+
   async filterPane(): Promise<undefined> {
     // Get report from the wrapper component
     const report: Report = this.reportObj.getReport();
@@ -325,7 +335,7 @@ export class PowerBiComponent implements OnInit {
     }
   }
 
-  
+
 
   async highContrast(ID: number): Promise<undefined> {
     // Get report from the wrapper component

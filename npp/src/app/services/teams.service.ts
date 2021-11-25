@@ -98,7 +98,7 @@ export class TeamsService {
     const protectedResourceMap = new Map<string, Array<string>>();
     //protectedResourceMap.set('janddconsulting.sharepoint.com', ['https://janddconsulting.sharepoint.com/.default']);
     //protectedResourceMap.set('betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
-    //https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
+    
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
@@ -106,6 +106,7 @@ export class TeamsService {
     //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
     protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
+    protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
     //https://api.powerbi.com/v1.0/myorg/datasets/2cd0262f-28c4-4ed1-94c1-671293777a62/refreshes
     return {
       interactionType: InteractionType.Redirect,

@@ -3,10 +3,23 @@ import { HttpClient, HttpHeaders, HttpRequest } from '@angular/common/http';
 import { LicensingService } from './licensing.service';
 import { ErrorService } from './error.service';
 import { TeamsService } from './teams.service';
+import { PBIReport } from './sharepoint.service';
 
 export interface PageDetails {
   ReportSection: string;
   DisplayName: string;
+}
+
+export interface PBIResult{
+  'odata.metadata': string;
+  value: any;
+}
+
+export interface PBIObject {
+  id: string;
+  name: string;
+  webUrl: string;
+  embedUrl: string;
 }
 
 @Injectable({
@@ -19,6 +32,17 @@ export class PowerBiService {
 
   async refreshReport() {
     try {
+      /*
+      const SPOURL = this.licensing.getSharepointUri();
+      const reportName = encodeURIComponent("Epi+");
+      const token = await this.getPBIToken();
+      const url = `http://localhost:7071/api/PowerBIRefresh?siteUrl=${SPOURL}&reportName=${reportName}&token=${token}`
+
+      let res = await this.http.post(url, {}).toPromise();
+
+      this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
+      return true;
+      */
       let url = this.licensing.license?.PowerBi?.Refresh;
       if (url) {
         let res = await this.http.post(url, {}).toPromise();
@@ -35,10 +59,45 @@ export class PowerBiService {
     }
 
   }
+  async getObjects(groupId: string, objectType: string): Promise<PBIObject[]> {
+
+    const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/${objectType}`
+
+    let objects = await this.http.get(url).toPromise() as PBIResult;
+
+    if (objects.value && objects.value.length >0){
+      return objects.value
+    }
+    return[];
+
+  }
+
+  async getReportId(groupId: string, objectType: string, reportName: string): Promise<PBIObject> {
+    
+    let objects:PBIObject[] = await this.getObjects(groupId,objectType);
+    
+    console.log(objects);
+    
+    let returnObject!:PBIObject;
+    
+    objects.forEach(async (object)=>{
+      
+      if(object.name == reportName){
+        var objectDetails = {id:object.id, name:object.name, webUrl: object.webUrl, embedUrl: object.embedUrl}
+        
+        returnObject = objectDetails;  
+      }
+      
+    })
+    console.log(returnObject);
+    return returnObject;
+
+
+  }
 
   async getPBIToken() {
     let token: string = "";
-    
+
     try {
       let domain = "api.powerbi.com";
       console.log("trying to obtain token for domain: " + domain);
@@ -52,6 +111,7 @@ export class PowerBiService {
 
         let tokenResponse = await this.teams.msalInstance.acquireTokenSilent(request);
         token = tokenResponse.accessToken;
+        console.log(token);
         return token;
 
       }

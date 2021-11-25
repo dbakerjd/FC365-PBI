@@ -221,7 +221,7 @@ export interface GroupPermission {
 
 export interface PBIReport {
   ID: number;
-  ReportId: string;
+  name: string;
   GroupId: string;
   pageName: string;
   Title: string;
@@ -1693,7 +1693,7 @@ export class SharepointService {
   }
 
   async getReports(): Promise<PBIReport[]>{
-    return await this.getAllItems(MASTER_POWER_BI);
+    return await this.getAllItems(MASTER_POWER_BI,'$orderby=SortOrder');
   }
 
   async getReport(id:number): Promise<PBIReport>{
