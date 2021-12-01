@@ -93,6 +93,7 @@ export class UploadFileConfig {
             filterLocally: true,
             options: options,
             multiple: false,
+            required: true
         },
         "hideExpression": (model: any) => {
           return !folders.find(f => f.ID === model.category)?.containsModels;
