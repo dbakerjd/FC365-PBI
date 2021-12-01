@@ -93,6 +93,11 @@ export class CreateOpportunityComponent implements OnInit {
 
     this.fields = [
       {
+        validators: {
+          validation: [
+            { name: 'afterDate', options: { errorPath: 'Opportunity.ProjectEndDate' } },
+          ],
+        },
         fieldGroup: [{
           key: 'Opportunity.Title',
           type: 'input',
@@ -169,14 +174,14 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
             change: (field) => {
               field.formControl?.valueChanges
-              .pipe(take(1), takeUntil(this._destroying$))
-              .subscribe(
-                (selectedValue) => {
-                  this.sharepoint.getStageType(selectedValue).then(r => {
-                    if (r) this.model.stageType = r;
-                  });
-                }
-            );
+                .pipe(take(1), takeUntil(this._destroying$))
+                .subscribe(
+                  (selectedValue) => {
+                    this.sharepoint.getStageType(selectedValue).then(r => {
+                      if (r) this.model.stageType = r;
+                    });
+                  }
+                );
             },
           },
           defaultValue: this.opportunity?.OpportunityTypeId !== -1 ? this.opportunity?.OpportunityTypeId : null,
@@ -218,7 +223,7 @@ export class CreateOpportunityComponent implements OnInit {
         template: '<div class="form-header">Complete First Stage Info</div><hr />',
         hideExpression: !this.firstStepCompleted,
         expressionProperties: {
-          'template': function($viewValue, $modelValue, scope) {
+          'template': function ($viewValue, $modelValue, scope) {
             return `<div class="form-header">The Opportunity Stage Type is ${scope?.model.stageType}</div><hr />`
           },
         },
@@ -228,7 +233,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'stageType',
           type: 'input',
           hideExpression: true,
-        },{
+        }, {
           key: 'StageNumber',
           type: 'select',
           templateOptions: {
@@ -237,17 +242,17 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           hideExpression: (m, fs) => fs.hideStageNumbers,
-        },{
+        }, {
           key: 'Stage.StageUsersId',
           type: 'ngsearchable',
           templateOptions: {
-              label: 'Stage Users:',
-              placeholder: 'Stage Users',
-              filterLocally: false,
-              query: 'siteusers',
-              multiple: true,
-              required: true,
-              options: defaultStageUsersList,
+            label: 'Stage Users:',
+            placeholder: 'Stage Users',
+            filterLocally: false,
+            query: 'siteusers',
+            multiple: true,
+            required: true,
+            options: defaultStageUsersList,
           },
           validation: {
             messages: {
@@ -255,12 +260,12 @@ export class CreateOpportunityComponent implements OnInit {
             },
           },
           defaultValue: this.stage?.StageUsersId
-        },{
+        }, {
           key: 'Stage.StageReview',
           type: 'datepicker',
           templateOptions: {
-              label: 'Stage Review',
-              required: true
+            label: 'Stage Review',
+            required: true
           },
           defaultValue: this.stage?.StageReview ? new Date(this.stage.StageReview) : null
         },],
