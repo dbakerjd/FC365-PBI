@@ -1,16 +1,15 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import { LicensingService } from './licensing.service';
 import { ErrorService } from './error.service';
 import { TeamsService } from './teams.service';
-import { PBIReport } from './sharepoint.service';
 
 export interface PageDetails {
   ReportSection: string;
   DisplayName: string;
 }
 
-export interface PBIResult{
+export interface PBIResult {
   'odata.metadata': string;
   value: any;
 }
@@ -28,56 +27,72 @@ export interface PBIObject {
 
 export class PowerBiService {
 
+  
   constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService, private teams: TeamsService) { }
 
-  async refreshReport() {
+  async refreshReport(reportName: string): Promise<number> {
     try {
+
+      const token = await this.getPBIToken();
+      const userObjectId = this.teams.context.userObjectId;
       
-      let url = this.licensing.license?.PowerBi?.Refresh;
-      if (url) {
-        let res = await this.http.post(url, {}).toPromise();
-
-        this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
-        return true;
-      } else {
-        this.error.handleError(new Error("Licensing information missing, try again in a few seconds."));
-        return false;
+      const body = {
+        reportType: reportName,
+        token: token,
+        userObjectId: userObjectId,
+        entityId: this.teams.context.entityId
       }
-    } catch (e: any) {
-      this.error.handleError(e);
-      return false;
-    }
 
+      const url = 'https://fc365.azurewebsites.net/api/PowerBI'
+      
+      return new Promise((resolve) =>{
+        this.http.post(url,body,{ observe: 'response' }).subscribe(response => {
+            resolve(response.status);
+          },error =>{
+            resolve(error.status);
+          })
+      })
+      
+      //this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
+
+
+    } catch (e: any) {
+      
+      this.error.handleError(e);
+      
+      return 500;
+    }
   }
+  
   async getObjects(groupId: string, objectType: string): Promise<PBIObject[]> {
 
     const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/${objectType}`
 
     let objects = await this.http.get(url).toPromise() as PBIResult;
 
-    if (objects.value && objects.value.length >0){
+    if (objects.value && objects.value.length > 0) {
       return objects.value
     }
-    return[];
+    return [];
 
   }
 
   async getReportId(groupId: string, objectType: string, reportName: string): Promise<PBIObject> {
-    
-    let objects:PBIObject[] = await this.getObjects(groupId,objectType);
-    
+
+    let objects: PBIObject[] = await this.getObjects(groupId, objectType);
+
     console.log(objects);
-    
-    let returnObject!:PBIObject;
-    
-    objects.forEach(async (object)=>{
-      
-      if(object.name == reportName){
-        var objectDetails = {id:object.id, name:object.name, webUrl: object.webUrl, embedUrl: object.embedUrl}
-        
-        returnObject = objectDetails;  
+
+    let returnObject!: PBIObject;
+
+    objects.forEach(async (object) => {
+
+      if (object.name == reportName) {
+        var objectDetails = { id: object.id, name: object.name, webUrl: object.webUrl, embedUrl: object.embedUrl }
+
+        returnObject = objectDetails;
       }
-      
+
     })
     console.log(returnObject);
     return returnObject;
