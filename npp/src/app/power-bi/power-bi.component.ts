@@ -243,7 +243,6 @@ export class PowerBiComponent implements OnInit {
       },
     };
 
-    console.log(deepLink);
     try {
       const response = await report.updateSettings(settings);
 
