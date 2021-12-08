@@ -1,3 +1,4 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -722,16 +723,41 @@ export class ActionsListComponent implements OnInit {
     try {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
-        let res = await this.powerBi.refreshReport();
-        this.refreshingPowerBi = false;   
-        if(res) {
-          this.toastr.success("Analytics report succesfully refreshed.");
+        //const at the moment needs to be dynamic
+        const reportName: string = "Epi+"
+
+        let response = await this.powerBi.refreshReport(reportName);
+        console.log("status is: "+response);
+        switch (response){
+          case 202:{
+            this.toastr.success("Analytics report succesfully refreshed.");
+            break;
+          }
+          case 409:{
+            this.toastr.error("Report currently refreshing. Please try again later");
+            break;
+          }
+          default:{
+            this.toastr.error(`Unknown error, ${response}`);
+            break;
+          }
         }
+
+        this.refreshingPowerBi = false;   
       }  
     } catch(e: any) {
       this.refreshingPowerBi = false;
+      
       this.toastr.error(e.message);
     }
     
   }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
+    
+  }
+
 }

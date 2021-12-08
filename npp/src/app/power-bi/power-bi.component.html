@@ -1,2 +1,43 @@
 <app-npp-header [isHome]="false"></app-npp-header>
-<iframe [src]="licensing.license?.PowerBi?.Report | safe" width="100%" height="100%"></iframe>
+<div class="icons-wrapper">
+
+    <div class="gate-info-icons">
+        <div class="gate-info-icons-settings" title="{{actionbarOption}} Action Bar" (click)="actionbar()"></div>
+        <div class="gate-info-icons-removefilters" title="Remove all Filters" (click)="removeFilters()"></div>
+        <div class="gate-info-icons-resetReport" title="Reload Report" (click)="reloadReport()"></div>
+
+        <!--<div class="gate-info-icons-settings-list" [hidden]="settingsHidden">
+            <div class="gate-info-icons-settings-list-item" (click)="filterPane()">{{filterPaneOption}} Filter Pane</div>
+            <div class="gate-info-icons-settings-list-item" (click)="bookmarks()">{{bookmarksOption}} Bookmarks</div>
+            <div class="gate-info-icons-settings-list-item" (click)="actionbar()">{{actionbarOption}} Action Bar</div>
+            <div class="gate-info-icons-settings-list-item" (click)="highContrast(report.ID)">Turn {{highContrastOption}} High Contrast</div>
+            <div class="gate-info-icons-settings-list-item" (click)="test()">Test</div>
+        </div>-->
+    </div>
+
+</div>
+<div class="gates-wrapper">
+    <div class="gates-item-wrapper" *ngFor="let report of pbireports">
+        <div class="gates-item" [ngClass]="{'selected-gate': report.ID === ID, 'folders-visible': showPages}" (click)="setEmbed(report.ID)">
+            <span>{{report.Title}}</span>
+            <svg *ngIf="showPages">
+                <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+            </svg>
+        </div>
+        <div class="folders-wrapper" *ngIf="showPages && report.ID === ID">
+            <div class="folders-item" *ngFor="let page of pagesList"
+                [ngClass]="{'selected-folder': page.ReportSection === pageName}"
+                (click)="pageNavigate(page.ReportSection,page.DisplayName)">
+                <svg *ngIf="showPages">
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
+                <span>{{page.DisplayName}}</span>
+            </div>
+        </div>
+    </div>
+    
+
+</div>
+<div class="report-wrapper desktop-view iframe report-container">
+    <powerbi-report [cssClassName]="reportClass" [embedConfig]="reportConfig"></powerbi-report>
+</div>
