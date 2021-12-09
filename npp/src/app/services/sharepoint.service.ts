@@ -119,9 +119,8 @@ export interface NPPFileMetadata {
   ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
-  CountryId?: number[];
-  GeographyId?: number;
-  Geography?: OpportunityGeography;
+  OpportunityGeographyId?: number;
+  OpportunityGeography?: OpportunityGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
@@ -162,6 +161,7 @@ export interface OpportunityGeography {
   Id: number;
   Modified: Date;
   OpportunityId: number;
+  OpportunityGeographyType: string;
   ServerRedirectedEmbedUri: string;
   ServerRedirectedEmbedUrl: string;
   Title: string;
@@ -219,13 +219,21 @@ export interface GroupPermission {
   ListFilter: 'List' | 'Item';
 }
 
+export interface PBIReport {
+  ID: number;
+  name: string;
+  GroupId: string;
+  pageName: string;
+  Title: string;
+}
+
 const OPPORTUNITES_LIST_NAME = 'Opportunities';
 const OPPORTUNITY_STAGES_LIST_NAME = 'Opportunity Stages';
 const OPPORTUNITY_ACTIONS_LIST_NAME = 'Opportunity Action List';
 const GEOGRAPHIES_LIST_NAME = 'Opportunity Geographies';
-const OPPORTUNITIES_LIST = "lists/getbytitle('"+OPPORTUNITES_LIST_NAME+"')";
-const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('"+OPPORTUNITY_STAGES_LIST_NAME+"')";
-const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('"+OPPORTUNITY_ACTIONS_LIST_NAME+"')";
+const OPPORTUNITIES_LIST = "lists/getbytitle('" + OPPORTUNITES_LIST_NAME + "')";
+const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('" + OPPORTUNITY_STAGES_LIST_NAME + "')";
+const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('" + OPPORTUNITY_ACTIONS_LIST_NAME + "')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
@@ -235,12 +243,13 @@ const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
 const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
-const GEOGRAPHIES_LIST = "lists/getByTitle('"+GEOGRAPHIES_LIST_NAME+"')";
+const GEOGRAPHIES_LIST = "lists/getByTitle('" + GEOGRAPHIES_LIST_NAME + "')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 const FILES_FOLDER = "Current Opportunity Library";
 const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
+const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
 
 @Injectable({
   providedIn: 'root'
@@ -312,7 +321,7 @@ export class SharepointService {
     try {
       let endpoint = this.licensing.getSharepointApiUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
-      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult;
       if (lists.value && lists.value.length > 0) {
         return lists.value;
       }
@@ -327,7 +336,7 @@ export class SharepointService {
     try {
       let endpoint = this.licensing.getSharepointApiUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
-      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult;
       if (lists.value && lists.value.length == 1) {
         return lists.value[0];
       }
@@ -342,7 +351,7 @@ export class SharepointService {
     try {
       let endpoint = this.licensing.getSharepointApiUri() + list + `/items(${id})`;
       if (conditions) endpoint += '?' + conditions;
-      return await this.http.get(endpoint).toPromise(); 
+      return await this.http.get(endpoint).toPromise();
     } catch (e: any) {
       this.error.handleError(e);
       return null;
@@ -354,7 +363,7 @@ export class SharepointService {
     try {
       let endpoint = this.licensing.getSharepointApiUri() + list + '/ItemCount';
       if (conditions) endpoint += '?' + conditions;
-      let lists = await this.http.get(endpoint).toPromise() as SharepointResult; 
+      let lists = await this.http.get(endpoint).toPromise() as SharepointResult;
       if (lists.value) {
         return lists.value;
       }
@@ -368,7 +377,7 @@ export class SharepointService {
   private async createItem(list: string, data: any): Promise<any> {
     try {
       return await this.http.post(
-        this.licensing.getSharepointApiUri() + list + "/items", 
+        this.licensing.getSharepointApiUri() + list + "/items",
         data
       ).toPromise();
     } catch (e: any) {
@@ -380,7 +389,7 @@ export class SharepointService {
   private async updateItem(id: number, list: string, data: any): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointApiUri() + list + `/items(${id})`, 
+        this.licensing.getSharepointApiUri() + list + `/items(${id})`,
         data,
         {
           headers: new HttpHeaders({
@@ -403,10 +412,11 @@ export class SharepointService {
     if (expand) {
       filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner";
     }
-    if(onlyActive) {
-      if(!filter) filter = "$filter=OpportunityStatus eq 'Active'";
-      else filter+="&$filter=OpportunityStatus eq 'Active'";
+    if (onlyActive) {
+      if (!filter) filter = "$filter=OpportunityStatus eq 'Active'";
+      else filter += "&$filter=OpportunityStatus eq 'Active'";
     }
+    console.log(await this.getAllItems(OPPORTUNITIES_LIST,filter));
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
   }
 
@@ -439,7 +449,7 @@ export class SharepointService {
     for (const g of geographies) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
-        OpportunityId: oppId,
+        OpportunityNameId: oppId,
         GeographyId: g
       });
       res.push(newGeo);
@@ -447,7 +457,7 @@ export class SharepointService {
     for (const c of countries) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
-        OpportunityId: oppId,
+        OpportunityNameId: oppId,
         CountryId: c
       });
       res.push(newGeo);
@@ -463,14 +473,14 @@ export class SharepointService {
     // add groups to lists
     permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
     await this.setPermissions(permissions, groups);
-  
+
     // add groups to the Opportunity
     permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
     await this.setPermissions(permissions, groups, opportunity.ID);
 
     // add groups to the Opp geographies
     permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityId eq ' + opportunity.ID);
+    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityNameId eq ' + opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
@@ -483,7 +493,7 @@ export class SharepointService {
   async initializeOpportunityAPI(opportunity: Opportunity, stage: Stage) {
     //NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
     let sharepoint = this.licensing.getSharepointUri();
-    return await this.http.get(this.provisioningAPI,{
+    return await this.http.get(this.provisioningAPI, {
       params: {
         StageID: stage.ID,
         OppID: opportunity.ID,
@@ -504,7 +514,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq "+id+"&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -519,7 +529,7 @@ export class SharepointService {
       return cache.indications;
     }
     let max = await this.countItems(MASTER_THERAPY_AREAS_LIST);
-    let cond = "$skiptoken=Paged=TRUE&$top="+max;
+    let cond = "$skiptoken=Paged=TRUE&$top=" + max;
     if (therapy !== 'all') {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
@@ -532,10 +542,10 @@ export class SharepointService {
   }
 
   async getOpportunityGeographies(oppId: number, all?: boolean) {
-    let filter = `$filter=OpportunityId eq ${oppId}`;
-    /*if(!all) {
-        filter += ' and Deleted ne true';
-    }*/
+    let filter = `$filter=OpportunityNameId eq ${oppId}`;
+    if (!all) {
+      filter += ' and Deleted ne 1';
+    }
     return await this.getAllItems(
       GEOGRAPHIES_LIST, filter,
     );
@@ -610,24 +620,24 @@ export class SharepointService {
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
-    return await this.getAllItems(OPPORTUNITY_STAGES_LIST, "$filter=OpportunityNameId eq "+opportunityId);
+    return await this.getAllItems(OPPORTUNITY_STAGES_LIST, "$filter=OpportunityNameId eq " + opportunityId);
   }
 
   async getFirstStage(opp: Opportunity) {
     const stageType = await this.getStageType(opp.OpportunityTypeId);
     const firstMasterStage = await this.getMasterStage(stageType, 1);
     return await this.getOneItem(
-      OPPORTUNITY_STAGES_LIST, 
+      OPPORTUNITY_STAGES_LIST,
       `$filter=OpportunityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
     );
   }
 
   async initializeStage(opportunity: Opportunity, stage: Stage, geographies: OpportunityGeography[]): Promise<boolean> {
-    const OUGroup = await this.createGroup('OU-'+opportunity.ID);
-    const OOGroup = await this.createGroup('OO-'+opportunity.ID);
+    const OUGroup = await this.createGroup('OU-' + opportunity.ID);
+    const OOGroup = await this.createGroup('OO-' + opportunity.ID);
     const SUGroup = await this.createGroup(`SU-${opportunity.ID}-${stage.StageNameId}`);
 
-    if (!OUGroup || ! OOGroup || !SUGroup) return false; // something happened with groups
+    if (!OUGroup || !OOGroup || !SUGroup) return false; // something happened with groups
 
     const owner = await this.getUserInfo(opportunity.OpportunityOwnerId);
     if (!owner.LoginName) return false;
@@ -672,7 +682,7 @@ export class SharepointService {
       if (f.DepartmentID) {
         let folderGroups = [...groups]; // copy default groups
         let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup} );
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
     }
@@ -684,7 +694,7 @@ export class SharepointService {
     if (this.masterOpportunitiesTypes.length > 0) {
       result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
     } else {
-      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq "+OpportunityTypeId+"&$select=StageType");
+      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
     }
     if (result == null) {
       return '';
@@ -704,7 +714,7 @@ export class SharepointService {
     if (cache) {
       masterFolders = cache.folders;
     } else {
-      masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq "+masterStageId);
+      masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + masterStageId);
       for (let index = 0; index < masterFolders.length; index++) {
         masterFolders[index].containsModels = masterFolders[index].Title === FORECAST_MODELS_FOLDER_NAME;
       }
@@ -713,25 +723,25 @@ export class SharepointService {
         folders: masterFolders
       });
     }
-    
+
     if (opportunityId) {
       // only folders user can access
       const allowedFolders = await this.getSubfolders(`/${opportunityId}/${masterStageId}`);
-      return masterFolders.filter(f => allowedFolders.some((af: any)=> +af.Name === f.ID));
+      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.ID));
     }
     return masterFolders;
   }
 
   private async getMasterStage(stageType: string, stageNumber: number = 1): Promise<any> {
     return await this.getOneItem(
-      MASTER_STAGES_LIST, 
+      MASTER_STAGES_LIST,
       `$select=ID,Title&$filter=(StageType eq '${stageType}') and (StageNumber eq ${stageNumber})`
     );
   }
 
   private async createStageActions(opportunity: Opportunity, stage: Stage): Promise<Action[]> {
     const masterActions: MasterAction[] = await this.getAllItems(
-      MASTER_ACTION_LIST, 
+      MASTER_ACTION_LIST,
       `$filter=StageNameId eq ${stage.StageNameId} and OpportunityTypeId eq ${opportunity.OpportunityTypeId}&$orderby=ActionNumber asc`
     );
 
@@ -745,10 +755,18 @@ export class SharepointService {
 
   private async createStageFolders(stage: Stage, geographies: OpportunityGeography[], groups: SPGroupListItem[]): Promise<SystemFolder[]> {
     let oppId = stage.OpportunityNameId;
-    
+
+    const OUGroup = groups.find(el => el.type == "OU");
+    if (!OUGroup) throw new Error("Error creating group permissions.");
+
     const masterFolders = await this.getStageFolders(stage.StageNameId);
-    await this.createFolder(`/${stage.OpportunityNameId}`);
-    await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
+    const oppFolder = await this.createFolder(`/${stage.OpportunityNameId}`);
+    const stageFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
+    if (!oppFolder || !stageFolder) throw new Error("Error creating opportunity folders.");
+
+    // assign OU to parent folders
+    await this.addRolePermissionToFolder(oppFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
+    await this.addRolePermissionToFolder(stageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
 
     let folders: SystemFolder[] = [];
 
@@ -759,19 +777,18 @@ export class SharepointService {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
         } else {
-          for(let geo of geographies) {
+          for (let geo of geographies) {
             const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
             if (folder) {
-              const OUGroup = groups.find(el => el.type=="OU");
-              const OOGroup = groups.find(el => el.type=="OO");
-              const SUGroup = groups.find(el => el.type=="SU");
+              const OOGroup = groups.find(el => el.type == "OO");
+              const SUGroup = groups.find(el => el.type == "SU");
               if (!OUGroup || !OOGroup || !SUGroup) throw new Error("Error creating group permissions.");
-              
+
               // department group name
-              let groupName = `DU-${oppId}-${mf.ID}-${geo.Id}`;
+              let groupName = `DU-${oppId}-${mf.DepartmentID}-${geo.Id}`;
               const permissions = await this.getGroupPermissions(FILES_FOLDER);
-              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + geo.Id);
-                
+              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + geo.Id);
+
               if (DUGroup) {
                 let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
                 await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
@@ -783,6 +800,7 @@ export class SharepointService {
         }
       }
     }
+
     return folders;
   }
 
@@ -807,7 +825,7 @@ export class SharepointService {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      OPPORTUNITY_ACTIONS_LIST, 
+      OPPORTUNITY_ACTIONS_LIST,
       `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`
     );
   }
@@ -816,7 +834,7 @@ export class SharepointService {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      OPPORTUNITY_ACTIONS_LIST, 
+      OPPORTUNITY_ACTIONS_LIST,
       `$filter=${filterConditions}&$orderby=Timestamp%20asc`
     );
   }
@@ -844,7 +862,7 @@ export class SharepointService {
   }
 
   /** --- FILES --- **/
-  
+
   getBaseFilesFolder(): string {
     return FILES_FOLDER;
   }
@@ -852,7 +870,7 @@ export class SharepointService {
   async createFolder(newFolderUrl: string): Promise<SystemFolder | null> {
     try {
       return await this.http.post(
-        this.licensing.getSharepointApiUri() + "folders", 
+        this.licensing.getSharepointApiUri() + "folders",
         {
           ServerRelativeUrl: FILES_FOLDER + newFolderUrl
         }
@@ -866,7 +884,7 @@ export class SharepointService {
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
-        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`, 
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/$value`,
         { responseType: 'arraybuffer' }
       ).toPromise();
     } catch (e: any) {
@@ -878,7 +896,7 @@ export class SharepointService {
   async deleteFile(fileUri: string): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')`, 
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')`,
         null,
         {
           headers: new HttpHeaders({
@@ -897,7 +915,7 @@ export class SharepointService {
   async renameFile(fileUri: string, newName: string): Promise<boolean> {
     try {
       await this.http.post(
-        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/ListItemAllFields`, 
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')/ListItemAllFields`,
         {
           Title: newName,
           FileLeafRef: newName
@@ -971,8 +989,8 @@ export class SharepointService {
 
     const baseFileName = originFilename.substring(0, originFilename.length - (extension.length + 1));
     return baseFileName
-        + '-' + scenarios.find(el => el.value === scenarioId)?.label.replace(/ /g, '').toLocaleLowerCase()
-        + '.' + extension;
+      + '-' + scenarios.find(el => el.value === scenarioId)?.label.replace(/ /g, '').toLocaleLowerCase()
+      + '.' + extension;
   }
 
   async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
@@ -994,7 +1012,7 @@ export class SharepointService {
   async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
     const result = await this.query(
-      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`, 
+      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`,
       '$expand=ListItemAllFields',
     ).toPromise();
 
@@ -1015,7 +1033,7 @@ export class SharepointService {
   async getSubfolders(folder: string): Promise<any> {
     let subfolders: any[] = [];
     const result = await this.query(
-      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/folders`, 
+      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/folders`,
       '$expand=ListItemAllFields',
     ).toPromise();
     if (result.value) {
@@ -1026,10 +1044,10 @@ export class SharepointService {
 
   async getFileInfo(fileId: number): Promise<NPPFile> {
     return await this.query(
-      `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`, 
+      `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        Country/Title, Geography/Title, ModelScenario/Title, ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,Country,Geography,ModelScenario,ApprovalStatus',
+        OpportunityGeography/Title,OpportunityGeography/OpportunityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,OpportunityGeography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
@@ -1044,7 +1062,7 @@ export class SharepointService {
     return await this.updateItem(fileId, `lists/getbytitle('${FILES_FOLDER}')`, data);
   }
 
-  async getApprovalStatusId(status: string): Promise <number | null> {
+  async getApprovalStatusId(status: string): Promise<number | null> {
     if (this.masterApprovalStatusList.length < 1) {
       this.masterApprovalStatusList = await this.getAllItems(MASTER_APPROVAL_STATUS_LIST);
     }
@@ -1060,7 +1078,7 @@ export class SharepointService {
     try {
       let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
       return await this.http.post(
-        this.licensing.getSharepointApiUri() + url, 
+        this.licensing.getSharepointApiUri() + url,
         fileData,
         {
           headers: { 'Content-Type': 'blob' }
@@ -1128,7 +1146,7 @@ export class SharepointService {
     } else {
       try {
         const result = await this.query(`roledefinitions/getbyname('${name}')/id`).toPromise();
-        this.SPRoleDefinitions.push({name, id: result.value }); // add for local caching
+        this.SPRoleDefinitions.push({ name, id: result.value }); // add for local caching
         return result.value;
       }
       catch (e) {
@@ -1138,24 +1156,24 @@ export class SharepointService {
   }
 
   async updateDepartmentUsers(
-    oppId: number, 
-    stageId: number, 
-    departmentId: number, 
-    folderDepartmentId: number, 
-    geoId: number | null, 
-    currentUsersList: number[], 
+    oppId: number,
+    stageId: number,
+    departmentId: number,
+    folderDepartmentId: number,
+    geoId: number | null,
+    currentUsersList: number[],
     newUsersList: number[]
   ): Promise<boolean> {
     // groups needed
     const OUGroup = await this.getGroup('OU-' + oppId);
     const OOGroup = await this.getGroup('OO-' + oppId);
-    const SUGroup = await this.getGroup('SU-'  + oppId + '-' + stageId);
+    const SUGroup = await this.getGroup('SU-' + oppId + '-' + stageId);
     let groupName = `DU-${oppId}-${departmentId}`;
     if (geoId) {
       groupName += `-${geoId}`;
-    } 
+    }
     const DUGroup = await this.getGroup(groupName);
-    
+
     if (!OUGroup || !OOGroup || !SUGroup || !DUGroup) throw new Error("Permission groups missing.");
 
     const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
@@ -1212,8 +1230,8 @@ export class SharepointService {
         }
       ).toPromise();
       return true;
-    } catch (e) {
-      if(e.status == 400) {
+    } catch (e: any) {
+      if (e.status == 400) {
         return true;
       }
       return false;
@@ -1255,7 +1273,7 @@ export class SharepointService {
   async deleteGroup(id: number) {
     try {
       await this.http.post(
-        this.licensing.getSharepointApiUri() + `/sitegroups/removebyid(${id})`, 
+        this.licensing.getSharepointApiUri() + `/sitegroups/removebyid(${id})`,
         null,
         {
           headers: new HttpHeaders({
@@ -1304,15 +1322,17 @@ export class SharepointService {
 
   private async addRolePermissionToFolder(folderUrl: string, groupId: number, roleName: string): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
-    return await this.setRolePermission(baseUrl, groupId, roleName);
+    // permissions to folders without inherit
+    let success = await this.setRolePermission(baseUrl, groupId, roleName, false);
+    return success && await this.removeRolePermission(baseUrl, (await this.getCurrentUserInfo()).Id);
   }
 
-  private async setRolePermission(baseUrl: string, groupId: number, roleName: string) {
+  private async setRolePermission(baseUrl: string, groupId: number, roleName: string, inherit = true) {
     // const roleId = 1073741826; // READ
     const roleId = await this.getRoleDefinitionId(roleName);
     try {
       await this.http.post(
-        baseUrl + `/breakroleinheritance(copyRoleAssignments=true,clearSubscopes=true)`,
+        baseUrl + `/breakroleinheritance(copyRoleAssignments=${inherit ? 'true' : 'false'},clearSubscopes=${inherit ? 'true' : 'false'})`,
         null).toPromise();
       await this.http.post(
         baseUrl + `/roleassignments/addroleassignment(principalid=${groupId},roledefid=${roleId})`,
@@ -1324,15 +1344,27 @@ export class SharepointService {
     }
   }
 
+  private async removeRolePermission(baseUrl: string, groupId: number) {
+    try {
+      await this.http.post(
+        baseUrl + `/roleassignments/removeroleassignment(principalid=${groupId})`,
+        null).toPromise();
+      return true;
+    } catch (e: any) {
+      this.error.handleError(e);
+      return false;
+    }
+  }
+
   private async changeOpportunityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
 
     const newOwner = await this.getUserInfo(newOwnerId);
-    const OOGroup = await this.getGroup('OO-'+oppId); // Opportunity Owner (OO)
-    const OUGroup = await this.getGroup('OU-'+oppId); // Opportunity Users (OO)
+    const OOGroup = await this.getGroup('OO-' + oppId); // Opportunity Owner (OO)
+    const OUGroup = await this.getGroup('OU-' + oppId); // Opportunity Users (OO)
     if (!newOwner.LoginName || !OOGroup || !OUGroup) return false;
 
     let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
-    
+
     success = await this.addUserToGroup(newOwner.LoginName, OOGroup.Id) && success;
     return await this.addUserToGroup(newOwner.LoginName, OUGroup.Id) && success;
   }
@@ -1391,19 +1423,20 @@ export class SharepointService {
     }
     return success;
   }
-  
+
   /** --- USERS --- **/
 
-  async getUserProfilePic(userId: number): Promise<string> {
+  async getUserProfilePic(userId: number): Promise<string | boolean> {
     const user = await this.getUserInfo(userId);
-    if (!user) return '';
-    
-    return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
+    if (!user) return false;
+    //TODO check why graph call is failing...
+    return false;
+    //return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
   }
 
   async getCurrentUserInfo(): Promise<User> {
     let account = localStorage.getItem('sharepointAccount');
-    if(account) {
+    if (account) {
       return JSON.parse(account);
     } else {
       let account = await this.query('currentuser', '$select=Title,Email,Id,FirstName,LastName,IsSiteAdmin').toPromise();
@@ -1421,7 +1454,7 @@ export class SharepointService {
     const siteTitle = await this.query('title').toPromise();
     if (siteTitle.value) {
       return (await this.getGroupMembers(siteTitle.value + ' Owners'))
-      .filter((m: any) => m.Title != 'System Account' && m.UserId); // only "real" users
+        .filter((m: any) => m.Title != 'System Account' && m.UserId); // only "real" users
     }
     return [];
   }
@@ -1460,45 +1493,45 @@ export class SharepointService {
   }
 
   async getOpportunityTypesList(type: string | null = null): Promise<SelectInputList[]> {
-    return (await this.getOpportunityTypes(type)).map(t => {return {value: t.ID, label: t.Title}});
+    return (await this.getOpportunityTypes(type)).map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getUsersList(usersId: number[]): Promise<SelectInputList[]> {
     const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
-    const users = await this.query('siteusers', '$filter='+conditions).toPromise();
+    const users = await this.query('siteusers', '$filter=' + conditions).toPromise();
     if (users.value) {
-      return users.value.map((u: User) => { return { label: u.Title, value: u.Id }});
+      return users.value.map((u: User) => { return { label: u.Title, value: u.Id } });
     }
     return [];
   }
 
   async getCountriesList(): Promise<SelectInputList[]> {
     if (this.masterCountriesList.length < 1) {
-      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, "$orderby=Title asc")).map(t => {return {value: t.ID, label: t.Title}});
+      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, "$orderby=Title asc")).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterCountriesList;
   }
 
   async getGeographiesList(): Promise<SelectInputList[]> {
     if (this.masterGeographiesList.length < 1) {
-      this.masterGeographiesList = (await this.getAllItems(MASTER_GEOGRAPHIES_LIST, "$orderby=Title asc")).map(t => {return {value: t.ID, label: t.Title}});
+      this.masterGeographiesList = (await this.getAllItems(MASTER_GEOGRAPHIES_LIST, "$orderby=Title asc")).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterGeographiesList;
   }
 
   /** Accessible Geographies for the user (subfolders with read/write permission) */
   async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
-    
+
     const geographiesList = await this.getOpportunityGeographies(oppId);
-    
+
     const geoFoldersWithAccess = await this.getSubfolders(`/${oppId}/${stageId}/${departmentID}`);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
-      .map(t => {return {value: t.Id, label: t.Title}});
+      .map(t => { return { value: t.Id, label: t.Title } });
   }
 
   async getScenariosList(): Promise<SelectInputList[]> {
     if (this.masterScenariosList.length < 1) {
-      this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => {return {value: t.ID, label: t.Title}});
+      this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterScenariosList;
   }
@@ -1507,32 +1540,32 @@ export class SharepointService {
     let indications = await this.getIndications(therapy);
 
     if (therapy) {
-      return indications.map(el => { return {value: el.ID, label: el.Title}})
+      return indications.map(el => { return { value: el.ID, label: el.Title } })
     }
-    return indications.map(el => { return {value: el.ID, label: el.Title, group: el.TherapyArea}})
+    return indications.map(el => { return { value: el.ID, label: el.Title, group: el.TherapyArea } })
   }
 
   async getTherapiesList(): Promise<SelectInputList[]> {
     if (this.masterTherapiesList.length < 1) {
       let count = await this.countItems(MASTER_THERAPY_AREAS_LIST);
-      let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top="+count);
+      let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top=" + count);
 
       return indications
         .map(v => v.TherapyArea)
         .filter((value, index, self) => self.indexOf(value) === index)
-        .map(v => { return { label: v, value: v }});
+        .map(v => { return { label: v, value: v } });
     }
     return this.masterTherapiesList;
   }
 
   async getSiteOwnersList(): Promise<SelectInputList[]> {
     const owners = await this.getSiteOwners();
-    return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id }})
+    return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id } })
   }
 
   async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
     const stages = await this.getAllItems(MASTER_STAGES_LIST, `$filter=StageType eq '${stageType}'`);
-    return stages.map(v => { return { label: v.Title, value: v.StageNumber }});
+    return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
   async updateOpportunityGeographies(opportunityId: number, newGeographies: string[]) {
@@ -1541,9 +1574,9 @@ export class SharepointService {
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
-      let id = arrId[1]; 
+      let id = arrId[1];
       let geo = allGeo.find(el => {
-        if(kindOfGeo == 'G') {
+        if (kindOfGeo == 'G') {
           return el.GeographyId == parseInt(id);
         } else {
           return el.CountryId == parseInt(id);
@@ -1575,9 +1608,9 @@ export class SharepointService {
     newGeographies.forEach(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
-      let id = arrId[1]; 
+      let id = arrId[1];
       let geo = allGeo.find(el => {
-        if(kindOfGeo == 'G') {
+        if (kindOfGeo == 'G') {
           return el.GeographyId == parseInt(id);
         } else {
           return el.CountryId == parseInt(id);
@@ -1593,9 +1626,9 @@ export class SharepointService {
       let isCountry = !!el.CountryId;
       let geo = newGeographies.find(g => {
         if (isCountry) {
-          return g == 'C-'+el.CountryId;
+          return g == 'C-' + el.CountryId;
         } else {
-          return g == 'G-'+el.GeographyId;
+          return g == 'G-' + el.GeographyId;
         }
       });
 
@@ -1608,22 +1641,22 @@ export class SharepointService {
 
     let OOGroup = await this.getGroup(`OO-${opportunityId}`);
     let OUGroup = await this.getGroup(`OU-${opportunityId}`);
-    if(!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
+    if (!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
 
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OO', data: OOGroup });
 
     let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
     let stages = await this.getStages(opportunityId);
-    
+
     for (const oppGeo of newGeos) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
-      for(let index=0; index < stages.length; index++) {
+      for (let index = 0; index < stages.length; index++) {
         let stage = stages[index];
         let stageFolders = await this.getStageFolders(stage.StageNameId, opportunityId);
         let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
-        
-        if(!mf) throw new Error("Could not find Models folder");
+
+        if (!mf) throw new Error("Could not find Models folder");
 
         const folder = await this.createFolder(`/${opportunityId}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
         if (folder) {
@@ -1631,7 +1664,7 @@ export class SharepointService {
           let groupName = `DU-${opportunityId}-${mf.ID}-${oppGeo.Id}`;
           const permissions = await this.getGroupPermissions(FILES_FOLDER);
           let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
-            
+
           if (DUGroup) {
             let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
             await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
@@ -1644,7 +1677,7 @@ export class SharepointService {
   }
 
   async deleteGeographies(removeGeo: OpportunityGeography[]) {
-    for(let i=0; i<removeGeo.length; i++) {
+    for (let i = 0; i < removeGeo.length; i++) {
       await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
         Deleted: "true"
       });
@@ -1652,10 +1685,19 @@ export class SharepointService {
   }
 
   async restoreGeographies(restoreGeo: OpportunityGeography[]) {
-    for(let i=0; i<restoreGeo.length; i++) {
+    for (let i = 0; i < restoreGeo.length; i++) {
       await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
         Deleted: "false"
       });
     }
   }
+
+  async getReports(): Promise<PBIReport[]>{
+    return await this.getAllItems(MASTER_POWER_BI,'$orderby=SortOrder');
+  }
+
+  async getReport(id:number): Promise<PBIReport>{
+    return await this.getOneItemById(id,MASTER_POWER_BI);
+  }
+
 }

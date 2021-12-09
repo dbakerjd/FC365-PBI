@@ -1,3 +1,4 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -75,7 +76,8 @@ export class ActionsListComponent implements OnInit {
         this.isOwner = this.currentUser.Id === this.opportunity.OpportunityOwnerId;
 
         if (this.opportunity.OpportunityOwner) {
-          this.opportunity.OpportunityOwner.profilePicUrl = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
+          this.opportunity.OpportunityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
           this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);
@@ -570,6 +572,7 @@ export class ActionsListComponent implements OnInit {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      this.toastr.success("File downloaded to your Downloads folder.");
     } else {
       // get sharepoint base url TODO
 
@@ -586,6 +589,11 @@ export class ActionsListComponent implements OnInit {
       ms-spd:
       ms-infopath:
       */
+
+      if(!fileInfo.LinkingUri) {
+        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        return;
+      }
       
       let arrUrl = fileInfo.LinkingUri.split("?");
       let url = arrUrl[0];
@@ -611,6 +619,7 @@ export class ActionsListComponent implements OnInit {
       }
       
       const data = window.open(url, '_blank');
+      this.toastr.success("Trying to open file with your local Office installation.");
     }
   }
 
@@ -714,16 +723,41 @@ export class ActionsListComponent implements OnInit {
     try {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
-        let res = await this.powerBi.refreshReport();
-        this.refreshingPowerBi = false;   
-        if(res) {
-          this.toastr.success("Power Bi report succesfully refreshed.");
+        //const at the moment needs to be dynamic
+        const reportName: string = "Epi+"
+
+        let response = await this.powerBi.refreshReport(reportName);
+        console.log("status is: "+response);
+        switch (response){
+          case 202:{
+            this.toastr.success("Analytics report succesfully refreshed.");
+            break;
+          }
+          case 409:{
+            this.toastr.error("Report currently refreshing. Please try again later");
+            break;
+          }
+          default:{
+            this.toastr.error(`Unknown error, ${response}`);
+            break;
+          }
         }
+
+        this.refreshingPowerBi = false;   
       }  
     } catch(e: any) {
       this.refreshingPowerBi = false;
+      
       this.toastr.error(e.message);
     }
     
   }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
+    
+  }
+
 }

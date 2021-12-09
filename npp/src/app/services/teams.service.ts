@@ -37,6 +37,7 @@ export class TeamsService {
   public msalInstance = new PublicClientApplication({
     auth: {
       clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // Prod enviroment. Uncomment to use. 
+      //clientId: '9ff5f696-db6b-4373-b076-eab231d4cdcb',
       //clientId: 'e504af88-0105-426f-bd33-9990e49c8122', // PPE testing environment
       authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
@@ -81,6 +82,12 @@ export class TeamsService {
         // handle error, either in the library or coming back from the server
         this.errorService.handleError(error);
     });
+
+    errorService.subject.subscribe(msg => {
+      if(msg == 'unauthorized') {
+        this.login();
+      }
+    })
   }
 
   getResourceMap() {
@@ -92,15 +99,16 @@ export class TeamsService {
     const protectedResourceMap = new Map<string, Array<string>>();
     //protectedResourceMap.set('janddconsulting.sharepoint.com', ['https://janddconsulting.sharepoint.com/.default']);
     //protectedResourceMap.set('betasoftwaresl.sharepoint.com', ['https://betasoftwaresl.sharepoint.com/.default']);
-    //https://nppprovisioning20210831.azurewebsites.net/api/NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
+    
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
     }
-    protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net', ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default']);
     protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    https://api.powerbi.com/v1.0/myorg/datasets/2cd0262f-28c4-4ed1-94c1-671293777a62/refreshes
+    //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
+    protectedResourceMap.set('fc365.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/FC365_API_TEST/access_as_user']);
+    
     return {
       interactionType: InteractionType.Redirect,
       protectedResourceMap
@@ -118,8 +126,9 @@ export class TeamsService {
       this.errorService.toastr.error("Trying to get resources without an active license");
       return;
     }
-    let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default', 'User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
-    //let scopes = [];
+    //'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'
+    //let scopes = ['api://b431132e-d7ea-4206-a0a9-5403adf64155/.default', 'User.Read', 'https://analysis.windows.net/powerbi/api/.default'];
+    let scopes = [];
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       scopes.push('https://'+sharepointUri+'/.default');

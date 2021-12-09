@@ -64,8 +64,7 @@ export class UploadFileComponent implements OnInit {
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
 
       Object.assign(fileData, {
-        CountryId: geography.CountryId ? [geography.CountryId] : [],
-        GeographyId: geography.GeographyId ? geography.GeographyId : null,
+        OpportunityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),

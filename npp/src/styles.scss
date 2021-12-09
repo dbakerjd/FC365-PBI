@@ -188,3 +188,18 @@ div.has-error .ng-select-container {
     color: #dc3545;
 }
 
+.hidden {
+    height: 0 !important;
+    width: 0 !important;
+  }
+
+.report-container {
+    height: 100vh;
+    margin: 2px left;
+    width: 100%
+    
+  }
+  
+.desktop-view iframe, .mobile-view iframe {
+    border: none;
+}

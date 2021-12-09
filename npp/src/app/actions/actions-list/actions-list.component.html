@@ -64,7 +64,8 @@
             <div class="gate-info-icons">
                 <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-refresh-bi" title="Refresh Power BI" *ngIf="licensing.license?.PowerBi" (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.PowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.PowerBi"  (click)="navigateTo(opportunity)"></div>
                 <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
@@ -121,16 +122,16 @@
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
-                                <p *ngIf="file.ListItemAllFields.GeographyId">
+                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Geography'">
                                     <label>Geography: </label>
                                     <ng-container>
-                                        {{file.ListItemAllFields.Geography.Title}}
+                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
                                     </ng-container>
                                 </p>
-                                <p *ngIf="file.ListItemAllFields.Country.length > 0">
+                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Country'">
                                     <label>Country: </label>
-                                    <ng-container *ngFor="let s of file.ListItemAllFields.Country; let $last = last">
-                                        {{s.Title}}
+                                    <ng-container>
+                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
                                     </ng-container>
                                 </p>
                                 <p>

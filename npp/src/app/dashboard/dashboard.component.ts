@@ -22,7 +22,7 @@ export class DashboardComponent implements OnInit {
 
   powerBiItem = {
     src: 'assets/power-bi.svg',
-    text: 'Power BI Report',
+    text: 'Analytics Report',
     route: ['power-bi']
   };
 

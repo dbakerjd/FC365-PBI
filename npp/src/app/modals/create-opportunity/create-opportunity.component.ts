@@ -5,7 +5,6 @@ import { Opportunity, OpportunityGeography, SelectInputList, SharepointService, 
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { StageSettingsComponent } from '../stage-settings/stage-settings.component';
 
 @Component({
   selector: 'app-create-opportunity',
