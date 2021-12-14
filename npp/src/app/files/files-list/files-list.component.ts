@@ -1,0 +1,644 @@
+import { Component, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute } from '@angular/router';
+import { FormlyFieldConfig } from '@ngx-formly/core';
+import { DatepickerOptions } from 'ng2-datepicker';
+import { ToastrService } from 'ngx-toastr';
+import { take } from 'rxjs/operators';
+import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
+import { CommentsListComponent } from 'src/app/modals/comments-list/comments-list.component';
+import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
+import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
+import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
+import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
+import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
+import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
+import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
+import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
+import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { LicensingService } from 'src/app/services/licensing.service';
+import { PowerBiService } from 'src/app/services/power-bi.service';
+import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, BRAND_FOLDER_ARCHIVED, BRAND_FOLDER_APPROVED, BRAND_FOLDER_WIP, BRAND_FOLDER_DOCUMENTS, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication } from 'src/app/services/sharepoint.service';
+import { TeamsService } from 'src/app/services/teams.service';
+
+@Component({
+  selector: 'app-files-list',
+  templateUrl: './files-list.component.html',
+  styleUrls: ['./files-list.component.scss']
+})
+export class FilesListComponent implements OnInit {
+  isOwner = false;
+  currentUser: User | undefined = undefined;
+  currentFolder: NPPFolder | undefined = undefined;
+  cycles: BrandForecastCycle[] = [];
+  refreshingPowerBi = false;
+  brandId = 0;
+  brand: Brand | undefined = undefined;
+  dateOptions: DatepickerOptions = {
+    format: 'Y-M-d'
+  };
+  profilePic: string | boolean = '';
+  currentSection = 'models';
+  currentFiles: NPPFile[] = [];
+  uploadDialogInstance: any; 
+  modelStatus = ['Work in Progress', 'Approved', 'Archived'];
+  currentStatus = this.modelStatus[0];
+  dialogInstance: any; 
+  formCycleSelect = new FormGroup({});
+  formCycleSelectFields: FormlyFieldConfig[] = [];
+  currentCycle: number | undefined;
+  masterCycles: SelectInputList[] = [];
+  updatingFiles = false;
+  updateFilesTimeout: any;
+  selectedCycle: any = false;
+
+  constructor(
+    private sharepoint: SharepointService, 
+    private powerBi: PowerBiService, 
+    private route: ActivatedRoute, 
+    public matDialog: MatDialog,
+    private toastr: ToastrService, 
+    private teams: TeamsService,
+    public licensing: LicensingService) { }
+
+  ngOnInit(): void {
+    if(this.teams.initialized) this.init();
+    else {
+      this.teams.statusSubject.subscribe(async (msg) => {
+        setTimeout(async () => {
+          this.init();
+        }, 500);
+      });
+    }
+  }
+
+  init() {
+    this.route.params.subscribe(async (params) => {
+      this.currentUser = await this.sharepoint.getCurrentUserInfo();
+      this.masterCycles = await this.sharepoint.getForecastCycles();
+
+      if(params.id && params.id != this.brandId) {
+        this.brandId = params.id;
+        this.brand = await this.sharepoint.getBrand(params.id);
+        this.isOwner = this.currentUser.Id === this.brand.BrandOwnerId;
+        if (this.brand && this.brand.BrandOwner) {
+          
+          this.cycles = await this.sharepoint.getBrandForecastCycles(this.brand);
+
+          let pic = await this.sharepoint.getUserProfilePic(this.brand.BrandOwnerId);
+          this.brand.BrandOwner.profilePicUrl = pic ? pic : '/assets/user.svg';
+          this.profilePic = this.brand.BrandOwner.profilePicUrl;
+        }
+        this.setStatus(this.modelStatus[0]);
+      }
+    });
+  }
+
+  onCycleChange() {
+    this.currentCycle = this.formCycleSelect.value?.cycle;
+    this.updateCurrentFiles();
+  }
+
+  getSharepointFolderNameByModelStatus(status: string) {
+    switch(status) {
+      case 'Archived':
+        return BRAND_FOLDER_ARCHIVED+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+      case 'Approved':
+        return BRAND_FOLDER_APPROVED+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+      case 'Work in Progress':
+        return BRAND_FOLDER_WIP+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+      default:
+        return BRAND_FOLDER_DOCUMENTS+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID;
+    }
+  }
+
+  getCurrentRootFolder() {
+    return this.getRootFolder(this.currentStatus);
+  }
+
+  getRootFolder(status: string) {
+    switch(status) {
+      case 'Archived':
+        return BRAND_FOLDER_ARCHIVED;
+      case 'Approved':
+        return BRAND_FOLDER_APPROVED;
+      case 'Work in Progress':
+        return BRAND_FOLDER_WIP;
+      default:
+        return BRAND_FOLDER_DOCUMENTS;
+    }
+  }
+
+  async updateCurrentFiles() {
+    try {
+      if(!this.updatingFiles) {
+        this.updatingFiles = true;
+        let currentFolder = this.getCurrentFolder();
+        
+        if (this.currentStatus != 'none') {
+          const geoFolders = await this.sharepoint.getSubfolders(currentFolder);
+          this.currentFiles = [];
+          for (const geofolder of geoFolders) {
+            let folder = currentFolder + '/' + geofolder.Name;
+            if(this.currentStatus == 'Archived') {
+              folder = folder + '/' + this.currentCycle;
+            }
+            this.currentFiles.push(...await this.sharepoint.readBrandFolderFiles(folder, true));
+          }
+        } else {
+          this.currentFiles = await this.sharepoint.readBrandFolderFiles(currentFolder, true);
+        }
+
+        this.initLastComments();
+
+        this.updatingFiles = false;
+
+      } else {
+        
+        if(this.updateFilesTimeout) {
+          clearTimeout(this.updateFilesTimeout);
+        }
+        
+        this.updateFilesTimeout = setTimeout(() => {
+          this.updateCurrentFiles();
+        }, 500);
+        
+      }
+    } catch(e: any) {
+      this.updatingFiles = false;
+    }
+    
+    
+  }
+
+  getCurrentFolder() {
+    return this.getSharepointFolderNameByModelStatus(this.currentStatus);
+  }
+
+  getIndications(indications: Indication[]) {
+    if(indications) {
+      return indications.map(el => el.Title).join(", ");
+    }
+    return '';
+  }
+
+  getTherapyArea(indications: Indication[]) {
+    if(indications && indications.length) {
+      return indications[0].TherapyArea;
+    }
+
+    return '';
+  }
+
+  async openUploadDialog() {
+    if(this.brand) {
+      let geographiesList = await this.sharepoint.getBrandAccessibleGeographiesList(this.brand);
+    
+      this.dialogInstance = this.matDialog.open(UploadFileComponent, {
+        height: '600px',
+        width: '405px',
+        data: {
+          geographies: geographiesList,
+          scenarios: await this.sharepoint.getScenariosList(),
+          folderList: [{ Title: 'Reference Documents', ID: BRAND_FOLDER_DOCUMENTS}, { Title: 'Forecast Models', ID: FORECAST_MODELS_FOLDER_NAME, containsModels: true }],
+          selectedFolder: this.currentSection == 'none' ? 'Reference Documents' : 'Forecast Models',
+          brand: this.brand
+        }
+      });
+  
+      this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
+          this.updateCurrentFiles();
+        } else if (result.success === false) {
+          this.toastr.error("Sorry, there was a problem uploading your file");
+        }
+      });
+    }
+  }
+
+  sendForApproval(file: NPPFile) {
+    this.dialogInstance = this.matDialog.open(SendForApprovalComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file,
+        rootFolder: this.getCurrentRootFolder()
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          this.updateCurrentFiles();
+          this.toastr.success("The model has been sent for approval", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("The model couldn't be sent for approval");
+        }
+      });
+  }
+
+  openFolderPermissions() {
+    if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
+      this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
+        height: '400px',
+        width: '405px',
+        data: {
+          brand: this.brand
+        }
+      });
+    }
+  }
+
+  async approve(file: NPPFile) {
+    
+    if (!file.ListItemAllFields) return;
+    if (!this.brand) return;
+
+    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file,
+        brand: this.brand,
+        rootFolder: this.getCurrentRootFolder(),
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          this.updateCurrentFiles();
+          this.toastr.success("The model has been approved!", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There were a problem approving the forecast model", 'Try again');
+        }
+      });
+  }
+
+  createScenario(file: NPPFile) {
+    this.dialogInstance = this.matDialog.open(CreateScenarioComponent, {
+      height: '400px',
+      width: '405px',
+      data: {
+        file: file
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (success: any) => {
+        if (success) {
+          this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
+          this.updateCurrentFiles();
+        } else if (success === false) {
+          this.toastr.error('The new model scenario could not be created', 'Try Again');
+        }
+      });
+  }
+
+  setSection(section: string) {
+    this.currentSection = section;
+    if(section == 'models') {
+      this.setStatus(this.modelStatus[0]);
+    } else {
+      this.setStatus('none');
+    }
+  }
+
+  async setStatus(status: string) {
+    this.selectedCycle = false;
+    this.currentCycle = undefined;
+    this.currentStatus = status;
+    this.updateCurrentFiles();
+  }
+
+  showFolders() {
+    this.setSection('documents');
+    this.setStatus('none');
+  }
+
+  showModels() {
+    this.setSection('models');
+  }
+
+  async openFile(fileId: number, forceDownload = false) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
+    var newBlob = new Blob([response]);
+
+    if (forceDownload) {
+      var link = document.createElement('a');
+      link.href = window.URL.createObjectURL(newBlob);
+      link.download = fileInfo.Name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.toastr.success("File downloaded to your Downloads folder.");
+    } else {
+      // get sharepoint base url TODO
+
+      console.log('file info', fileInfo);
+      
+      /*
+      ms-word:
+      ms-powerpoint:
+      ms-excel:
+      ms-visio:
+      ms-access:
+      ms-project:
+      ms-publisher:
+      ms-spd:
+      ms-infopath:
+      */
+
+      if(!fileInfo.LinkingUri) {
+        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        return;
+      }
+      
+      let arrUrl = fileInfo.LinkingUri.split("?");
+      let url = arrUrl[0];
+      const arrFile = url.split(".");
+      const extension = arrFile[arrFile.length - 1];
+
+      switch(extension) {
+        case "xlsx":
+        case "xls":
+        case "csv":
+          url = "ms-excel:"+url;
+          break;
+        case "docx":
+        case "doc":
+          url = "ms-word:"+url;
+          break;
+        case "pptx":
+        case "ppt":
+          url = "ms-powerpoint"+url;
+          break;
+        default:
+          url = fileInfo.LinkingUri;
+      }
+      
+      const data = window.open(url, '_blank');
+      this.toastr.success("Trying to open file with your local Office installation.");
+    }
+  }
+
+  async shareFile(fileId: number, geoId: number | null = null, countryId: number | null = null) {
+    const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!file) return;
+    
+    const oppGeo = await this.sharepoint.getBrandGeographies(this.brandId);
+
+    let involvedGeo = null;
+    if (geoId) {
+      involvedGeo = oppGeo.find(el => el.Master_x0020_GeographyId == geoId);
+    } else if (countryId) {
+      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
+    }
+    if (!involvedGeo && (geoId || countryId)) return;
+
+    let folderUsersList: User[] = [];
+    if (involvedGeo) {
+      let folderGroup = `BU-${this.brandId}-${involvedGeo.Id}`;
+      folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    }
+    
+    // users with access
+    folderUsersList = folderUsersList.concat(
+      await this.sharepoint.getGroupMembers('BO-' + this.brandId)
+    );
+
+    // remove own user
+    const currentUser = await this.sharepoint.getCurrentUserInfo();
+    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+
+    this.matDialog.open(ShareDocumentComponent, {
+      height: '250px',
+      width: '405px',
+      data: {
+        file,
+        folderUsersList
+      }
+    });
+  }
+
+
+  async editFile(fileId: number) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    const dialogRef = this.matDialog.open(EditFileComponent, {
+      width: "400px",
+      height: "325px",
+      data: {
+        fileInfo,
+        brand: this.brand
+      }
+    });
+
+    dialogRef.afterClosed()
+      .pipe(take(1))
+      .subscribe(async result => {
+        let res = result.success;
+        let str = '';
+        let error = false;
+        if(res.needsRename && res.renameWorked) {
+          str = `The file has been renamed.`;
+        }
+        if(res.needsRename && !res.renameWorked) {
+          error = true;
+          str = `Sorry there was a problem renaming the file.`
+        }
+
+        if(res.needsIndicationsUpdate && res.indicationsUpdateWorked) {
+          str += ` Indications have been updated.`
+        }
+
+        if(res.needsIndicationsUpdate && !res.indicationsUpdateWorked) {
+          error = true;
+          str += ` There was an error updating model indications.`
+        }
+
+        if (!error) {
+          fileInfo.Name = result.filename;
+          this.toastr.success(str, "File Update");
+          this.updateCurrentFiles();
+        } else {
+          this.toastr.error(str);
+        }
+      });
+  }
+
+  async deleteFile(fileId: number) {
+    const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
+    if (!fileInfo) return;
+
+    const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      maxWidth: "400px",
+      height: "200px",
+      data: {
+        message: 'Are you sure you want to delete the file <em>' + fileInfo.Name + '</em> ?',
+        confirmButtonText: 'Yes, delete'
+      }
+    });
+
+    dialogRef.afterClosed()
+      .pipe(take(1))
+      .subscribe(async deleteConfirmed => {
+        if (deleteConfirmed) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+            // remove file for the current files list
+            this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
+            this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
+          } else {
+            this.toastr.error("Sorry, there was a problem deleting the file");
+          }
+        }
+      });
+  }
+  
+  async refreshPowerBi() {
+    try {
+      if(!this.refreshingPowerBi) {
+        this.refreshingPowerBi = true;
+        let res = await this.powerBi.refreshReport();
+        this.refreshingPowerBi = false;   
+        if(res) {
+          this.toastr.success("Analytics report succesfully refreshed.");
+        }
+      }  
+    } catch(e: any) {
+      this.refreshingPowerBi = false;
+      this.toastr.error(e.message);
+    }
+    
+  }
+
+  createForecast() {
+    this.dialogInstance = this.matDialog.open(CreateForecastCycleComponent, {
+      height: '400px',
+      width: '405px',
+      data: {
+        brand: this.brand
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (success: any) => {
+        if (success) {
+          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
+          if(this.brand) this.cycles = await this.sharepoint.getBrandForecastCycles(this.brand);
+          this.brand = Object.assign(this.brand, {
+            ForecastCycleId: success.ForecastCycleId,
+            ForecastCycle: { 
+              Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
+              ID: success.ForecastCycleId
+            },
+            Year: success.Year
+          });
+          this.updateCurrentFiles();
+        } else if (success === false) {
+          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+        }
+      });
+  }
+
+  selectCycle(cycle: ForecastCycle) {
+    if(!cycle) {
+      this.selectedCycle = false;
+      this.currentCycle = undefined;  
+    } else {
+      this.selectedCycle = cycle;
+      this.currentCycle = cycle.ID;
+      this.updateCurrentFiles();
+    }
+    
+  }
+
+  async rejectModel(file: NPPFile) {
+    if (!file.ListItemAllFields) return;
+    this.dialogInstance = this.matDialog.open(RejectModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file,
+        rootFolder: this.getCurrentRootFolder(),
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          this.updateCurrentFiles();
+          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+        }
+      });
+  }
+
+  initLastComments() {
+    this.currentFiles.forEach(el => {
+      el.lastComments = this.getLatestComments(el);
+    });
+  }
+  
+  getLatestComments(file: NPPFile): FileComments[] {
+    let comments: FileComments[] = [];
+    let numComments = 2;
+    let lastComments = [];
+
+    if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
+      try {
+        comments = JSON.parse(file.ListItemAllFields.Comments);
+      } catch(e) {
+        console.log("Error parsing comments for file "+file.ListItemAllFields.ID);
+      }
+
+      for(let i = (comments.length - 1); i >= 0 && (numComments - ((comments.length - 1 ) - i) > 0); i--) {
+        lastComments.push(comments[i]);
+      }
+    }
+
+    return lastComments;
+  }
+
+  openCommentsDetail(file: NPPFile) {
+    let comments: FileComments[] = [];
+    if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
+      try {
+        comments = JSON.parse(file.ListItemAllFields.Comments);
+      } catch(e) {
+        console.log("Error parsing comments for file "+file.ListItemAllFields.ID);
+      }
+
+      this.dialogInstance = this.matDialog.open(CommentsListComponent, {
+        height: '700px',
+        width: '600px',
+        data: {
+          comments
+        }
+      });
+
+      this.dialogInstance.afterClosed()
+      .subscribe(() => {
+        this.updateCurrentFiles();
+      });
+    }
+  }
+
+}

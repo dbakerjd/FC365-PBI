@@ -1,0 +1,192 @@
+<app-npp-header [isHome]="false"></app-npp-header>
+<div class="brand-info-wrapper" *ngIf="brand">
+    <div class="brand-name">
+        <h2>{{brand?.Title}}</h2>
+        <p class="brand-forecast-cyle">{{brand?.ForecastCycle?.Title}} {{brand?.Year}}</p>
+    </div>
+    <div class="brand-indication">
+        <p><label>BusinessUnit: </label>{{brand?.BusinessUnit?.Title}}</p>
+        <p><label>Indication: </label>{{getIndications(brand?.Indication)}}</p>
+    </div>
+    <div class="brand-dates">
+        <!-- <p><label>Forecast Cycle Due Date: </label> {{brand?.FCDueDate | date : 'dd MMM y'}}</p>-->
+        <p><label>Therapy Area: </label> {{getTherapyArea(brand?.Indication)}}</p>
+    </div>
+    <div class="brand-owner">
+        <div class="brand-owner-pic">
+            <div class="brand-owner-pic-background"></div>
+            <img [src]="profilePic" *ngIf="profilePic"/>
+        </div>
+        <div class="brand-owner-info">
+            <div class="brand-owner-info-title"><label>Brand Owner</label></div>
+            <div class="brand-owner-info-name" *ngIf="brand?.BrandOwner">
+                {{brand.BrandOwner?.Title}}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="folder-and-actions-wrapper">
+    <div class="folder-wrapper">
+        <div class="folder-item-wrapper">
+            <div class="folder-item"  [ngClass]="{'selected-folder': currentSection == 'documents'}" (click)="setSection('documents')">
+                <span>Reference Documents</span>
+            </div>
+        </div>
+        <div class="folder-item-wrapper">
+            <div class="folder-item models-folder"  [ngClass]="{'selected-folder': currentSection == 'models'}" (click)="setSection('models')">
+                <span>Forecast Models</span>
+                <svg *ngIf=" currentSection == 'models' ">
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
+            </div>
+            <div class="folders-wrapper" *ngIf="currentSection == 'models'">
+                <div class="folders-item" *ngFor="let status of modelStatus" [ngClass]="{'selected-status':currentStatus === status}" (click)="setStatus(status)">
+                    <svg>
+                        <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                    </svg>
+                    <span>{{status}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="files-wrapper">
+        <div class="folder-info-wrapper">
+            <div class="folder-info-review">
+                <div class="forecast-cycles-wrapper" *ngIf="currentStatus == 'Archived' && selectedCycle">
+                    <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}}
+                </div>
+            </div>
+            <div class="folder-info-progress">
+                
+            </div>
+            <div class="folder-info-icons">
+                <div class="folder-info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
+                <div class="folder-info-icons-documents" matTooltip="Documents" (click)="showFolders()" [ngClass]="{ 'folder-info-icon-selected': currentSection == 'documents'}">
+                    <div class="folder-info-icons-selected-section"></div>
+                </div>
+                <div class="folder-info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'folder-info-icon-selected': currentSection == 'models'}">
+                    <div class="folder-info-icons-selected-section"></div>
+                </div>
+                <div class="folder-info-icons-folder-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
+                <div class="folder-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.PowerBi" (click)="refreshPowerBi()"></div>
+                <div class="folder-info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
+            </div>
+        </div>
+        <div [ngSwitch]="currentSection">
+            <!-- DOCUMENTS LIST -->
+            <div *ngSwitchCase="'documents'">
+                <div class="documents-files">
+                    <ng-container *ngIf="currentFiles && currentFiles.length">
+                        <div class="documents-files-item" *ngFor="let file of currentFiles">
+                            <div class="documents-files-item-name">
+                                <p><label>Name: </label>{{file.Name}}</p>
+                            </div>
+                            <div class="documents-files-item-uploaded">
+                                <p>
+                                    <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}} 
+                                    <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
+                                        {{file.ListItemAllFields.Author.FirstName + ' ' + file.ListItemAllFields.Author.LastName}}
+                                    </ng-container>
+                                </p>
+                            </div>
+                            <div class="documents-files-item-comments">
+                                <p *ngIf="file.ListItemAllFields.Comments">
+                                    <label>Description: </label>
+                                    {{file.ListItemAllFields.Comments}}
+                                </p>
+                            </div>
+                            <div class="documents-files-item-icons">
+                                <div class="documents-files-item-icons-file" matTooltip="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
+                                <div class="documents-files-item-icons-remove" matTooltip="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <h3 *ngIf="!currentFiles || currentFiles.length == 0" style="text-align: center;">No Results Found</h3>  
+                </div>
+            </div>
+            <div *ngSwitchCase="'models'">
+                <div class="documents-folders" *ngIf="currentStatus=='Archived' && !selectedCycle">
+                    <h3 *ngIf="!cycles || cycles.length == 0" style="text-align: center;">No Results Found</h3>  
+                    <div class="document-folder-item" *ngFor="let cycle of cycles" (click)="selectCycle(cycle)">
+                        <div class="document-folder-icon"></div>
+                        {{cycle.Title}}
+                    </div>
+                </div>
+                <div class="documents-files" *ngIf="currentStatus != 'Archived' || selectedCycle">
+                    <ng-container *ngIf="currentFiles && currentFiles.length">
+                        <div class="documents-files-item" *ngFor="let file of currentFiles">
+                            <div class="documents-files-item-name">
+                                <p><label>Name: </label>{{file.Name}}</p>
+                                <p>
+                                    <label>Geography: </label>
+                                    <ng-container>
+                                        {{file.ListItemAllFields.BrandGeography?.Title}}
+                                    </ng-container>
+                                </p>
+                                <p>
+                                    <label>Scenarios: </label>
+                                    <ng-container *ngFor="let s of file.ListItemAllFields.ModelScenario; let $last = last">
+                                        {{s.Title + ($last ? '' : ', ')}}
+                                    </ng-container>
+                                </p>
+                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p>
+                                    <label>Last Modified at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
+                                    <ng-container *ngIf="file.ListItemAllFields.Editor"><label> by </label>
+                                        {{file.ListItemAllFields.Editor.FirstName + ' ' + file.ListItemAllFields.Editor.LastName}}
+                                    </ng-container>
+                                </p>
+                            </div>
+                            <div class="documents-files-item-uploaded">
+                                <ng-container *ngIf="currentStatus == 'Work in Progress'">
+                                    <div class="documents-files-item-model-status">
+                                        <div [ngClass]="{
+                                            'status-in-progress': file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress', 
+                                            'status-submitted': file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted', 
+                                            'status-approved': file.ListItemAllFields?.ApprovalStatus?.Title == 'Approved'
+                                        }">
+                                            <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
+                                        </div>
+                                        <div *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
+                                            <span (click)="approve(file)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> / 
+                                            <span (click)="rejectModel(file)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
+                                        </div>
+                                    </div>
+                                    <div class="documents-files-item-model-actions">
+                                        <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file)"></div>
+                                        <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
+                                    </div>
+                                </ng-container>
+                                <div class="documents-files-item-model-indications">
+
+                                </div>
+                            </div>
+                            <div class="documents-files-item-comments">
+                                <p *ngIf="file.Description">
+                                    <label>Description: </label>{{file.Description}}
+                                </p>
+                                <ng-container *ngIf="file.ListItemAllFields?.Comments">
+                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" title="Open Comments Detail">
+                                        <p><label>{{comment.name}} at </label> {{ comment.createdAt | date : 'Y-M-d'}}</p>
+                                        <p class="comment-text">{{comment.text}}</p>
+                                    </div>
+                                </ng-container>
+                            </div>
+                            <div class="documents-files-item-icons">
+                                <div class="documents-files-item-icons-file" matTooltip="Open file" *ngIf="currentStatus == 'Work in Progress'" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, file.ListItemAllFields.BrandGeographyId)"></div>
+                                <div class="documents-files-item-icons-edit" matTooltip="Edit file name" *ngIf="currentStatus == 'Work in Progress'" (click)="editFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-remove" matTooltip="Delete file" *ngIf="currentStatus == 'Work in Progress'" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                            </div>
+                        </div>
+    
+                    </ng-container>
+                    <h3 *ngIf="(currentStatus != 'Archived' || selectedCycle) && (!currentFiles || currentFiles.length == 0)" style="text-align: center;">No Results Found</h3>  
+                </div>
+            </div>
+        </div>        
+    </div>
+</div>

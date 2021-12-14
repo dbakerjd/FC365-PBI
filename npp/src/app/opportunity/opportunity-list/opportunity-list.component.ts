@@ -160,7 +160,12 @@ export class OpportunityListComponent implements OnInit {
 
   navigateTo(item: Opportunity) {
     if (item.OpportunityStatus === "Processing") return;
-    this.router.navigate(['opportunities', item.ID, 'actions']);
+    if(item.OpportunityType?.isInternal) {
+      this.router.navigate(['opportunities', item.ID, 'files']);
+    } else {
+      this.router.navigate(['opportunities', item.ID, 'actions']);
+    }
+    
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {

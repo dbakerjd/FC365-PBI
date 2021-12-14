@@ -73,6 +73,7 @@ export interface OpportunityType {
   ID: number;
   Title: string;
   StageType: string;
+  isInternal: boolean;
 }
 
 export interface Indication {
@@ -110,6 +111,7 @@ export interface NPPFile {
   LinkingUri: string;
   TimeLastModified: Date;
   ListItemAllFields?: NPPFileMetadata;
+  lastComments: any[];
 }
 
 export interface NPPFileMetadata {
@@ -126,6 +128,7 @@ export interface NPPFileMetadata {
   Author: User;
   TargetUserId: number;
   TargetUser?: User;
+  Comments: string;
 }
 
 export interface NPPFolder {

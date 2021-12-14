@@ -1,0 +1,504 @@
+.brand-info-wrapper {
+    width: 100%;
+    background-color: #f5f5f5;
+    padding: 1rem 0;
+    position: relative;
+    height: 3.17rem;
+    overflow: hidden;
+    border-left: 1px solid #fff;
+    border-right: 1px solid #fff;
+
+    & > div {
+        display: block;
+        float: left;
+        height: 3rem;
+        position: relative;
+        line-height: 1.5rem;
+        top: 0;
+    }
+
+    h2 {
+        padding: 0;
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: normal;
+        font-stretch: normal;
+        font-style: normal;
+        line-height: normal;
+        letter-spacing: normal;
+        color: #000000;
+    }
+    
+    .brand-name {
+        padding-left: 2rem;
+        width: calc(25% - 2rem);
+
+        .brand-active {
+            background-color: #bdffd1;
+            border: 1px solid #94d9a9;
+            border-radius: 50%;
+            display: inline-block;
+            width: 0.6rem;
+            height: 0.6rem;
+            margin: 0;
+        }
+
+        .brand-archived {
+            background-color: #ffc1b8;
+            border: 1px solid #f68b7b;
+            border-radius: 50%;
+            display: inline-block;
+            width: 0.6rem;
+            height: 0.6rem;
+            margin: 0;
+        }
+    }
+    .brand-indication{
+        width: 31.18%;
+    }
+
+    .brand-dates {
+        width: 28%;
+    }
+
+    .brand-owner {
+        width: 15%;
+        & > div {
+            display: inline-block;
+        }
+        .brand-owner-pic {
+            margin-left: 1rem;
+            width: 3rem;
+            height: 3rem;
+            overflow: hidden;
+            position: relative;
+            margin-right: 1rem;
+            .brand-owner-pic-background{
+                display: block;
+                width: 3rem;
+                height: 3rem;
+                position: absolute;
+                top: 0;
+                left: 0;
+                border-radius: 50%;
+                background: #ea5817;
+                background: linear-gradient(to right, #ea5817 0%,#ffa13e 100%);
+            }
+            img {
+                display: block;
+                width: 2.6rem;
+                height: 2.6rem;
+                position: absolute;
+                top: 0.2rem;
+                left: 0.17rem;
+                border-radius: 50%;
+                margin-right: 1rem;
+            }
+        }
+
+        .brand-owner-info {
+            height: 3rem;
+            position: absolute;
+        }
+    }
+}
+
+.folder-and-actions-wrapper {
+    height: 100%;
+    .folder-wrapper {
+        background-color: #f5f5f5;
+        width: 10.14%;
+        float: left;
+        clear: left;
+        height: 100%;
+
+        .folder-item {
+            background-color: #ebebeb;
+            height: 3.42rem;
+            line-height: 3.42rem;
+            text-align: center;
+            color: #000;
+            cursor: pointer;
+            border-top: 1px solid #fff;
+            border-left: 1px solid #fff;
+            border-right: 1px solid #fff;
+            position: relative;
+            &:last-child {
+                border-bottom: 1px solid #fff;
+            }
+            &.selected-folder {
+                color: #fff;
+                background-color: #000;
+                svg {
+                    fill: white;
+                    transform: rotate(180deg);
+                }
+                &.models-folder{
+                    background-color: #4e4e4e;           
+                }
+            }
+
+            svg {
+                height: 1rem;
+                width: 1rem;
+                position: absolute;
+                right: 1.2rem;
+                top: 1.2rem;
+            }
+            
+            &.folders-visible {
+                text-align: left;
+                span {
+                    margin-left: 2rem;
+                }
+                
+            }
+        }
+
+        .folders-item {
+            background-color: #4e4e4e;
+            height: 3.42rem;
+            line-height: 3.42rem;
+            text-align: left;
+            color: #000;
+            cursor: pointer;
+            border-top: 1px solid #fff;
+            border-left: 1px solid #fff;
+            border-right: 1px solid #fff;
+            color: #fff;
+            position: relative;
+            span {
+                margin-left: 5px;
+                position: relative;
+                top: -2px;
+            }
+            & > svg {
+                margin-top: 2px;
+                width: 1.5rem;
+                height: 1.2rem;
+                fill: white;
+                margin-left: 2rem;
+            }
+            &.selected-status{
+                background-color: #000;
+            }
+
+            & > img {
+                position: absolute;
+                right: 1.2rem;
+                top: 1rem;
+            }
+        }
+    }
+
+    .documents-files {
+        width: 100%;
+        float: left;
+        .documents-files-item {
+            width: 100%;
+            clear: left;
+            border-top: 1px solid #fff;
+            overflow: hidden;
+
+            &:last-child {
+                border-bottom: 1px solid #fff;
+            }
+
+            & > div {
+                float: left;
+                padding: 1rem 0;
+                border-right: 1px solid #fff;
+            }
+            .documents-files-item-name {
+                clear: left;
+                width: calc(35% - 1px);
+                p {
+                    padding-left: 1.35rem;
+                }
+            }
+
+            .documents-files-item-uploaded {
+                width: calc(23% - 1px);
+                p {
+                    padding-left: 1.35rem;
+                }
+
+                .documents-files-item-model-status {
+                    width: 50%;
+                    float: left;
+                }
+
+                .documents-files-item-model-actions {
+                    width: 50%;
+                    float: left;
+                    &>div {
+                        width: 20px;
+                        height: 16px;
+                        padding-left: 0.5rem;
+                        cursor: pointer;
+                        display: inline-block;
+                        margin: 0 !important;
+                    }
+                    .model-send-approve-icon {
+                        background: url("/assets/send.svg") no-repeat center;
+                    }
+                
+                    .model-create-scenario-icon {
+                        background: url("/assets/duplicate.svg") no-repeat center;
+                    }
+                }
+
+                span.model-approve-btn {
+                    cursor: pointer;
+                    color: green;
+                }
+                span.model-reject-btn {
+                    cursor: pointer;
+                    color: red;
+                }
+            }
+            
+            .documents-files-item-comments {
+                width: calc(27.5% - 1px);
+                p {
+                    padding-left: 1.35rem;
+                }
+            }
+
+            .documents-files-item-icons {
+                width: calc(14.5% - 1px);
+                overflow: hidden;
+                height: 100%;
+                padding: 0;
+                
+                &>div {
+                    width: 19%;
+                    height: 2rem;
+                    padding-top: 1rem;
+                    cursor: pointer;
+                    float: left;
+                    margin-left: 1%;
+                }
+                .documents-files-item-icons-file {
+                    background: url("/assets/doc.svg") no-repeat center;
+                }
+
+                .documents-files-item-icons-download {
+                    background: url("/assets/down.png") no-repeat center;
+                }
+
+                .documents-files-item-icons-share {
+                    background: url("/assets/share.svg") no-repeat center;
+                }
+
+                .documents-files-item-icons-edit {
+                    background: url("/assets/edit.svg") no-repeat center;
+                }
+
+                .documents-files-item-icons-remove {
+                    background: url("/assets/bin.svg") no-repeat center;
+                }            
+            }
+        }
+    }
+
+    .files-wrapper {
+        background-color: #f5f5f5;
+        width: 89.86%;
+        float: left;
+        height: 100%;
+        
+        .comment-text {
+            width: 90%;
+            height: 3rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 0.6rem;
+            cursor: pointer;
+        }
+
+        .documents-folders {
+            .document-folder-item {
+                display: inline-block;
+                cursor: pointer;
+                padding: 20px;
+                margin: 20px;
+                .document-folder-icon {
+                    margin: 0 auto;
+                    width: 51px;
+                    height: 45px;
+                    background: url("/assets/folder.svg") no-repeat center;
+                    background-size: cover;
+                }
+            }
+        }
+        .folder-info-wrapper {
+            background-color: #ebebeb;
+            height: 3.42rem;
+            line-height: 3.42rem;
+            width: 100%;
+            border-top: 1px solid #fff;
+            & > div {
+                display: block;
+                float: left;
+            }
+
+            .folder-info-review {
+                width: 29.24%;
+                label {
+                    margin-left: 1.59rem;
+                }
+            }
+            .folder-info-progress {
+                width: 53.69%;
+                app-progress-bar {
+                    display: inline-block;
+                    margin-left: 1rem;
+                    width: 11rem;
+                    height: 0.8rem;
+                }
+            }
+            .folder-info-icons {
+                width: 17.06%;
+                height: 100%;
+                float: right;
+                &>div {
+                    width: 16.66%;
+                    height: 100%;
+                    cursor: pointer;
+                    float: left;
+                }
+                .folder-info-icons-upload {
+                    background: url("/assets/up.svg") no-repeat 1.35rem center;
+                }
+                .folder-info-icons-actions {
+                    background: url("/assets/menu.svg") no-repeat 1.1rem center;
+                }
+                .folder-info-icons-documents {
+                    background: url("/assets/folder.svg") no-repeat 1.1rem center;
+                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
+                        display: block;
+                    }
+                }
+                .folder-info-icons-models {
+                    background: url("/assets/alldocuments.svg") no-repeat 1.1rem center;
+                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
+                        display: block;
+                    }
+                }
+                .folder-info-icons-refresh-bi {
+                    background: url("/assets/cilindro.svg") no-repeat 1.1rem center;
+                }
+                .folder-info-icons-folder-settings {
+                    background: url("/assets/settings.svg") no-repeat 1.1rem center;
+                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
+                        display: block;
+                    }
+                }
+                .folder-info-icons-department-users {
+                    background: url("/assets/addpeople.svg") no-repeat center;
+                    padding-top: 3px;
+                }
+
+                .folder-info-icon-selected {
+                    .folder-info-icons-selected-section {
+                        display: block;
+                        border-bottom: 2px solid black;
+                        height: 95%;   
+                    }
+                }
+            }
+
+            
+        }
+
+        .action-item {
+            width: 100%;
+            height: 3.42rem;
+            clear: left;
+            &:last-child {
+                border-bottom: 1px solid #fff;
+            } 
+
+            & > div {
+                display: block;
+                float: left;
+                line-height: 3.42rem;
+                background-color: #f5f5f5;
+                border-top: 1px solid #fff;
+                border-left: 1px solid #fff;
+                padding-left: 1.59rem;
+            }
+
+            .action-item-name {
+                width: calc(28.4% - 1px - 1.59rem);
+            }
+
+            .action-item-completed {
+                width: calc(27.7% - 1px - 1.25rem);
+                padding-left: 1.25rem;
+            }
+
+            .action-item-due {
+                width: calc(26.84% - 1px - 1.59rem);
+                
+            }
+
+            .action-item-complete {
+                width: calc(17.06% - 2px - 1.59rem);
+                font-weight: normal;
+                font-stretch: normal;
+                font-style: normal;
+                line-height: normal;
+                letter-spacing: normal;
+                color: rgba(0, 0, 0, 0.6);
+                line-height: 3.42rem;
+                cursor: pointer;
+                &.action-completed {
+                    background-color: #bdffd1;    
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Check.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
+                }
+
+                &.action-late {
+                    background-color: #ffc1c1;
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Warning.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
+                }
+                
+                &.action-pending {
+                    background-color: #f5f5f5;
+                    position: relative;
+                    .action-item-status-icon {
+                        background: url('/assets/Pending.svg') no-repeat;
+                        background-size: cover;
+                        width: 1.5rem;
+                        height: 1.5rem;
+                        position: absolute;
+                        top: 1rem;
+                        right: 2rem;
+                    }
+                }
+
+            }
+        }
+    }
+}

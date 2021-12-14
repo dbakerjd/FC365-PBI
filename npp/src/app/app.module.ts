@@ -53,6 +53,7 @@ import { EditFileComponent } from './modals/edit-file/edit-file.component';
 import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 import { PowerBIEmbedModule } from 'powerbi-client-angular';
+import { FilesListComponent } from './files/files-list/files-list.component';
 
 @NgModule({
   imports: [
@@ -79,6 +80,7 @@ import { PowerBIEmbedModule } from 'powerbi-client-angular';
     AppComponent,
     DashboardComponent,
     OpportunityListComponent,
+    FilesListComponent,
     OpportunityDetailComponent,
     ActionsListComponent,
     HeaderComponent,
