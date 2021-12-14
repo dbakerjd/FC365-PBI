@@ -1,0 +1,2 @@
+0.5.0
+   - Add column "isInternal" to "Master Opportunity Type List", type Boolean, default "No"

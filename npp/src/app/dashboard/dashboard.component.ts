@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TeamsService } from '../services/teams.service';
 import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,6 +11,7 @@ import { LicensingService } from '../services/licensing.service';
 })
 export class DashboardComponent implements OnInit {
   account: any;
+  version = environment.version;
   items = [{
     src: 'assets/npp-summary.svg',
     text: 'NPP Summary',
