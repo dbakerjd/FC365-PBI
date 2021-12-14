@@ -652,9 +652,12 @@ export class ActionsListComponent implements OnInit {
       await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
+    console.log('users', folderUsersList);
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
     folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+
+    console.log('users', folderUsersList);
 
     this.matDialog.open(ShareDocumentComponent, {
       height: '250px',

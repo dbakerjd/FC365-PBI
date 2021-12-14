@@ -34,7 +34,7 @@ export class ShareDocumentComponent implements OnInit {
             placeholder: 'Users with access',
             filterLocally: true,
             options: this.data.folderUsersList,
-            multiple: false,
+            multiple: true,
             labelProp: 'Title',
             valueProp: 'Id',
             required: true,
