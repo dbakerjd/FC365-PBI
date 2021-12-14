@@ -328,6 +328,9 @@ export class ActionsListComponent implements OnInit {
   }
 
   async toggleStatus(action: Action) {
+    // only if is the active stage
+    if (this.opportunity?.OpportunityStatus !== 'Active' || !this.isActiveStage(action.StageNameId)) return;
+
     let done = false;
     if (!this.currentUser) this.currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
 
@@ -760,4 +763,10 @@ export class ActionsListComponent implements OnInit {
     
   }
 
+  private isActiveStage(stageId: number): boolean {
+    console.log('stages', this.gates.map(el => el.StageNameId));
+    const position = this.gates.map(el => el.StageNameId).indexOf(stageId);
+    return position === this.gates.length - 1;
+  }
 }
+
