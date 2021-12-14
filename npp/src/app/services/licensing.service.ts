@@ -36,7 +36,7 @@ export class LicensingService {
   async askLicensingApi(context: any): Promise<JDLicense> {
 
       let headers = new HttpHeaders({
-        'x-functions-key': 'tFs/KoE40qeTvQlsYUTA6GmgF88G3QF9RXxX51kasNV2Z8nzr2Y/hA==',
+        'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST',
       });
