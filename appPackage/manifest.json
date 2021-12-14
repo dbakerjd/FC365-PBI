@@ -1,49 +1,66 @@
 {
-    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.9/MicrosoftTeams.schema.json",
-    "manifestVersion": "1.9",
-    "version": "1.0.9",
-    "id": "17534ca2-f4f8-43c0-8612-72bdd29a9ee8",
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.11/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.11",
+    "version": "1.0.3",
+    "id": "f09e1948-42d0-4937-8f7c-63b216c73cd9",
     "packageName": "com.microsoft.teams.extension",
     "developer": {
-        "name": "Beta Software S.L.",
-        "websiteUrl": "https://localhost:4200",
-        "privacyUrl": "https://localhost:4200",
-        "termsOfUseUrl": "https://localhost:4200"
+        "name": "J+D Forecasting",
+        "websiteUrl": "https://jdforecasting.com/",
+        "privacyUrl": "https://jdforecasting.com/privacy-policy/",
+        "termsOfUseUrl": "https://jdforecasting.com/terms-of-service",
+        "mpnId": "684361"
     },
     "icons": {
         "color": "color.png",
         "outline": "outline.png"
     },
     "name": {
-        "short": "NPP Demo",
-        "full": ""
+        "short": "FC365 NPP Dev",
+        "full": "FC365 NPP Dev"
     },
     "description": {
-        "short": "Short description for Personal App.",
-        "full": "Full description of Personal App."
+        "short": "All-in-one, pharmaceutical forecasting platform",
+        "full": "FC365 is a powerful, collaborative, pharmaceutical forecasting solution.\n\nBuilt on the functionality you know and trust, our FC365 Teams App empowers better decision making through effective insight generation and visualisation thanks to J+D. We simplify the complex nature of forecasting with a centralised process in one, shared cloud-based interface.\n\nFC365 is an innovative support system for informed decision making about the future."
     },
-    "accentColor": "#FFFFFF",
+    "accentColor": "#dedede",
     "staticTabs": [
         {
-            "entityId": "JDInternalDemo",
+            "entityId": "FC365NPPDev",
             "name": "NPP",
-            "contentUrl": "https://localhost:4200",
-            "websiteUrl": "https://localhost:4200",
+            "contentUrl": "https://nice-beach-021ec5303.azurestaticapps.net",
+            "websiteUrl": "https://nice-beach-021ec5303.azurestaticapps.net",
+            "scopes": [
+                "personal"
+            ]
+        },
+        {
+            "entityId": "about",
             "scopes": [
                 "personal"
             ]
         }
     ],
     "permissions": [
-        "identity"
+        "identity",
+        "messageTeamMembers"
     ],
     "validDomains": [
-        "localhost:4200",
-        "npp-beta.staging.beta.barcelona",
-        "betasoftwaresl.sharepoint.com"
+        "nice-beach-021ec5303.azurestaticapps.net",
+        "*.sharepoint.com",
+        "*.login.microsoftonline.com"
     ],
     "webApplicationInfo": {
-        "id": "17534ca2-f4f8-43c0-8612-72bdd29a9ee8"
+        "id": "9ff5f696-db6b-4373-b076-eab231d4cdcb",
+        "resource": "https://janddconsulting.onmicrosoft.com/FC365_API_TEST"
+    },
+    "activities": {
+        "activityTypes": [
+            {
+                "type": "PowerBIRefresh",
+                "description": "Power BI Refresh",
+                "templateText": "{reportName} report refreshed in {actor}"
+            }
+        ]
     }
 }
-
