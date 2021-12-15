@@ -68,7 +68,7 @@
                     <div class="folder-info-icons-selected-section"></div>
                 </div>
                 <div class="folder-info-icons-folder-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
-                <div class="folder-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.PowerBi" (click)="refreshPowerBi()"></div>
+                <div class="folder-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi" (click)="refreshPowerBi()"></div>
                 <div class="folder-info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
             </div>
         </div>

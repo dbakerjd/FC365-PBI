@@ -54,6 +54,9 @@ import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 import { PowerBIEmbedModule } from 'powerbi-client-angular';
 import { FilesListComponent } from './files/files-list/files-list.component';
+import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/create-forecast-cycle.component';
+import { CommentsListComponent } from './modals/comments-list/comments-list.component';
+import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
 
 @NgModule({
   imports: [
@@ -108,7 +111,10 @@ import { FilesListComponent } from './files/files-list/files-list.component';
     ExpiredLicenseComponent,
     SafePipe,
     AuthStartComponent,
-    AuthEndComponent
+    AuthEndComponent,
+    CreateForecastCycleComponent,
+    CommentsListComponent,
+    ApproveModelComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

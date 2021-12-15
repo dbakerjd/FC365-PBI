@@ -111,7 +111,14 @@ export interface NPPFile {
   LinkingUri: string;
   TimeLastModified: Date;
   ListItemAllFields?: NPPFileMetadata;
-  lastComments: any[];
+  lastComments: FileComments[];
+}
+
+export interface FileComments {
+  text: string;
+  email: string;
+  name: string;
+  createdAt: string;
 }
 
 export interface NPPFileMetadata {
@@ -144,7 +151,7 @@ export interface SystemFolder {
   ServerRelativeUrl: string;
   ItemCount: number;
   DepartmentID?: number;
-  GeographyID?: boolean;
+  GeographyID?: number;
 }
 
 export interface Country {
@@ -251,8 +258,88 @@ const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 const FILES_FOLDER = "Current Opportunity Library";
-const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
+export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
+
+export interface BusinessUnit {
+  ID: number;
+  Title: string;
+  BUOwnerID: number;
+  BUOwner?: User;
+  SortOrder: number;
+}
+
+export interface ForecastCycle {
+  ID: number;
+  Title: string;
+  SortOrder: number;
+}
+
+export interface BrandForecastCycle {
+  ID: number;
+  Title: string;
+  BrandId: number;
+  Brand?: Brand;
+  ForecastCycleTypeId: number;
+  ForecastCycleType?: ForecastCycle;
+  Year: string;
+}
+
+
+export interface Brand {
+  ID: number;
+  Title: string;
+  BrandOwnerId: number;
+  BrandOwner?: User;
+  BusinessUnitId: number;
+  BusinessUnit?: BusinessUnit;
+  ForecastCycleId: number;
+  ForecastCycle?: ForecastCycle;
+  IndicationId: number[];
+  Indication?: Indication[];
+  FCDueDate?: Date;
+  Year: number;
+}
+
+export interface BrandInput {
+  Title: string;
+  BrandOwnerId: number;
+  IndicationId: number;
+  BusinessUnitId: number;
+  ForecastCycleId: number;
+  FCDueDate?: Date;
+  Year: number;
+}
+
+export interface BrandGeography {
+  Attachments: boolean;
+  AuthorId: number;
+  ContentTypeId: number;
+  CountryId: number;
+  Created: Date;
+  EditorId: number;
+  Master_x0020_GeographyId: number;
+  ID: number;
+  Id: number;
+  Modified: Date;
+  BrandId: number;
+  ServerRedirectedEmbedUri: string;
+  ServerRedirectedEmbedUrl: string;
+  Title: string;
+  Removed: "true" | "false" | boolean;
+}
+
+export const BRAND_LIST = "lists/getbytitle('Brands')";
+export const BUSINESS_UNIT_LIST = "lists/getbytitle('Business Units')";
+export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
+export const BRAND_GEOGRAPHIES_LIST_NAME = 'Brand Geographies';
+export const BRAND_GEOGRAPHIES_LIST = "lists/getByTitle('" + BRAND_GEOGRAPHIES_LIST_NAME + "')";
+export const BRAND_FOLDER_APPROVED = 'Approved Models';
+export const BRAND_FOLDER_ARCHIVED = 'Archived Models';
+export const BRAND_FOLDER_WIP = 'Work in Progress';
+export const BRAND_FOLDER_DOCUMENTS = 'Reference Documents';
+export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
+export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
 
 @Injectable({
   providedIn: 'root'
@@ -260,6 +347,8 @@ const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
 export class SharepointService {
 
   // local "cache"
+  masterBusinessUnits: SelectInputList[] = [];
+  masterForecastCycles: SelectInputList[] = [];
   masterOpportunitiesTypes: OpportunityType[] = [];
   masterGroupTypes: GroupPermission[] = [];
   masterCountriesList: SelectInputList[] = [];
@@ -1429,11 +1518,11 @@ export class SharepointService {
 
   /** --- USERS --- **/
 
-  async getUserProfilePic(userId: number): Promise<string | boolean> {
+  async getUserProfilePic(userId: number): Promise<string> {
     const user = await this.getUserInfo(userId);
-    if (!user) return false;
+    if (!user) return '';
     //TODO check why graph call is failing...
-    return false;
+    return '';
     //return `https://graph.microsoft.com/v1.0/users/${user.Email}/photo/$value`;
   }
 
@@ -1701,6 +1790,695 @@ export class SharepointService {
 
   async getReport(id:number): Promise<PBIReport>{
     return await this.getOneItemById(id,MASTER_POWER_BI);
+  }
+
+  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Brand|undefined> {
+    const owner = await this.getUserInfo(b.BrandOwnerId);
+    if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
+
+    let brand = await this.createItem(BRAND_LIST, b);
+    const BUGroup = await this.createGroup('BU-'+brand.ID);
+    const BOGroup = await this.createGroup('BO-'+brand.ID);
+    if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
+
+    await this.addUserToGroup(owner.LoginName, BOGroup.Id);
+    await this.addUserToGroup(owner.LoginName, BUGroup.Id);
+
+    //create geographies
+    await this.createBrandGeographies(brand.ID,geographies, countries);
+
+    //create models folders
+    let folders = await this.createBrandFolders(brand);
+
+    let permissions = await this.getGroupPermissions(BRAND_FOLDER_WIP);
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'BU', data: BUGroup });
+    groups.push({ type: 'BO', data: BOGroup });
+
+    for (const f of folders.rw) {
+      let folderGroups = [...groups]; // copy default groups
+      let GUGroup;
+      if (f.GeographyID) {
+        GUGroup = await this.createGroup(
+          `BU-${brand.ID}-${f.GeographyID}`, 
+          'Geography ID ' + f.GeographyID);
+        if (GUGroup) {
+          folderGroups.push( { type: 'GU', data: GUGroup} );
+          await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+        }
+      } 
+
+      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    }
+
+    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    for (const f of folders.ro) {
+      let folderGroups = [...groups]; // copy default groups
+      let GUGroup;
+      if (f.GeographyID) {
+        GUGroup = await this.createGroup(
+          `BU-${brand.ID}-${f.GeographyID}`, 
+          'Geography ID ' + f.GeographyID);
+        if (GUGroup) {
+          folderGroups.push( { type: 'GU', data: GUGroup} );
+          await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+        }
+      } 
+
+      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    }
+    
+    return brand; 
+  }
+
+  private async createBrandFolders(brand: Brand): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
+    let ReadWriteNames = [BRAND_FOLDER_WIP, BRAND_FOLDER_DOCUMENTS];
+    let ReadOnlyNames = [BRAND_FOLDER_APPROVED, BRAND_FOLDER_ARCHIVED];
+    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
+
+    let rwFolders: SystemFolder[] = [];
+    for (const mf of ReadWriteNames) {
+      const mfFolder = await this.createFolder(`${mf}`);
+      if(mfFolder) {
+        const BUFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}`);
+        if(BUFolder) {
+          const folder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}`);
+          if (folder) {
+            if(mf != BRAND_FOLDER_DOCUMENTS) {
+              const forecastFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+              if(forecastFolder) {
+                rwFolders = rwFolders.concat(await this.createBrandGeographyFolders(brand, geographies, mf));
+              }
+            } 
+          }
+        }
+      }
+    }
+
+    let roFolders: SystemFolder[] = [];
+    for (const mf of ReadOnlyNames) {
+      const mfFolder = await this.createFolder(`${mf}`);
+      if(mfFolder) {
+        const BUFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}`);
+        if(BUFolder) {
+          const folder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}`);
+          if (folder) {
+            const forecastFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+            if(forecastFolder) {
+              roFolders = roFolders.concat(await this.createBrandGeographyFolders(brand, geographies, mf));
+            }
+          }
+        }
+      }
+    }
+    return {
+      rw: rwFolders,
+      ro: roFolders
+    };
+  }
+
+  private async createBrandGeographyFolders(brand: Brand, geographies: BrandGeography[], mf: string): Promise<SystemFolder[]> {
+    let folders: SystemFolder[] = [];
+    let basePath = `${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    for (const geo of geographies) {
+      const geoFolder = await this.createFolder(`${basePath}/${geo.ID}`);
+      if (geoFolder) {
+        geoFolder.GeographyID = geo.ID;
+        folders.push(geoFolder);
+      }
+    }
+    
+    return folders;
+  }
+
+
+  async getBrands(): Promise<Brand[]> {
+    let max = await this.countItems(BRAND_LIST);
+    let cond = "$select=*,Indication/Title,Indication/TherapyArea,BrandOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=BrandOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
+    
+    let results = await this.getAllItems(BRAND_LIST, cond);
+    
+    return results;
+  }
+
+  async getBrand(id: number): Promise<Brand> {
+    let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,BrandOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=BrandOwner,ForecastCycle,BusinessUnit,Indication";
+   
+    let results = await this.getOneItem(BRAND_LIST, "$filter=Id eq "+id+cond);
+    
+    return results;
+  }
+
+  async getBrandFields() {
+    return [
+      { value: 'Title', label: 'Brand Name' },
+      //{ value: 'FCDueDate', label: 'Forecast Cycle Due Date' },
+      { value: 'BusinessUnit.Title', label: 'Business Unit' },
+      { value: 'Indication.Title', label: 'Indication Name' },
+    ];
+  }
+
+
+  async getBrandModelsCount(brand: Brand) {
+    return await this.getBrandFolderFilesCount(brand, BRAND_FOLDER_WIP);
+  }
+
+  async getBrandApprovedModelsCount(brand: Brand) {
+    return await this.getBrandFolderFilesCount(brand, BRAND_FOLDER_APPROVED);
+  }
+
+  async getBrandFolderFilesCount(brand: Brand, folder: string) {
+    let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+    const geoFolders = await this.getSubfolders(currentFolder);
+    let currentFiles = [];
+    for (const geofolder of geoFolders) {
+      let folder = currentFolder + '/' + geofolder.Name;
+      currentFiles.push(...await this.readBrandFolderFiles(folder, true));
+    }
+    return currentFiles.length;
+  }
+
+  //return all geographies for now
+  async getBrandAccessibleGeographiesList(brand: Brand): Promise<SelectInputList[]> {
+    const geographiesList = await this.getBrandGeographies(brand.ID);
+
+    const geoFoldersWithAccess = await this.getSubfolders(`${BRAND_FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+    return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
+      .map(t => { return { value: t.Id, label: t.Title } });
+  }
+
+  async getBusinessUnitsList(): Promise<SelectInputList[]> {
+    let cache = this.masterBusinessUnits;
+    if (cache && cache.length) {
+      return cache;
+    }
+    let max = await this.countItems(BUSINESS_UNIT_LIST);
+    let cond = "$skiptoken=Paged=TRUE&$top="+max;
+    let results = await this.getAllItems(BUSINESS_UNIT_LIST, cond);
+    this.masterBusinessUnits = results.map(el => { return {value: el.ID, label: el.Title }});
+    return this.masterBusinessUnits;
+  }
+
+  async getForecastCycles(): Promise<SelectInputList[]> {
+    let cache = this.masterForecastCycles;
+    if (cache && cache.length) {
+      return cache;
+    }
+    let max = await this.countItems(FORECAST_CYCLES_LIST);
+    let cond = "$skiptoken=Paged=TRUE&$top="+max;
+    let results = await this.getAllItems(FORECAST_CYCLES_LIST, cond);
+    this.masterForecastCycles = results.map(el => { return {value: el.ID, label: el.Title }});
+    return this.masterForecastCycles;
+  }
+
+  async getBrandGeographies(brandId: number, all?: boolean) {
+    let filter = `$filter=BrandId eq ${brandId}`;
+    if (!all) {
+      filter += ' and Removed ne 1';
+    }
+    return await this.getAllItems(
+      BRAND_GEOGRAPHIES_LIST, filter,
+    );
+  }
+
+  async updateBrandGeographies(brand: Brand, newGeographies: string[]) {
+    let brandId = brand.ID;
+    let allGeo: BrandGeography[] = await this.getBrandGeographies(brandId, true);
+
+    let neoGeo = newGeographies.filter(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      let id = arrId[1];
+      let geo = allGeo.find(el => {
+        if (kindOfGeo == 'G') {
+          return el.Master_x0020_GeographyId == parseInt(id);
+        } else {
+          return el.CountryId == parseInt(id);
+        }
+      });
+
+      return !geo;
+    });
+
+    let neoCountry = neoGeo.filter(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      return kindOfGeo == 'C';
+    }).map(el => {
+      let arrId = el.split("-");
+      return parseInt(arrId[1]);
+    });
+
+    let neoGeography = neoGeo.filter(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      return kindOfGeo == 'G';
+    }).map(el => {
+      let arrId = el.split("-");
+      return parseInt(arrId[1]);
+    })
+
+    let restoreGeo: BrandGeography[] = [];
+    newGeographies.forEach(el => {
+      let arrId = el.split("-");
+      let kindOfGeo = arrId[0];
+      let id = arrId[1];
+      let geo = allGeo.find(el => {
+        if (kindOfGeo == 'G') {
+          return el.Master_x0020_GeographyId == parseInt(id);
+        } else {
+          return el.CountryId == parseInt(id);
+        }
+      });
+
+      if (geo && geo.Removed == true) {
+        restoreGeo.push(geo);
+      }
+    });
+
+    let removeGeo = allGeo.filter(el => {
+      let isCountry = !!el.CountryId;
+      let geo = newGeographies.find(g => {
+        if (isCountry) {
+          return g == 'C-' + el.CountryId;
+        } else {
+          return g == 'G-' + el.Master_x0020_GeographyId;
+        }
+      });
+
+      return !geo && el.Removed != true;
+    });
+
+    await this.deleteBrandGeographies(removeGeo);
+    await this.restoreBrandGeographies(restoreGeo);
+    let newGeos = await this.createBrandGeographies(brandId, neoGeography, neoCountry);
+
+    let BOGroup = await this.getGroup(`BO-${brandId}`);
+    let BUGroup = await this.getGroup(`BU-${brandId}`);
+    if (!BOGroup || !BUGroup) throw new Error("Error obtaining user groups.");
+
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'BO', data: BOGroup });
+
+    let permissions = await this.getGroupPermissions(BRAND_GEOGRAPHIES_LIST_NAME);
+
+    for (const oppGeo of newGeos) {
+      await this.setPermissions(permissions, groups, oppGeo.Id);
+    }
+
+    let folderNames = [BRAND_FOLDER_APPROVED, BRAND_FOLDER_ARCHIVED, BRAND_FOLDER_WIP];
+    
+    let folders: SystemFolder[] = [];
+    for (const mf of folderNames) {
+      folders = await this.createBrandGeographyFolders(brand, newGeos, mf);
+    }
+  }
+
+  async deleteBrandGeographies(removeGeo: BrandGeography[]) {
+    for (let i = 0; i < removeGeo.length; i++) {
+      await this.updateItem(removeGeo[i].ID, BRAND_GEOGRAPHIES_LIST, {
+        Removed: true
+      });
+    }
+  }
+
+  async restoreBrandGeographies(restoreGeo: BrandGeography[]) {
+    for (let i = 0; i < restoreGeo.length; i++) {
+      await this.updateItem(restoreGeo[i].ID, BRAND_GEOGRAPHIES_LIST, {
+        Removed: false
+      });
+    }
+  }
+
+  async createBrandGeographies(brandId: number, geographies: number[], countries: number[]) {
+    const geographiesList = await this.getGeographiesList();
+    const countriesList = await this.getCountriesList();
+    let res = [];
+    for (const g of geographies) {
+      let newGeo = await this.createItem(BRAND_GEOGRAPHIES_LIST, {
+        Title: geographiesList.find(el => el.value == g)?.label,
+        BrandId: brandId,
+        Master_x0020_GeographyId: g
+      });
+      res.push(newGeo);
+    }
+    for (const c of countries) {
+      let newGeo = await this.createItem(BRAND_GEOGRAPHIES_LIST, {
+        Title: countriesList.find(el => el.value == c)?.label,
+        BrandId: brandId,
+        CountryId: c
+      });
+      res.push(newGeo);
+    }
+
+    return res;
+  }
+
+  async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
+    const oppBeforeChanges: Brand = await this.getOneItemById(brandId, BRAND_LIST);
+    const success = await this.updateItem(brandId, BRAND_LIST, brandData);
+
+    if (success && oppBeforeChanges.BrandOwnerId !== brandData.BrandOwnerId) { // owner changed
+      return this.changeBrandOwnerPermissions(brandId, oppBeforeChanges.BrandOwnerId, brandData.BrandOwnerId);
+    }
+
+    return success;
+  }
+
+  private async changeBrandOwnerPermissions(brandId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
+
+    const newOwner = await this.getUserInfo(newOwnerId);
+    const BOGroup = await this.getGroup('BO-' + brandId); // Opportunity Owner (OO)
+    const BUGroup = await this.getGroup('BU-' + brandId); // Opportunity Users (OO)
+    if (!newOwner.LoginName || !BOGroup || !BUGroup) return false;
+
+    let success = await this.removeUserFromAllGroups(brandId, currentOwnerId, ['BO', 'BU']);
+
+    success = await this.addUserToGroup(newOwner.LoginName, BOGroup.Id) && success;
+    return await this.addUserToGroup(newOwner.LoginName, BUGroup.Id) && success;
+  }
+
+  async readBrandFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+    let files: NPPFile[] = []
+    const result = await this.query(
+      `GetFolderByServerRelativeUrl('${folder}')/Files`,
+      '$expand=ListItemAllFields',
+    ).toPromise();
+
+    if (result.value) {
+      files = result.value;
+    }
+
+    if (expandProperties && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        let fileItems = files[i];
+        if (fileItems) {
+          let info = await this.getBrandFileInfo(folder, fileItems);
+          fileItems = Object.assign(fileItems.ListItemAllFields, info);
+        }
+      }
+    }
+    return files;
+  }
+  
+  async getBrandFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
+    let arrFolder = folder.split("/");
+    let rootFolder = arrFolder[0];
+    let select = '';
+    switch(rootFolder) {
+      case BRAND_FOLDER_DOCUMENTS:
+        select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
+        break;
+      case BRAND_FOLDER_ARCHIVED:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title&$expand=Author,Editor,BrandGeography,ModelScenario,Indication';  
+        break;
+      default:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,BrandGeography,ModelScenario,ApprovalStatus,Indication';
+        break;
+    }
+    
+    return await this.query(
+      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
+      select,
+      'all'
+    ).toPromise();
+  }
+
+  clearFileName(name: string): string {
+    return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
+  }
+
+  async updateBrandGeographyUsers(brandId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
+    // groups needed
+    const BUGroup = await this.getGroup('BU-' + brandId);
+    const BOGroup = await this.getGroup('BO-' + brandId);
+    let groupName = `BU-${brandId}-${geoId}`;
+    const GUGroup = await this.getGroup(groupName);
+
+    if (!BUGroup || !BOGroup || !GUGroup) throw new Error("Permission groups missing.");
+
+    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
+    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
+
+    let success = true;
+    for (const userId of removedUsers) {
+      success = success && await this.removeUserFromGroup(GUGroup.Id, userId);
+      success = success && await this.removeUserFromGroup(BUGroup.Id, userId);
+    }
+
+    if (!success) return success;
+
+    for (const userId of addedUsers) {
+      const user = await this.getUserInfo(userId);
+      if (user.LoginName) {
+        success = success && await this.addUserToGroup(user.LoginName, GUGroup.Id);
+        success = success && await this.addUserToGroup(user.LoginName, BUGroup.Id);
+        if (!success) return success;
+      }
+    }
+    return success;
+  }
+
+  async getBrandForecastCycles(brand: Brand) {
+    let filter = `$filter=BrandId eq ${brand.ID}`;
+    
+    return await this.getAllItems(
+      BRAND_FORECAST_CYCLE_LIST, filter,
+    ); 
+  }
+
+  async createForecastCycle(brand: Brand, values: any) {
+    console.log(values);
+    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
+    let archivedBasePath = `${BRAND_FOLDER_ARCHIVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let approvedBasePath = `${BRAND_FOLDER_APPROVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let workInProgressBasePath = `${BRAND_FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+
+    let cycle = await this.createItem(BRAND_FORECAST_CYCLE_LIST, {
+      BrandId: brand.ID,
+      ForecastCycleTypeId: brand.ForecastCycleId,
+      Year: brand.Year+"",
+      Title: brand.ForecastCycle?.Title + ' ' + brand.Year
+    });
+
+    const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    
+    for (const geo of geographies) {
+      let GUGroup = await this.getGroup(`BU-${brand.ID}-${geo.ID}`);
+      if(GUGroup) {
+        let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+        const cycleFolder = await this.createFolder(geoFolder);
+        if(cycleFolder) {
+          await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
+          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}`, geoFolder);
+        }else {
+          throw new Error("Could not create Forecast Cycle folder");
+        }
+      } else {
+        throw new Error("Could not get geography group.");
+      }
+    }
+
+    let changes = {
+      ForecastCycleId: values.ForecastCycle,
+      Year: values.Year
+    };
+
+    await this.updateItem(brand.ID, BRAND_LIST, changes);
+
+    await this.setAllModelsStatusInFolder(brand, workInProgressBasePath, "In Progress");
+    return changes;
+
+  }
+
+  async setAllModelsStatusInFolder(brand: Brand, folder: string, status: string) {
+    
+    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
+    
+    let arrFolder = folder.split("/");
+    let rootFolder = arrFolder[0];
+
+    for(let i=0; i<geographies.length; i++) {
+      let geo = geographies[i];
+      let files = await this.readBrandFolderFiles(folder+"/"+geo.ID, true);
+      for(let j=0; files && j<files.length; j++) {
+        let model = files[j];
+        await this.setBrandApprovalStatus(rootFolder, model, brand, "In Progress");
+      }
+    }
+    
+  }
+
+  async moveAllFolderFiles(origin: string, dest: string) {
+    let files = await this.readBrandFolderFiles(origin);
+    for(let i=0;i<files.length; i++){
+      let model = files[i];
+      await this.moveFile(model.ServerRelativeUrl, dest);
+    }
+  }
+
+  async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
+
+    /*
+    // set readonly field to false
+
+    const data: any = await this.http.get(
+      this.licensing.getSharepointApiUri() + "lists/getByTitle('" + BRAND_FOLDER_WIP + "')/fields?$filter=Title eq 'Created By'",
+    ).toPromise();
+
+    if (data.value.length < 1) return;
+
+    const fieldId = data.value[0].Id;
+
+    await this.http.post(
+      this.licensing.getSharepointApiUri() + `lists/getByTitle('${BRAND_FOLDER_WIP}')/fields(guid'${fieldId}')`, {
+      // '__metadata': { 'type': 'SP.Field' },
+      'ReadOnlyField': false
+    },
+      {
+        headers: new HttpHeaders({
+          'If-Match': '*',
+          'X-HTTP-Method': "PATCH"
+        })
+      }).toPromise();
+    */
+
+    await this.http.post(
+      this.licensing.getSharepointApiUri() + `lists/getByTitle('${list}')/items(${elementId})/validateUpdateListItem`,
+      JSON.stringify({
+        "formValues": [
+          {
+            "__metadata": { "type": "SP.ListItemFormUpdateValue" },
+            "FieldName": fieldname,
+            "FieldValue": "[{'Key':'" + value + "'}]"
+          }
+        ],
+        "bNewDocumentUpdate": false
+      }),
+      {
+        headers: new HttpHeaders({
+          "Accept": "application/json; odata=verbose",
+          "Content-Type": "application/json; odata=verbose"
+        })
+      }).toPromise();
+  }
+
+  async addComment(file: NPPFile, str: string) {
+    let comments = file.ListItemAllFields?.Comments?.replace(/""/g, '"');
+    let parsedComments = [];
+    let commentsStr = "";
+    if(comments) {
+      try {
+        parsedComments = JSON.parse(comments);
+      } catch(e) {
+
+      }
+      let currentUser = await this.getCurrentUserInfo();
+      let newComment = {
+        text: str,
+        email: currentUser.Email,
+        name: currentUser.Title,
+        createdAt: new Date().toISOString()
+      }
+      parsedComments.push(newComment);
+      commentsStr = JSON.stringify(parsedComments)
+      if(file.ListItemAllFields) file.ListItemAllFields.Comments = commentsStr;
+    }
+    return commentsStr;   
+  }
+
+  async copyFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<any> {
+    const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
+    let destinationUrl = `copyTo('${destinationFolder + this.clearFileName(newFileName)}')`;
+    try {
+      const r = await this.http.post(
+        this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
+        null
+      ).toPromise();
+      return r;
+    }
+    catch (e) {
+      return false;
+    }
+  }
+
+  async moveFile(originServerRelativeUrl: string, destinationFolder: string): Promise<any> {
+    let arrUrl = originServerRelativeUrl.split("/");
+    let fileName = arrUrl[arrUrl.length - 1];
+    const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
+    let destinationUrl = `moveTo('${destinationFolder + "/" + fileName}')`;
+    const r = await this.http.post(
+      this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
+      null
+    ).toPromise();
+  }
+
+  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Brand | null, status: string, comments: string | null = null) {
+    if(file.ListItemAllFields) {
+      const statusId = await this.getApprovalStatusId(status);
+      if (!statusId) return false;
+      /*TODO use something like this to ensure unique name
+      while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
+        fileName = baseFileName + '-copy-' + attemps + '.' + extension;
+      }*/
+      let data = { ApprovalStatusId: statusId };
+      if (comments) Object.assign(data, { Comments: comments });
+  
+      await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
+      let res;
+      if(status === "Approved" && brand) {
+        let arrFolder = file.ServerRelativeUrl.split("/");
+        await this.removeOldAcceptedModel(brand, file);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+BRAND_FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
+        return res;
+      };
+      
+      return true;
+    } else {
+      throw new Error("Missing file metadata.");
+    }
+    
+  
+  }
+
+  async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
+    if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
+      let arrFolder = file.ServerRelativeUrl.split("/");
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+BRAND_FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
+      let scenarios = file.ListItemAllFields.ModelScenarioId;
+
+      let model = await this.getFileByScenarios(path, scenarios);
+      if(model) {
+        await this.deleteFile(model.ServerRelativeUrl);
+      }
+    }
+  }
+
+  async getFileByScenarios(path: string, scenarios: number[]) {
+    let files = await this.readBrandFolderFiles(path,false);
+    for(let i=0;i<files.length; i++){
+      let model = files[i];
+      let sameScenario = this.sameScenarios(model, scenarios);
+      if(sameScenario) {
+        return model;
+      }
+    }
+    return null;
+  }
+
+  sameScenarios(model: NPPFile, scenarios: number[]) {
+    if(model.ListItemAllFields && model.ListItemAllFields.ModelScenarioId) {
+      
+      let sameScenario = model.ListItemAllFields.ModelScenarioId.length === scenarios.length;
+      
+      for(let j=0; sameScenario && j < model.ListItemAllFields.ModelScenarioId.length ; j++) {
+        let scenarioId = model.ListItemAllFields.ModelScenarioId[j];
+        sameScenario = sameScenario && (scenarios.indexOf(scenarioId) != -1);
+      }
+      
+      return sameScenario;
+
+    } else return false;
   }
 
 }

@@ -512,10 +512,23 @@ export class FilesListComponent implements OnInit {
     try {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
-        let res = await this.powerBi.refreshReport();
+        const reportName: string = "Epi+";
+
+        let response = await this.powerBi.refreshReport(reportName);
         this.refreshingPowerBi = false;   
-        if(res) {
-          this.toastr.success("Analytics report succesfully refreshed.");
+        switch (response){
+          case 202:{
+            this.toastr.success("Analytics report succesfully refreshed.");
+            break;
+          }
+          case 409:{
+            this.toastr.error("Report currently refreshing. Please try again later");
+            break;
+          }
+          default:{
+            this.toastr.error(`Unknown error, ${response}`);
+            break;
+          }
         }
       }  
     } catch(e: any) {
