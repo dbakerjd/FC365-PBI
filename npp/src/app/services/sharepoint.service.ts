@@ -502,6 +502,7 @@ export class SharepointService {
   async getOpportunities(expand = true, onlyActive = false): Promise<Opportunity[]> {
     let filter = undefined;
     if (expand) {
+      //TODO check why OpportunityType/isInternal is failing
       filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner";
     }
     if (onlyActive) {
@@ -1585,7 +1586,8 @@ export class SharepointService {
   }
 
   async getOpportunityTypesList(type: string | null = null): Promise<SelectInputList[]> {
-    return (await this.getOpportunityTypes(type)).map(t => { return { value: t.ID, label: t.Title } });
+    let res = await this.getOpportunityTypes(type);
+    return res.map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getUsersList(usersId: number[]): Promise<SelectInputList[]> {

@@ -8,7 +8,7 @@ import { from } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { Opportunity, OpportunityType, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
@@ -25,6 +25,7 @@ export class OpportunityListComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
   loading = true;
+  opportunityTypes: OpportunityType[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
@@ -39,7 +40,8 @@ export class OpportunityListComponent implements OnInit {
 
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
-    let opportunityTypes = await this.sharepoint.getOpportunityTypesList();
+    this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
+    let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
     let opportunityFields = await this.sharepoint.getOpportunityFields();
     
     this.fields = [{
@@ -160,7 +162,8 @@ export class OpportunityListComponent implements OnInit {
 
   navigateTo(item: Opportunity) {
     if (item.OpportunityStatus === "Processing") return;
-    if(item.OpportunityType?.isInternal) {
+    let opType = this.opportunityTypes.find(el => el.Title == item.OpportunityType?.Title);
+    if(opType?.isInternal) {
       this.router.navigate(['opportunities', item.ID, 'files']);
     } else {
       this.router.navigate(['opportunities', item.ID, 'actions']);
