@@ -2,3 +2,10 @@
    - Add column "isInternal" to "Master Opportunity Type List", type Boolean, default "No".
    - Add Business Units List same as Inline APP.
    - Add column "BusinessUnitId" to Opportunity List type reference column to Business Unit List.
+   - Model Folders as in Inline "Approved Models", "Archived Models", "Work in Progress"
+   - Add columns to Model Folders
+      * Brand or Opportunity Lookup
+      * Model Scenario Lookup
+      * Comments
+      * BrandGeography or OpportunityGeography Lookup
+      * Indication Lookup
