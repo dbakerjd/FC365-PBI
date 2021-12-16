@@ -26,6 +26,7 @@ export interface Opportunity {
   progress?: number;
   gates?: Stage[];
   isGateType?: boolean;
+  BusinessUnitId: number;
 }
 
 export interface OpportunityInput {
@@ -334,12 +335,15 @@ export const BUSINESS_UNIT_LIST = "lists/getbytitle('Business Units')";
 export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
 export const BRAND_GEOGRAPHIES_LIST_NAME = 'Brand Geographies';
 export const BRAND_GEOGRAPHIES_LIST = "lists/getByTitle('" + BRAND_GEOGRAPHIES_LIST_NAME + "')";
-export const BRAND_FOLDER_APPROVED = 'Approved Models';
-export const BRAND_FOLDER_ARCHIVED = 'Archived Models';
-export const BRAND_FOLDER_WIP = 'Work in Progress';
-export const BRAND_FOLDER_DOCUMENTS = 'Reference Documents';
+export const FOLDER_APPROVED = 'Approved Models';
+export const FOLDER_ARCHIVED = 'Archived Models';
+export const FOLDER_WIP = 'Work in Progress';
+export const FOLDER_DOCUMENTS = 'Reference Documents';
 export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
 export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
+
+export const OPPORTUNITY_FORECAST_CYCLE = 'Archived Forecast Cycles';
+export const OPPORTUNITY_FORECAST_CYCLE_LIST = "lists/getbytitle('" + OPPORTUNITY_FORECAST_CYCLE + "')";
 
 @Injectable({
   providedIn: 'root'
@@ -1812,7 +1816,7 @@ export class SharepointService {
     //create models folders
     let folders = await this.createBrandFolders(brand);
 
-    let permissions = await this.getGroupPermissions(BRAND_FOLDER_WIP);
+    let permissions = await this.getGroupPermissions(FOLDER_WIP);
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'BU', data: BUGroup });
     groups.push({ type: 'BO', data: BOGroup });
@@ -1854,8 +1858,8 @@ export class SharepointService {
   }
 
   private async createBrandFolders(brand: Brand): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
-    let ReadWriteNames = [BRAND_FOLDER_WIP, BRAND_FOLDER_DOCUMENTS];
-    let ReadOnlyNames = [BRAND_FOLDER_APPROVED, BRAND_FOLDER_ARCHIVED];
+    let ReadWriteNames = [FOLDER_WIP, FOLDER_DOCUMENTS];
+    let ReadOnlyNames = [FOLDER_APPROVED, FOLDER_ARCHIVED];
     const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
 
     let rwFolders: SystemFolder[] = [];
@@ -1866,7 +1870,7 @@ export class SharepointService {
         if(BUFolder) {
           const folder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}`);
           if (folder) {
-            if(mf != BRAND_FOLDER_DOCUMENTS) {
+            if(mf != FOLDER_DOCUMENTS) {
               const forecastFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
               if(forecastFolder) {
                 rwFolders = rwFolders.concat(await this.createBrandGeographyFolders(brand, geographies, mf));
@@ -1942,11 +1946,11 @@ export class SharepointService {
 
 
   async getBrandModelsCount(brand: Brand) {
-    return await this.getBrandFolderFilesCount(brand, BRAND_FOLDER_WIP);
+    return await this.getBrandFolderFilesCount(brand, FOLDER_WIP);
   }
 
   async getBrandApprovedModelsCount(brand: Brand) {
-    return await this.getBrandFolderFilesCount(brand, BRAND_FOLDER_APPROVED);
+    return await this.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
   }
 
   async getBrandFolderFilesCount(brand: Brand, folder: string) {
@@ -1964,7 +1968,7 @@ export class SharepointService {
   async getBrandAccessibleGeographiesList(brand: Brand): Promise<SelectInputList[]> {
     const geographiesList = await this.getBrandGeographies(brand.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${BRAND_FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
@@ -2088,7 +2092,7 @@ export class SharepointService {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
 
-    let folderNames = [BRAND_FOLDER_APPROVED, BRAND_FOLDER_ARCHIVED, BRAND_FOLDER_WIP];
+    let folderNames = [FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP];
     
     let folders: SystemFolder[] = [];
     for (const mf of folderNames) {
@@ -2188,10 +2192,10 @@ export class SharepointService {
     let rootFolder = arrFolder[0];
     let select = '';
     switch(rootFolder) {
-      case BRAND_FOLDER_DOCUMENTS:
+      case FOLDER_DOCUMENTS:
         select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
         break;
-      case BRAND_FOLDER_ARCHIVED:
+      case FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title&$expand=Author,Editor,BrandGeography,ModelScenario,Indication';  
         break;
       default:
@@ -2241,6 +2245,14 @@ export class SharepointService {
     return success;
   }
 
+  async getOpportunityForecastCycles(opportunity: Opportunity) {
+    let filter = `$filter=OpportunityId eq ${opportunity.ID}`;
+    
+    return await this.getAllItems(
+      OPPORTUNITY_FORECAST_CYCLE_LIST, filter,
+    ); 
+  }
+
   async getBrandForecastCycles(brand: Brand) {
     let filter = `$filter=BrandId eq ${brand.ID}`;
     
@@ -2252,9 +2264,9 @@ export class SharepointService {
   async createForecastCycle(brand: Brand, values: any) {
     console.log(values);
     const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
-    let archivedBasePath = `${BRAND_FOLDER_ARCHIVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let approvedBasePath = `${BRAND_FOLDER_APPROVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let workInProgressBasePath = `${BRAND_FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let archivedBasePath = `${FOLDER_ARCHIVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let approvedBasePath = `${FOLDER_APPROVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let workInProgressBasePath = `${FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
 
     let cycle = await this.createItem(BRAND_FORECAST_CYCLE_LIST, {
       BrandId: brand.ID,
@@ -2431,7 +2443,7 @@ export class SharepointService {
       if(status === "Approved" && brand) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeOldAcceptedModel(brand, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+BRAND_FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
         return res;
       };
       
@@ -2446,7 +2458,7 @@ export class SharepointService {
   async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+BRAND_FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getFileByScenarios(path, scenarios);

@@ -17,10 +17,12 @@ import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.c
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, BRAND_FOLDER_ARCHIVED, BRAND_FOLDER_APPROVED, BRAND_FOLDER_WIP, BRAND_FOLDER_DOCUMENTS, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication } from 'src/app/services/sharepoint.service';
+import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-files-list',
@@ -33,8 +35,8 @@ export class FilesListComponent implements OnInit {
   currentFolder: NPPFolder | undefined = undefined;
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
-  brandId = 0;
-  brand: Brand | undefined = undefined;
+  entityId = 0;
+  entity: Brand | Opportunity | undefined = undefined;
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
@@ -60,7 +62,8 @@ export class FilesListComponent implements OnInit {
     public matDialog: MatDialog,
     private toastr: ToastrService, 
     private teams: TeamsService,
-    public licensing: LicensingService) { }
+    public licensing: LicensingService,
+    public disambiguator: InlineNppDisambiguationService) { }
 
   ngOnInit(): void {
     if(this.teams.initialized) this.init();
@@ -78,17 +81,20 @@ export class FilesListComponent implements OnInit {
       this.currentUser = await this.sharepoint.getCurrentUserInfo();
       this.masterCycles = await this.sharepoint.getForecastCycles();
 
-      if(params.id && params.id != this.brandId) {
-        this.brandId = params.id;
-        this.brand = await this.sharepoint.getBrand(params.id);
-        this.isOwner = this.currentUser.Id === this.brand.BrandOwnerId;
-        if (this.brand && this.brand.BrandOwner) {
+      if(params.id && params.id != this.entityId) {
+        this.entityId = params.id;
+        this.entity = await this.disambiguator.getEntity(params.id);
+        
+        let owner = this.disambiguator.getOwner(this.entity);
+        let ownerId = this.disambiguator.getOwnerId(this.entity);
+        this.isOwner = this.currentUser.Id === ownerId;
+        if (this.entity && owner) {
           
-          this.cycles = await this.sharepoint.getBrandForecastCycles(this.brand);
+          this.cycles = await this.disambiguator.getForecastCycles(this.entity);
 
-          let pic = await this.sharepoint.getUserProfilePic(this.brand.BrandOwnerId);
-          this.brand.BrandOwner.profilePicUrl = pic ? pic : '/assets/user.svg';
-          this.profilePic = this.brand.BrandOwner.profilePicUrl;
+          let pic = await this.sharepoint.getUserProfilePic(ownerId);
+          owner.profilePicUrl = pic ? pic : '/assets/user.svg';
+          this.profilePic = owner.profilePicUrl;
         }
         this.setStatus(this.modelStatus[0]);
       }
@@ -103,13 +109,13 @@ export class FilesListComponent implements OnInit {
   getSharepointFolderNameByModelStatus(status: string) {
     switch(status) {
       case 'Archived':
-        return BRAND_FOLDER_ARCHIVED+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
       case 'Approved':
-        return BRAND_FOLDER_APPROVED+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
       case 'Work in Progress':
-        return BRAND_FOLDER_WIP+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
       default:
-        return BRAND_FOLDER_DOCUMENTS+'/'+this.brand?.BusinessUnitId+'/'+this.brand?.ID;
+        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID;
     }
   }
 
@@ -120,13 +126,13 @@ export class FilesListComponent implements OnInit {
   getRootFolder(status: string) {
     switch(status) {
       case 'Archived':
-        return BRAND_FOLDER_ARCHIVED;
+        return FOLDER_ARCHIVED;
       case 'Approved':
-        return BRAND_FOLDER_APPROVED;
+        return FOLDER_APPROVED;
       case 'Work in Progress':
-        return BRAND_FOLDER_WIP;
+        return FOLDER_WIP;
       default:
-        return BRAND_FOLDER_DOCUMENTS;
+        return FOLDER_DOCUMENTS;
     }
   }
 

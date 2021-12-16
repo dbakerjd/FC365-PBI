@@ -57,6 +57,7 @@ import { FilesListComponent } from './files/files-list/files-list.component';
 import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CommentsListComponent } from './modals/comments-list/comments-list.component';
 import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
+import { InlineNppDisambiguationService } from './services/inline-npp-disambiguation.service';
 
 @NgModule({
   imports: [
@@ -124,7 +125,8 @@ import { ApproveModelComponent } from './modals/approve-model/approve-model.comp
     SharepointService,
     LicensingService,
     WorkInProgressService,
-    PowerBiService
+    PowerBiService,
+    InlineNppDisambiguationService
   ],
   bootstrap: [AppComponent]
 })
