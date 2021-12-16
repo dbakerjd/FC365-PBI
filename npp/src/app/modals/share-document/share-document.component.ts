@@ -28,7 +28,7 @@ export class ShareDocumentComponent implements OnInit {
     this.file = this.data.file;
     this.fields = [{
       fieldGroup: [{
-        key: 'userId',
+        key: 'usersId',
         type: 'ngsearchable',
         templateOptions: {
             label: 'Document Users:',
@@ -46,14 +46,16 @@ export class ShareDocumentComponent implements OnInit {
 
   async onSubmit() {
     const fileId = this.file?.ListItemAllFields?.ID;
-    if (fileId && this.model.userId) {
+    if (fileId && this.model.usersId) {
       const userFrom = await this.sharepoint.getCurrentUserInfo();
-      const created = await this.sharepoint.createNotification(
-        this.model.userId, 
-        `The file "${this.file?.Name}" was shared with you by ${userFrom.Title}`
-      );
-      if (created) this.toastr.success("The file was shared successfully");
-      else this.toastr.error("The file couldn't be shared", "Try again");
+      for (const userId of this.model.usersId) {
+        await this.sharepoint.createNotification(
+          userId, 
+          `The file "${this.file?.Name}" was shared with you by ${userFrom.Title}`
+        );
+      }
+      this.toastr.success("The file was shared successfully");
+      // else this.toastr.error("The file couldn't be shared", "Try again");
       this.dialogRef.close();
     }
   }

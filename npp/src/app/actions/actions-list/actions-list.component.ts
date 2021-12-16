@@ -639,25 +639,23 @@ export class ActionsListComponent implements OnInit {
     
     // users with access
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
-    console.log('users group', folderUsersList);
     folderUsersList = folderUsersList.concat(
       await this.sharepoint.getGroupMembers('OO-' + this.opportunityId),
       await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
-    console.log('users all', folderUsersList);
+    // clean users list
+    let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
-    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
-
-    console.log('users', folderUsersList);
+    uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
       height: '300px',
       width: '405px',
       data: {
         file,
-        folderUsersList
+        folderUsersList: uniqueFolderUsersList
       }
     });
   }
@@ -760,7 +758,6 @@ export class ActionsListComponent implements OnInit {
   }
 
   private isActiveStage(stageId: number): boolean {
-    console.log('stages', this.gates.map(el => el.StageNameId));
     const position = this.gates.map(el => el.StageNameId).indexOf(stageId);
     return position === this.gates.length - 1;
   }
