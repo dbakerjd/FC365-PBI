@@ -3,11 +3,11 @@
     <mat-dialog-content>
         <p *ngIf="data.folderUsersList.length < 1">There are no more users with access to share this file.</p>
         <p *ngIf="data.folderUsersList.length > 0">Choose who to share the file among users with access to it.</p>
-        <p>You can give access to new users through the stage user management options.</p>
-        <formly-form [model]="model" [fields]="fields" [form]="form" *ngIf="data.folderUsersList > 0"></formly-form>
+        <p class="users-advice">You can give access to new users through the stage user management options.</p>
+        <formly-form [model]="model" [fields]="fields" [form]="form" *ngIf="data.folderUsersList.length > 0"></formly-form>
     </mat-dialog-content>
     <div class="dialog-footer">
         <div class="dialog-cancel-button" mat-dialog-close>Close</div>
-        <div class="dialog-submit-button" (click)="onSubmit()" cdkFocusInitial [ngClass]="{'disabled' : data.folderUsersList < 1 }" >Share</div>
+        <div class="dialog-submit-button" (click)="onSubmit()" cdkFocusInitial [ngClass]="{'disabled' : data.folderUsersList.length < 1 }" >Share</div>
     </div>
 </form>
