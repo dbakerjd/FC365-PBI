@@ -626,33 +626,26 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number, geoId: number | null = null, countryId: number | null = null) {
+  async shareFile(fileId: number, departmentId: number) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     
-    const oppGeo = await this.sharepoint.getOpportunityGeographies(this.opportunityId);
-
-    let involvedGeo = null;
-    if (geoId) {
-      involvedGeo = oppGeo.find(el => el.GeographyId == geoId);
-    } else if (countryId) {
-      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
-    }
-    if (!involvedGeo && (geoId || countryId)) return;
-
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
-    if (involvedGeo) {
-      folderGroup += '-' + involvedGeo.Id;
+
+    // is it a model with geography assigned?
+    if (file.ListItemAllFields?.OpportunityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.OpportunityGeographyId;
     }
     
     // users with access
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    console.log('users group', folderUsersList);
     folderUsersList = folderUsersList.concat(
       await this.sharepoint.getGroupMembers('OO-' + this.opportunityId),
       await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
-    console.log('users', folderUsersList);
+    console.log('users all', folderUsersList);
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
     folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
@@ -660,7 +653,7 @@ export class ActionsListComponent implements OnInit {
     console.log('users', folderUsersList);
 
     this.matDialog.open(ShareDocumentComponent, {
-      height: '250px',
+      height: '300px',
       width: '405px',
       data: {
         file,
