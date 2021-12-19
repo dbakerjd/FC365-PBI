@@ -45,5 +45,19 @@ export class InlineNppDisambiguationService {
     }
   }
 
-  
+  readFolderFiles(folder: string, expandProperties: boolean) {
+    if(this.isInline) {
+      return this.sharepoint.readBrandFolderFiles(folder, expandProperties);
+    } else {
+      return this.sharepoint.readOpportunityFolderFiles(folder, expandProperties);
+    }
+  }
+
+  getAccessibleGeographiesList(entity: Brand | Opportunity) {
+    if(this.isInline) {
+      return this.sharepoint.getOpportunityAccessibleGeographiesList(entity as Opportunity);
+    } else {
+      return this.sharepoint.getBrandAccessibleGeographiesList(entity as Brand);
+    }
+  }  
 }

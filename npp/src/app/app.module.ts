@@ -58,6 +58,7 @@ import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/cre
 import { CommentsListComponent } from './modals/comments-list/comments-list.component';
 import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
 import { InlineNppDisambiguationService } from './services/inline-npp-disambiguation.service';
+import { ExternalUploadFileComponent } from './modals/external-upload-file/external-upload-file.component';
 
 @NgModule({
   imports: [
@@ -115,7 +116,8 @@ import { InlineNppDisambiguationService } from './services/inline-npp-disambigua
     AuthEndComponent,
     CreateForecastCycleComponent,
     CommentsListComponent,
-    ApproveModelComponent
+    ApproveModelComponent,
+    ExternalUploadFileComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

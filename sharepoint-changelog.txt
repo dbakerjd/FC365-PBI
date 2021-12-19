@@ -9,3 +9,6 @@
       * Comments
       * BrandGeography or OpportunityGeography Lookup
       * Indication Lookup
+      * (only archived models) Forecast Cycle lookup
+      * (only archived models) Year as number
+      * (only archived models) Complete boolean defaulted to No

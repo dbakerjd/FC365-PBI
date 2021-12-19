@@ -150,10 +150,10 @@ export class FilesListComponent implements OnInit {
             if(this.currentStatus == 'Archived') {
               folder = folder + '/' + this.currentCycle;
             }
-            this.currentFiles.push(...await this.sharepoint.readBrandFolderFiles(folder, true));
+            this.currentFiles.push(...await this.disambiguator.readFolderFiles(folder, true));
           }
         } else {
-          this.currentFiles = await this.sharepoint.readBrandFolderFiles(currentFolder, true);
+          this.currentFiles = await this.disambiguator.readFolderFiles(currentFolder, true);
         }
 
         this.initLastComments();
@@ -198,18 +198,18 @@ export class FilesListComponent implements OnInit {
   }
 
   async openUploadDialog() {
-    if(this.brand) {
-      let geographiesList = await this.sharepoint.getBrandAccessibleGeographiesList(this.brand);
-    
+    if(this.entity) {
+      let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
+      let defaultFolders = [{ Title: 'Reference Documents', ID: FOLDER_DOCUMENTS}, { Title: 'Forecast Models', ID: FORECAST_MODELS_FOLDER_NAME, containsModels: true }];
       this.dialogInstance = this.matDialog.open(UploadFileComponent, {
         height: '600px',
         width: '405px',
         data: {
           geographies: geographiesList,
           scenarios: await this.sharepoint.getScenariosList(),
-          folderList: [{ Title: 'Reference Documents', ID: BRAND_FOLDER_DOCUMENTS}, { Title: 'Forecast Models', ID: FORECAST_MODELS_FOLDER_NAME, containsModels: true }],
+          folderList: defaultFolders,
           selectedFolder: this.currentSection == 'none' ? 'Reference Documents' : 'Forecast Models',
-          brand: this.brand
+          entity: this.entity
         }
       });
   

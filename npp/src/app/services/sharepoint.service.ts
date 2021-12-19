@@ -1127,6 +1127,30 @@ export class SharepointService {
     return files;
   }
 
+  async readOpportunityFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+    let files: NPPFile[] = []
+    const result = await this.query(
+      `GetFolderByServerRelativeUrl('${folder}')/Files`,
+      '$expand=ListItemAllFields',
+    ).toPromise();
+
+    if (result.value) {
+      files = result.value;
+    }
+
+    if (expandProperties && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        let fileItems = files[i];
+        if (fileItems) {
+          let info = await this.getOpportunityFileInfo(folder, fileItems);
+          fileItems = Object.assign(fileItems.ListItemAllFields, info);
+        }
+      }
+    }
+    return files;
+  }
+  
+
   async getSubfolders(folder: string): Promise<any> {
     let subfolders: any[] = [];
     const result = await this.query(
@@ -1973,6 +1997,14 @@ export class SharepointService {
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 
+  async getOpportunityAccessibleGeographiesList(opportunity: Opportunity): Promise<SelectInputList[]> {
+    const geographiesList = await this.getOpportunityGeographies(opportunity.ID);
+
+    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${opportunity.BusinessUnitId}/${opportunity.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+    return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
+      .map(t => { return { value: t.Id, label: t.Title } });
+  }
+
   async getBusinessUnitsList(): Promise<SelectInputList[]> {
     let cache = this.masterBusinessUnits;
     if (cache && cache.length) {
@@ -2200,6 +2232,29 @@ export class SharepointService {
         break;
       default:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,BrandGeography,ModelScenario,ApprovalStatus,Indication';
+        break;
+    }
+    
+    return await this.query(
+      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
+      select,
+      'all'
+    ).toPromise();
+  }
+  
+  async getOpportunityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
+    let arrFolder = folder.split("/");
+    let rootFolder = arrFolder[0];
+    let select = '';
+    switch(rootFolder) {
+      case FOLDER_DOCUMENTS:
+        select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
+        break;
+      case FOLDER_ARCHIVED:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,OpportunityGeography/Title,ModelScenario/Title&$expand=Author,Editor,OpportunityGeography,ModelScenario,Indication';  
+        break;
+      default:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,OpportunityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,OpportunityGeography,ModelScenario,ApprovalStatus,Indication';
         break;
     }
     
