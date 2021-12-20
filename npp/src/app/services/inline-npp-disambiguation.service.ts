@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Brand, Opportunity, SharepointService } from './sharepoint.service';
+import { Brand, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
 
 @Injectable({
   providedIn: 'root'
@@ -59,5 +59,29 @@ export class InlineNppDisambiguationService {
     } else {
       return this.sharepoint.getBrandAccessibleGeographiesList(entity as Brand);
     }
-  }  
+  }
+  
+  getEntityGeographies(entityId: number) {
+    if(this.isInline) {
+      return this.sharepoint.getOpportunityGeographies(entityId);
+    } else {
+      return this.sharepoint.getBrandGeographies(entityId);
+    }
+  }
+
+  getFileByScenarios(fileFolder: string, scenario: number[]) {
+    if(this.isInline) {
+      return this.sharepoint.getFileByScenarios(fileFolder, scenario);
+    } else {
+      return this.sharepoint.getNPPFileByScenarios(fileFolder, scenario);
+    }
+  }
+
+  async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
+    if(this.isInline) {
+      return this.sharepoint.uploadInlineFile(fileData, folder, fileName, metadata);
+    } else {
+      return this.sharepoint.uploadNPPFile(fileData, folder, fileName, metadata);
+    }
+  }
 }

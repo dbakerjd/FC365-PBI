@@ -1043,6 +1043,56 @@ export class SharepointService {
     return uploaded;
   }
 
+  async uploadInlineFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
+    if(metadata) {
+      let scenarios = metadata.ModelScenarioId;
+      if(scenarios) {
+        let file = await this.getFileByScenarios(folder, scenarios);
+        if(file) this.deleteFile(file?.ServerRelativeUrl);
+      }
+    }
+    
+    let uploaded: any = await this.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
+
+    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
+
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
+      let arrFolder = folder.split("/");
+      let rootFolder = arrFolder[0];
+      if(!metadata.Comments) {
+        metadata.Comments = " ";
+      }
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, metadata);
+    }
+    return uploaded;
+  }
+
+  async uploadNPPFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
+    if(metadata) {
+      let scenarios = metadata.ModelScenarioId;
+      if(scenarios) {
+        let file = await this.getNPPFileByScenarios(folder, scenarios);
+        if(file) this.deleteFile(file?.ServerRelativeUrl);
+      }
+    }
+    
+    let uploaded: any = await this.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
+
+    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
+
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
+      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
+      let arrFolder = folder.split("/");
+      let rootFolder = arrFolder[0];
+      if(!metadata.Comments) {
+        metadata.Comments = " ";
+      }
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, metadata);
+    }
+    return uploaded;
+  }
+
   async existsFile(filename: string, folder: string): Promise<boolean> {
     try {
       let file = await this.query(
@@ -1197,7 +1247,7 @@ export class SharepointService {
 
   private async uploadFileQuery(fileData: string, folder: string, filename: string) {
     try {
-      let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
+      let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${this.clearFileName(filename)}',overwrite=true)?$expand=ListItemAllFields`;
       return await this.http.post(
         this.licensing.getSharepointApiUri() + url,
         fileData,
@@ -2525,6 +2575,18 @@ export class SharepointService {
 
   async getFileByScenarios(path: string, scenarios: number[]) {
     let files = await this.readBrandFolderFiles(path,false);
+    for(let i=0;i<files.length; i++){
+      let model = files[i];
+      let sameScenario = this.sameScenarios(model, scenarios);
+      if(sameScenario) {
+        return model;
+      }
+    }
+    return null;
+  }
+
+  async getNPPFileByScenarios(path: string, scenarios: number[]) {
+    let files = await this.readOpportunityFolderFiles(path,false);
     for(let i=0;i<files.length; i++){
       let model = files[i];
       let sameScenario = this.sameScenarios(model, scenarios);

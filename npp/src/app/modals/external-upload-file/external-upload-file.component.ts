@@ -8,6 +8,7 @@ import { Observable } from 'rxjs';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { take } from 'rxjs/operators';
 import { ExternalUploadFileConfig } from 'src/app/shared/forms/external-upload-file.config';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-external-upload-file',
@@ -15,7 +16,7 @@ import { ExternalUploadFileConfig } from 'src/app/shared/forms/external-upload-f
   styleUrls: ['./external-upload-file.component.scss']
 })
 export class ExternalUploadFileComponent implements OnInit {
-  formConfig: UploadFileConfig = new ExternalUploadFileConfig();
+  formConfig: ExternalUploadFileConfig = new ExternalUploadFileConfig();
   fields: FormlyFieldConfig[] = [];
   form: FormGroup = new FormGroup({});
   model: any = { };
@@ -26,20 +27,21 @@ export class ExternalUploadFileComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ExternalUploadFileComponent>,
     private readonly sharepoint: SharepointService,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private readonly disambiguator: InlineNppDisambiguationService
   ) { 
     
   }
 
   ngOnInit(): void {
-    this.formConfig = new UploadFileConfig();
+    this.formConfig = new ExternalUploadFileConfig();
     this.fields = this.formConfig.fields(
-      this.data.brand.ID, 
+      this.data.entity.ID, 
       this.data.folderList,
       this.data.selectedFolder,
       this.data.geographies,
       this.data.scenarios,
-      this.data.brand.Indication?.map((el: Indication) => {
+      this.data.entity.Indication?.map((el: Indication) => {
         return { label: el.Title, value: el.ID }
       }));
     this.form = new FormGroup({});
@@ -50,16 +52,17 @@ export class ExternalUploadFileComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
-    let fileData: any = {
-      BrandId: this.model.brandId
-    };
-
+    
     this.uploading = this.dialogRef.disableClose = true;
 
-    let fileFolder = BRAND_FOLDER_WIP+'/'+this.data.brand.BusinessUnitId+'/'+this.data.brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+    let fileData: any = {
+      EntityId: this.model.entityId
+    };
+
+    let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
     let containsModels = true;
-    if(this.model.category == BRAND_FOLDER_DOCUMENTS) {
-      fileFolder = BRAND_FOLDER_DOCUMENTS+'/'+this.data.brand.BusinessUnitId+'/'+this.data.brand.ID;
+    if(this.model.category == FOLDER_DOCUMENTS) {
+      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID;
       containsModels = false;
       fileData = {
         Comments: this.model.description
@@ -69,7 +72,7 @@ export class ExternalUploadFileComponent implements OnInit {
     if (containsModels) {
       // forecast model file
 
-      const oppGeographies = await this.sharepoint.getBrandGeographies(this.data.brand.ID);
+      const oppGeographies = await this.disambiguator.getEntityGeographies(this.data.entity.ID);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
       const user = await this.sharepoint.getCurrentUserInfo();
 
@@ -86,7 +89,7 @@ export class ExternalUploadFileComponent implements OnInit {
     } 
 
     let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-    let scenarioExists = await this.sharepoint.getFileByScenarios(fileFolder, this.model.scenario);
+    let scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);
     let fileExists = await this.sharepoint.existsFile(scenarioFileName, fileFolder);
     if (fileExists || scenarioExists) {
       let message = '';
@@ -132,7 +135,7 @@ export class ExternalUploadFileComponent implements OnInit {
   private async uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.sharepoint.uploadFile(data, folder, fileName, fileData).then(
+        this.disambiguator.uploadFile(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished
