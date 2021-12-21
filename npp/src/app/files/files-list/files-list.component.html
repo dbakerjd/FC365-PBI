@@ -1,16 +1,16 @@
 <app-npp-header [isHome]="false"></app-npp-header>
-<div class="brand-info-wrapper" *ngIf="brand">
+<div class="brand-info-wrapper" *ngIf="entity">
     <div class="brand-name">
-        <h2>{{brand?.Title}}</h2>
-        <p class="brand-forecast-cyle">{{brand?.ForecastCycle?.Title}} {{brand?.Year}}</p>
+        <h2>{{entity?.Title}}</h2>
+        <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}}</p>
     </div>
     <div class="brand-indication">
-        <p><label>BusinessUnit: </label>{{brand?.BusinessUnit?.Title}}</p>
-        <p><label>Indication: </label>{{getIndications(brand?.Indication)}}</p>
+        <p><label>BusinessUnit: </label>{{entity?.BusinessUnit?.Title}}</p>
+        <p><label>Indication: </label>{{getIndications(entity?.Indication)}}</p>
     </div>
     <div class="brand-dates">
-        <!-- <p><label>Forecast Cycle Due Date: </label> {{brand?.FCDueDate | date : 'dd MMM y'}}</p>-->
-        <p><label>Therapy Area: </label> {{getTherapyArea(brand?.Indication)}}</p>
+        <!-- <p><label>Forecast Cycle Due Date: </label> {{entity?.FCDueDate | date : 'dd MMM y'}}</p>-->
+        <p><label>Therapy Area: </label> {{getTherapyArea(entity?.Indication)}}</p>
     </div>
     <div class="brand-owner">
         <div class="brand-owner-pic">
@@ -18,9 +18,12 @@
             <img [src]="profilePic" *ngIf="profilePic"/>
         </div>
         <div class="brand-owner-info">
-            <div class="brand-owner-info-title"><label>Brand Owner</label></div>
-            <div class="brand-owner-info-name" *ngIf="brand?.BrandOwner">
-                {{brand.BrandOwner?.Title}}
+            <div class="brand-owner-info-title"><label>Owner</label></div>
+            <div class="brand-owner-info-name" *ngIf="entity?.BrandOwner">
+                {{entity.BrandOwner?.Title}}
+            </div>
+            <div class="brand-owner-info-name" *ngIf="entity?.OpportunityOwner">
+                {{entity.OpportunityOwner?.Title}}
             </div>
         </div>
     </div>

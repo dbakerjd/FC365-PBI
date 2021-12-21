@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Brand, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
+import { Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
 
 @Injectable({
   providedIn: 'root'
@@ -84,4 +84,29 @@ export class InlineNppDisambiguationService {
       return this.sharepoint.uploadNPPFile(fileData, folder, fileName, metadata);
     }
   }
+
+  async updateEntityGeographyUsers(entityId: number, geoId: number, currentUsersList: number[], newUsersList: number[]) {
+    if(this.isInline) {
+      return this.sharepoint.updateBrandGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
+    } else {
+      return this.sharepoint.updateOpportunityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
+    }
+  }
+
+  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
+    if(this.isInline) {
+      return this.sharepoint.setBrandApprovalStatus(rootFolder, file, entity as Brand, "Approved", comments);
+    } else {
+      return this.sharepoint.setOpportunityApprovalStatus(rootFolder, file, entity as Opportunity, "Approved", comments);
+    }
+  }
+
+  async createForecastCycle(entity: Brand | Opportunity, values: any) {
+    if(this.isInline) {
+      return this.sharepoint.createForecastCycle(entity as Brand, values);
+    } else {
+      return this.sharepoint.createOpportunityForecastCycle(entity as Opportunity, values);
+    }
+  }
+
 }

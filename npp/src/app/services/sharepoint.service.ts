@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, filter, ignoreElements } from 'rxjs/operators';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
@@ -18,6 +17,8 @@ export interface Opportunity {
   OpportunityTypeId: number;
   OpportunityType?: OpportunityType;
   OpportunityStatus: "Processing" | "Archive" | "Active" | "Approved";
+  ForecastCycle?:ForecastCycle;
+  ForecastCycleId?: number;
   IndicationId: number;
   Indication: Indication;
   Modified: Date;
@@ -27,6 +28,7 @@ export interface Opportunity {
   gates?: Stage[];
   isGateType?: boolean;
   BusinessUnitId: number;
+  Year: number;
 }
 
 export interface OpportunityInput {
@@ -124,19 +126,22 @@ export interface FileComments {
 
 export interface NPPFileMetadata {
   ID: number;
-  OpportunityNameId: number;
-  StageNameId: number;
+  OpportunityNameId?: number;
+  StageNameId?: number;
   ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
   OpportunityGeographyId?: number;
   OpportunityGeography?: OpportunityGeography;
+  BrandGeographyId?: number;
+  BrandGeography?: BrandGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
   TargetUserId: number;
   TargetUser?: User;
   Comments: string;
+  IndicationId: number[];
 }
 
 export interface NPPFolder {
@@ -286,6 +291,15 @@ export interface BrandForecastCycle {
   Year: string;
 }
 
+export interface OpportunityForecastCycle {
+  ID: number;
+  Title: string;
+  OpportunityId: number;
+  Opportunity?: Opportunity;
+  ForecastCycleTypeId: number;
+  ForecastCycleType?: ForecastCycle;
+  Year: string;
+}
 
 export interface Brand {
   ID: number;
@@ -482,7 +496,7 @@ export class SharepointService {
     }
   }
 
-  private async updateItem(id: number, list: string, data: any): Promise<boolean> {
+  public async updateItem(id: number, list: string, data: any): Promise<boolean> {
     try {
       await this.http.post(
         this.licensing.getSharepointApiUri() + list + `/items(${id})`,
@@ -1128,6 +1142,40 @@ export class SharepointService {
 
     return success;
   }
+
+  async cloneEntityForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], authorId: number, comments = ''): Promise<boolean> {
+
+    const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
+
+    let success = await this.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
+    if (!success) return false;
+
+    let newFileInfo = await this.query(
+      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
+      `$expand=ListItemAllFields&$filter=Name eq '${this.clearFileName(newFilename)}'`,
+    ).toPromise();
+
+    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
+      const newData:any = {
+        ModelScenarioId: newScenarios,
+        Comments: comments ? comments : null,
+        ApprovalStatusId: await this.getApprovalStatusId("In Progress")
+      }
+      
+      let arrFolder = destinationFolder.split("/");
+      let rootFolder = arrFolder[3];
+      
+      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, newData);
+      if(success && authorId) {
+        const user = await this.getUserInfo(authorId);
+        if (user.LoginName)
+          await this.updateReadOnlyField(rootFolder, newFileInfo.value[0].ListItemAllFields.ID, 'Editor', user.LoginName);
+      }
+    }
+
+    return success;
+  }
+
 
   async addScenarioSufixToFilename(originFilename: string, scenarioId: number): Promise<string | false> {
     const scenarios = await this.getScenariosList();
@@ -2350,6 +2398,38 @@ export class SharepointService {
     return success;
   }
 
+  async updateOpportunityGeographyUsers(oppId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
+    // groups needed
+    const BUGroup = await this.getGroup('OU-' + oppId);
+    const BOGroup = await this.getGroup('OO-' + oppId);
+    let groupName = `OU-${oppId}-${geoId}`;
+    const GUGroup = await this.getGroup(groupName);
+
+    if (!BUGroup || !BOGroup || !GUGroup) throw new Error("Permission groups missing.");
+
+    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
+    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
+
+    let success = true;
+    for (const userId of removedUsers) {
+      success = success && await this.removeUserFromGroup(GUGroup.Id, userId);
+      success = success && await this.removeUserFromGroup(BUGroup.Id, userId);
+    }
+
+    if (!success) return success;
+
+    for (const userId of addedUsers) {
+      const user = await this.getUserInfo(userId);
+      if (user.LoginName) {
+        success = success && await this.addUserToGroup(user.LoginName, GUGroup.Id);
+        success = success && await this.addUserToGroup(user.LoginName, BUGroup.Id);
+        if (!success) return success;
+      }
+    }
+    return success;
+  }
+
+
   async getOpportunityForecastCycles(opportunity: Opportunity) {
     let filter = `$filter=OpportunityId eq ${opportunity.ID}`;
     
@@ -2410,6 +2490,50 @@ export class SharepointService {
 
   }
 
+  async createOpportunityForecastCycle(opp: Opportunity, values: any) {
+    console.log(values);
+    const geographies = await this.getOpportunityGeographies(opp.ID); // 1 = stage id would be dynamic in the future
+    let archivedBasePath = `${FOLDER_ARCHIVED}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let approvedBasePath = `${FOLDER_APPROVED}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+    let workInProgressBasePath = `${FOLDER_WIP}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+
+    let cycle = await this.createItem(OPPORTUNITY_FORECAST_CYCLE_LIST, {
+      OpportunityId: opp.ID,
+      ForecastCycleTypeId: opp.ForecastCycleId,
+      Year: opp.Year+"",
+      Title: opp.ForecastCycle?.Title + ' ' + opp.Year
+    });
+
+    const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    
+    for (const geo of geographies) {
+      let GUGroup = await this.getGroup(`EU-${opp.ID}-${geo.ID}`);
+      if(GUGroup) {
+        let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+        const cycleFolder = await this.createFolder(geoFolder);
+        if(cycleFolder) {
+          await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
+          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}`, geoFolder);
+        }else {
+          throw new Error("Could not create Forecast Cycle folder");
+        }
+      } else {
+        throw new Error("Could not get geography group.");
+      }
+    }
+
+    let changes = {
+      ForecastCycleId: values.ForecastCycle,
+      Year: values.Year
+    };
+
+    await this.updateItem(opp.ID, OPPORTUNITIES_LIST, changes);
+
+    await this.setAllOpportunityModelsStatusInFolder(opp, workInProgressBasePath, "In Progress");
+    return changes;
+
+  }
+
   async setAllModelsStatusInFolder(brand: Brand, folder: string, status: string) {
     
     const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
@@ -2423,6 +2547,24 @@ export class SharepointService {
       for(let j=0; files && j<files.length; j++) {
         let model = files[j];
         await this.setBrandApprovalStatus(rootFolder, model, brand, "In Progress");
+      }
+    }
+    
+  }
+
+  async setAllOpportunityModelsStatusInFolder(opp: Opportunity, folder: string, status: string) {
+    
+    const geographies = await this.getOpportunityGeographies(opp.ID); // 1 = stage id would be dynamic in the future
+    
+    let arrFolder = folder.split("/");
+    let rootFolder = arrFolder[0];
+
+    for(let i=0; i<geographies.length; i++) {
+      let geo = geographies[i];
+      let files = await this.readOpportunityFolderFiles(folder+"/"+geo.ID, true);
+      for(let j=0; files && j<files.length; j++) {
+        let model = files[j];
+        await this.setOpportunityApprovalStatus(rootFolder, model, opp, "In Progress");
       }
     }
     
@@ -2556,8 +2698,33 @@ export class SharepointService {
     } else {
       throw new Error("Missing file metadata.");
     }
-    
+  }
+
+
+  async setOpportunityApprovalStatus(rootFolder: string, file: NPPFile, opp: Opportunity | null, status: string, comments: string | null = null) {
+    if(file.ListItemAllFields) {
+      const statusId = await this.getApprovalStatusId(status);
+      if (!statusId) return false;
+      /*TODO use something like this to ensure unique name
+      while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
+        fileName = baseFileName + '-copy-' + attemps + '.' + extension;
+      }*/
+      let data = { ApprovalStatusId: statusId };
+      if (comments) Object.assign(data, { Comments: comments });
   
+      await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
+      let res;
+      if(status === "Approved" && opp) {
+        let arrFolder = file.ServerRelativeUrl.split("/");
+        await this.removeNPPOldAcceptedModel(opp, file);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
+        return res;
+      };
+      
+      return true;
+    } else {
+      throw new Error("Missing file metadata.");
+    }
   }
 
   async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
@@ -2567,6 +2734,19 @@ export class SharepointService {
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getFileByScenarios(path, scenarios);
+      if(model) {
+        await this.deleteFile(model.ServerRelativeUrl);
+      }
+    }
+  }
+
+  async removeNPPOldAcceptedModel(opp: Opportunity, file: NPPFile) {
+    if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
+      let arrFolder = file.ServerRelativeUrl.split("/");
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
+      let scenarios = file.ListItemAllFields.ModelScenarioId;
+
+      let model = await this.getNPPFileByScenarios(path, scenarios);
       if(model) {
         await this.deleteFile(model.ServerRelativeUrl);
       }

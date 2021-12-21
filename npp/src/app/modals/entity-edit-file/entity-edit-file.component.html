@@ -1,0 +1,8 @@
+<app-dialog-header title="Edit File"></app-dialog-header>
+<mat-dialog-content>
+    <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
+</mat-dialog-content>
+<div class="dialog-footer">
+    <div class="dialog-cancel-button" mat-dialog-close>Close</div>
+    <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()">Update</div>
+</div>

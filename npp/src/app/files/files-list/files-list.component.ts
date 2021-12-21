@@ -12,17 +12,18 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
-import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
+import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
+import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
+import { ExternalFolderPermissionsComponent } from 'src/app/modals/external-folder-permissions/external-folder-permissions.component';
+import { ExternalUploadFileComponent } from 'src/app/modals/external-upload-file/external-upload-file.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
-import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-files-list',
@@ -201,7 +202,7 @@ export class FilesListComponent implements OnInit {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
       let defaultFolders = [{ Title: 'Reference Documents', ID: FOLDER_DOCUMENTS}, { Title: 'Forecast Models', ID: FORECAST_MODELS_FOLDER_NAME, containsModels: true }];
-      this.dialogInstance = this.matDialog.open(UploadFileComponent, {
+      this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
         data: {
@@ -251,11 +252,11 @@ export class FilesListComponent implements OnInit {
 
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
-      this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
+      this.dialogInstance = this.matDialog.open(ExternalFolderPermissionsComponent, {
         height: '400px',
         width: '405px',
         data: {
-          brand: this.brand
+          entity: this.entity
         }
       });
     }
@@ -264,14 +265,14 @@ export class FilesListComponent implements OnInit {
   async approve(file: NPPFile) {
     
     if (!file.ListItemAllFields) return;
-    if (!this.brand) return;
+    if (!this.entity) return;
 
-    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
+    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
       height: '300px',
       width: '405px',
       data: {
         file: file,
-        brand: this.brand,
+        brand: this.entity,
         rootFolder: this.getCurrentRootFolder(),
       }
     });
@@ -404,7 +405,7 @@ export class FilesListComponent implements OnInit {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     
-    const oppGeo = await this.sharepoint.getBrandGeographies(this.brandId);
+    const oppGeo = await this.disambiguator.getEntityGeographies(this.entityId);
 
     let involvedGeo = null;
     if (geoId) {
@@ -416,13 +417,13 @@ export class FilesListComponent implements OnInit {
 
     let folderUsersList: User[] = [];
     if (involvedGeo) {
-      let folderGroup = `BU-${this.brandId}-${involvedGeo.Id}`;
+      let folderGroup = `EU-${this.entityId}-${involvedGeo.Id}`;
       folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     }
     
     // users with access
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('BO-' + this.brandId)
+      await this.sharepoint.getGroupMembers('EO-' + this.entityId)
     );
 
     // remove own user
@@ -444,12 +445,12 @@ export class FilesListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    const dialogRef = this.matDialog.open(EditFileComponent, {
+    const dialogRef = this.matDialog.open(EntityEditFileComponent, {
       width: "400px",
       height: "325px",
       data: {
         fileInfo,
-        brand: this.brand
+        enitity: this.entity
       }
     });
 
@@ -549,7 +550,7 @@ export class FilesListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        brand: this.brand
+        entity: this.entity
       }
     });
 
@@ -558,8 +559,8 @@ export class FilesListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success) {
           this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.brand) this.cycles = await this.sharepoint.getBrandForecastCycles(this.brand);
-          this.brand = Object.assign(this.brand, {
+          if(this.entity) this.cycles = await this.disambiguator.getForecastCycles(this.entity);
+          this.entity = Object.assign(this.entity, {
             ForecastCycleId: success.ForecastCycleId,
             ForecastCycle: { 
               Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,

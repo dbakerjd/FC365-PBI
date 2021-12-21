@@ -3,7 +3,8 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ErrorService } from 'src/app/services/error.service';
-import { Brand, ForecastCycle, NPPFile, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
+import { Brand, ForecastCycle, NPPFile, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 
@@ -17,7 +18,7 @@ export class CreateForecastCycleComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   form: FormGroup = new FormGroup({});
   model: any = {};
-  brand: Brand | undefined;
+  entity: Brand | Opportunity | undefined;
   cycles: SelectInputList[] = [];
 
   // flow control
@@ -29,12 +30,13 @@ export class CreateForecastCycleComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
     private error: ErrorService,
-    public jobs: WorkInProgressService
+    public jobs: WorkInProgressService,
+    private readonly disambiguation: InlineNppDisambiguationService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
-    this.brand = this.data.brand;
+    this.entity = this.data.entity;
     this.cycles = await this.sharepoint.getForecastCycles();
     const currentYear = new Date().getFullYear();
     
@@ -67,7 +69,7 @@ export class CreateForecastCycleComponent implements OnInit {
           }),
           required: true,
         },
-        defaultValue: this.brand?.Year || currentYear
+        defaultValue: this.entity?.Year || currentYear
       }]
     }];
 
@@ -75,18 +77,18 @@ export class CreateForecastCycleComponent implements OnInit {
 
   async onSubmit() {
     let job = this.jobs.startJob(
-      "Creating Brand",
-      'The new brand is being initialized. Folders and permissions are being created.'
+      "Creating Forecast Cycle",
+      'The new forecast cycle is being initialized. Folders and permissions are being created.'
       );
     try {
-      if (this.form.invalid || !this.brand) {
+      if (this.form.invalid || !this.entity) {
         this.validateAllFormFields(this.form);
         this.jobs.finishJob(job.id);
         return;
       }
       
       this.updating = this.dialogRef.disableClose = true;
-      let success = await this.sharepoint.createForecastCycle(this.brand, this.form.value);
+      let success = await this.disambiguation.createForecastCycle(this.entity, this.form.value);
       this.jobs.finishJob(job.id);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close(success);
