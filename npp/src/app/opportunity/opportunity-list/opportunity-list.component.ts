@@ -100,7 +100,8 @@ export class OpportunityListComponent implements OnInit {
         opportunity: fromOpp ? fromOpp : null,
         createFrom: fromOpp ? true : false,
         forceType
-      }
+      },
+      panelClass: 'config-dialog-container'
     });
 
     this.dialogInstance.afterClosed()
@@ -139,7 +140,8 @@ export class OpportunityListComponent implements OnInit {
       width: '405px',
       data: {
         opportunity: opp
-      }
+      },
+      panelClass: 'config-dialog-container'
     });
 
     this.dialogInstance.afterClosed()
