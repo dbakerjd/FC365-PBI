@@ -203,3 +203,20 @@ div.has-error .ng-select-container {
 .desktop-view iframe, .mobile-view iframe {
     border: none;
 }
+
+// datepicker modal
+.config-dialog-container .mat-dialog-container {
+    overflow: visible;
+}
+.datepicker-modal {
+    position: absolute;
+    .calendar-container {
+        top: -150px !important;
+        left: 0;
+        font-weight: 700;
+    }
+}
+.datepicker-default, 
+.datepicker-default div {
+    line-height: normal !important;
+}

@@ -40,7 +40,8 @@ export class ActionsListComponent implements OnInit {
   currentGateProgress: number = 0;
   refreshingPowerBi = false;
   dateOptions: DatepickerOptions = {
-    format: 'Y-M-d'
+    format: 'Y-M-d',
+    firstCalendarDay: 1
   };
   currentSection = 'actions';
   dateListener: any;
@@ -252,7 +253,8 @@ export class ActionsListComponent implements OnInit {
       data: {
         stage: this.currentGate,
         canSetUsers: this.isOwner || this.currentUser?.IsSiteAdmin // only until set permission problem is resolved
-      }
+      },
+      panelClass: 'config-dialog-container'
     });
 
     this.dialogInstance.afterClosed()
@@ -368,7 +370,8 @@ export class ActionsListComponent implements OnInit {
           next: this.nextStage,
           opportunityId: this.opportunityId,
           canSetUsers: this.isOwner || this.currentUser?.IsSiteAdmin // only until set permission problem is resolved
-        }
+        },
+        panelClass: 'config-dialog-container'
       });
       this.dialogInstance.afterClosed()
         .pipe(take(1))
