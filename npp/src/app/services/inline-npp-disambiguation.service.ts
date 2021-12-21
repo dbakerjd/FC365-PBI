@@ -109,4 +109,15 @@ export class InlineNppDisambiguationService {
     }
   }
 
+  getGroupName(name: string):string {
+    if(this.isInline) {
+      name = name.replace("EU-", "BU-");
+      name = name.replace("EO-", "BO-");
+    } else {
+      name = name.replace("EU-", "OU-");
+      name = name.replace("EO-", "OO-");
+    }
+    return name;
+  }
+
 }

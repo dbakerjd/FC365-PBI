@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ActionsListComponent } from './actions/actions-list/actions-list.component';
 import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthStartComponent } from './auth/auth-start/auth-start.component';
+import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
 import { FilesListComponent } from './files/files-list/files-list.component';
@@ -17,6 +18,8 @@ const routes: Routes = [
   { path: 'opportunities', component: OpportunityListComponent },
   { path: 'opportunities/:id/actions', component: ActionsListComponent },
   { path: 'opportunities/:id/files', component: FilesListComponent},
+  { path: 'brands', component: BrandListComponent },
+  { path: 'brands/:id/files', component: FilesListComponent},
   { path: 'power-bi', component: PowerBiComponent },
   { path: 'expired-license', component: ExpiredLicenseComponent },
   { path: 'auth-start', component: AuthStartComponent },

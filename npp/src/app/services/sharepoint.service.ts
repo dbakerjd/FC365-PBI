@@ -2507,7 +2507,7 @@ export class SharepointService {
     const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
     
     for (const geo of geographies) {
-      let GUGroup = await this.getGroup(`EU-${opp.ID}-${geo.ID}`);
+      let GUGroup = await this.getGroup(`OU-${opp.ID}-${geo.ID}`);
       if(GUGroup) {
         let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
         const cycleFolder = await this.createFolder(geoFolder);

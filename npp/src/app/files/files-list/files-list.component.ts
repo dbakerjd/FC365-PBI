@@ -417,13 +417,13 @@ export class FilesListComponent implements OnInit {
 
     let folderUsersList: User[] = [];
     if (involvedGeo) {
-      let folderGroup = `EU-${this.entityId}-${involvedGeo.Id}`;
+      let folderGroup = this.disambiguator.getGroupName(`EU-${this.entityId}-${involvedGeo.Id}`);
       folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     }
     
     // users with access
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('EO-' + this.entityId)
+      await this.sharepoint.getGroupMembers( this.disambiguator.getGroupName('EO-' + this.entityId))
     );
 
     // remove own user

@@ -62,6 +62,8 @@ import { ExternalUploadFileComponent } from './modals/external-upload-file/exter
 import { ExternalFolderPermissionsComponent } from './modals/external-folder-permissions/external-folder-permissions.component';
 import { ExternalApproveModelComponent } from './modals/external-approve-model/external-approve-model.component';
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
+import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
+import { BrandListComponent } from './brand/brand-list/brand-list.component';
 
 @NgModule({
   imports: [
@@ -123,7 +125,9 @@ import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-f
     ExternalUploadFileComponent,
     ExternalFolderPermissionsComponent,
     ExternalApproveModelComponent,
-    EntityEditFileComponent
+    EntityEditFileComponent,
+    CreateBrandComponent,
+    BrandListComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
