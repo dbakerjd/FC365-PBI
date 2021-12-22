@@ -123,6 +123,20 @@ export class OpportunityListComponent implements OnInit {
           this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
+          const userFrom = await this.sharepoint.getCurrentUserInfo();
+          if (userFrom.Id !== result.data.opportunity.OpportunityOwnerId) {
+            await this.sharepoint.createNotification(
+              result.data.opportunity.OpportunityOwnerId,
+              `${userFrom.Title} has made you the owner of the opportunity '${result.data.opportunity.Title}'`
+            );
+          }
+          for (const suId of result.data.stage.StageUsersId) {
+            if (suId == userFrom.Id) continue;
+            await this.sharepoint.createNotification(
+              suId,
+              `${userFrom.Title} has given you access to a new opportunity: ${result.data.opportunity.Title}`
+            );
+          }
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);
