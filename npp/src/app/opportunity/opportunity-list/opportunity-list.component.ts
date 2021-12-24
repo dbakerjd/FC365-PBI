@@ -154,7 +154,7 @@ export class OpportunityListComponent implements OnInit {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
         if (opp.OpportunityOwnerId !== result.data.OpportunityOwnerId) {
-          this.notifications.opportunityOwnerNotification(result.data);
+          await this.notifications.opportunityOwnerNotification(result.data);
         }
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
       } else if (result.success === false) {

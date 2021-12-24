@@ -43,6 +43,28 @@ export class NotificationsService {
     }
   }
 
+  async modelFolderAccessNotification(userIds: number[], opportunityId: number) {
+    this.currentUser = await this.getCurrentUser();
+    let notificationMessage = `${this.currentUser.Title} has given you access to Forecast Models`;
+    const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+    if (opportunity.Title) notificationMessage += `at '${opportunity.Title}' opportunity`;
+    for (const user of userIds) {
+      if (user == this.currentUser.Id) continue;
+      await this.sharepoint.createNotification(user, notificationMessage);
+    }
+  }
+
+  async folderAccessNotification(userIds: number[], opportunityId: number, departmentId: number) {
+    this.currentUser = await this.getCurrentUser();
+    let notificationMessage = `${this.currentUser.Title} has given you access to ${departmentId}`;
+    const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+    if (opportunity.Title) notificationMessage += `at '${opportunity.Title}' opportunity`;
+    for (const user of userIds) {
+      if (user == this.currentUser.Id) continue;
+      await this.sharepoint.createNotification(user, notificationMessage);
+    }
+  }
+
   private async getCurrentUser(): Promise<User> {
     if (!this.currentUser) {
       this.currentUser = await this.sharepoint.getCurrentUserInfo();

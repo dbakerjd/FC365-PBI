@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { NPPFolder, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -26,6 +27,7 @@ export class FolderPermissionsComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<FolderPermissionsComponent>,
     private sharepoint: SharepointService, 
+    private readonly notifications: NotificationsService,
     private readonly toastr: ToastrService
   ) { }
 
@@ -159,7 +161,14 @@ export class FolderPermissionsComponent implements OnInit {
             currentList.list,
             this.model.DepartmentUsersId[key][geoKey]
           );
-          if (success) currentList.list = this.model.DepartmentUsersId[key][geoKey]; // update current list
+          if (success) {
+            console.log('model folder');
+            currentList.list = this.model.DepartmentUsersId[key][geoKey]; // update current list
+            // notifications
+            const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
+            console.log('adding to models', addedUsers);
+            await this.notifications.modelFolderAccessNotification(addedUsers, this.opportunityId);
+          }
           else break;
         }
       } else {
@@ -173,7 +182,14 @@ export class FolderPermissionsComponent implements OnInit {
           currentList.list,
           this.model.DepartmentUsersId[key]
         );
-        if (success) currentList.list = this.model.DepartmentUsersId[key]; // update current list
+        if (success) {
+          currentList.list = this.model.DepartmentUsersId[key]; // update current list
+          // notifications
+          console.log('adding to foldewr');
+          const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
+          console.log('added users folder', addedUsers);
+          await this.notifications.folderAccessNotification(addedUsers, this.opportunityId, +key);
+        }
         else break;
       }
     }

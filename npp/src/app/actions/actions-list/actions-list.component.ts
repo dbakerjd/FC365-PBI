@@ -266,7 +266,7 @@ export class ActionsListComponent implements OnInit {
           // notification to new users
           const currentStageUsers = this.currentGate.StageUsersId;
           const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
-          this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
+          await this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
           // update current info
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
