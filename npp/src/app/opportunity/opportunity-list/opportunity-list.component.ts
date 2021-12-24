@@ -163,6 +163,15 @@ export class OpportunityListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
+        if (opp.OpportunityOwnerId !== result.data.OpportunityOwnerId) {
+          const userFrom = await this.sharepoint.getCurrentUserInfo();
+          if (userFrom.Id !== result.data.OpportunityOwnerId) {
+            await this.sharepoint.createNotification(
+              result.data.OpportunityOwnerId,
+              `${userFrom.Title} has made you the owner of the opportunity '${result.data.Title}'`
+            );
+          }
+        }
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");

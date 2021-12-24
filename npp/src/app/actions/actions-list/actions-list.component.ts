@@ -261,6 +261,19 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (result: any) => {
         if (this.currentGate && result.success) {
+          const currentStageUsers = this.currentGate.StageUsersId;
+          const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
+          if (addedStageUsers.length > 0) {
+            const userFrom = await this.sharepoint.getCurrentUserInfo();
+            for (const asuId of addedStageUsers) {
+              if (asuId !== userFrom.Id) {
+                await this.sharepoint.createNotification(
+                  asuId,
+                  `${userFrom.Title} has given you access to '${this.currentGate.Title}' of '${this.opportunity?.Title}' opportunity`
+                );
+              }
+            }
+          }
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
         }
