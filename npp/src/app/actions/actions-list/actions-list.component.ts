@@ -16,6 +16,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { LicensingService } from 'src/app/services/licensing.service';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
@@ -56,6 +57,7 @@ export class ActionsListComponent implements OnInit {
 
   constructor(
     private readonly sharepoint: SharepointService, 
+    private readonly notifications: NotificationsService,
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
@@ -261,19 +263,11 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (result: any) => {
         if (this.currentGate && result.success) {
+          // notification to new users
           const currentStageUsers = this.currentGate.StageUsersId;
           const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
-          if (addedStageUsers.length > 0) {
-            const userFrom = await this.sharepoint.getCurrentUserInfo();
-            for (const asuId of addedStageUsers) {
-              if (asuId !== userFrom.Id) {
-                await this.sharepoint.createNotification(
-                  asuId,
-                  `${userFrom.Title} has given you access to '${this.currentGate.Title}' of '${this.opportunity?.Title}' opportunity`
-                );
-              }
-            }
-          }
+          this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
+          // update current info
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
         }

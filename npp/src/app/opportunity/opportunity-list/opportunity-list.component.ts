@@ -8,6 +8,7 @@ import { from } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
@@ -28,6 +29,7 @@ export class OpportunityListComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
+    private notifications: NotificationsService,
     private toastr: ToastrService,
     private router: Router, 
     public matDialog: MatDialog,
@@ -123,20 +125,8 @@ export class OpportunityListComponent implements OnInit {
           this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
-          const userFrom = await this.sharepoint.getCurrentUserInfo();
-          if (userFrom.Id !== result.data.opportunity.OpportunityOwnerId) {
-            await this.sharepoint.createNotification(
-              result.data.opportunity.OpportunityOwnerId,
-              `${userFrom.Title} has made you the owner of the opportunity '${result.data.opportunity.Title}'`
-            );
-          }
-          for (const suId of result.data.stage.StageUsersId) {
-            if (suId == userFrom.Id) continue;
-            await this.sharepoint.createNotification(
-              suId,
-              `${userFrom.Title} has given you access to a new opportunity: ${result.data.opportunity.Title}`
-            );
-          }
+          await this.notifications.opportunityOwnerNotification(result.data.opportunity);
+          await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);
@@ -164,13 +154,7 @@ export class OpportunityListComponent implements OnInit {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
         if (opp.OpportunityOwnerId !== result.data.OpportunityOwnerId) {
-          const userFrom = await this.sharepoint.getCurrentUserInfo();
-          if (userFrom.Id !== result.data.OpportunityOwnerId) {
-            await this.sharepoint.createNotification(
-              result.data.OpportunityOwnerId,
-              `${userFrom.Title} has made you the owner of the opportunity '${result.data.Title}'`
-            );
-          }
+          this.notifications.opportunityOwnerNotification(result.data);
         }
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
       } else if (result.success === false) {
