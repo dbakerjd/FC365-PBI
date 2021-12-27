@@ -15,3 +15,4 @@
    - Add columns to Opportunity
       * add Year number
       * add Forecast Cycle lookup
+   - Archived Forecast Cycles list, similar to Archived Brand Forecast Cycles list on inline sharepoint, we actually need both if we plan on using NPP and Inline on the same sharepoint
