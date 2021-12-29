@@ -10,11 +10,11 @@ export class NotificationsService {
   constructor(private sharepoint: SharepointService) {}
 
   async opportunityOwnerNotification(opportunity: Opportunity) {
-    this.currentUser = await this.getCurrentUser();
-    if (this.currentUser.Id !== opportunity.OpportunityOwnerId) {
+    const currentUser = await this.getCurrentUser();
+    if (currentUser.Id !== opportunity.OpportunityOwnerId) {
       await this.sharepoint.createNotification(
         opportunity.OpportunityOwnerId,
-        `${this.currentUser.Title} has made you the owner of the opportunity '${opportunity.Title}'`
+        `${currentUser.Title} has made you the owner of the opportunity '${opportunity.Title}'`
       );
     }
   }
@@ -23,47 +23,96 @@ export class NotificationsService {
     userIds: number[],
     opportunity: Opportunity
   ) {
-    this.currentUser = await this.getCurrentUser();
+    const currentUser = await this.getCurrentUser();
     for (const user of userIds) {
-      if (this.currentUser.Id == user) continue;
+      if (currentUser.Id == user) continue;
       await this.sharepoint.createNotification(
         user,
-        `${this.currentUser.Title} has given you access to a new opportunity: ${opportunity.Title}`
+        `${currentUser.Title} has given you access to a new opportunity: ${opportunity.Title}`
       );
     }
   }
 
   async stageAccessNotification(userIds: number[], stageTitle: string, opportunityTitle: string | undefined) {
-    this.currentUser = await this.getCurrentUser();
-    let notificationMessage = `${this.currentUser.Title} has given you access to '${stageTitle}'`;
+    const currentUser = await this.getCurrentUser();
+    let notificationMessage = `${currentUser.Title} has given you access to '${stageTitle}'`;
     if (opportunityTitle) notificationMessage += ` of '${opportunityTitle}' opportunity`;
     for (const user of userIds) {
-      if (user == this.currentUser.Id) continue;
+      if (user == currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);
     }
   }
 
   async modelFolderAccessNotification(userIds: number[], opportunityId: number) {
-    this.currentUser = await this.getCurrentUser();
-    let notificationMessage = `${this.currentUser.Title} has given you access to Forecast Models`;
+    const currentUser = await this.getCurrentUser();
+    let notificationMessage = `${currentUser.Title} has given you access to Forecast Models`;
     const opportunity = await this.sharepoint.getOpportunity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
-      if (user == this.currentUser.Id) continue;
+      if (user == currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);
     }
   }
 
   async folderAccessNotification(userIds: number[], opportunityId: number, departmentId: number) {
-    this.currentUser = await this.getCurrentUser();
+    const currentUser = await this.getCurrentUser();
     const folder = await this.sharepoint.getNPPFolderByDepartment(departmentId);
     if (!folder) return;
-    let notificationMessage = `${this.currentUser.Title} has given you access to ${folder.Title}`;
+    let notificationMessage = `${currentUser.Title} has given you access to ${folder.Title}`;
     const opportunity = await this.sharepoint.getOpportunity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
-      if (user == this.currentUser.Id) continue;
+      if (user == currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);
+    }
+  }
+
+  async modelSubmittedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
+    const currentUser = await this.getCurrentUser();
+    await this.generateModelNotification(
+      `${currentUser.Title} has submitted for approval the model '${fileName}'`, 
+      usersGroups,
+      opportunityId
+    );
+  }
+
+  async modelApprovedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
+    const currentUser = await this.getCurrentUser();
+    await this.generateModelNotification(
+      `${currentUser.Title} has approved the model '${fileName}'`, 
+      usersGroups,
+      opportunityId
+    );
+  }
+
+  async modelRejectedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
+    const currentUser = await this.getCurrentUser();
+    await this.generateModelNotification(
+      `${currentUser.Title} has rejected the model '${fileName}'`, 
+      usersGroups,
+      opportunityId
+    );
+  }
+
+  private async generateModelNotification(notificationMessage: string, usersGroups: string[], opportunityId: number | null = null) {
+    // get unique users involved
+    const currentUser = await this.getCurrentUser();
+    let users: User[] = [];
+    for (const group of usersGroups) {
+      users = users.concat(await this.sharepoint.getGroupMembers(group));
+    }
+    const uniqueUsers = [...new Map(users.map(u => [u.Id, u])).values()].filter((u: User) => u.Id != currentUser.Id);
+
+    if (users.length < 1) return;
+
+    if (opportunityId) {
+      const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+      if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
+    }
+    
+    // create notifications to involved users
+    for (const u of uniqueUsers) {
+      await this.sharepoint.createNotification(u.Id, notificationMessage);
     }
   }
 
