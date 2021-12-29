@@ -653,23 +653,15 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number, geoId: number | null = null, countryId: number | null = null) {
+  async shareFile(fileId: number, departmentId: number) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     
-    const oppGeo = await this.sharepoint.getOpportunityGeographies(this.opportunityId);
-
-    let involvedGeo = null;
-    if (geoId) {
-      involvedGeo = oppGeo.find(el => el.GeographyId == geoId);
-    } else if (countryId) {
-      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
-    }
-    if (!involvedGeo && (geoId || countryId)) return;
-
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
-    if (involvedGeo) {
-      folderGroup += '-' + involvedGeo.Id;
+
+    // is it a model with geography assigned?
+    if (file.ListItemAllFields?.OpportunityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.OpportunityGeographyId;
     }
     
     // users with access
@@ -679,16 +671,18 @@ export class ActionsListComponent implements OnInit {
       await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
+    // clean users list
+    let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
-    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+    uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
-      height: '250px',
+      height: '300px',
       width: '405px',
       data: {
         file,
-        folderUsersList
+        folderUsersList: uniqueFolderUsersList
       }
     });
   }
@@ -791,7 +785,6 @@ export class ActionsListComponent implements OnInit {
   }
 
   private isActiveStage(stageId: number): boolean {
-    console.log('stages', this.gates.map(el => el.StageNameId));
     const position = this.gates.map(el => el.StageNameId).indexOf(stageId);
     return position === this.gates.length - 1;
   }
