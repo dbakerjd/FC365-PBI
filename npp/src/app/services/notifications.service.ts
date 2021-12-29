@@ -36,7 +36,7 @@ export class NotificationsService {
   async stageAccessNotification(userIds: number[], stageTitle: string, opportunityTitle: string | undefined) {
     this.currentUser = await this.getCurrentUser();
     let notificationMessage = `${this.currentUser.Title} has given you access to '${stageTitle}'`;
-    if (opportunityTitle) notificationMessage += `of '${opportunityTitle}' opportunity`;
+    if (opportunityTitle) notificationMessage += ` of '${opportunityTitle}' opportunity`;
     for (const user of userIds) {
       if (user == this.currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);
@@ -47,7 +47,7 @@ export class NotificationsService {
     this.currentUser = await this.getCurrentUser();
     let notificationMessage = `${this.currentUser.Title} has given you access to Forecast Models`;
     const opportunity = await this.sharepoint.getOpportunity(opportunityId);
-    if (opportunity.Title) notificationMessage += `at '${opportunity.Title}' opportunity`;
+    if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
       if (user == this.currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);
@@ -56,9 +56,11 @@ export class NotificationsService {
 
   async folderAccessNotification(userIds: number[], opportunityId: number, departmentId: number) {
     this.currentUser = await this.getCurrentUser();
-    let notificationMessage = `${this.currentUser.Title} has given you access to ${departmentId}`;
+    const folder = await this.sharepoint.getNPPFolderByDepartment(departmentId);
+    if (!folder) return;
+    let notificationMessage = `${this.currentUser.Title} has given you access to ${folder.Title}`;
     const opportunity = await this.sharepoint.getOpportunity(opportunityId);
-    if (opportunity.Title) notificationMessage += `at '${opportunity.Title}' opportunity`;
+    if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
       if (user == this.currentUser.Id) continue;
       await this.sharepoint.createNotification(user, notificationMessage);

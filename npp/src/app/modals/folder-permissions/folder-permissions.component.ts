@@ -162,12 +162,11 @@ export class FolderPermissionsComponent implements OnInit {
             this.model.DepartmentUsersId[key][geoKey]
           );
           if (success) {
-            console.log('model folder');
-            currentList.list = this.model.DepartmentUsersId[key][geoKey]; // update current list
             // notifications
             const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
-            console.log('adding to models', addedUsers);
             await this.notifications.modelFolderAccessNotification(addedUsers, this.opportunityId);
+            // update current list
+            currentList.list = this.model.DepartmentUsersId[key][geoKey];
           }
           else break;
         }
@@ -183,12 +182,11 @@ export class FolderPermissionsComponent implements OnInit {
           this.model.DepartmentUsersId[key]
         );
         if (success) {
-          currentList.list = this.model.DepartmentUsersId[key]; // update current list
-          // notifications
-          console.log('adding to foldewr');
+          //notifications
           const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
-          console.log('added users folder', addedUsers);
           await this.notifications.folderAccessNotification(addedUsers, this.opportunityId, +key);
+          // update current list
+          currentList.list = this.model.DepartmentUsersId[key]; 
         }
         else break;
       }

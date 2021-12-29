@@ -804,6 +804,10 @@ export class SharepointService {
     return folders;
   }
 
+  async getNPPFolderByDepartment(departmentID: number): Promise<NPPFolder> {
+    return await this.getOneItem(MASTER_FOLDER_LIST, "$filter=Id eq " + departmentID);
+  }
+
   /** --- OPPORTUNITY ACTIONS --- **/
 
   private async createAction(ma: MasterAction, oppId: number): Promise<Action> {
