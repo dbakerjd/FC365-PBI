@@ -15,7 +15,7 @@
     <div class="header-menu-link" title="Summary">
       <a href="/summary" [routerLink]="['/summary']" class="nav-link active notification-container">
         <img src="assets/npp-summary.svg" alt="Summary"/>
-        <span class="notification-counter">3</span>
+        <span class="notification-counter" *ngIf="notificationsCounter > 0">{{ notificationsCounter }}</span>
       </a>
     </div>
     <div class="header-menu-link" title="Opportunities">
