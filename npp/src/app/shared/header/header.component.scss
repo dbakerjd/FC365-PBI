@@ -53,3 +53,17 @@
         }
     }
 }
+
+.notification-container {
+    position: relative;
+}
+
+.notification-counter {   
+    position: absolute;
+    right: -2px;
+    background-color: #d4130d;
+    color: #fff;
+    border-radius: 5px;
+    padding: 3px 5px;
+    font: 10px Verdana;
+}
