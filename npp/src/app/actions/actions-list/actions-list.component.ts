@@ -158,7 +158,7 @@ export class ActionsListComponent implements OnInit {
     
   }
 
-  async sendForApproval(file: NPPFile, departmentId: number, geoId: number) {
+  async sendForApproval(file: NPPFile, departmentId: number) {
     this.dialogInstance = this.matDialog.open(SendForApprovalComponent, {
       height: '300px',
       width: '405px',
@@ -182,7 +182,7 @@ export class ActionsListComponent implements OnInit {
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${geoId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -192,13 +192,13 @@ export class ActionsListComponent implements OnInit {
       });
   }
 
-  async approveModel(file: NPPFile, departmentId: number, geoId: number) {
+  async approveModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
     if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
       file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
       this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
       await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
-        `DU-${this.opportunityId}-${departmentId}-${geoId}`,
+        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
         `OO-${this.opportunityId}`,
         `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
       ]);
@@ -207,7 +207,7 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async rejectModel(file: NPPFile, departmentId: number, geoId: number) {
+  async rejectModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
     this.dialogInstance = this.matDialog.open(RejectModelComponent, {
       height: '300px',
@@ -230,7 +230,7 @@ export class ActionsListComponent implements OnInit {
           }
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${geoId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);

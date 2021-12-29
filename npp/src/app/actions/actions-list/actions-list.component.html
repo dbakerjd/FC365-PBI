@@ -151,12 +151,12 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        <span (click)="approveModel(file, currentFolder.DepartmentID, file.ListItemAllFields?.OpportunityGeographyId)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
-                                        <span (click)="rejectModel(file, currentFolder.DepartmentID, file.ListItemAllFields?.OpportunityGeographyId)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID, file.ListItemAllFields.OpportunityGeographyId)"></div>
+                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" title="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
