@@ -1465,10 +1465,16 @@ export class SharepointService {
 
   /** --- NOTIFICATIONS --- */
 
-  async getUserNotifications(userId: number): Promise<NPPNotification[]> {
+  async getUserNotifications(userId: number, from: Date | null | false = null): Promise<NPPNotification[]> {
+    let conditions = `$filter=TargetUserId eq '${userId}'`;
+    if (from) {
+      conditions += `&ReadAt gt '${from}'`;
+    } else if (from === false) {
+      conditions += ` and ReadAt eq null`;
+    }
     return await this.getAllItems(
       NOTIFICATIONS_LIST,
-      `$filter=TargetUserId eq '${userId}'&$orderby=Created desc`
+      conditions + '&$orderby=Created desc'
     );
   }
 

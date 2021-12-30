@@ -37,7 +37,7 @@ export class SummaryComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       const user = await this.sharepoint.getCurrentUserInfo();
-      this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
+      this.notificationsList = await this.sharepoint.getUserNotifications(user.Id, false);
 
       this.opportunities = await this.sharepoint.getOpportunities(true, true);
       const gates = await this.sharepoint.getAllStages();
