@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -14,11 +14,11 @@ export class HeaderComponent implements OnInit {
 
   constructor(
     public jobs: WorkInProgressService, 
-    private readonly sharepoint: SharepointService
+    private readonly notifications: NotificationsService
   ) { }
 
   async ngOnInit() {
-    this.notificationsCounter = await (await this.sharepoint.getUserNotifications((await this.sharepoint.getCurrentUserInfo()).Id)).length;
+    this.notificationsCounter = await this.notifications.getUnreadNotifications();
   }
 
   goBack() {

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Opportunity, SharepointService, User } from './sharepoint.service';
+import { NPPNotification, Opportunity, SharepointService, User } from './sharepoint.service';
 
 @Injectable({
   providedIn: 'root',
@@ -8,6 +8,17 @@ export class NotificationsService {
   currentUser: User | undefined;
 
   constructor(private sharepoint: SharepointService) {}
+
+
+  async getNotifications(): Promise<NPPNotification[]> {
+    const currentUser = await this.getCurrentUser();
+    return await this.sharepoint.getUserNotifications(currentUser.Id);
+  }
+
+  async getUnreadNotifications(): Promise<number> {
+    const currentUser = await this.getCurrentUser();
+    return (await this.sharepoint.getUserNotifications(currentUser.Id, false)).length;
+  }
 
   async opportunityOwnerNotification(opportunity: Opportunity) {
     const currentUser = await this.getCurrentUser();
