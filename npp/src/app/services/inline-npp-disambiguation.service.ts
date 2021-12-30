@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { environment } from 'src/environments/environment';
-import { Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
+import { ErrorService } from './error.service';
+import { AppType, Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
+import { TeamsService } from './teams.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,9 +10,37 @@ import { Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from 
 export class InlineNppDisambiguationService {
   
   isInline: boolean = false;
-  
-  constructor(private readonly sharepoint: SharepointService) { 
+  app: AppType | undefined;
+
+  constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService) { 
     this.isInline = environment.isInlineApp;
+
+    if (this.teams.initialized) {
+      this.setApp();
+    } else {
+      this.teams.statusSubject.subscribe(async (msg) => {
+        if(msg == 'initialized') {
+          this.setApp();
+        }
+      })
+    }
+    
+  }
+
+  async setApp() {
+    let appTitle = 'NPP';
+    if(this.isInline) {
+      appTitle = 'Inline';
+    }
+
+    let apps = await this.sharepoint.getApp(appTitle);
+    this.app = (apps && apps.length) ? apps[0] : undefined;
+
+    if(!this.app) {
+      this.error.handleError(new Error("Could not find ID for app: "+appTitle));
+    } else {
+      this.sharepoint.app = this.app;
+    }
   }
 
   getEntity(id: number) {

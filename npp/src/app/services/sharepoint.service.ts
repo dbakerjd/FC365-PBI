@@ -243,13 +243,13 @@ export interface PBIReport {
   Title: string;
 }
 
-const OPPORTUNITES_LIST_NAME = 'Opportunities';
-const OPPORTUNITY_STAGES_LIST_NAME = 'Opportunity Stages';
-const OPPORTUNITY_ACTIONS_LIST_NAME = 'Opportunity Action List';
-const GEOGRAPHIES_LIST_NAME = 'Opportunity Geographies';
-const OPPORTUNITIES_LIST = "lists/getbytitle('" + OPPORTUNITES_LIST_NAME + "')";
-const OPPORTUNITY_STAGES_LIST = "lists/getbytitle('" + OPPORTUNITY_STAGES_LIST_NAME + "')";
-const OPPORTUNITY_ACTIONS_LIST = "lists/getbytitle('" + OPPORTUNITY_ACTIONS_LIST_NAME + "')";
+const ENTITIES_LIST_NAME = 'Entities';
+const ENTITY_STAGES_LIST_NAME = 'Entity Stages';
+const ENTITY_ACTIONS_LIST_NAME = 'Entity Action List';
+const GEOGRAPHIES_LIST_NAME = 'Entity Geographies';
+const OPPORTUNITIES_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
+const ENTITY_STAGES_LIST = "lists/getbytitle('" + ENTITY_STAGES_LIST_NAME + "')";
+const ENTITY_ACTIONS_LIST = "lists/getbytitle('" + ENTITY_ACTIONS_LIST_NAME + "')";
 const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
 const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
 const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
@@ -344,18 +344,21 @@ export interface BrandGeography {
   Removed: "true" | "false" | boolean;
 }
 
-export const BRAND_LIST = "lists/getbytitle('Brands')";
+export interface AppType {
+  ID: number;
+  Title: string;
+}
+
+export const BRAND_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
 export const BUSINESS_UNIT_LIST = "lists/getbytitle('Business Units')";
 export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
-export const BRAND_GEOGRAPHIES_LIST_NAME = 'Brand Geographies';
-export const BRAND_GEOGRAPHIES_LIST = "lists/getByTitle('" + BRAND_GEOGRAPHIES_LIST_NAME + "')";
 export const FOLDER_APPROVED = 'Approved Models';
 export const FOLDER_ARCHIVED = 'Archived Models';
 export const FOLDER_WIP = 'Work in Progress';
 export const FOLDER_DOCUMENTS = 'Reference Documents';
 export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
 export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
-
+export const MASTER_APPS = "lists/getbytitle('Master APPs')";
 export const OPPORTUNITY_FORECAST_CYCLE = 'Archived Forecast Cycles';
 export const OPPORTUNITY_FORECAST_CYCLE_LIST = "lists/getbytitle('" + OPPORTUNITY_FORECAST_CYCLE + "')";
 
@@ -388,6 +391,8 @@ export class SharepointService {
     id: number;
   }[] = [];
   provisioningAPI = "https://nppprovisioning20210831.azurewebsites.net/api/";
+  public app: AppType | undefined;
+
   constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
 
   async test() {
@@ -515,6 +520,9 @@ export class SharepointService {
     return true;
   }
 
+  public async getApp(appId: string) {
+    return await this.getAllItems(MASTER_APPS, "$select=*&$filter=Title eq '"+appId+"'");
+  }
   /** --- OPPORTUNITIES --- **/
 
   async getOpportunities(expand = true, onlyActive = false): Promise<Opportunity[]> {
@@ -532,7 +540,7 @@ export class SharepointService {
   }
 
   async getAllStages(): Promise<Stage[]> {
-    return await this.getAllItems(OPPORTUNITY_STAGES_LIST);
+    return await this.getAllItems(ENTITY_STAGES_LIST);
   }
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
@@ -586,7 +594,7 @@ export class SharepointService {
     await this.setPermissions(permissions, groups);
 
     // add groups to the Opportunity
-    permissions = await this.getGroupPermissions(OPPORTUNITES_LIST_NAME);
+    permissions = await this.getGroupPermissions(ENTITIES_LIST_NAME);
     await this.setPermissions(permissions, groups, opportunity.ID);
 
     // add groups to the Opp geographies
@@ -715,12 +723,12 @@ export class SharepointService {
       const masterStage = await this.getOneItemById(data.StageNameId, MASTER_STAGES_LIST);
       Object.assign(data, { Title: masterStage.Title });
     }
-    return await this.createItem(OPPORTUNITY_STAGES_LIST, data);
+    return await this.createItem(ENTITY_STAGES_LIST, data);
   }
 
   async updateStage(stageId: number, data: any): Promise<boolean> {
-    const currentStage = await this.getOneItemById(stageId, OPPORTUNITY_STAGES_LIST);
-    let success = await this.updateItem(stageId, OPPORTUNITY_STAGES_LIST, data);
+    const currentStage = await this.getOneItemById(stageId, ENTITY_STAGES_LIST);
+    let success = await this.updateItem(stageId, ENTITY_STAGES_LIST, data);
 
     return success && await this.changeStageUsersPermissions(
       currentStage.OpportunityNameId,
@@ -731,14 +739,14 @@ export class SharepointService {
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
-    return await this.getAllItems(OPPORTUNITY_STAGES_LIST, "$filter=OpportunityNameId eq " + opportunityId);
+    return await this.getAllItems(ENTITY_STAGES_LIST, "$filter=OpportunityNameId eq " + opportunityId);
   }
 
   async getFirstStage(opp: Opportunity) {
     const stageType = await this.getStageType(opp.OpportunityTypeId);
     const firstMasterStage = await this.getMasterStage(stageType, 1);
     return await this.getOneItem(
-      OPPORTUNITY_STAGES_LIST,
+      ENTITY_STAGES_LIST,
       `$filter=OpportunityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
     );
   }
@@ -763,7 +771,7 @@ export class SharepointService {
     groups.push({ type: 'SU', data: SUGroup });
 
     // add groups to the Stage
-    let permissions = await this.getGroupPermissions(OPPORTUNITY_STAGES_LIST_NAME);
+    let permissions = await this.getGroupPermissions(ENTITY_STAGES_LIST_NAME);
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU and SU
@@ -779,7 +787,7 @@ export class SharepointService {
     const stageActions = await this.createStageActions(opportunity, stage);
 
     // add groups into Actions
-    permissions = await this.getGroupPermissions(OPPORTUNITY_ACTIONS_LIST_NAME);
+    permissions = await this.getGroupPermissions(ENTITY_ACTIONS_LIST_NAME);
     for (const action of stageActions) {
       await this.setPermissions(permissions, groups, action.Id);
     }
@@ -921,7 +929,7 @@ export class SharepointService {
     let dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + ma.DueDays);
     return await this.createItem(
-      OPPORTUNITY_ACTIONS_LIST,
+      ENTITY_ACTIONS_LIST,
       {
         Title: ma.Title,
         StageNameId: ma.StageNameId,
@@ -936,7 +944,7 @@ export class SharepointService {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      OPPORTUNITY_ACTIONS_LIST,
+      ENTITY_ACTIONS_LIST,
       `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`
     );
   }
@@ -945,7 +953,7 @@ export class SharepointService {
     let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      OPPORTUNITY_ACTIONS_LIST,
+      ENTITY_ACTIONS_LIST,
       `$filter=${filterConditions}&$orderby=Timestamp%20asc`
     );
   }
@@ -956,7 +964,7 @@ export class SharepointService {
       Timestamp: new Date(),
       Complete: true
     };
-    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, data);
+    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, data);
   }
 
   async uncompleteAction(actionId: number): Promise<boolean> {
@@ -965,11 +973,11 @@ export class SharepointService {
       Timestamp: null,
       Complete: false
     };
-    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, data);
+    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, data);
   }
 
   async setActionDueDate(actionId: number, newDate: string) {
-    return await this.updateItem(actionId, OPPORTUNITY_ACTIONS_LIST, { ActionDueDate: newDate });
+    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, { ActionDueDate: newDate });
   }
 
   /** --- FILES --- **/
@@ -2133,7 +2141,7 @@ export class SharepointService {
       filter += ' and Removed ne 1';
     }
     return await this.getAllItems(
-      BRAND_GEOGRAPHIES_LIST, filter,
+      GEOGRAPHIES_LIST, filter,
     );
   }
 
@@ -2216,7 +2224,7 @@ export class SharepointService {
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'BO', data: BOGroup });
 
-    let permissions = await this.getGroupPermissions(BRAND_GEOGRAPHIES_LIST_NAME);
+    let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
 
     for (const oppGeo of newGeos) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
@@ -2232,7 +2240,7 @@ export class SharepointService {
 
   async deleteBrandGeographies(removeGeo: BrandGeography[]) {
     for (let i = 0; i < removeGeo.length; i++) {
-      await this.updateItem(removeGeo[i].ID, BRAND_GEOGRAPHIES_LIST, {
+      await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
         Removed: true
       });
     }
@@ -2240,7 +2248,7 @@ export class SharepointService {
 
   async restoreBrandGeographies(restoreGeo: BrandGeography[]) {
     for (let i = 0; i < restoreGeo.length; i++) {
-      await this.updateItem(restoreGeo[i].ID, BRAND_GEOGRAPHIES_LIST, {
+      await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
         Removed: false
       });
     }
@@ -2251,7 +2259,7 @@ export class SharepointService {
     const countriesList = await this.getCountriesList();
     let res = [];
     for (const g of geographies) {
-      let newGeo = await this.createItem(BRAND_GEOGRAPHIES_LIST, {
+      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
         BrandId: brandId,
         Master_x0020_GeographyId: g
@@ -2259,7 +2267,7 @@ export class SharepointService {
       res.push(newGeo);
     }
     for (const c of countries) {
-      let newGeo = await this.createItem(BRAND_GEOGRAPHIES_LIST, {
+      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
         BrandId: brandId,
         CountryId: c
