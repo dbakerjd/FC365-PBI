@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NPPNotification, Opportunity, SharepointService } from '../services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from '../services/teams.service';
+import { NotificationsService } from '../services/notifications.service';
 
 @Component({
   selector: 'app-summary',
@@ -31,13 +32,13 @@ export class SummaryComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
+    private notifications: NotificationsService,
     private teams: TeamsService
   ) { }
 
   async ngOnInit(): Promise<void> {
     try {
-      const user = await this.sharepoint.getCurrentUserInfo();
-      this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
+      this.notificationsList = await this.notifications.getNotifications();
 
       this.opportunities = await this.sharepoint.getOpportunities(true, true);
       const gates = await this.sharepoint.getAllStages();
@@ -307,6 +308,10 @@ export class SummaryComponent implements OnInit {
       this.teams.hackyConsole += "********RUNTIME ERROR********    "+JSON.stringify(e);
     }
   } 
+
+  async ngAfterViewInit() {
+    this.notifications.updateUnreadNotifications();
+  }
 
   async getOpportunityCurrentTaskName(op: Opportunity) {
     if(!op.gates) return;

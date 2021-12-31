@@ -8,6 +8,7 @@ import { from } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
@@ -28,6 +29,7 @@ export class OpportunityListComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
+    private notifications: NotificationsService,
     private toastr: ToastrService,
     private router: Router, 
     public matDialog: MatDialog,
@@ -123,6 +125,8 @@ export class OpportunityListComponent implements OnInit {
           this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
+          await this.notifications.opportunityOwnerNotification(result.data.opportunity);
+          await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);
@@ -149,6 +153,9 @@ export class OpportunityListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
+        if (opp.OpportunityOwnerId !== result.data.OpportunityOwnerId) {
+          await this.notifications.opportunityOwnerNotification(result.data);
+        }
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");

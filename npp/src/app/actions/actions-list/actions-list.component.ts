@@ -16,6 +16,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { LicensingService } from 'src/app/services/licensing.service';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
@@ -56,6 +57,7 @@ export class ActionsListComponent implements OnInit {
 
   constructor(
     private readonly sharepoint: SharepointService, 
+    private readonly notifications: NotificationsService,
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
@@ -156,7 +158,7 @@ export class ActionsListComponent implements OnInit {
     
   }
 
-  sendForApproval(file: NPPFile) {
+  async sendForApproval(file: NPPFile, departmentId: number) {
     this.dialogInstance = this.matDialog.open(SendForApprovalComponent, {
       height: '300px',
       width: '405px',
@@ -176,24 +178,36 @@ export class ActionsListComponent implements OnInit {
               file.ListItemAllFields.ModelApprovalComments = result.comments;
             }
           }
+
+          //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
+          await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (result.success === false) {
           this.toastr.error("The model couldn't be sent for approval");
         }
       });
   }
 
-  async approveModel(file: NPPFile) {
+  async approveModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
     if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
       file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
       this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
+      await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
+        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+        `OO-${this.opportunityId}`,
+        `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+      ]);
     } else {
       this.toastr.error("There were a problem approving the forecast model", 'Try again');
     }
   }
 
-  async rejectModel(file: NPPFile) {
+  async rejectModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
     this.dialogInstance = this.matDialog.open(RejectModelComponent, {
       height: '300px',
@@ -215,6 +229,11 @@ export class ActionsListComponent implements OnInit {
             }
           }
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (result.success === false) {
           this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
         }
@@ -261,6 +280,11 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (result: any) => {
         if (this.currentGate && result.success) {
+          // notification to new users
+          const currentStageUsers = this.currentGate.StageUsersId;
+          const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
+          await this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
+          // update current info
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
         }
@@ -629,23 +653,15 @@ export class ActionsListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, departmentId: number, geoId: number | null = null, countryId: number | null = null) {
+  async shareFile(fileId: number, departmentId: number) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!file) return;
     
-    const oppGeo = await this.sharepoint.getOpportunityGeographies(this.opportunityId);
-
-    let involvedGeo = null;
-    if (geoId) {
-      involvedGeo = oppGeo.find(el => el.GeographyId == geoId);
-    } else if (countryId) {
-      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
-    }
-    if (!involvedGeo && (geoId || countryId)) return;
-
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
-    if (involvedGeo) {
-      folderGroup += '-' + involvedGeo.Id;
+
+    // is it a model with geography assigned?
+    if (file.ListItemAllFields?.OpportunityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.OpportunityGeographyId;
     }
     
     // users with access
@@ -655,16 +671,18 @@ export class ActionsListComponent implements OnInit {
       await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
+    // clean users list
+    let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
-    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+    uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
-      height: '250px',
+      height: '300px',
       width: '405px',
       data: {
         file,
-        folderUsersList
+        folderUsersList: uniqueFolderUsersList
       }
     });
   }
@@ -767,7 +785,6 @@ export class ActionsListComponent implements OnInit {
   }
 
   private isActiveStage(stageId: number): boolean {
-    console.log('stages', this.gates.map(el => el.StageNameId));
     const position = this.gates.map(el => el.StageNameId).indexOf(stageId);
     return position === this.gates.length - 1;
   }
