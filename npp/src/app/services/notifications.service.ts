@@ -12,12 +12,23 @@ export class NotificationsService {
 
   async getNotifications(): Promise<NPPNotification[]> {
     const currentUser = await this.getCurrentUser();
-    return await this.sharepoint.getUserNotifications(currentUser.Id);
+    const limit = 15;
+    const fromDate = new Date();
+    fromDate.setMonth(fromDate.getMonth() - 1);
+    return await this.sharepoint.getUserNotifications(currentUser.Id, fromDate, limit);
   }
 
   async getUnreadNotifications(): Promise<number> {
     const currentUser = await this.getCurrentUser();
-    return (await this.sharepoint.getUserNotifications(currentUser.Id, false)).length;
+    return await this.sharepoint.notificationsCount(currentUser.Id, 'ReadAt eq null');
+  }
+
+  async updateUnreadNotifications() {
+    const currentUser = await this.getCurrentUser();
+    const unreadNotifications = await this.sharepoint.getUserNotifications(currentUser.Id, false);
+    for (const not of unreadNotifications) {
+      await this.sharepoint.updateNotification(not.Id, { ReadAt: new Date() })
+    }
   }
 
   async opportunityOwnerNotification(opportunity: Opportunity) {
