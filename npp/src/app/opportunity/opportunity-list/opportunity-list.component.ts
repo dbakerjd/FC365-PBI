@@ -89,9 +89,19 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
+    this.opportunities.forEach(el => {
+      this.initIndicationString(el);
+    })
     this.loading = false;
     for (let op of this.opportunities) {
       op.progress = await this.computeProgress(op);
+    }
+  }
+
+  initIndicationString(el: Opportunity) {
+    if(el.Indication && el.Indication.length) {
+      (el as any).IndicationAsString = el.Indication.map(el => el.Title).join(", ");
+      (el as any).TherapyAreaAsString = el.Indication.map(el => el.TherapyArea).join(", ");
     }
   }
 
@@ -123,6 +133,7 @@ export class OpportunityListComponent implements OnInit {
           // set active
           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
           opp.OpportunityStatus = 'Active';
+          this.initIndicationString(opp);
           this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);

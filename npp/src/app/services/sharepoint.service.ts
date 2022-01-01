@@ -19,8 +19,8 @@ export interface Opportunity {
   OpportunityStatus: "Processing" | "Archive" | "Active" | "Approved";
   ForecastCycle?:ForecastCycle;
   ForecastCycleId?: number;
-  IndicationId: number;
-  Indication: Indication;
+  IndicationId: number[];
+  Indication: Indication[];
   Modified: Date;
   AuthorId: number;
   Author?: User;

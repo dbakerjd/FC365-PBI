@@ -49,7 +49,8 @@ export class CreateOpportunityComponent implements OnInit {
     const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
-    let indicationsList: any[] = [];
+    let indicationsList: SelectInputList[] = [];
+    let businessUnits = await this.sharepoint.getBusinessUnitsList();
     let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
@@ -70,8 +71,9 @@ export class CreateOpportunityComponent implements OnInit {
       }
 
       // default indications for the therapy selected
-      indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication.TherapyArea);
-
+      if (this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length) {
+        indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
+      }
       // if we are cloning opportunity, get first stage info
       if (this.data?.createFrom && !this.data?.forceType) {
         this.stage = await this.sharepoint.getFirstStage(this.opportunity);
@@ -139,13 +141,14 @@ export class CreateOpportunityComponent implements OnInit {
             options: therapies,
             required: true,
           },
-          defaultValue: this.opportunity?.Indication.TherapyArea,
-        }, {
+          defaultValue: this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length ? this.opportunity.Indication[0].TherapyArea : null
+        },{
           key: 'Opportunity.IndicationId',
-          type: 'select',
+          type: 'ngsearchable',
           templateOptions: {
             label: 'Indication Name:',
             options: indicationsList,
+            multiple: true,
             required: true,
           },
           defaultValue: this.opportunity?.IndicationId,
@@ -165,6 +168,15 @@ export class CreateOpportunityComponent implements OnInit {
               ).subscribe();
             }
           }
+        }, {
+          key: 'Opportunity.BusinessUnitId',
+          type: 'select',
+          templateOptions: {
+            label: 'Business Unit:',
+            options: businessUnits,
+            required: true,
+          },
+          defaultValue: this.opportunity?.BusinessUnitId
         }, {
           key: 'Opportunity.OpportunityTypeId',
           type: 'select',
