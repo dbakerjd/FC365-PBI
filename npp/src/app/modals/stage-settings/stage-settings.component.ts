@@ -117,7 +117,7 @@ export class StageSettingsComponent implements OnInit {
       const newStage = await this.sharepoint.createStage({
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId,
-        OpportunityNameId: this.model.opportunityId,
+        EntityNameId: this.model.opportunityId,
         StageNameId: this.model.nextMasterStageId
       });
       this.dialogRef.close({

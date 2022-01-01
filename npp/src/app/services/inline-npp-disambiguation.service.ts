@@ -55,7 +55,7 @@ export class InlineNppDisambiguationService {
     if(this.isInline) {
       return (entity as Brand).BrandOwnerId;
     } else {
-      return (entity as Opportunity).OpportunityOwnerId;
+      return (entity as Opportunity).EntityOwnerId;
     }
   }
 
@@ -63,7 +63,7 @@ export class InlineNppDisambiguationService {
     if(this.isInline) {
       return (entity as Brand).BrandOwner;
     } else {
-      return (entity as Opportunity).OpportunityOwner;
+      return (entity as Opportunity).EntityOwner;
     }
   }
 
@@ -119,7 +119,7 @@ export class InlineNppDisambiguationService {
     if(this.isInline) {
       return this.sharepoint.updateBrandGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
     } else {
-      return this.sharepoint.updateOpportunityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
+      return this.sharepoint.updateEntityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
     }
   }
 

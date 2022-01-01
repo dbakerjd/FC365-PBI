@@ -33,9 +33,9 @@ export class NotificationsService {
 
   async opportunityOwnerNotification(opportunity: Opportunity) {
     const currentUser = await this.getCurrentUser();
-    if (currentUser.Id !== opportunity.OpportunityOwnerId) {
+    if (currentUser.Id !== opportunity.EntityOwnerId) {
       await this.sharepoint.createNotification(
-        opportunity.OpportunityOwnerId,
+        opportunity.EntityOwnerId,
         `${currentUser.Title} has made you the owner of the opportunity '${opportunity.Title}'`
       );
     }

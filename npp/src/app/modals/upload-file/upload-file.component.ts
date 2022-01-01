@@ -49,22 +49,22 @@ export class UploadFileComponent implements OnInit {
     }
     let fileData = {
       StageNameId: this.model.StageNameId,
-      OpportunityNameId: this.model.OpportunityNameId,
+      EntityNameId: this.model.EntityNameId,
     };
 
     this.uploading = this.dialogRef.disableClose = true;
 
-    let fileFolder = '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
+    let fileFolder = '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // add geography to folder route
       fileFolder += '/' + this.model.geography;
 
       // read opp geography to get master ID of country / geography
-      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.OpportunityNameId);
+      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
 
       Object.assign(fileData, {
-        OpportunityGeographyId: geography.Id ? geography.Id : null,
+        EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),

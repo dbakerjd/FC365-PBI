@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { Opportunity, OpportunityGeography, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -31,7 +31,7 @@ export class CreateOpportunityComponent implements OnInit {
   stage: Stage | null = null;
   loading = true;
   updating = false;
-  geographies: OpportunityGeography[] = [];
+  geographies: EntityGeography[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
@@ -83,8 +83,8 @@ export class CreateOpportunityComponent implements OnInit {
       /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
       /*
       defaultUsersList = [{ 
-        label: this.opportunity.OpportunityOwner.FirstName + ' ' + this.opportunity.OpportunityOwner.LastName,
-        value: this.opportunity.OpportunityOwnerId
+        label: this.opportunity.EntityOwner.FirstName + ' ' + this.opportunity.EntityOwner.LastName,
+        value: this.opportunity.EntityOwnerId
       }];
       */
     }
@@ -117,7 +117,7 @@ export class CreateOpportunityComponent implements OnInit {
           },
           defaultValue: this.opportunity?.MoleculeName
         }, {
-          key: 'Opportunity.OpportunityOwnerId',
+          key: 'Opportunity.EntityOwnerId',
           type: 'ngsearchable',
           templateOptions: {
             label: 'Opportunity Owner:',
@@ -130,7 +130,7 @@ export class CreateOpportunityComponent implements OnInit {
             query: 'siteusers'
             */
           },
-          defaultValue: this.opportunity?.OpportunityOwnerId
+          defaultValue: this.opportunity?.EntityOwnerId
         }, {
           key: 'therapy',
           type: 'select',

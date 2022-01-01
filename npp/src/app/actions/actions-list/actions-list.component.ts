@@ -76,12 +76,12 @@ export class ActionsListComponent implements OnInit {
           this.router.navigate(['notfound']);
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
-        this.isOwner = this.currentUser.Id === this.opportunity.OpportunityOwnerId;
+        this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
 
-        if (this.opportunity.OpportunityOwner) {
-          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
-          this.opportunity.OpportunityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
-          this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
+        if (this.opportunity.EntityOwner) {
+          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
+          this.opportunity.EntityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
+          this.profilePic = this.opportunity.EntityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
@@ -182,7 +182,7 @@ export class ActionsListComponent implements OnInit {
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -198,7 +198,7 @@ export class ActionsListComponent implements OnInit {
       file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
       this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
       await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
-        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
         `OO-${this.opportunityId}`,
         `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
       ]);
@@ -230,7 +230,7 @@ export class ActionsListComponent implements OnInit {
           }
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -405,7 +405,7 @@ export class ActionsListComponent implements OnInit {
               'initialize stage ' + result.data.ID, 
               'The stage is being initialized. The list of actions and starter permissions are being created.'
             );
-            let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+            let opp = await this.sharepoint.getOpportunity(result.data.EntityNameId);
             const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
             this.sharepoint.initializeStage(opp, result.data,oppGeographies).then(async r => {
@@ -660,8 +660,8 @@ export class ActionsListComponent implements OnInit {
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
 
     // is it a model with geography assigned?
-    if (file.ListItemAllFields?.OpportunityGeographyId) {
-      folderGroup += '-' + file.ListItemAllFields?.OpportunityGeographyId;
+    if (file.ListItemAllFields?.EntityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.EntityGeographyId;
     }
     
     // users with access

@@ -48,7 +48,7 @@ export class SummaryComponent implements OnInit {
       this.opportunities.forEach(async (el, index) => {
         //populate gates/phases and isGateType
         let filteredGates = gates.filter(g => {
-          return g.OpportunityNameId == el.ID;
+          return g.EntityNameId == el.ID;
         });
         el.gates = filteredGates;
         if(el.gates.length > 0) {
@@ -75,7 +75,7 @@ export class SummaryComponent implements OnInit {
         }
 
         let lastGate = el.gates[el.gates.length - 1];
-        let lastGateTasks = await this.sharepoint.getActionsRaw(lastGate.OpportunityNameId, lastGate.StageNameId);
+        let lastGateTasks = await this.sharepoint.getActionsRaw(lastGate.EntityNameId, lastGate.StageNameId);
         let lastTask = lastGateTasks.find(el => !el.Complete);
         let taskInfo = {
           opportunityName: el.Title,

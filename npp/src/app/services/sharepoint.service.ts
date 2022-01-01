@@ -10,8 +10,8 @@ export interface Opportunity {
   ID: number;
   Title: string;
   MoleculeName: string;
-  OpportunityOwnerId: number;
-  OpportunityOwner?: User;
+  EntityOwnerId: number;
+  EntityOwner?: User;
   ProjectStartDate: Date;
   ProjectEndDate: Date;
   OpportunityTypeId: number;
@@ -34,7 +34,7 @@ export interface Opportunity {
 export interface OpportunityInput {
   Title: string;
   MoleculeName: string;
-  OpportunityOwnerId: number;
+  EntityOwnerId: number;
   ProjectStartDate: Date;
   ProjectEndDate: Date;
   OpportunityTypeId: number;
@@ -45,14 +45,14 @@ export interface StageInput {
   StageUsersId: number[];
   StageReview: Date;
   Title?: string;
-  OpportunityNameId?: number;
+  EntityNameId?: number;
   StageNameId?: number;
 }
 
 export interface Action {
   Id: number,
   StageNameId: number;
-  OpportunityNameId: number;
+  EntityNameId: number;
   Title: string;
   ActionNameId: string;
   ActionDueDate: Date;
@@ -99,7 +99,7 @@ export interface User {
 export interface Stage {
   ID: number;
   Title: string;
-  OpportunityNameId: number;
+  EntityNameId: number;
   StageNameId: number;
   StageReview: Date;
   StageUsersId: number[];
@@ -126,15 +126,13 @@ export interface FileComments {
 
 export interface NPPFileMetadata {
   ID: number;
-  OpportunityNameId?: number;
+  EntityNameId?: number;
   StageNameId?: number;
   ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
-  OpportunityGeographyId?: number;
-  OpportunityGeography?: OpportunityGeography;
-  BrandGeographyId?: number;
-  BrandGeography?: BrandGeography;
+  EntityGeographyId?: number;
+  EntityGeography?: EntityGeography;
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
@@ -165,7 +163,7 @@ export interface Country {
   Title: string;
 }
 
-export interface OpportunityGeography {
+export interface EntityGeography {
   Attachments: boolean;
   AuthorId: number;
   ContentTypeId: number;
@@ -176,8 +174,8 @@ export interface OpportunityGeography {
   ID: number;
   Id: number;
   Modified: Date;
-  OpportunityId: number;
-  OpportunityGeographyType: string;
+  EntityId: number;
+  EntityGeographyType: string;
   ServerRedirectedEmbedUri: string;
   ServerRedirectedEmbedUrl: string;
   Title: string;
@@ -294,8 +292,8 @@ export interface BrandForecastCycle {
 export interface OpportunityForecastCycle {
   ID: number;
   Title: string;
-  OpportunityId: number;
-  Opportunity?: Opportunity;
+  EntityId: number;
+  Entity?: Opportunity;
   ForecastCycleTypeId: number;
   ForecastCycleType?: ForecastCycle;
   Year: string;
@@ -529,7 +527,7 @@ export class SharepointService {
     let filter = undefined;
     if (expand) {
       //TODO check why OpportunityType/isInternal is failing
-      filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,OpportunityOwner/FirstName,OpportunityOwner/LastName,OpportunityOwner/ID,OpportunityOwner/EMail&$expand=OpportunityType,Indication,OpportunityOwner";
+      filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner";
     }
     if (onlyActive) {
       if (!filter) filter = "$filter=OpportunityStatus eq 'Active'";
@@ -554,7 +552,7 @@ export class SharepointService {
     const masterStage = await this.getMasterStage(stageType, stageStartNumber);
 
     const stage = await this.createStage(
-      { ...st, Title: masterStage.Title, OpportunityNameId: opportunity.ID, StageNameId: masterStage.ID }
+      { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
     );
     if (!stage) return false; // TODO remove opportunity
 
@@ -568,7 +566,7 @@ export class SharepointService {
     for (const g of geographies) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
-        OpportunityNameId: oppId,
+        EntityNameId: oppId,
         GeographyId: g
       });
       res.push(newGeo);
@@ -576,7 +574,7 @@ export class SharepointService {
     for (const c of countries) {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
-        OpportunityNameId: oppId,
+        EntityNameId: oppId,
         CountryId: c
       });
       res.push(newGeo);
@@ -586,7 +584,7 @@ export class SharepointService {
   }
 
   async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
-    const groups = await this.createOpportunityGroups(opportunity.OpportunityOwnerId, opportunity.ID, stage.StageNameId);
+    const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID, stage.StageNameId);
 
     let permissions;
     // add groups to lists
@@ -599,7 +597,7 @@ export class SharepointService {
 
     // add groups to the Opp geographies
     permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=OpportunityNameId eq ' + opportunity.ID);
+    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=EntityNameId eq ' + opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
@@ -625,15 +623,15 @@ export class SharepointService {
     const oppBeforeChanges: Opportunity = await this.getOneItemById(oppId, OPPORTUNITIES_LIST);
     const success = await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
 
-    if (success && oppBeforeChanges.OpportunityOwnerId !== oppData.OpportunityOwnerId) { // owner changed
-      return this.changeOpportunityOwnerPermissions(oppId, oppBeforeChanges.OpportunityOwnerId, oppData.OpportunityOwnerId);
+    if (success && oppBeforeChanges.EntityOwnerId !== oppData.EntityOwnerId) { // owner changed
+      return this.changeOpportunityOwnerPermissions(oppId, oppBeforeChanges.EntityOwnerId, oppData.EntityOwnerId);
     }
 
     return success;
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,OpportunityOwner/ID,OpportunityOwner/FirstName,OpportunityOwner/EMail,OpportunityOwner/LastName&$expand=OpportunityType,Indication,Author,OpportunityOwner");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -661,7 +659,7 @@ export class SharepointService {
   }
 
   async getOpportunityGeographies(oppId: number, all?: boolean) {
-    let filter = `$filter=OpportunityNameId eq ${oppId}`;
+    let filter = `$filter=EntityNameId eq ${oppId}`;
     if (!all) {
       filter += ' and Deleted ne 1';
     }
@@ -731,7 +729,7 @@ export class SharepointService {
     let success = await this.updateItem(stageId, ENTITY_STAGES_LIST, data);
 
     return success && await this.changeStageUsersPermissions(
-      currentStage.OpportunityNameId,
+      currentStage.EntityNameId,
       currentStage.StageNameId,
       currentStage.StageUsersId,
       data.StageUsersId
@@ -739,7 +737,7 @@ export class SharepointService {
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
-    return await this.getAllItems(ENTITY_STAGES_LIST, "$filter=OpportunityNameId eq " + opportunityId);
+    return await this.getAllItems(ENTITY_STAGES_LIST, "$filter=EntityNameId eq " + opportunityId);
   }
 
   async getFirstStage(opp: Opportunity) {
@@ -747,18 +745,18 @@ export class SharepointService {
     const firstMasterStage = await this.getMasterStage(stageType, 1);
     return await this.getOneItem(
       ENTITY_STAGES_LIST,
-      `$filter=OpportunityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
+      `$filter=EntityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
     );
   }
 
-  async initializeStage(opportunity: Opportunity, stage: Stage, geographies: OpportunityGeography[]): Promise<boolean> {
+  async initializeStage(opportunity: Opportunity, stage: Stage, geographies: EntityGeography[]): Promise<boolean> {
     const OUGroup = await this.createGroup('OU-' + opportunity.ID);
     const OOGroup = await this.createGroup('OO-' + opportunity.ID);
     const SUGroup = await this.createGroup(`SU-${opportunity.ID}-${stage.StageNameId}`);
 
     if (!OUGroup || !OOGroup || !SUGroup) return false; // something happened with groups
 
-    const owner = await this.getUserInfo(opportunity.OpportunityOwnerId);
+    const owner = await this.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
     await this.addUserToGroup(owner.LoginName, OUGroup.Id);
@@ -872,15 +870,15 @@ export class SharepointService {
     return actions;
   }
 
-  private async createStageFolders(stage: Stage, geographies: OpportunityGeography[], groups: SPGroupListItem[]): Promise<SystemFolder[]> {
-    let oppId = stage.OpportunityNameId;
+  private async createStageFolders(stage: Stage, geographies: EntityGeography[], groups: SPGroupListItem[]): Promise<SystemFolder[]> {
+    let oppId = stage.EntityNameId;
 
     const OUGroup = groups.find(el => el.type == "OU");
     if (!OUGroup) throw new Error("Error creating group permissions.");
 
     const masterFolders = await this.getStageFolders(stage.StageNameId);
-    const oppFolder = await this.createFolder(`/${stage.OpportunityNameId}`);
-    const stageFolder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}`);
+    const oppFolder = await this.createFolder(`/${stage.EntityNameId}`);
+    const stageFolder = await this.createFolder(`/${stage.EntityNameId}/${stage.StageNameId}`);
     if (!oppFolder || !stageFolder) throw new Error("Error creating opportunity folders.");
 
     // assign OU to parent folders
@@ -890,14 +888,14 @@ export class SharepointService {
     let folders: SystemFolder[] = [];
 
     for (const mf of masterFolders) {
-      const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}`);
+      const folder = await this.createFolder(`/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
         if (mf.Title !== FORECAST_MODELS_FOLDER_NAME) {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
         } else {
           for (let geo of geographies) {
-            const folder = await this.createFolder(`/${stage.OpportunityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
+            const folder = await this.createFolder(`/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
             if (folder) {
               const OOGroup = groups.find(el => el.type == "OO");
               const SUGroup = groups.find(el => el.type == "SU");
@@ -937,7 +935,7 @@ export class SharepointService {
       {
         Title: ma.Title,
         StageNameId: ma.StageNameId,
-        OpportunityNameId: oppId,
+        EntityNameId: oppId,
         ActionNameId: ma.Id,
         ActionDueDate: dueDate
       }
@@ -945,7 +943,7 @@ export class SharepointService {
   }
 
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
-    let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
+    let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
       ENTITY_ACTIONS_LIST,
@@ -954,7 +952,7 @@ export class SharepointService {
   }
 
   async getActionsRaw(opportunityId: number, stageId?: number): Promise<Action[]> {
-    let filterConditions = `(OpportunityNameId eq ${opportunityId})`;
+    let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
       ENTITY_ACTIONS_LIST,
@@ -1277,8 +1275,8 @@ export class SharepointService {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
-        OpportunityGeography/Title,OpportunityGeography/OpportunityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,OpportunityGeography,ModelScenario,ApprovalStatus',
+        EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
+        &$expand=StageName,Author,TargetUser,EntityGeography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
@@ -1820,7 +1818,7 @@ export class SharepointService {
   }
 
   async updateOpportunityGeographies(opportunityId: number, newGeographies: string[]) {
-    let allGeo: OpportunityGeography[] = await this.getOpportunityGeographies(opportunityId, true);
+    let allGeo: EntityGeography[] = await this.getOpportunityGeographies(opportunityId, true);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -1855,7 +1853,7 @@ export class SharepointService {
       return parseInt(arrId[1]);
     })
 
-    let restoreGeo: OpportunityGeography[] = [];
+    let restoreGeo: EntityGeography[] = [];
     newGeographies.forEach(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
@@ -1927,7 +1925,7 @@ export class SharepointService {
     }
   }
 
-  async deleteGeographies(removeGeo: OpportunityGeography[]) {
+  async deleteGeographies(removeGeo: EntityGeography[]) {
     for (let i = 0; i < removeGeo.length; i++) {
       await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
         Deleted: "true"
@@ -1935,7 +1933,7 @@ export class SharepointService {
     }
   }
 
-  async restoreGeographies(restoreGeo: OpportunityGeography[]) {
+  async restoreGeographies(restoreGeo: EntityGeography[]) {
     for (let i = 0; i < restoreGeo.length; i++) {
       await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
         Deleted: "false"
@@ -2380,10 +2378,10 @@ export class SharepointService {
         select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
         break;
       case FOLDER_ARCHIVED:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,OpportunityGeography/Title,ModelScenario/Title&$expand=Author,Editor,OpportunityGeography,ModelScenario,Indication';  
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
         break;
       default:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,OpportunityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,OpportunityGeography,ModelScenario,ApprovalStatus,Indication';
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
         break;
     }
     
@@ -2429,7 +2427,7 @@ export class SharepointService {
     return success;
   }
 
-  async updateOpportunityGeographyUsers(oppId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
+  async updateEntityGeographyUsers(oppId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
     // groups needed
     const BUGroup = await this.getGroup('OU-' + oppId);
     const BOGroup = await this.getGroup('OO-' + oppId);
