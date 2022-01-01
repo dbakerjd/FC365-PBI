@@ -923,6 +923,10 @@ export class SharepointService {
     return folders;
   }
 
+  async getNPPFolderByDepartment(departmentID: number): Promise<NPPFolder> {
+    return await this.getOneItem(MASTER_FOLDER_LIST, "$filter=Id eq " + departmentID);
+  }
+
   /** --- OPPORTUNITY ACTIONS --- **/
 
   private async createAction(ma: MasterAction, oppId: number): Promise<Action> {
@@ -1692,11 +1696,30 @@ export class SharepointService {
 
   /** --- NOTIFICATIONS --- */
 
-  async getUserNotifications(userId: number): Promise<NPPNotification[]> {
+  async getUserNotifications(userId: number, from: Date | false | null = null, limit: number | null = null): Promise<NPPNotification[]> {
+    let conditions = `$filter=TargetUserId eq '${userId}'`;
+    if (from) {
+      conditions += `and Created gt datetime'${from.toISOString()}'`;
+    } else if (from === false) {
+      conditions += ` and ReadAt eq null`;
+    }
+
+    if (limit) conditions += '&$top=' + limit;
+
     return await this.getAllItems(
       NOTIFICATIONS_LIST,
-      `$filter=TargetUserId eq '${userId}'&$orderby=Created desc`
+      conditions + '&$orderby=Created desc'
     );
+  }
+
+  async updateNotification(notificationId: number, data: any): Promise<boolean> {
+    return await this.updateItem(notificationId, NOTIFICATIONS_LIST, data);
+  }
+
+  async notificationsCount(userId: number, conditions = ''): Promise<number> {
+    conditions = `$filter=TargetUserId eq '${userId}'` + ( conditions ? ' and ' + conditions : '');
+    // item count ho retorna tot sense condicions => getAllItems + length
+    return (await this.getAllItems(NOTIFICATIONS_LIST, '$select=Id&' + conditions)).length;
   }
 
   async createNotification(userId: number, text: string): Promise<NPPNotification> {

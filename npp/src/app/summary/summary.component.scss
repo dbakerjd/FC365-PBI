@@ -94,6 +94,9 @@
                 border-bottom: 1px solid #fff;
                 margin: 1px 0.9px 1px 1.2px;
                 padding: 12px 9px 23px 16px;
+                &.isRead {
+                    background-color: #f5e6d7;
+                }
             }
         }
     }
