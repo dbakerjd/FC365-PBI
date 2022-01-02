@@ -20,6 +20,9 @@ export class UploadFileComponent implements OnInit {
   model: any = { };
   folders: NPPFolder[] = [];
   uploading = false; // spinner control
+  businessUnitId: number = 0;
+  forecastCycleId: number = 0;
+  geoId: number = 0;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -27,7 +30,8 @@ export class UploadFileComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
   ) { 
-    
+    this.businessUnitId = this.data.businessUnitId ? this.data.businessUnitId : 0;
+    this.forecastCycleId = this.data.forecastCycleId ? this.data.forecastCycleId : 0;
   }
 
   ngOnInit(): void {
@@ -54,7 +58,8 @@ export class UploadFileComponent implements OnInit {
 
     this.uploading = this.dialogRef.disableClose = true;
 
-    let fileFolder = '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
+    let fileFolder = '/' + this.businessUnitId + '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
+    
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // add geography to folder route
       fileFolder += '/' + this.model.geography;

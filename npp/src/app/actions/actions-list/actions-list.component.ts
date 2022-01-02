@@ -116,8 +116,9 @@ export class ActionsListComponent implements OnInit {
 
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (modelFolder) {
+    if (modelFolder && this.opportunity) {
       geographiesList = await this.sharepoint.getAccessibleGeographiesList(
+        this.opportunity.BusinessUnitId,
         this.opportunityId, 
         this.currentGate.StageNameId,
         modelFolder.ID

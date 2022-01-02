@@ -1769,11 +1769,11 @@ export class SharepointService {
   }
 
   /** Accessible Geographies for the user (subfolders with read/write permission) */
-  async getAccessibleGeographiesList(oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
+  async getAccessibleGeographiesList(busId: number, oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
 
     const geographiesList = await this.getOpportunityGeographies(oppId);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`/${oppId}/${stageId}/${departmentID}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`/${busId}/${oppId}/${stageId}/${departmentID}`);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
