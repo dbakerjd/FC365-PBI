@@ -310,7 +310,7 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.isEdit) {
 
       this.updating = this.dialogRef.disableClose = true;
-      await this.sharepoint.updateOpportunityGeographies(this.data.opportunity.ID, this.model.geographies);
+      await this.sharepoint.updateOpportunityGeographies(this.data.opportunity, this.model.geographies);
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({

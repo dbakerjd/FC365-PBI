@@ -542,19 +542,26 @@ export class SharepointService {
   }
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
-    Promise<{ opportunity: Opportunity, stage: Stage } | false> {
+    Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
 
     const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
     // get master stage info
-    const stageType = await this.getStageType(opp.OpportunityTypeId);
-    const masterStage = await this.getMasterStage(stageType, stageStartNumber);
+    const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
+    let stage = null;
 
-    const stage = await this.createStage(
-      { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
-    );
-    if (!stage) return false; // TODO remove opportunity
+    if(!opportunityType?.isInternal) {
+      const stageType = opportunityType?.StageType;
+      if(!stageType) throw new Error("Could not determine Opportunity Type");
+      const masterStage = await this.getMasterStage(stageType, stageStartNumber);
+  
+      stage = await this.createStage(
+        { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
+      );
+      if (!stage) return false; // TODO remove opportunity
+    }
+    
 
     return { opportunity, stage };
   }
@@ -602,7 +609,12 @@ export class SharepointService {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
 
-    await this.initializeStage(opportunity, stage, oppGeographies);
+    if (stage) {
+      await this.initializeStage(opportunity, stage, oppGeographies);
+    } else {
+      await this.initializeInternalEntityFolders(opportunity, oppGeographies);
+    }
+    
 
     return true;
   }
@@ -749,6 +761,43 @@ export class SharepointService {
     );
   }
 
+  async initializeInternalEntityFolders(opportunity: Opportunity, geographies: EntityGeography[]) {
+    const OUGroup = await this.createGroup('OU-' + opportunity.ID);
+    const OOGroup = await this.createGroup('OO-' + opportunity.ID);
+
+    if (!OUGroup || !OOGroup) return false; // something happened with groups
+
+    const owner = await this.getUserInfo(opportunity.EntityOwnerId);
+    if (!owner.LoginName) return false;
+
+    await this.addUserToGroup(owner.LoginName, OUGroup.Id);
+    await this.addUserToGroup(owner.LoginName, OOGroup.Id);
+    // await this.addUserToGroup(owner.LoginName, SUGroup.Id); // not needed
+
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'OU', data: OUGroup });
+    groups.push({ type: 'OO', data: OOGroup });
+    
+    // add groups to the Stage
+    let permissions = await this.getGroupPermissions(ENTITY_STAGES_LIST_NAME);
+    await this.setPermissions(permissions, groups, 0);
+
+    // Folders
+    const folders = await this.createInternalFolders(opportunity, geographies, groups);
+
+    // add groups to folders
+    permissions = await this.getGroupPermissions(FILES_FOLDER);
+    for (const f of folders) {
+      if (f.DepartmentID) {
+        let folderGroups = [...groups]; // copy default groups
+        let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+      }
+    }
+    return true;
+  }
+
   async initializeStage(opportunity: Opportunity, stage: Stage, geographies: EntityGeography[]): Promise<boolean> {
     const OUGroup = await this.createGroup('OU-' + opportunity.ID);
     const OOGroup = await this.createGroup('OO-' + opportunity.ID);
@@ -817,6 +866,19 @@ export class SharepointService {
       return '';
     }
     return result.StageType;
+  }
+
+  async getOpportunityType(OpportunityTypeId: number): Promise<OpportunityType | null> {
+    let result: OpportunityType | undefined;
+    if (this.masterOpportunitiesTypes.length > 0) {
+      result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
+    } else {
+      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
+    }
+    if (result == null) {
+      return null;
+    }
+    return result;
   }
 
   async getNextStage(stageId: number): Promise<Stage | null> {
@@ -1544,6 +1606,7 @@ export class SharepointService {
     }
   }
 
+   
   private async addRolePermissionToList(list: string, groupId: number, roleName: string, id: number = 0): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointApiUri() + list + (id === 0 ? '' : `/items(${id})`);
     return await this.setRolePermission(baseUrl, groupId, roleName);
@@ -1817,8 +1880,8 @@ export class SharepointService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
-  async updateOpportunityGeographies(opportunityId: number, newGeographies: string[]) {
-    let allGeo: EntityGeography[] = await this.getOpportunityGeographies(opportunityId, true);
+  async updateOpportunityGeographies(opportunity: Opportunity, newGeographies: string[]) {
+    let allGeo: EntityGeography[] = await this.getOpportunityGeographies(opportunity.ID, true);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -1886,31 +1949,31 @@ export class SharepointService {
 
     await this.deleteGeographies(removeGeo);
     await this.restoreGeographies(restoreGeo);
-    let newGeos = await this.createGeographies(opportunityId, neoGeography, neoCountry);
+    let newGeos = await this.createGeographies(opportunity.ID, neoGeography, neoCountry);
 
-    let OOGroup = await this.getGroup(`OO-${opportunityId}`);
-    let OUGroup = await this.getGroup(`OU-${opportunityId}`);
+    let OOGroup = await this.getGroup(`OO-${opportunity.ID}`);
+    let OUGroup = await this.getGroup(`OU-${opportunity.ID}`);
     if (!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
 
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OO', data: OOGroup });
 
     let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    let stages = await this.getStages(opportunityId);
+    let stages = await this.getStages(opportunity.ID);
 
     for (const oppGeo of newGeos) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
       for (let index = 0; index < stages.length; index++) {
         let stage = stages[index];
-        let stageFolders = await this.getStageFolders(stage.StageNameId, opportunityId);
+        let stageFolders = await this.getStageFolders(stage.StageNameId, opportunity.ID);
         let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
 
         if (!mf) throw new Error("Could not find Models folder");
 
-        const folder = await this.createFolder(`/${opportunityId}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
+        const folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
         if (folder) {
           // department group name
-          let groupName = `DU-${opportunityId}-${mf.ID}-${oppGeo.Id}`;
+          let groupName = `DU-${opportunity.ID}-${mf.ID}-${oppGeo.Id}`;
           const permissions = await this.getGroupPermissions(FILES_FOLDER);
           let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
 
@@ -2008,25 +2071,30 @@ export class SharepointService {
     return brand; 
   }
 
-  private async createBrandFolders(brand: Brand): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
+  private async createInternalFolders(entity: Opportunity | Brand): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
     let ReadWriteNames = [FOLDER_WIP, FOLDER_DOCUMENTS];
     let ReadOnlyNames = [FOLDER_APPROVED, FOLDER_ARCHIVED];
-    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
+    const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
 
     let rwFolders: SystemFolder[] = [];
     for (const mf of ReadWriteNames) {
       const mfFolder = await this.createFolder(`${mf}`);
       if(mfFolder) {
-        const BUFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}`);
+        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`);
         if(BUFolder) {
-          const folder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}`);
+          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`);
           if (folder) {
-            if(mf != FOLDER_DOCUMENTS) {
-              const forecastFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
-              if(forecastFolder) {
-                rwFolders = rwFolders.concat(await this.createBrandGeographyFolders(brand, geographies, mf));
-              }
-            } 
+            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`);
+            if(emptyStageFolder) {
+              if(mf != FOLDER_DOCUMENTS) {
+                const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`);
+                if(forecastFolder) {
+                  rwFolders = rwFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
+                }
+              } else {
+                
+              } 
+            }
           }
         }
       }
@@ -2036,13 +2104,16 @@ export class SharepointService {
     for (const mf of ReadOnlyNames) {
       const mfFolder = await this.createFolder(`${mf}`);
       if(mfFolder) {
-        const BUFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}`);
+        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`);
         if(BUFolder) {
-          const folder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}`);
+          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`);
           if (folder) {
-            const forecastFolder = await this.createFolder(`${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
-            if(forecastFolder) {
-              roFolders = roFolders.concat(await this.createBrandGeographyFolders(brand, geographies, mf));
+            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`);
+            if(emptyStageFolder) {
+              const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`);
+              if(forecastFolder) {  
+                roFolders = roFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
+              }
             }
           }
         }
@@ -2053,6 +2124,24 @@ export class SharepointService {
       ro: roFolders
     };
   }
+
+  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string): Promise<SystemFolder[]> {
+    let folders: SystemFolder[] = [];
+    let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    for (const geo of geographies) {
+      let geoFolder = await this.createFolder(`${basePath}/${geo.ID}`);
+      if (geoFolder) {
+        let geoFolder = await this.createFolder(`${basePath}/${geo.ID}/0`);
+        if(geoFolder) {
+          geoFolder.GeographyID = geo.ID;
+          folders.push(geoFolder);
+        }
+      }
+    }
+    
+    return folders;
+  }
+
 
   private async createBrandGeographyFolders(brand: Brand, geographies: BrandGeography[], mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
@@ -2158,6 +2247,16 @@ export class SharepointService {
 
   async getBrandGeographies(brandId: number, all?: boolean) {
     let filter = `$filter=BrandId eq ${brandId}`;
+    if (!all) {
+      filter += ' and Removed ne 1';
+    }
+    return await this.getAllItems(
+      GEOGRAPHIES_LIST, filter,
+    );
+  }
+
+  async getEntityGeographies(entityId: number, all?: boolean) {
+    let filter = `$filter=EntityId eq ${entityId}`;
     if (!all) {
       filter += ' and Removed ne 1';
     }
