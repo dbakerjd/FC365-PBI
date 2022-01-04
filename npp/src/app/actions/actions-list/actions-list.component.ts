@@ -133,7 +133,8 @@ export class ActionsListComponent implements OnInit {
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
-        opportunityId: this.opportunityId
+        opportunityId: this.opportunityId,
+        businessUnitId: this.opportunity?.BusinessUnitId
       }
     });
 
@@ -146,10 +147,10 @@ export class ActionsListComponent implements OnInit {
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
           this.currentFiles = [];
           for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
           }
         } else {
-          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
         }
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
@@ -258,7 +259,7 @@ export class ActionsListComponent implements OnInit {
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
           this.currentFiles = [];
           for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
           }
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
@@ -564,15 +565,15 @@ export class ActionsListComponent implements OnInit {
     if (folderId) {
       this.loading = true;
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
-      this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
+      this.currentFolderUri = `${this.opportunity?.BusinessUnitId}/${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       if (this.currentFolder?.containsModels) {
         const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
         this.currentFiles = [];
         for (const geofolder of geoFolders) {
-          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
         }
       } else {
-        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
       }
   
       this.displayingModels = false;

@@ -62,7 +62,7 @@ export class UploadFileComponent implements OnInit {
     
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // add geography to folder route
-      fileFolder += '/' + this.model.geography;
+      fileFolder += '/' + this.model.geography + '/0';
 
       // read opp geography to get master ID of country / geography
       const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
@@ -105,6 +105,7 @@ export class UploadFileComponent implements OnInit {
       }
       
     } else {
+      fileFolder = fileFolder + '/0/0';
       // regular file
       Object.assign(fileData, {
         ModelApprovalComments: this.model.description

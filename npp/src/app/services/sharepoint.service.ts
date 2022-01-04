@@ -968,32 +968,27 @@ export class SharepointService {
     let folders: SystemFolder[] = [];
 
     for (const mf of masterFolders) {
-      const folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
+      let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
         if (mf.Title !== FORECAST_MODELS_FOLDER_NAME) {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
+          folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0`);
+          if (folder) {
+            folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0/0`);
+            if (folder) {
+              folder.DepartmentID = mf.DepartmentID;
+              folders.push(folder);
+            }
+          }
         } else {
           for (let geo of geographies) {
             let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
             if (folder) {
               folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}/0`);
               if (folder) {
-                const OOGroup = groups.find(el => el.type == "OO");
-                const SUGroup = groups.find(el => el.type == "SU");
-                if (!OUGroup || !OOGroup || !SUGroup) throw new Error("Error creating group permissions.");
-
-                // department group name
-                let groupName = `DU-${oppId}-${mf.DepartmentID}-${geo.Id}`;
-                const permissions = await this.getGroupPermissions(FILES_FOLDER);
-                let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + geo.Id);
-
-                if (DUGroup) {
-                  let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
-                  await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
-                } else {
-                  throw new Error("Error creating geography group permissions.")
-                }
+                folder.DepartmentID = 0;
+                folders.push(folder);
               }
             }
           }
@@ -1073,6 +1068,7 @@ export class SharepointService {
 
   async createFolder(newFolderUrl: string): Promise<SystemFolder | null> {
     try {
+      console.log("gonna create: "+newFolderUrl);
       return await this.http.post(
         this.licensing.getSharepointApiUri() + "folders",
         {
@@ -1080,6 +1076,7 @@ export class SharepointService {
         }
       ).toPromise() as SystemFolder;
     } catch (e: any) {
+      console.log("Error creating folder: "+e.message);
       this.error.handleError(e);
       return null;
     }
@@ -1991,18 +1988,21 @@ export class SharepointService {
 
         if (!mf) throw new Error("Could not find Models folder");
 
-        const folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
-        if (folder) {
-          // department group name
-          let groupName = `DU-${opportunity.ID}-${mf.ID}-${oppGeo.Id}`;
-          const permissions = await this.getGroupPermissions(FILES_FOLDER);
-          let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
-
-          if (DUGroup) {
-            let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
-            await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
-          } else {
-            throw new Error("Error creating geography group permissions.")
+        let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
+        if(folder) {
+          let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
+          if (folder) {
+            // department group name
+            let groupName = `DU-${opportunity.ID}-${mf.ID}-${oppGeo.Id}`;
+            const permissions = await this.getGroupPermissions(FILES_FOLDER);
+            let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
+  
+            if (DUGroup) {
+              let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
+              await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
+            } else {
+              throw new Error("Error creating geography group permissions.")
+            }
           }
         }
       }
