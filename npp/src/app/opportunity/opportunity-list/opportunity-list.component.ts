@@ -138,7 +138,7 @@ export class OpportunityListComponent implements OnInit {
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
           await this.notifications.opportunityOwnerNotification(result.data.opportunity);
-          await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+          if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);

@@ -1,10 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage, OpportunityType } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -32,20 +33,23 @@ export class CreateOpportunityComponent implements OnInit {
   loading = true;
   updating = false;
   geographies: EntityGeography[] = [];
+  oppTypes: any[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateOpportunityComponent>
-    ) { }
+    ) { 
+      dialogRef.disableClose = true;
+    }
 
   async ngOnInit() {
     this.opportunity = this.data?.opportunity;
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
     const therapies = await this.sharepoint.getTherapiesList();
-    let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    this.oppTypes = await this.sharepoint.getOpportunityTypesList();
     const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
@@ -61,10 +65,10 @@ export class CreateOpportunityComponent implements OnInit {
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
-        oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
+        this.oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
         this.opportunity.OpportunityTypeId = -1;
-        if (oppTypes.length > 0) {
-          this.opportunity.OpportunityTypeId = oppTypes[0].value;
+        if (this.oppTypes.length > 0) {
+          this.opportunity.OpportunityTypeId = this.oppTypes[0].value;
           this.model.stageType = 'Phase';
           stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
         }
@@ -182,7 +186,7 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'select',
           templateOptions: {
             label: 'Opportunity Type:',
-            options: oppTypes,
+            options: this.oppTypes,
             required: true,
             change: (field) => {
               field.formControl?.valueChanges
@@ -291,7 +295,13 @@ export class CreateOpportunityComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
+    let optype = this.oppTypes.find(el => el.extra.ID == this.model.Opportunity.OpportunityTypeId);
+    if(optype && optype.extra && optype.extra.isInternal) {
+      this.onSubmit();
+      return;
+    }
 
+    if(this.model.Opportunity.OpportunityTypeId)
     this.firstStepCompleted = true;
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
@@ -326,6 +336,7 @@ export class CreateOpportunityComponent implements OnInit {
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))
         );
       }
+      
       this.dialogRef.close({
         success: newOpp ? true : false,
         data: newOpp

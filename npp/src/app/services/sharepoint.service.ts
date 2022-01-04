@@ -590,8 +590,8 @@ export class SharepointService {
     return res;
   }
 
-  async initializeOpportunity(opportunity: Opportunity, stage: Stage): Promise<boolean> {
-    const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID, stage.StageNameId);
+  async initializeOpportunity(opportunity: Opportunity, stage: Stage | null): Promise<boolean> {
+    const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID);
 
     let permissions;
     // add groups to lists
@@ -680,7 +680,7 @@ export class SharepointService {
     );
   }
 
-  private async createOpportunityGroups(ownerId: number, oppId: number, masterStageId: number): Promise<SPGroupListItem[]> {
+  private async createOpportunityGroups(ownerId: number, oppId: number): Promise<SPGroupListItem[]> {
     let group;
     let groups: SPGroupListItem[] = [];
     const owner = await this.getUserInfo(ownerId);
@@ -1066,13 +1066,15 @@ export class SharepointService {
     return FILES_FOLDER;
   }
 
-  async createFolder(newFolderUrl: string): Promise<SystemFolder | null> {
+  async createFolder(newFolderUrl: string, isAbsolutePath: boolean = false): Promise<SystemFolder | null> {
     try {
-      console.log("gonna create: "+newFolderUrl);
+      let basePath = FILES_FOLDER;
+      if(isAbsolutePath) basePath = '';
+
       return await this.http.post(
         this.licensing.getSharepointApiUri() + "folders",
         {
-          ServerRelativeUrl: FILES_FOLDER + newFolderUrl
+          ServerRelativeUrl: basePath + newFolderUrl
         }
       ).toPromise() as SystemFolder;
     } catch (e: any) {
@@ -1823,7 +1825,7 @@ export class SharepointService {
 
   async getOpportunityTypesList(type: string | null = null): Promise<SelectInputList[]> {
     let res = await this.getOpportunityTypes(type);
-    return res.map(t => { return { value: t.ID, label: t.Title } });
+    return res.map(t => { return { value: t.ID, label: t.Title, extra: t } });
   }
 
   async getUsersList(usersId: number[]): Promise<SelectInputList[]> {
@@ -2102,16 +2104,16 @@ export class SharepointService {
 
     let rwFolders: SystemFolder[] = [];
     for (const mf of ReadWriteNames) {
-      const mfFolder = await this.createFolder(`${mf}`);
+      const mfFolder = await this.createFolder(`${mf}`, true);
       if(mfFolder) {
-        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`);
+        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`, true);
         if(BUFolder) {
-          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`);
+          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`, true);
           if (folder) {
-            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`);
+            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`, true);
             if(emptyStageFolder) {
               if(mf != FOLDER_DOCUMENTS) {
-                const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`);
+                const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
                 if(forecastFolder) {
                   rwFolders = rwFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
                 }
@@ -2126,15 +2128,15 @@ export class SharepointService {
 
     let roFolders: SystemFolder[] = [];
     for (const mf of ReadOnlyNames) {
-      const mfFolder = await this.createFolder(`${mf}`);
+      const mfFolder = await this.createFolder(`${mf}`, true);
       if(mfFolder) {
-        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`);
+        const BUFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}`, true);
         if(BUFolder) {
-          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`);
+          const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`, true);
           if (folder) {
-            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`);
+            const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`, true);
             if(emptyStageFolder) {
-              const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`);
+              const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
               if(forecastFolder) {  
                 roFolders = roFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
               }
@@ -2153,9 +2155,9 @@ export class SharepointService {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/${departmentId}`;
     for (const geo of geographies) {
-      let geoFolder = await this.createFolder(`${basePath}/${geo.ID}`);
+      let geoFolder = await this.createFolder(`${basePath}/${geo.ID}`, true);
       if (geoFolder) {
-        let geoFolder = await this.createFolder(`${basePath}/${geo.ID}/0`);
+        let geoFolder = await this.createFolder(`${basePath}/${geo.ID}/0`, true);
         if(geoFolder) {
           geoFolder.GeographyID = geo.ID;
           geoFolder.DepartmentID = departmentId;
@@ -2172,7 +2174,7 @@ export class SharepointService {
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0`;
     let departmentFolders = await this.getInternalDepartments();
     for(const dept of departmentFolders) {
-      let folder = await this.createFolder(`${basePath}/${dept.ID}`);
+      let folder = await this.createFolder(`${basePath}/${dept.ID}`, true);
       if (folder) {
         folders.concat(await this.createEntityGeographyFolders(entity, geographies, mf, dept.ID));
       }
@@ -2181,8 +2183,8 @@ export class SharepointService {
   }
   
   private async getInternalDepartments(): Promise<NPPFolder[]> {
-    let internalStageId = await this.getOneItem(MASTER_STAGES_LIST, "$filter=Title eq Internal");
-    return await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId);
+    let internalStageId = await this.getOneItem(MASTER_STAGES_LIST, "$filter=Title eq 'Internal'");
+    return await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId.ID);
   }
 
   private async createBrandGeographyFolders(brand: Brand, geographies: BrandGeography[], mf: string): Promise<SystemFolder[]> {
