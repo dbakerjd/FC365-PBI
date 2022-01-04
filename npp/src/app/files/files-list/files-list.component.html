@@ -19,11 +19,8 @@
         </div>
         <div class="brand-owner-info">
             <div class="brand-owner-info-title"><label>Owner</label></div>
-            <div class="brand-owner-info-name" *ngIf="entity?.BrandOwner">
-                {{entity.BrandOwner?.Title}}
-            </div>
-            <div class="brand-owner-info-name" *ngIf="entity?.EntityOwner">
-                {{entity.EntityOwner?.Title}}
+            <div class="brand-owner-info-name">
+                {{entity?.EntityOwner?.FirstName+" "+entity?.EntityOwner?.LastName}}
             </div>
         </div>
     </div>

@@ -6,12 +6,10 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
-import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
 import { CommentsListComponent } from 'src/app/modals/comments-list/comments-list.component';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
-import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
 import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
 import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
 import { ExternalFolderPermissionsComponent } from 'src/app/modals/external-folder-permissions/external-folder-permissions.component';
@@ -32,6 +30,7 @@ import { TeamsService } from 'src/app/services/teams.service';
 })
 export class FilesListComponent implements OnInit {
   isOwner = false;
+  currentDepartmentId: number = 0;
   currentUser: User | undefined = undefined;
   currentFolder: NPPFolder | undefined = undefined;
   cycles: BrandForecastCycle[] = [];
@@ -86,8 +85,8 @@ export class FilesListComponent implements OnInit {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
         
-        let owner = this.disambiguator.getOwner(this.entity);
-        let ownerId = this.disambiguator.getOwnerId(this.entity);
+        let owner = this.entity.EntityOwner;
+        let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
           
@@ -110,13 +109,13 @@ export class FilesListComponent implements OnInit {
   getSharepointFolderNameByModelStatus(status: string) {
     switch(status) {
       case 'Archived':
-        return FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Approved':
-        return FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Work in Progress':
-        return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+        return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID;
+        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.currentDepartmentId;
     }
   }
 
@@ -144,12 +143,14 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          const geoFolders = await this.sharepoint.getSubfolders(currentFolder);
+          const geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
           this.currentFiles = [];
           for (const geofolder of geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
               folder = folder + '/' + this.currentCycle;
+            } else {
+              folder = folder + '/0';
             }
             this.currentFiles.push(...await this.disambiguator.readFolderFiles(folder, true));
           }

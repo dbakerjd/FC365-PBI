@@ -304,6 +304,8 @@ export interface Brand {
   Title: string;
   BrandOwnerId: number;
   BrandOwner?: User;
+  EntityOwnerId: number;
+  EntityOwner?: User;
   BusinessUnitId: number;
   BusinessUnit?: BusinessUnit;
   ForecastCycleId: number;
@@ -643,7 +645,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -1341,10 +1343,12 @@ export class SharepointService {
   }
   
 
-  async getSubfolders(folder: string): Promise<any> {
+  async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
     let subfolders: any[] = [];
+    let basePath = `${this.getBaseFilesFolder()}/`;
+    if(isAbsolutePath) basePath = '';
     const result = await this.query(
-      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/folders`,
+      `GetFolderByServerRelativeUrl('${basePath}${folder}')/folders`,
       '$expand=ListItemAllFields',
     ).toPromise();
     if (result.value) {
@@ -2260,7 +2264,7 @@ export class SharepointService {
   async getOpportunityAccessibleGeographiesList(opportunity: Opportunity): Promise<SelectInputList[]> {
     const geographiesList = await this.getOpportunityGeographies(opportunity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${opportunity.BusinessUnitId}/${opportunity.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${opportunity.BusinessUnitId}/${opportunity.ID}/0/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }

@@ -59,10 +59,10 @@ export class ExternalUploadFileComponent implements OnInit {
       EntityId: this.model.entityId
     };
 
-    let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+    let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/0';
     let containsModels = true;
     if(this.model.category == FOLDER_DOCUMENTS) {
-      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID;
+      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/'+this.model.DepartmentID;
       containsModels = false;
       fileData = {
         Comments: this.model.description
@@ -78,7 +78,7 @@ export class ExternalUploadFileComponent implements OnInit {
 
       Object.assign(fileData, {
         CountryId: this.model.country,
-        BrandGeographyId: geography.Id ? geography.Id : null,
+        EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","createdAt":"'+new Date().toISOString()+'"}]' : '[]',
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),

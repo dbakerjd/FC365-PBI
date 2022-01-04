@@ -85,17 +85,17 @@ export class InlineNppDisambiguationService {
 
   getAccessibleGeographiesList(entity: Brand | Opportunity) {
     if(this.isInline) {
-      return this.sharepoint.getOpportunityAccessibleGeographiesList(entity as Opportunity);
-    } else {
       return this.sharepoint.getBrandAccessibleGeographiesList(entity as Brand);
+    } else {
+      return this.sharepoint.getOpportunityAccessibleGeographiesList(entity as Opportunity);
     }
   }
   
   getEntityGeographies(entityId: number) {
     if(this.isInline) {
-      return this.sharepoint.getOpportunityGeographies(entityId);
-    } else {
       return this.sharepoint.getBrandGeographies(entityId);
+    } else {
+      return this.sharepoint.getOpportunityGeographies(entityId);
     }
   }
 
