@@ -1368,14 +1368,14 @@ export class SharepointService {
     ).toPromise();
   }
 
-  async setApprovalStatus(fileId: number, status: string, comments: string | null = null): Promise<boolean> {
+  async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string = FILES_FOLDER): Promise<boolean> {
     const statusId = await this.getApprovalStatusId(status);
     if (!statusId) return false;
 
     let data = { ApprovalStatusId: statusId };
     if (comments) Object.assign(data, { ModelApprovalComments: comments });
 
-    return await this.updateItem(fileId, `lists/getbytitle('${FILES_FOLDER}')`, data);
+    return await this.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
   }
 
   async getApprovalStatusId(status: string): Promise<number | null> {
@@ -2867,7 +2867,7 @@ export class SharepointService {
       if(status === "Approved" && brand) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeOldAcceptedModel(brand, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
         return res;
       };
       
@@ -2894,7 +2894,7 @@ export class SharepointService {
       if(status === "Approved" && opp) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(opp, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/', file.Name);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
         return res;
       };
       
@@ -2907,7 +2907,7 @@ export class SharepointService {
   async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getFileByScenarios(path, scenarios);
@@ -2920,7 +2920,7 @@ export class SharepointService {
   async removeNPPOldAcceptedModel(opp: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/'+FORECAST_MODELS_FOLDER_NAME+'/'+arrFolder[arrFolder.length - 2]+'/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getNPPFileByScenarios(path, scenarios);

@@ -12,6 +12,7 @@ import { SharepointService } from 'src/app/services/sharepoint.service';
 export class SendForApprovalComponent implements OnInit {
 
   fileId: number | null = null;
+  folder: string | null = null;
 
   fields: FormlyFieldConfig[] = [{
     fieldGroup: [{
@@ -35,12 +36,13 @@ export class SendForApprovalComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.fileId = this.data.fileId;
+    this.fileId = this.data.fileId ? this.data.fileId : this.data.file?.ListItemAllFields?.ID;
+    this.folder = this.data.rootFolder ? this.data.rootFolder : null;
   }
 
   async onSubmit() {
     if (this.fileId) {
-      const result = await this.sharepoint.setApprovalStatus(this.fileId, "Submitted", this.model.comments);
+      const  result = await this.sharepoint.setApprovalStatus(this.fileId, "Submitted", this.model.comments, this.data.rootFolder);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments

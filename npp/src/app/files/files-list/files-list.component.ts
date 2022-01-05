@@ -273,7 +273,7 @@ export class FilesListComponent implements OnInit {
       width: '405px',
       data: {
         file: file,
-        brand: this.entity,
+        entity: this.entity,
         rootFolder: this.getCurrentRootFolder(),
       }
     });

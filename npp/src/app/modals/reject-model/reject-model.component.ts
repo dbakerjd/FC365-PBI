@@ -35,12 +35,12 @@ export class RejectModelComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.fileId = this.data.fileId;
+    this.fileId = this.data.fileId ? this.data.fileId : this.data.file?.ListItemAllFields?.ID;
   }
 
   async onSubmit() {
     if (this.fileId) {
-      const result = await this.sharepoint.setApprovalStatus(this.fileId, "In Progress", this.model.comments);
+      const  result = await this.sharepoint.setApprovalStatus(this.fileId, "In Progress", this.model.comments, this.data.rootFolder);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments
