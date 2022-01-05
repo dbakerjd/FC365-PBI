@@ -56,7 +56,7 @@ export class ExternalUploadFileComponent implements OnInit {
     this.uploading = this.dialogRef.disableClose = true;
 
     let fileData: any = {
-      EntityId: this.model.entityId
+      EntityNameId: this.model.entityId
     };
 
     let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/0';
@@ -85,8 +85,10 @@ export class ExternalUploadFileComponent implements OnInit {
         IndicationId: this.model.IndicationId
       });
 
-      fileFolder += '/' + geography.Id;
-    } 
+      fileFolder += '/' + geography.Id + '/0';
+    } else {
+      fileFolder += '/0/0';
+    }
 
     let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
     let scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);

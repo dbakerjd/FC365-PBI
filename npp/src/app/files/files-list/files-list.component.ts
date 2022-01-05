@@ -451,7 +451,7 @@ export class FilesListComponent implements OnInit {
       height: "325px",
       data: {
         fileInfo,
-        enitity: this.entity
+        entity: this.entity
       }
     });
 
