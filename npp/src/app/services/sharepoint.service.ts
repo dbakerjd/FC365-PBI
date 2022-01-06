@@ -2689,7 +2689,7 @@ export class SharepointService {
         const cycleFolder = await this.createFolder(geoFolder, true);
         if(cycleFolder) {
           await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
-          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}`, geoFolder);
+          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
         }else {
           throw new Error("Could not create Forecast Cycle folder");
         }
