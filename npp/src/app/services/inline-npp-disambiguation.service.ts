@@ -68,11 +68,7 @@ export class InlineNppDisambiguationService {
   }
 
   getForecastCycles(entity: Brand | Opportunity) {
-    if(this.isInline) {
-      return this.sharepoint.getBrandForecastCycles(entity as Brand);
-    } else {
-      return this.sharepoint.getOpportunityForecastCycles(entity as Opportunity);
-    }
+    return this.sharepoint.getEntityForecastCycles(entity);
   }
 
   readFolderFiles(folder: string, expandProperties: boolean) {
@@ -124,19 +120,11 @@ export class InlineNppDisambiguationService {
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
-    if(this.isInline) {
-      return this.sharepoint.setBrandApprovalStatus(rootFolder, file, entity as Brand, "Approved", comments);
-    } else {
-      return this.sharepoint.setOpportunityApprovalStatus(rootFolder, file, entity as Opportunity, "Approved", comments);
-    }
+    return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity as Opportunity, "Approved", comments);
   }
 
   async createForecastCycle(entity: Brand | Opportunity, values: any) {
-    if(this.isInline) {
-      return this.sharepoint.createForecastCycle(entity as Brand, values);
-    } else {
-      return this.sharepoint.createOpportunityForecastCycle(entity as Opportunity, values);
-    }
+    return this.sharepoint.createEntityForecastCycle(entity, values);    
   }
 
   getGroupName(name: string):string {

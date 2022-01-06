@@ -2305,7 +2305,7 @@ export class SharepointService {
   }
 
   async getEntityGeographies(entityId: number, all?: boolean) {
-    let filter = `$filter=EntityId eq ${entityId}`;
+    let filter = `$filter=EntityNameId eq ${entityId}`;
     if (!all) {
       filter += ' and Removed ne 1';
     }
@@ -2607,8 +2607,8 @@ export class SharepointService {
   }
 
 
-  async getOpportunityForecastCycles(opportunity: Opportunity) {
-    let filter = `$filter=OpportunityId eq ${opportunity.ID}`;
+  async getEntityForecastCycles(entity: Brand | Opportunity) {
+    let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.getAllItems(
       OPPORTUNITY_FORECAST_CYCLE_LIST, filter,
@@ -2667,27 +2667,26 @@ export class SharepointService {
 
   }
 
-  async createOpportunityForecastCycle(opp: Opportunity, values: any) {
-    console.log(values);
-    const geographies = await this.getOpportunityGeographies(opp.ID); // 1 = stage id would be dynamic in the future
-    let archivedBasePath = `${FOLDER_ARCHIVED}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let approvedBasePath = `${FOLDER_APPROVED}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let workInProgressBasePath = `${FOLDER_WIP}/${opp.BusinessUnitId}/${opp.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
+  async createEntityForecastCycle(entity: Opportunity | Brand, values: any) {
+    const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
+    let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let workInProgressBasePath = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
 
     let cycle = await this.createItem(OPPORTUNITY_FORECAST_CYCLE_LIST, {
-      OpportunityId: opp.ID,
-      ForecastCycleTypeId: opp.ForecastCycleId,
-      Year: opp.Year+"",
-      Title: opp.ForecastCycle?.Title + ' ' + opp.Year
+      EntityNameId: entity.ID,
+      ForecastCycleTypeId: entity.ForecastCycleId,
+      Year: entity.Year+"",
+      Title: entity.ForecastCycle?.Title + ' ' + entity.Year
     });
 
     const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
     
     for (const geo of geographies) {
-      let GUGroup = await this.getGroup(`OU-${opp.ID}-${geo.ID}`);
+      let GUGroup = await this.getGroup(`OU-${entity.ID}-${geo.ID}`);
       if(GUGroup) {
         let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
-        const cycleFolder = await this.createFolder(geoFolder);
+        const cycleFolder = await this.createFolder(geoFolder, true);
         if(cycleFolder) {
           await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
           await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}`, geoFolder);
@@ -2704,9 +2703,9 @@ export class SharepointService {
       Year: values.Year
     };
 
-    await this.updateItem(opp.ID, OPPORTUNITIES_LIST, changes);
+    await this.updateItem(entity.ID, OPPORTUNITIES_LIST, changes);
 
-    await this.setAllOpportunityModelsStatusInFolder(opp, workInProgressBasePath, "In Progress");
+    await this.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
     return changes;
 
   }
@@ -2729,19 +2728,19 @@ export class SharepointService {
     
   }
 
-  async setAllOpportunityModelsStatusInFolder(opp: Opportunity, folder: string, status: string) {
+  async setAllEntityModelsStatusInFolder(entity: Opportunity | Brand, folder: string, status: string) {
     
-    const geographies = await this.getOpportunityGeographies(opp.ID); // 1 = stage id would be dynamic in the future
+    const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
     
     let arrFolder = folder.split("/");
     let rootFolder = arrFolder[0];
 
     for(let i=0; i<geographies.length; i++) {
       let geo = geographies[i];
-      let files = await this.readOpportunityFolderFiles(folder+"/"+geo.ID, true);
+      let files = await this.readOpportunityFolderFiles(folder+"/"+geo.ID+"/0", true);
       for(let j=0; files && j<files.length; j++) {
         let model = files[j];
-        await this.setOpportunityApprovalStatus(rootFolder, model, opp, "In Progress");
+        await this.setEntityApprovalStatus(rootFolder, model, entity, "In Progress");
       }
     }
     
@@ -2878,7 +2877,7 @@ export class SharepointService {
   }
 
 
-  async setOpportunityApprovalStatus(rootFolder: string, file: NPPFile, opp: Opportunity | null, status: string, comments: string | null = null) {
+  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
       const statusId = await this.getApprovalStatusId(status);
       if (!statusId) return false;
@@ -2891,10 +2890,10 @@ export class SharepointService {
   
       await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
       let res;
-      if(status === "Approved" && opp) {
+      if(status === "Approved" && entity) {
         let arrFolder = file.ServerRelativeUrl.split("/");
-        await this.removeNPPOldAcceptedModel(opp, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
+        await this.removeNPPOldAcceptedModel(entity, file);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
         return res;
       };
       
@@ -2917,10 +2916,10 @@ export class SharepointService {
     }
   }
 
-  async removeNPPOldAcceptedModel(opp: Opportunity, file: NPPFile) {
+  async removeNPPOldAcceptedModel(entity: Opportunity | Brand, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+opp.BusinessUnitId+'/'+opp.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getNPPFileByScenarios(path, scenarios);
