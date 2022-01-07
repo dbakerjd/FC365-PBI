@@ -31,6 +31,7 @@ export interface Opportunity {
   Year: number;
   ClinicalTrialPhaseId: number;
   ClinicalTrialPhase?: ClinicalTrialPhase[];
+  ForecastCycleDescriptor: string;
 }
 
 export interface ClinicalTrialPhase {
@@ -285,6 +286,7 @@ export interface BusinessUnit {
 export interface ForecastCycle {
   ID: number;
   Title: string;
+  Descriptor: string;
   SortOrder: number;
 }
 
@@ -296,6 +298,7 @@ export interface BrandForecastCycle {
   ForecastCycleTypeId: number;
   ForecastCycleType?: ForecastCycle;
   Year: string;
+  Descriptor: string;
 }
 
 export interface OpportunityForecastCycle {
@@ -305,6 +308,7 @@ export interface OpportunityForecastCycle {
   Entity?: Opportunity;
   ForecastCycleTypeId: number;
   ForecastCycleType?: ForecastCycle;
+  Descriptor: string;
   Year: string;
 }
 
@@ -323,6 +327,7 @@ export interface Brand {
   Indication?: Indication[];
   FCDueDate?: Date;
   Year: number;
+  ForecastCycleDescriptor: string;
 }
 
 export interface BrandInput {
@@ -2703,7 +2708,8 @@ export class SharepointService {
       EntityNameId: entity.ID,
       ForecastCycleTypeId: entity.ForecastCycleId,
       Year: entity.Year+"",
-      Title: entity.ForecastCycle?.Title + ' ' + entity.Year
+      Title: entity.ForecastCycle?.Title + ' ' + entity.Year,
+      Descriptor: entity.ForecastCycleDescriptor
     });
 
     const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
@@ -2726,6 +2732,7 @@ export class SharepointService {
 
     let changes = {
       ForecastCycleId: values.ForecastCycle,
+      ForecastCycleDescriptor: values.ForecastCycleDescriptor,
       Year: values.Year
     };
 

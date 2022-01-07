@@ -2,7 +2,7 @@
 <div class="brand-info-wrapper" *ngIf="entity">
     <div class="brand-name">
         <h2>{{entity?.Title}}</h2>
-        <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}}</p>
+        <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}} {{entity?.ForecastCycleDescriptor}}</p>
     </div>
     <div class="brand-indication">
         <p><label>BusinessUnit: </label>{{entity?.BusinessUnit?.Title}}</p>
@@ -62,7 +62,7 @@
         <div class="folder-info-wrapper">
             <div class="folder-info-review">
                 <div class="forecast-cycles-wrapper" *ngIf="currentStatus == 'Archived' && selectedCycle">
-                    <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}}
+                    <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
                 </div>
             </div>
             <div class="folder-info-progress">

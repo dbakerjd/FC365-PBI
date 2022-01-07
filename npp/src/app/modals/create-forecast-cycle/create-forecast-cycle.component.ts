@@ -70,6 +70,13 @@ export class CreateForecastCycleComponent implements OnInit {
           required: true,
         },
         defaultValue: this.entity?.Year || currentYear
+      },{
+        key: 'ForecastCycleDescriptor',
+        type: 'input',
+        templateOptions: {
+          label: 'Descriptor',
+          required: false
+        }
       }]
     }];
 
