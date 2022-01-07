@@ -262,7 +262,7 @@ const GEOGRAPHIES_LIST = "lists/getByTitle('" + GEOGRAPHIES_LIST_NAME + "')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
-const FILES_FOLDER = "Current Opportunity Library";
+export const FILES_FOLDER = "Current Opportunity Library";
 export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
 
@@ -356,7 +356,7 @@ export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')"
 export const FOLDER_APPROVED = 'Approved Models';
 export const FOLDER_ARCHIVED = 'Archived Models';
 export const FOLDER_WIP = 'Work in Progress';
-export const FOLDER_DOCUMENTS = 'Reference Documents';
+export const FOLDER_DOCUMENTS = FILES_FOLDER;
 export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
 export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
 export const MASTER_APPS = "lists/getbytitle('Master APPs')";
@@ -904,6 +904,21 @@ export class SharepointService {
   async getNextStage(stageId: number): Promise<Stage | null> {
     let current = await this.getOneItemById(stageId, MASTER_STAGES_LIST);
     return await this.getMasterStage(current.StageType, current.StageNumber + 1);
+  }
+
+  public async getInternalDepartments(entityId: number | null = null, businessUnitId: number | null = null): Promise<NPPFolder[]> {
+    let internalStageId = await this.getOneItem(MASTER_STAGES_LIST, "$filter=Title eq 'Internal'");
+    let folders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId.ID);
+    for (let index = 0; index < folders.length; index++) {
+      folders[index].containsModels = false;
+    }
+
+    if (entityId && (businessUnitId !== null)) {
+      // only folders user can access
+      const allowedFolders = await this.getSubfolders(`/${businessUnitId}/${entityId}/0`);
+      return folders.filter(f => allowedFolders.some((af: any) => +af.Name === f.ID));
+    }
+    return folders;
   }
 
   /** get stage folders. If opportunityId, only the folders with permission. Otherwise, all master folders of stage */
@@ -2181,15 +2196,14 @@ export class SharepointService {
     for(const dept of departmentFolders) {
       let folder = await this.createFolder(`${basePath}/${dept.ID}`, true);
       if (folder) {
-        folders.concat(await this.createEntityGeographyFolders(entity, geographies, mf, dept.ID));
+        folder = await this.createFolder(`${basePath}/${dept.ID}/0`, true);
+        if(folder) {
+          folder = await this.createFolder(`${basePath}/${dept.ID}/0/0`, true);
+          if(folder) folders.push(folder);
+        }
       }
     }
     return folders;
-  }
-  
-  private async getInternalDepartments(): Promise<NPPFolder[]> {
-    let internalStageId = await this.getOneItem(MASTER_STAGES_LIST, "$filter=Title eq 'Internal'");
-    return await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId.ID);
   }
 
   private async createBrandGeographyFolders(brand: Brand, geographies: BrandGeography[], mf: string): Promise<SystemFolder[]> {

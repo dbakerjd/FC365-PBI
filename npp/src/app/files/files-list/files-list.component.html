@@ -31,6 +31,14 @@
             <div class="folder-item"  [ngClass]="{'selected-folder': currentSection == 'documents'}" (click)="setSection('documents')">
                 <span>Reference Documents</span>
             </div>
+            <div class="folders-wrapper" *ngIf="currentSection == 'documents'">
+                <div class="folders-item" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status':selectedFolderId === folder.ID}" (click)="setFolder(folder)">
+                    <svg>
+                        <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                    </svg>
+                    <span>{{folder.Title}}</span>
+                </div>
+            </div>
         </div>
         <div class="folder-item-wrapper">
             <div class="folder-item models-folder"  [ngClass]="{'selected-folder': currentSection == 'models'}" (click)="setSection('models')">

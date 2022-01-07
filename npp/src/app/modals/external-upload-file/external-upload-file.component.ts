@@ -61,8 +61,8 @@ export class ExternalUploadFileComponent implements OnInit {
 
     let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/0';
     let containsModels = true;
-    if(this.model.category == FOLDER_DOCUMENTS) {
-      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/'+this.model.DepartmentID;
+    if(this.model.category !== 0) {
+      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/'+this.model.category;
       containsModels = false;
       fileData = {
         Comments: this.model.description

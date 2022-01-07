@@ -20,7 +20,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS } from 'src/app/services/sharepoint.service';
+import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -33,6 +33,9 @@ export class FilesListComponent implements OnInit {
   currentDepartmentId: number = 0;
   currentUser: User | undefined = undefined;
   currentFolder: NPPFolder | undefined = undefined;
+  selectedFolder: NPPFolder | undefined = undefined;
+  selectedFolderId: number = 0;
+  documentFolders: NPPFolder[] = [];
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
   entityId = 0;
@@ -84,7 +87,7 @@ export class FilesListComponent implements OnInit {
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
-        
+        this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
@@ -115,7 +118,7 @@ export class FilesListComponent implements OnInit {
       case 'Work in Progress':
         return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.currentDepartmentId;
+        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedFolderId+'/0/0';
     }
   }
 
@@ -134,6 +137,15 @@ export class FilesListComponent implements OnInit {
       default:
         return FOLDER_DOCUMENTS;
     }
+  }
+
+  async setFolder(folder: NPPFolder) {
+    this.selectedCycle = false;
+    this.currentCycle = undefined;
+    this.currentStatus = 'none';
+    this.selectedFolder = folder;
+    this.selectedFolderId = folder.ID;
+    this.updateCurrentFiles();
   }
 
   async updateCurrentFiles() {
@@ -202,15 +214,15 @@ export class FilesListComponent implements OnInit {
   async openUploadDialog() {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
-      let defaultFolders = [{ Title: 'Reference Documents', ID: FOLDER_DOCUMENTS}, { Title: 'Forecast Models', ID: FORECAST_MODELS_FOLDER_NAME, containsModels: true }];
+      let folders = [...this.documentFolders, { Title: 'Forecast Models', ID: 0, containsModels: true }]
       this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
         data: {
           geographies: geographiesList,
           scenarios: await this.sharepoint.getScenariosList(),
-          folderList: defaultFolders,
-          selectedFolder: this.currentSection == 'none' ? 'Reference Documents' : 'Forecast Models',
+          folderList: folders,
+          selectedFolder: this.currentSection == 'none' && this.selectedFolder ?  this.selectedFolder.ID : 'Forecast Models',
           entity: this.entity
         }
       });
@@ -226,6 +238,7 @@ export class FilesListComponent implements OnInit {
         }
       });
     }
+      
   }
 
   sendForApproval(file: NPPFile) {
@@ -325,6 +338,8 @@ export class FilesListComponent implements OnInit {
     this.selectedCycle = false;
     this.currentCycle = undefined;
     this.currentStatus = status;
+    this.selectedFolder = undefined;
+    this.selectedFolderId = 0;
     this.updateCurrentFiles();
   }
 
