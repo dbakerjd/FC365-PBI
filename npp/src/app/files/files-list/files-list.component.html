@@ -11,6 +11,7 @@
     <div class="brand-dates">
         <!-- <p><label>Forecast Cycle Due Date: </label> {{entity?.FCDueDate | date : 'dd MMM y'}}</p>-->
         <p><label>Therapy Area: </label> {{getTherapyArea(entity?.Indication)}}</p>
+        <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
     </div>
     <div class="brand-owner">
         <div class="brand-owner-pic">

@@ -28,6 +28,7 @@
                 <p class="opportunity-title">{{item.Title}}</p>
                 <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
                 <p><label>Indication: </label> {{item.IndicationAsString}}</p>
+                <p><label>Clinical Trial Phase: </label> {{item.ClinicalTrialPhase?.Title}}</p>
             </div>
             <div class="opportunity-progress" (click)="navigateTo(item)">
                 <p><label>Progress:</label> <span class="opportunity-progress-value">{{item.progress}}%</span> <app-progress-bar [progress]="item.progress"></app-progress-bar></p>

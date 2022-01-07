@@ -29,6 +29,13 @@ export interface Opportunity {
   isGateType?: boolean;
   BusinessUnitId: number;
   Year: number;
+  ClinicalTrialPhaseId: number;
+  ClinicalTrialPhase?: ClinicalTrialPhase[];
+}
+
+export interface ClinicalTrialPhase {
+  ID: number;
+  Title: string;
 }
 
 export interface OpportunityInput {
@@ -260,6 +267,7 @@ const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
 const COUNTRIES_LIST = "lists/getByTitle('Countries')";
 const GEOGRAPHIES_LIST = "lists/getByTitle('" + GEOGRAPHIES_LIST_NAME + "')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
+export const MASTER_CLINICAL_TRIAL_PHASES_LIST = "lists/getByTitle('Master Clinical Trial Phases')";
 const USER_INFO_LIST = "lists/getByTitle('User Information List')";
 const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 export const FILES_FOLDER = "Current Opportunity Library";
@@ -530,7 +538,7 @@ export class SharepointService {
     let filter = undefined;
     if (expand) {
       //TODO check why OpportunityType/isInternal is failing
-      filter = "$select=*,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner";
+      filter = "$select=*,ClinicalTrialPhase/Title,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner,ClinicalTrialPhase";
     }
     if (onlyActive) {
       if (!filter) filter = "$filter=OpportunityStatus eq 'Active'";
@@ -646,7 +654,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -1886,6 +1894,10 @@ export class SharepointService {
       this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterScenariosList;
+  }
+
+  async getClinicalTrialPhases(): Promise<SelectInputList[]> {
+    return (await this.getAllItems(MASTER_CLINICAL_TRIAL_PHASES_LIST)).map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {

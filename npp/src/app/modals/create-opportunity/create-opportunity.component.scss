@@ -1,0 +1,13 @@
+form {
+    max-height: calc(100% - 2rem);
+    overflow: auto;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    margin-bottom: 3rem;
+}
+
+dialog-footer {
+    position: fixed;
+    bottom: -3rem;
+}

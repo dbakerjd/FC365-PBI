@@ -59,6 +59,7 @@ export class CreateOpportunityComponent implements OnInit {
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
+    const trialPhases = await this.sharepoint.getClinicalTrialPhases();
     
     if (this.opportunity) {
       this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
@@ -181,6 +182,15 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.BusinessUnitId
+        }, {
+          key: 'Opportunity.ClinicalTrialPhaseId',
+          type: 'select',
+          templateOptions: {
+            label: 'Clinical Trial Phase:',
+            options: trialPhases,
+            required: true,
+          },
+          defaultValue: this.opportunity?.ClinicalTrialPhaseId
         }, {
           key: 'Opportunity.OpportunityTypeId',
           type: 'select',
