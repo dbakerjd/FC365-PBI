@@ -1,13 +1,14 @@
-form {
-    max-height: calc(100% - 2rem);
-    overflow: auto;
-    position: absolute;
-    left: 0;
-    width: 100%;
-    margin-bottom: 3rem;
+:host{
+    position: relative;
+    display: block;
 }
-
-dialog-footer {
-    position: fixed;
-    bottom: -3rem;
+.dialog-content-wrapper {
+    max-height: calc(100% - 3rem);
+    padding: 2rem;
+    position: relative;
+    form {
+        overflow-y: auto;
+        overflow-x: visible;
+        max-height: calc(100% - 3rem);
+    }
 }

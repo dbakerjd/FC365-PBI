@@ -107,8 +107,8 @@ export class OpportunityListComponent implements OnInit {
 
   createOpportunity(fromOpp: Opportunity | null, forceType = false) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '700px',
-      width: '405px',
+      height: '750px',
+      width: '500px',
       data: {
         opportunity: fromOpp ? fromOpp : null,
         createFrom: fromOpp ? true : false,
