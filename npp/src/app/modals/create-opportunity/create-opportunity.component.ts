@@ -34,6 +34,7 @@ export class CreateOpportunityComponent implements OnInit {
   updating = false;
   geographies: EntityGeography[] = [];
   oppTypes: any[] = [];
+  isInternal: boolean = false;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -49,6 +50,7 @@ export class CreateOpportunityComponent implements OnInit {
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
     const therapies = await this.sharepoint.getTherapiesList();
+    let forecastCycles = await this.sharepoint.getForecastCycles();
     this.oppTypes = await this.sharepoint.getOpportunityTypesList();
     const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
@@ -60,6 +62,12 @@ export class CreateOpportunityComponent implements OnInit {
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
     const trialPhases = await this.sharepoint.getClinicalTrialPhases();
+    const currentYear = new Date().getFullYear();
+    let year = currentYear;
+    let elegibleYears = [currentYear];
+    for(let i=1; i<6; i++) {
+      elegibleYears.push(++year);
+    }
     
     if (this.opportunity) {
       this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
@@ -203,6 +211,7 @@ export class CreateOpportunityComponent implements OnInit {
                 .pipe(take(1), takeUntil(this._destroying$))
                 .subscribe(
                   (selectedValue) => {
+                    this.isInternal = selectedValue.extra.isInternal;
                     this.sharepoint.getStageType(selectedValue).then(r => {
                       if (r) this.model.stageType = r;
                     });
@@ -221,7 +230,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.ProjectStartDate ? new Date(this.opportunity?.ProjectStartDate) : null,
-          hideExpression: this.isEdit
+          hideExpression: this.isEdit || this.isInternal
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
@@ -230,7 +239,42 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Project End Date:',
             required: true,
           },
-          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
+          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null,
+          hideExpression: this.isInternal
+        }, {
+          key: 'Opportunity.ForecastCycleId',
+          type: 'select',
+          templateOptions: {
+            label: 'Forecast Cycle:',
+            options: forecastCycles,
+            required: true,
+          },
+          defaultValue: this.opportunity?.ForecastCycleId,
+          hideExpression: !this.isInternal
+        }, {
+          key: 'Opportunity.Year',
+          type: 'select',
+          templateOptions: {
+            label: 'Year:',
+            options: elegibleYears.map(el => {
+              return {
+                label: el,
+                value: el
+              }
+            }),
+            required: true,
+          },
+          defaultValue: this.opportunity?.Year || currentYear,
+          hideExpression: !this.isInternal
+        }, {
+          key: 'Opportunity.ForecastCycleDescriptor',
+          type: 'input',
+          templateOptions: {
+            label: 'Forecast Cycle Descriptor:',
+            required: false,
+          },
+          defaultValue: this.opportunity?.ForecastCycleDescriptor,
+          hideExpression: !this.isInternal
         },
         {
           key: 'geographies',
