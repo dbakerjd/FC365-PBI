@@ -3,12 +3,19 @@
     display: block;
 }
 .dialog-content-wrapper {
-    max-height: calc(100% - 3rem);
+    max-height: calc(750px - 3rem);
     padding: 2rem;
     position: relative;
+    overflow-y: auto;
+    width: 88%;
+    background-color: #fff;
     form {
         overflow-y: auto;
         overflow-x: visible;
         max-height: calc(100% - 3rem);
+        padding-bottom: 4rem;
+        input {
+            max-width: 98%;
+        }
     }
 }

@@ -70,6 +70,8 @@ export class CreateOpportunityComponent implements OnInit {
     }
     
     if (this.opportunity) {
+      let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
+      this.isInternal = type.extra?.isInternal;
       this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
@@ -211,7 +213,8 @@ export class CreateOpportunityComponent implements OnInit {
                 .pipe(take(1), takeUntil(this._destroying$))
                 .subscribe(
                   (selectedValue) => {
-                    this.isInternal = selectedValue.extra.isInternal;
+                    let t = this.oppTypes.find(el => el.value == selectedValue);
+                    this.isInternal = t ? t.extra.isInternal : false;
                     this.sharepoint.getStageType(selectedValue).then(r => {
                       if (r) this.model.stageType = r;
                     });
@@ -230,7 +233,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.ProjectStartDate ? new Date(this.opportunity?.ProjectStartDate) : null,
-          hideExpression: this.isEdit || this.isInternal
+          hideExpression: () => this.isEdit || this.isInternal
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
@@ -240,7 +243,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null,
-          hideExpression: this.isInternal
+          hideExpression: () => this.isInternal
         }, {
           key: 'Opportunity.ForecastCycleId',
           type: 'select',
@@ -250,7 +253,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.ForecastCycleId,
-          hideExpression: !this.isInternal
+          hideExpression: () => !this.isInternal
         }, {
           key: 'Opportunity.Year',
           type: 'select',
@@ -265,7 +268,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.Year || currentYear,
-          hideExpression: !this.isInternal
+          hideExpression: () => !this.isInternal
         }, {
           key: 'Opportunity.ForecastCycleDescriptor',
           type: 'input',
@@ -274,7 +277,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: false,
           },
           defaultValue: this.opportunity?.ForecastCycleDescriptor,
-          hideExpression: !this.isInternal
+          hideExpression: () => !this.isInternal
         },
         {
           key: 'geographies',
