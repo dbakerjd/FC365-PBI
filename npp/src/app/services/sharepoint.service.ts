@@ -804,7 +804,7 @@ export class SharepointService {
     // add groups to folders
     permissions = await this.getGroupPermissions(FILES_FOLDER);
     for (const f of folders.rw) {
-      if (f.DepartmentID) {
+      if (f.DepartmentID || f.DepartmentID === 0) {
         let folderGroups = [...groups]; // copy default groups
         let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
         if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
@@ -1511,14 +1511,15 @@ export class SharepointService {
     // groups needed
     const OUGroup = await this.getGroup('OU-' + oppId);
     const OOGroup = await this.getGroup('OO-' + oppId);
-    const SUGroup = await this.getGroup('SU-' + oppId + '-' + stageId);
+    let SUGroup = null;
+    if(stageId) SUGroup = await this.getGroup('SU-' + oppId + '-' + stageId);
     let groupName = `DU-${oppId}-${departmentId}`;
     if (geoId) {
       groupName += `-${geoId}`;
     }
     const DUGroup = await this.getGroup(groupName);
 
-    if (!OUGroup || !OOGroup || !SUGroup || !DUGroup) throw new Error("Permission groups missing.");
+    if (!OUGroup || !OOGroup || (!SUGroup && stageId) || !DUGroup) throw new Error("Permission groups missing.");
 
     const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
     const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);

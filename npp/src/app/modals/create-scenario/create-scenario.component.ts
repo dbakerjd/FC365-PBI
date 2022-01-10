@@ -116,7 +116,13 @@ export class CreateScenarioComponent implements OnInit {
       success = false;
     } else {
       if (this.file) {
-        success = await this.sharepoint.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.sharepoint.getCurrentUserInfo()).Id, this.model.comments);
+        let commentsStr = '';
+        if(this.model.comments) {
+          commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        } else {
+          commentsStr = this.file.ListItemAllFields?.Comments ? this.file.ListItemAllFields?.Comments : '';
+        }
+        success = await this.sharepoint.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.sharepoint.getCurrentUserInfo()).Id, commentsStr);
       }
     }
     return success;

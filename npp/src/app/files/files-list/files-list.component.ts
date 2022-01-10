@@ -12,8 +12,8 @@ import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cyc
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
 import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
-import { ExternalFolderPermissionsComponent } from 'src/app/modals/external-folder-permissions/external-folder-permissions.component';
 import { ExternalUploadFileComponent } from 'src/app/modals/external-upload-file/external-upload-file.component';
+import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
@@ -267,11 +267,13 @@ export class FilesListComponent implements OnInit {
 
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
-      this.dialogInstance = this.matDialog.open(ExternalFolderPermissionsComponent, {
+      let folders = [...this.documentFolders, { Title: 'Forecast Models', ID: 0, containsModels: true }]
+      this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
         height: '400px',
         width: '405px',
         data: {
-          entity: this.entity
+          entity: this.entity,
+          folderList: folders
         }
       });
     }
