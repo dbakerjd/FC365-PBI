@@ -777,7 +777,7 @@ export class SharepointService {
     );
   }
 
-  async initializeInternalEntityFolders(opportunity: Opportunity, geographies: EntityGeography[]) {
+  async initializeInternalEntityFolders(opportunity: Opportunity | Brand, geographies: EntityGeography[]) {
     const OUGroup = await this.createGroup('OU-' + opportunity.ID);
     const OOGroup = await this.createGroup('OO-' + opportunity.ID);
 
@@ -1937,8 +1937,8 @@ export class SharepointService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
-  async updateOpportunityGeographies(opportunity: Opportunity, newGeographies: string[]) {
-    let allGeo: EntityGeography[] = await this.getOpportunityGeographies(opportunity.ID, true);
+  async updateEntityGeographies(entity: Opportunity | Brand, newGeographies: string[]) {
+    let allGeo: EntityGeography[] = await this.getEntityGeographies(entity.ID, true);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -2006,44 +2006,78 @@ export class SharepointService {
 
     await this.deleteGeographies(removeGeo);
     await this.restoreGeographies(restoreGeo);
-    let newGeos = await this.createGeographies(opportunity.ID, neoGeography, neoCountry);
+    let newGeos = await this.createGeographies(entity.ID, neoGeography, neoCountry);
 
-    let OOGroup = await this.getGroup(`OO-${opportunity.ID}`);
-    let OUGroup = await this.getGroup(`OU-${opportunity.ID}`);
+    let OOGroup = await this.getGroup(`OO-${entity.ID}`);
+    let OUGroup = await this.getGroup(`OU-${entity.ID}`);
     if (!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
 
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OO', data: OOGroup });
 
     let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    let stages = await this.getStages(opportunity.ID);
-
-    for (const oppGeo of newGeos) {
-      await this.setPermissions(permissions, groups, oppGeo.Id);
-      for (let index = 0; index < stages.length; index++) {
-        let stage = stages[index];
-        let stageFolders = await this.getStageFolders(stage.StageNameId, opportunity.ID, opportunity.BusinessUnitId);
-        let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
-
-        if (!mf) throw new Error("Could not find Models folder");
-
-        let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
-        if(folder) {
-          let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${opportunity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
-          if (folder) {
-            // department group name
-            let groupName = `DU-${opportunity.ID}-${mf.ID}-${oppGeo.Id}`;
-            const permissions = await this.getGroupPermissions(FILES_FOLDER);
-            let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
+    let stages = await this.getStages(entity.ID);
+    if (stages && stages.length) {
+      for (const oppGeo of newGeos) {
+        await this.setPermissions(permissions, groups, oppGeo.Id);
+        for (let index = 0; index < stages.length; index++) {
+          let stage = stages[index];
+          let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
+          let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
   
-            if (DUGroup) {
-              let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
-              await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
-            } else {
-              throw new Error("Error creating geography group permissions.")
+          if (!mf) throw new Error("Could not find Models folder");
+  
+          let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
+          if(folder) {
+            let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
+            if (folder) {
+              // department group name
+              let groupName = `DU-${entity.ID}-${mf.ID}-${oppGeo.Id}`;
+              const permissions = await this.getGroupPermissions(FILES_FOLDER);
+              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
+    
+              if (DUGroup) {
+                let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
+                await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
+              } else {
+                throw new Error("Error creating geography group permissions.")
+              }
             }
           }
         }
+      } 
+    } else {
+      const folders = await this.createInternalFolders(entity, newGeos);
+
+      // add groups to folders
+      permissions = await this.getGroupPermissions(FILES_FOLDER);
+      for (const f of folders.rw) {
+        if (f.DepartmentID) {
+          let folderGroups = [...groups]; // copy default groups
+          let DUGroup = await this.createGroup(`DU-${entity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+          if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+          await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+        }
+      }
+
+      permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+      for (const f of folders.ro) {
+        let folderGroups = [...groups]; // copy default groups
+        let GUGroup;
+        if (f.GeographyID) {
+          GUGroup = await this.createGroup(
+            `OU-${entity.ID}-${f.GeographyID}`, 
+            'Geography ID ' + f.GeographyID);
+          if (GUGroup) {
+            folderGroups.push( { type: 'GU', data: GUGroup} );
+            const owner = await this.getUserInfo(entity.EntityOwnerId);
+            if(owner && owner.LoginName) {
+              await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+            }
+            
+          }
+        } 
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
     }
   }
@@ -2051,7 +2085,7 @@ export class SharepointService {
   async deleteGeographies(removeGeo: EntityGeography[]) {
     for (let i = 0; i < removeGeo.length; i++) {
       await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
-        Deleted: "true"
+        Removed: "true"
       });
     }
   }
@@ -2059,7 +2093,7 @@ export class SharepointService {
   async restoreGeographies(restoreGeo: EntityGeography[]) {
     for (let i = 0; i < restoreGeo.length; i++) {
       await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
-        Deleted: "false"
+        Removed: "false"
       });
     }
   }
@@ -2293,10 +2327,10 @@ export class SharepointService {
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 
-  async getOpportunityAccessibleGeographiesList(opportunity: Opportunity): Promise<SelectInputList[]> {
-    const geographiesList = await this.getOpportunityGeographies(opportunity.ID);
+  async getEntityAccessibleGeographiesList(entity: Opportunity | Brand): Promise<SelectInputList[]> {
+    const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${opportunity.BusinessUnitId}/${opportunity.ID}/0/0`, true);
+    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }

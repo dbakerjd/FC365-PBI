@@ -247,7 +247,8 @@ export class FilesListComponent implements OnInit {
       width: '405px',
       data: {
         file: file,
-        rootFolder: this.getCurrentRootFolder()
+        rootFolder: this.getCurrentRootFolder(),
+        entity: this.entity
       }
     });
 
@@ -611,6 +612,7 @@ export class FilesListComponent implements OnInit {
       data: {
         file: file,
         rootFolder: this.getCurrentRootFolder(),
+        entity: this.entity
       }
     });
 

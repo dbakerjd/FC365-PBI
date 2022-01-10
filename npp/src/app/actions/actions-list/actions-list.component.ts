@@ -18,7 +18,7 @@ import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.comp
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -165,7 +165,9 @@ export class ActionsListComponent implements OnInit {
       height: '300px',
       width: '405px',
       data: {
-        fileId: file.ListItemAllFields?.ID
+        file,
+        rootFolder: FILES_FOLDER,
+        entity: this.opportunity
       }
     });
 
@@ -215,7 +217,9 @@ export class ActionsListComponent implements OnInit {
       height: '300px',
       width: '405px',
       data: {
-        fileId: file.ListItemAllFields?.ID
+        file,
+        rootFolder: FILES_FOLDER,
+        entity: this.opportunity
       }
     });
 

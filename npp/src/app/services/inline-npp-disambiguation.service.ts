@@ -80,19 +80,11 @@ export class InlineNppDisambiguationService {
   }
 
   getAccessibleGeographiesList(entity: Brand | Opportunity) {
-    if(this.isInline) {
-      return this.sharepoint.getBrandAccessibleGeographiesList(entity as Brand);
-    } else {
-      return this.sharepoint.getOpportunityAccessibleGeographiesList(entity as Opportunity);
-    }
+    return this.sharepoint.getEntityAccessibleGeographiesList(entity as Opportunity);
   }
   
   getEntityGeographies(entityId: number) {
-    if(this.isInline) {
-      return this.sharepoint.getBrandGeographies(entityId);
-    } else {
-      return this.sharepoint.getOpportunityGeographies(entityId);
-    }
+    return this.sharepoint.getEntityGeographies(entityId);
   }
 
   getFileByScenarios(fileFolder: string, scenario: number[]) {
@@ -120,7 +112,7 @@ export class InlineNppDisambiguationService {
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
-    return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity as Opportunity, "Approved", comments);
+    return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }
 
   async createForecastCycle(entity: Brand | Opportunity, values: any) {

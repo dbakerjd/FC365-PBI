@@ -72,7 +72,7 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.opportunity) {
       let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
       this.isInternal = type.extra?.isInternal;
-      this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
+      this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
@@ -377,7 +377,7 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.isEdit) {
 
       this.updating = this.dialogRef.disableClose = true;
-      await this.sharepoint.updateOpportunityGeographies(this.data.opportunity, this.model.geographies);
+      await this.sharepoint.updateEntityGeographies(this.data.opportunity, this.model.geographies);
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
