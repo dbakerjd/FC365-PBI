@@ -25,8 +25,8 @@
         </div>
         <div class="opportunity-owner-info">
             <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
-            <div class="opportunity-owner-info-name" *ngIf="opportunity.OpportunityOwner">
-                {{opportunity.OpportunityOwner.FirstName + ' ' + opportunity.OpportunityOwner.LastName}}
+            <div class="opportunity-owner-info-name" *ngIf="opportunity.EntityOwner">
+                {{opportunity.EntityOwner.FirstName + ' ' + opportunity.EntityOwner.LastName}}
             </div>
         </div>
     </div>
@@ -64,8 +64,8 @@
             <div class="gate-info-icons">
                 <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.PowerBi"  (click)="refreshPowerBi()"></div>
-                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.PowerBi"  (click)="navigateTo(opportunity)"></div>
+                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
                 <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
@@ -112,7 +112,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
+                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
                                 <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
@@ -122,16 +122,16 @@
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
-                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Geography'">
+                                <p *ngIf="file.ListItemAllFields.EntityGeography.EntityGeographyType == 'Geography'">
                                     <label>Geography: </label>
                                     <ng-container>
-                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
+                                        {{file.ListItemAllFields.EntityGeography.Title}}
                                     </ng-container>
                                 </p>
-                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Country'">
+                                <p *ngIf="file.ListItemAllFields.EntityGeography.EntityGeographyType == 'Country'">
                                     <label>Country: </label>
                                     <ng-container>
-                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
+                                        {{file.ListItemAllFields.EntityGeography.Title}}
                                     </ng-container>
                                 </p>
                                 <p>
@@ -151,12 +151,12 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        <span (click)="approveModel(file)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
-                                        <span (click)="rejectModel(file)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
+                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file)"></div>
+                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" title="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
@@ -171,7 +171,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID, file.ListItemAllFields.GeographyId ? file.ListItemAllFields.GeographyId : file.ListItemAllFields.Country[0].ID)"></div>
+                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
                                 <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>

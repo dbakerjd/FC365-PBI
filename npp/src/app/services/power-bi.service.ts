@@ -40,7 +40,8 @@ export class PowerBiService {
         reportType: reportName,
         token: token,
         userObjectId: userObjectId,
-        entityId: this.teams.context.entityId
+        entityId: this.teams.context.entityId,
+        teamSiteDomain: this.teams.context.teamSiteDomain
       }
 
       const url = 'https://fc365.azurewebsites.net/api/PowerBI'

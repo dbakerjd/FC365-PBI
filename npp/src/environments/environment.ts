@@ -4,7 +4,9 @@
 
 export const environment = {
   ssoRedirectUrl: 'https://localhost:4200/auth-end',
-  production: false
+  production: false,
+  isInlineApp: false,
+  version: '0.5.0'
 };
 
 /*

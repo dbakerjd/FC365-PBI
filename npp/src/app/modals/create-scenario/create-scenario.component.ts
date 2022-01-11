@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NPPFile, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -25,7 +26,8 @@ export class CreateScenarioComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateScenarioComponent>,
     public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService
+    private readonly sharepoint: SharepointService,
+    private readonly disambiguator: InlineNppDisambiguationService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -114,7 +116,13 @@ export class CreateScenarioComponent implements OnInit {
       success = false;
     } else {
       if (this.file) {
-        success = await this.sharepoint.cloneForecastModel(this.file, fileName, scenarios, this.model.comments);
+        let commentsStr = '';
+        if(this.model.comments) {
+          commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        } else {
+          commentsStr = this.file.ListItemAllFields?.Comments ? this.file.ListItemAllFields?.Comments : '';
+        }
+        success = await this.sharepoint.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.sharepoint.getCurrentUserInfo()).Id, commentsStr);
       }
     }
     return success;

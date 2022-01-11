@@ -1,4 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -8,9 +10,24 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
 })
 export class HeaderComponent implements OnInit {
   @Input() isHome = false;
-  constructor(public jobs: WorkInProgressService) { }
 
-  ngOnInit(): void {
+  public notificationsCounter = 0;
+
+  constructor(
+    public jobs: WorkInProgressService, 
+    private readonly notifications: NotificationsService,
+    private router: Router
+  ) { }
+
+  async ngOnInit() {
+    if (this.router.url != '/summary') { // si summary, continuar a 0
+      this.notificationsCounter = await this.notifications.getUnreadNotifications();
+    }
+    setInterval(async () => this.notificationsCounter = await this.notifications.getUnreadNotifications(), 60000);
+  }
+
+  clearNotifications() {
+    this.notificationsCounter = 0;
   }
 
   goBack() {

@@ -36,7 +36,7 @@
             <h4><div class="bell-btn-icon"></div> Notifications</h4>
         </div>
         <div class="notifications-column">
-            <div class="notification-item" *ngFor="let n of notificationsList">
+            <div class="notification-item" *ngFor="let n of notificationsList" [ngClass]="{'isRead': n.ReadAt }">
                 {{n.Title}}
             </div>
         </div>

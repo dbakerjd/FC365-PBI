@@ -12,7 +12,10 @@ export class FormlyFieldDatePicker extends FieldType {
   _formData: string = '';
   oldValue: string = '';
   dateOptions: DatepickerOptions = {
-    format: 'Y-M-d'
+    format: 'Y-M-d', 
+    position: 'right',
+    firstCalendarDay: 1,
+    calendarClass: 'datepicker-modal datepicker-default',
   };
 
   ngOnInit() {

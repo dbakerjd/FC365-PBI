@@ -15,6 +15,7 @@
     <ng-template #isLoaded>
         <ng-container *ngIf="( opportunities | filter:model.search:model.status:model.type:model.indication | sort:model.sort_by) as result">
         <div class="opportunity-list-item" *ngFor="let item of result">
+            {{item.Indication.Title }}
             <div class="opportunity-status">
                 <div>
                     <div class="signal-icon green-signal" *ngIf="item.OpportunityStatus == 'Active'"></div>
@@ -26,18 +27,19 @@
             <div class="opportunity-name" (click)="navigateTo(item)">
                 <p class="opportunity-title">{{item.Title}}</p>
                 <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
-                <p><label>Indication: </label> {{item.Indication?.Title}}</p>
+                <p><label>Indication: </label> {{item.IndicationAsString}}</p>
+                <p><label>Clinical Trial Phase: </label> {{item.ClinicalTrialPhase?.Title}}</p>
             </div>
             <div class="opportunity-progress" (click)="navigateTo(item)">
                 <p><label>Progress:</label> <span class="opportunity-progress-value">{{item.progress}}%</span> <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
-                <p *ngIf="item.OpportunityOwner"><label>Opportunity Owner: </label> {{item.OpportunityOwner.FirstName + ' ' + item.OpportunityOwner.LastName}}</p>
+                <p *ngIf="item.EntityOwner"><label>Opportunity Owner: </label> {{item.EntityOwner.FirstName + ' ' + item.EntityOwner.LastName}}</p>
                 <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
-                <p><label>Therapy Area: </label> {{item.Indication?.TherapyArea}}</p>
+                <p><label>Therapy Area: </label> {{item.TherapyAreaAsString}}</p>
             </div>
             <div class="opportunity-actions">
-                <div class="opportunity-icon-edit" title="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId" (click)="editOpportunity(item)"></div>
-                <div class="opportunity-icon-archive" title="Archive Opportunity" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)" (click)="archiveOpportunity(item)"></div>
-                <div class="opportunity-icon-restore" title="Restore Opportunity" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.OpportunityOwnerId)" (click)="restoreOpportunity(item)"></div>
+                <div class="opportunity-icon-edit" title="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId" (click)="editOpportunity(item)"></div>
+                <div class="opportunity-icon-archive" title="Archive Opportunity" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="archiveOpportunity(item)"></div>
+                <div class="opportunity-icon-restore" title="Restore Opportunity" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="restoreOpportunity(item)"></div>
             </div>
         </div>
         <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  

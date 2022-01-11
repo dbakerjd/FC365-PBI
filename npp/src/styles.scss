@@ -17,7 +17,11 @@ input, select, textarea {
     color: #000;
     border-radius: 5px;
     border: solid 1px #000000;
-    width: calc(100% - 1rem);
+    width: calc(100% - 1.2rem);
+}
+
+select {
+    width: 100%;
 }
 
 div.custom-checkbox {
@@ -202,4 +206,22 @@ div.has-error .ng-select-container {
   
 .desktop-view iframe, .mobile-view iframe {
     border: none;
+}
+
+// datepicker modal
+.config-dialog-container .mat-dialog-container {
+    overflow: visible;
+}
+.datepicker-modal {
+    position: absolute;
+    .calendar-container {
+        position: fixed !important;
+        top: 40% !important;
+        left: 40% !important;
+        font-weight: 700;
+    }
+}
+.datepicker-default, 
+.datepicker-default div {
+    line-height: normal !important;
 }

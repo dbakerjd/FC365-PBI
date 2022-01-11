@@ -1,0 +1,20 @@
+<app-dialog-header [title]="(isEdit ? 'Edit' : 'Create') + ' Brand'"></app-dialog-header>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content>
+        <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
+        <ng-template #isLoaded>
+            <formly-form [fields]="fields" [options]="options" [form]="form" [model]="model"></formly-form>
+        </ng-template>
+    </mat-dialog-content>
+    <div class="dialog-footer">
+        <div class="dialog-cancel-button" mat-dialog-close *ngIf="!updating">Close</div>
+        <div class="dialog-cancel-button" *ngIf="updating">Close</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="!isEdit">Create</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="isEdit && !updating">Update</div>
+        <div class="dialog-submit-button" *ngIf="isEdit && updating">
+            <app-progress-spinner [size]="small"></app-progress-spinner>
+        </div>
+    </div>
+</form>
+
+

@@ -1,10 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { Opportunity, OpportunityGeography, SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage, OpportunityType } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -31,47 +32,63 @@ export class CreateOpportunityComponent implements OnInit {
   stage: Stage | null = null;
   loading = true;
   updating = false;
-  geographies: OpportunityGeography[] = [];
+  geographies: EntityGeography[] = [];
+  oppTypes: any[] = [];
+  isInternal: boolean = false;
 
   constructor(
     private sharepoint: SharepointService, 
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateOpportunityComponent>
-    ) { }
+    ) { 
+      dialogRef.disableClose = true;
+    }
 
   async ngOnInit() {
     this.opportunity = this.data?.opportunity;
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
     const therapies = await this.sharepoint.getTherapiesList();
-    let oppTypes = await this.sharepoint.getOpportunityTypesList();
+    let forecastCycles = await this.sharepoint.getForecastCycles();
+    this.oppTypes = await this.sharepoint.getOpportunityTypesList();
     const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
-    let indicationsList: any[] = [];
+    let indicationsList: SelectInputList[] = [];
+    let businessUnits = await this.sharepoint.getBusinessUnitsList();
     let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
+    const trialPhases = await this.sharepoint.getClinicalTrialPhases();
+    const currentYear = new Date().getFullYear();
+    let year = currentYear;
+    let elegibleYears = [currentYear];
+    for(let i=1; i<6; i++) {
+      elegibleYears.push(++year);
+    }
     
     if (this.opportunity) {
-      this.geographies = await this.sharepoint.getOpportunityGeographies(this.opportunity?.ID);
+      let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
+      this.isInternal = type.extra?.isInternal;
+      this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
-        oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
+        this.oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
         this.opportunity.OpportunityTypeId = -1;
-        if (oppTypes.length > 0) {
-          this.opportunity.OpportunityTypeId = oppTypes[0].value;
+        if (this.oppTypes.length > 0) {
+          this.opportunity.OpportunityTypeId = this.oppTypes[0].value;
           this.model.stageType = 'Phase';
           stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
         }
       }
 
       // default indications for the therapy selected
-      indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication.TherapyArea);
-
+      if (this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length) {
+        indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
+      }
       // if we are cloning opportunity, get first stage info
       if (this.data?.createFrom && !this.data?.forceType) {
         this.stage = await this.sharepoint.getFirstStage(this.opportunity);
@@ -83,8 +100,8 @@ export class CreateOpportunityComponent implements OnInit {
       /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
       /*
       defaultUsersList = [{ 
-        label: this.opportunity.OpportunityOwner.FirstName + ' ' + this.opportunity.OpportunityOwner.LastName,
-        value: this.opportunity.OpportunityOwnerId
+        label: this.opportunity.EntityOwner.FirstName + ' ' + this.opportunity.EntityOwner.LastName,
+        value: this.opportunity.EntityOwnerId
       }];
       */
     }
@@ -93,6 +110,11 @@ export class CreateOpportunityComponent implements OnInit {
 
     this.fields = [
       {
+        validators: {
+          validation: [
+            { name: 'afterDate', options: { errorPath: 'Opportunity.ProjectEndDate' } },
+          ],
+        },
         fieldGroup: [{
           key: 'Opportunity.Title',
           type: 'input',
@@ -112,7 +134,7 @@ export class CreateOpportunityComponent implements OnInit {
           },
           defaultValue: this.opportunity?.MoleculeName
         }, {
-          key: 'Opportunity.OpportunityOwnerId',
+          key: 'Opportunity.EntityOwnerId',
           type: 'ngsearchable',
           templateOptions: {
             label: 'Opportunity Owner:',
@@ -125,7 +147,7 @@ export class CreateOpportunityComponent implements OnInit {
             query: 'siteusers'
             */
           },
-          defaultValue: this.opportunity?.OpportunityOwnerId
+          defaultValue: this.opportunity?.EntityOwnerId
         }, {
           key: 'therapy',
           type: 'select',
@@ -134,13 +156,14 @@ export class CreateOpportunityComponent implements OnInit {
             options: therapies,
             required: true,
           },
-          defaultValue: this.opportunity?.Indication.TherapyArea,
-        }, {
+          defaultValue: this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length ? this.opportunity.Indication[0].TherapyArea : null
+        },{
           key: 'Opportunity.IndicationId',
-          type: 'select',
+          type: 'ngsearchable',
           templateOptions: {
             label: 'Indication Name:',
             options: indicationsList,
+            multiple: true,
             required: true,
           },
           defaultValue: this.opportunity?.IndicationId,
@@ -161,22 +184,42 @@ export class CreateOpportunityComponent implements OnInit {
             }
           }
         }, {
+          key: 'Opportunity.BusinessUnitId',
+          type: 'select',
+          templateOptions: {
+            label: 'Business Unit:',
+            options: businessUnits,
+            required: true,
+          },
+          defaultValue: this.opportunity?.BusinessUnitId
+        }, {
+          key: 'Opportunity.ClinicalTrialPhaseId',
+          type: 'select',
+          templateOptions: {
+            label: 'Clinical Trial Phase:',
+            options: trialPhases,
+            required: true,
+          },
+          defaultValue: this.opportunity?.ClinicalTrialPhaseId
+        }, {
           key: 'Opportunity.OpportunityTypeId',
           type: 'select',
           templateOptions: {
             label: 'Opportunity Type:',
-            options: oppTypes,
+            options: this.oppTypes,
             required: true,
             change: (field) => {
               field.formControl?.valueChanges
-              .pipe(take(1), takeUntil(this._destroying$))
-              .subscribe(
-                (selectedValue) => {
-                  this.sharepoint.getStageType(selectedValue).then(r => {
-                    if (r) this.model.stageType = r;
-                  });
-                }
-            );
+                .pipe(take(1), takeUntil(this._destroying$))
+                .subscribe(
+                  (selectedValue) => {
+                    let t = this.oppTypes.find(el => el.value == selectedValue);
+                    this.isInternal = t ? t.extra.isInternal : false;
+                    this.sharepoint.getStageType(selectedValue).then(r => {
+                      if (r) this.model.stageType = r;
+                    });
+                  }
+                );
             },
           },
           defaultValue: this.opportunity?.OpportunityTypeId !== -1 ? this.opportunity?.OpportunityTypeId : null,
@@ -190,7 +233,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           defaultValue: this.opportunity?.ProjectStartDate ? new Date(this.opportunity?.ProjectStartDate) : null,
-          hideExpression: this.isEdit
+          hideExpression: () => this.isEdit || this.isInternal
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
@@ -199,7 +242,42 @@ export class CreateOpportunityComponent implements OnInit {
             label: 'Project End Date:',
             required: true,
           },
-          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null
+          defaultValue: this.opportunity?.ProjectEndDate ? new Date(this.opportunity?.ProjectEndDate) : null,
+          hideExpression: () => this.isInternal
+        }, {
+          key: 'Opportunity.ForecastCycleId',
+          type: 'select',
+          templateOptions: {
+            label: 'Forecast Cycle:',
+            options: forecastCycles,
+            required: true,
+          },
+          defaultValue: this.opportunity?.ForecastCycleId,
+          hideExpression: () => !this.isInternal
+        }, {
+          key: 'Opportunity.Year',
+          type: 'select',
+          templateOptions: {
+            label: 'Year:',
+            options: elegibleYears.map(el => {
+              return {
+                label: el,
+                value: el
+              }
+            }),
+            required: true,
+          },
+          defaultValue: this.opportunity?.Year || currentYear,
+          hideExpression: () => !this.isInternal
+        }, {
+          key: 'Opportunity.ForecastCycleDescriptor',
+          type: 'input',
+          templateOptions: {
+            label: 'Forecast Cycle Descriptor:',
+            required: false,
+          },
+          defaultValue: this.opportunity?.ForecastCycleDescriptor,
+          hideExpression: () => !this.isInternal
         },
         {
           key: 'geographies',
@@ -218,7 +296,7 @@ export class CreateOpportunityComponent implements OnInit {
         template: '<div class="form-header">Complete First Stage Info</div><hr />',
         hideExpression: !this.firstStepCompleted,
         expressionProperties: {
-          'template': function($viewValue, $modelValue, scope) {
+          'template': function ($viewValue, $modelValue, scope) {
             return `<div class="form-header">The Opportunity Stage Type is ${scope?.model.stageType}</div><hr />`
           },
         },
@@ -228,7 +306,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'stageType',
           type: 'input',
           hideExpression: true,
-        },{
+        }, {
           key: 'StageNumber',
           type: 'select',
           templateOptions: {
@@ -237,17 +315,17 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           hideExpression: (m, fs) => fs.hideStageNumbers,
-        },{
+        }, {
           key: 'Stage.StageUsersId',
           type: 'ngsearchable',
           templateOptions: {
-              label: 'Stage Users:',
-              placeholder: 'Stage Users',
-              filterLocally: false,
-              query: 'siteusers',
-              multiple: true,
-              required: true,
-              options: defaultStageUsersList,
+            label: 'Stage Users:',
+            placeholder: 'Stage Users',
+            filterLocally: false,
+            query: 'siteusers',
+            multiple: true,
+            required: true,
+            options: defaultStageUsersList,
           },
           validation: {
             messages: {
@@ -255,12 +333,12 @@ export class CreateOpportunityComponent implements OnInit {
             },
           },
           defaultValue: this.stage?.StageUsersId
-        },{
+        }, {
           key: 'Stage.StageReview',
           type: 'datepicker',
           templateOptions: {
-              label: 'Stage Review',
-              required: true
+            label: 'Stage Review',
+            required: true
           },
           defaultValue: this.stage?.StageReview ? new Date(this.stage.StageReview) : null
         },],
@@ -274,7 +352,13 @@ export class CreateOpportunityComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
+    let optype = this.oppTypes.find(el => el.extra.ID == this.model.Opportunity.OpportunityTypeId);
+    if(optype && optype.extra && optype.extra.isInternal) {
+      this.onSubmit();
+      return;
+    }
 
+    if(this.model.Opportunity.OpportunityTypeId)
     this.firstStepCompleted = true;
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
@@ -293,7 +377,7 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.isEdit) {
 
       this.updating = this.dialogRef.disableClose = true;
-      await this.sharepoint.updateOpportunityGeographies(this.data.opportunity.ID, this.model.geographies);
+      await this.sharepoint.updateEntityGeographies(this.data.opportunity, this.model.geographies);
       const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
@@ -309,6 +393,7 @@ export class CreateOpportunityComponent implements OnInit {
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))
         );
       }
+      
       this.dialogRef.close({
         success: newOpp ? true : false,
         data: newOpp

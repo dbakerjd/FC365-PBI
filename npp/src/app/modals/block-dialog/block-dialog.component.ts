@@ -8,7 +8,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 })
 export class BlockDialogComponent implements OnInit {
 
-  wait: string = "Please, wait until the action is finished without closing the screen ";
+  wait: string = "Please wait until the action is finished without closing the screen.";
   message: string = '';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any, private dialogRef: MatDialogRef<BlockDialogComponent>) {

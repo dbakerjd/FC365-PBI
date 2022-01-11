@@ -20,6 +20,9 @@ export class UploadFileComponent implements OnInit {
   model: any = { };
   folders: NPPFolder[] = [];
   uploading = false; // spinner control
+  businessUnitId: number = 0;
+  forecastCycleId: number = 0;
+  geoId: number = 0;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -27,7 +30,8 @@ export class UploadFileComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
   ) { 
-    
+    this.businessUnitId = this.data.businessUnitId ? this.data.businessUnitId : 0;
+    this.forecastCycleId = this.data.forecastCycleId ? this.data.forecastCycleId : 0;
   }
 
   ngOnInit(): void {
@@ -49,22 +53,23 @@ export class UploadFileComponent implements OnInit {
     }
     let fileData = {
       StageNameId: this.model.StageNameId,
-      OpportunityNameId: this.model.OpportunityNameId,
+      EntityNameId: this.model.EntityNameId,
     };
 
     this.uploading = this.dialogRef.disableClose = true;
 
-    let fileFolder = '/' + this.model.OpportunityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
+    let fileFolder = '/' + this.businessUnitId + '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
+    
     if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
       // add geography to folder route
-      fileFolder += '/' + this.model.geography;
+      fileFolder += '/' + this.model.geography + '/0';
 
       // read opp geography to get master ID of country / geography
-      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.OpportunityNameId);
+      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
 
       Object.assign(fileData, {
-        OpportunityGeographyId: geography.Id ? geography.Id : null,
+        EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         ModelApprovalComments: this.model.description,
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
@@ -100,6 +105,7 @@ export class UploadFileComponent implements OnInit {
       }
       
     } else {
+      fileFolder = fileFolder + '/0/0';
       // regular file
       Object.assign(fileData, {
         ModelApprovalComments: this.model.description

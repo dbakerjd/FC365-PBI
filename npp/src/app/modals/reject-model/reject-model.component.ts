@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
+import { Brand, NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-reject-model',
@@ -12,6 +12,9 @@ import { SharepointService } from 'src/app/services/sharepoint.service';
 export class RejectModelComponent implements OnInit {
 
   fileId: number | null = null;
+  file: NPPFile | null = null;
+  rootFolder: string = '';
+  entity: Brand | Opportunity | null = null;
 
   fields: FormlyFieldConfig[] = [{
     fieldGroup: [{
@@ -35,12 +38,19 @@ export class RejectModelComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.fileId = this.data.fileId;
+    this.fileId = this.data.fileId ? this.data.fileId : this.data.file?.ListItemAllFields?.ID;
+    this.file = this.data.file;
+    this.rootFolder = this.data.rootFolder;
+    this.entity = this.data.entity;
   }
 
   async onSubmit() {
-    if (this.fileId) {
-      const result = await this.sharepoint.setApprovalStatus(this.fileId, "In Progress", this.model.comments);
+    if (this.file) {
+      let commentsStr = '';
+      if(this.model.comments) {
+        commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+      }
+      const  result = await this.sharepoint.setEntityApprovalStatus(this.rootFolder, this.file, this.entity, "In Progress", commentsStr);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments

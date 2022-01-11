@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TeamsService } from '../services/teams.service';
 import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,6 +11,7 @@ import { LicensingService } from '../services/licensing.service';
 })
 export class DashboardComponent implements OnInit {
   account: any;
+  version = environment.version;
   items = [{
     src: 'assets/npp-summary.svg',
     text: 'NPP Summary',
@@ -29,7 +31,7 @@ export class DashboardComponent implements OnInit {
   constructor(private readonly teams: TeamsService, private router: Router, private licensing: LicensingService) { }
 
   ngOnInit(): void {
-    if(this.licensing.license && this.licensing.license.PowerBi) {
+    if(this.licensing.license && this.licensing.license.HasPowerBi) {
       this.items.push(this.powerBiItem);
     }
   }

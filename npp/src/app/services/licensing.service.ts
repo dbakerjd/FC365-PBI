@@ -8,11 +8,11 @@ export interface JDLicense {
   Tier: string;
   Expiration: Date;
   SharePointUri: string;
-  PowerBi?: {
-    Dashboard: string;
-    Report: string;
-    Refresh: string;
-  } | undefined;
+  HasPowerBi: boolean;
+  TenantId: string;
+  TotalSeats: number;
+  AssignedSeats: number;
+  AvailableSeats: number;
 }
 
 @Injectable({

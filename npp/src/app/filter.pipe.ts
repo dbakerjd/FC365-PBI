@@ -20,7 +20,7 @@ export class FilterPipe implements PipeTransform {
     }
 
     if (indicationFilter) {
-      list = [...list.filter(e => e.IndicationId === indicationFilter)];
+      list = [...list.filter(e => (e.IndicationId.indexOf(indicationFilter) > -1))];
     }
     
     return list;
