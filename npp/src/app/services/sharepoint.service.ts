@@ -897,9 +897,13 @@ export class SharepointService {
     // add groups to folders
     permissions = await this.getGroupPermissions(FILES_FOLDER);
     for (const f of folders) {
+      let folderGroups = [...groups]; // copy default groups
       if (f.DepartmentID) {
-        let folderGroups = [...groups]; // copy default groups
         let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+      } else {
+        let DUGroup = await this.createGroup(`DU-${opportunity.ID}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
         if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
@@ -1022,7 +1026,7 @@ export class SharepointService {
     for (const mf of masterFolders) {
       let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
       if (folder) {
-        if (mf.Title !== FORECAST_MODELS_FOLDER_NAME) {
+        if (mf.DepartmentID) {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
           folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0`);
@@ -1040,6 +1044,7 @@ export class SharepointService {
               folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}/0`);
               if (folder) {
                 folder.DepartmentID = 0;
+                folder.GeographyID = geo.ID;
                 folders.push(folder);
               }
             }
