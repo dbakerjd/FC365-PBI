@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
+import { ErrorService } from 'src/app/services/error.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { Brand, NPPFolder, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
@@ -29,7 +30,8 @@ export class FolderPermissionsComponent implements OnInit {
     public dialogRef: MatDialogRef<FolderPermissionsComponent>,
     private sharepoint: SharepointService, 
     private readonly notifications: NotificationsService,
-    private readonly toastr: ToastrService
+    private readonly toastr: ToastrService,
+    private readonly error: ErrorService
   ) {
     this.entity = this.data.entity;
   }
@@ -147,58 +149,64 @@ export class FolderPermissionsComponent implements OnInit {
       return;
     }
 
-    this.updating = this.dialogRef.disableClose = true;
+    try {
 
-    let success = true;
-    for (const key in this.model.DepartmentUsersId) {
-      if (this.modelKeys.includes(+key)) {
-        // is a department with geographies
-        for (const geoKey in this.model.DepartmentUsersId[key]) {
-          const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
+      
+      this.updating = this.dialogRef.disableClose = true;
+
+      let success = true;
+      for (const key in this.model.DepartmentUsersId) {
+        if (this.modelKeys.includes(+key)) {
+          // is a department with geographies
+          for (const geoKey in this.model.DepartmentUsersId[key]) {
+            const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
+            success = success && await this.sharepoint.updateDepartmentUsers(
+              this.entityId,
+              this.stageId,
+              +key,
+              this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
+              +geoKey,
+              currentList.list,
+              this.model.DepartmentUsersId[key][geoKey]
+            );
+            if (success) {
+              // notifications
+              const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
+              await this.notifications.modelFolderAccessNotification(addedUsers, this.entityId);
+              // update current list
+              currentList.list = this.model.DepartmentUsersId[key][geoKey];
+            }
+            else break;
+          }
+        } else {
+          const currentList = this.currentUsersList.find(el => el.departmentID == key);
           success = success && await this.sharepoint.updateDepartmentUsers(
             this.entityId,
             this.stageId,
             +key,
             this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
-            +geoKey,
+            null,
             currentList.list,
-            this.model.DepartmentUsersId[key][geoKey]
+            this.model.DepartmentUsersId[key]
           );
           if (success) {
-            // notifications
-            const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
-            await this.notifications.modelFolderAccessNotification(addedUsers, this.entityId);
+            //notifications
+            const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
+            await this.notifications.folderAccessNotification(addedUsers, this.entityId, +key);
             // update current list
-            currentList.list = this.model.DepartmentUsersId[key][geoKey];
+            currentList.list = this.model.DepartmentUsersId[key]; 
           }
           else break;
         }
-      } else {
-        const currentList = this.currentUsersList.find(el => el.departmentID == key);
-        success = success && await this.sharepoint.updateDepartmentUsers(
-          this.entityId,
-          this.stageId,
-          +key,
-          this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
-          null,
-          currentList.list,
-          this.model.DepartmentUsersId[key]
-        );
-        if (success) {
-          //notifications
-          const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
-          await this.notifications.folderAccessNotification(addedUsers, this.entityId, +key);
-          // update current list
-          currentList.list = this.model.DepartmentUsersId[key]; 
-        }
-        else break;
       }
+
+      this.updating = this.dialogRef.disableClose = false;
+
+      if (success) this.toastr.success('All the Department user permissions has been updated', 'Folder access');
+      else this.toastr.error('An error occurred updating users permissions', 'Try Again!');
+    } catch(e) {
+      this.error.handleError(e);
+      this.updating = false;
     }
-
-    this.updating = this.dialogRef.disableClose = false;
-
-    if (success) this.toastr.success('All the Department user permissions has been updated', 'Folder access');
-    else this.toastr.error('An error occurred updating users permissions', 'Try Again!');
   }
-
 }

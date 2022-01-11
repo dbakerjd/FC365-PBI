@@ -34,7 +34,7 @@ export class FilesListComponent implements OnInit {
   currentUser: User | undefined = undefined;
   currentFolder: NPPFolder | undefined = undefined;
   selectedFolder: NPPFolder | undefined = undefined;
-  selectedFolderId: number = 0;
+  selectedDepartmentId: number = 0;
   documentFolders: NPPFolder[] = [];
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
@@ -118,7 +118,7 @@ export class FilesListComponent implements OnInit {
       case 'Work in Progress':
         return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedFolderId+'/0/0';
+        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
     }
   }
 
@@ -144,7 +144,7 @@ export class FilesListComponent implements OnInit {
     this.currentCycle = undefined;
     this.currentStatus = 'none';
     this.selectedFolder = folder;
-    this.selectedFolderId = folder.ID;
+    this.selectedDepartmentId = folder.DepartmentID ? folder.DepartmentID : 0;
     this.updateCurrentFiles();
   }
 
@@ -214,7 +214,7 @@ export class FilesListComponent implements OnInit {
   async openUploadDialog() {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
-      let folders = [...this.documentFolders, { Title: 'Forecast Models', ID: 0, containsModels: true }]
+      let folders = [...this.documentFolders]
       this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
@@ -267,7 +267,7 @@ export class FilesListComponent implements OnInit {
 
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
-      let folders = [...this.documentFolders, { Title: 'Forecast Models', ID: 0, containsModels: true }]
+      let folders = [...this.documentFolders]
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
         height: '400px',
         width: '405px',
@@ -342,7 +342,7 @@ export class FilesListComponent implements OnInit {
     this.currentCycle = undefined;
     this.currentStatus = status;
     this.selectedFolder = undefined;
-    this.selectedFolderId = 0;
+    this.selectedDepartmentId = 0;
     this.updateCurrentFiles();
   }
 
