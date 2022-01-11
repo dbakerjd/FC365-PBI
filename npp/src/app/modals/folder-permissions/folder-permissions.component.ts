@@ -128,7 +128,7 @@ export class FolderPermissionsComponent implements OnInit {
           options: defaultUsersList,
         },
         expressionProperties: {
-          'templateOptions.disabled': '!model.category'
+          'templateOptions.disabled': '!model.category && model.category !== 0'
         },
         hideExpression: hideExpression,
         defaultValue: defaultUsersList.map(el => el.value)

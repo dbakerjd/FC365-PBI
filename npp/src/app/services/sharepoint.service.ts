@@ -807,12 +807,23 @@ export class SharepointService {
     // add groups to folders
     permissions = await this.getGroupPermissions(FILES_FOLDER);
     for (const f of folders.rw) {
-      if (f.DepartmentID || f.DepartmentID === 0) {
-        let folderGroups = [...groups]; // copy default groups
+      let folderGroups = [...groups];
+      if (f.DepartmentID) {
+         // copy default groups
         let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
         if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+      } else {
+        if (f.GeographyID) {
+          let DUGroup = await this.createGroup(
+            `DU-${opportunity.ID}-0-${f.GeographyID}`, 
+            'Geography ID ' + f.GeographyID);
+          if (DUGroup) {
+            folderGroups.push( { type: 'DU', data: DUGroup} );
+            await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+          }
+        } 
       }
+      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
     }
 
     permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
@@ -823,9 +834,14 @@ export class SharepointService {
         GUGroup = await this.createGroup(
           `OU-${opportunity.ID}-${f.GeographyID}`, 
           'Geography ID ' + f.GeographyID);
-        if (GUGroup) {
+        let DUGroup = await this.createGroup(
+          `DU-${opportunity.ID}-0-${f.GeographyID}`, 
+          'Geography ID ' + f.GeographyID);
+        if (GUGroup && DUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
+          folderGroups.push( { type: 'DU', data: DUGroup} );
           await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
         }
       } 
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
@@ -2034,14 +2050,14 @@ export class SharepointService {
   
           if (!mf) throw new Error("Could not find Models folder");
   
-          let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}`);
+          let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${oppGeo.Id}`);
           if(folder) {
-            let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.ID}/${oppGeo.Id}/0`);
+            let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${oppGeo.Id}/0`);
             if (folder) {
               // department group name
-              let groupName = `DU-${entity.ID}-${mf.ID}-${oppGeo.Id}`;
+              let groupName = `DU-${entity.ID}-${mf.DepartmentID}-${oppGeo.Id}`;
               const permissions = await this.getGroupPermissions(FILES_FOLDER);
-              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.ID + ' / Geography ID ' + oppGeo.Id);
+              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + oppGeo.Id);
     
               if (DUGroup) {
                 let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
