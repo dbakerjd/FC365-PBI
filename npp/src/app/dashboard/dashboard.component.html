@@ -1,12 +1,20 @@
-<app-npp-header [isHome]="true"></app-npp-header>
+<!-- <app-npp-header [isHome]="true"></app-npp-header> -->
 <div class="dashboard-wrapper">
-    <h1>Welcome</h1>
-    <h2>Your journey starts here</h2>
-    <div class="dashboard-items">
-        <div class="dashboard-item" *ngFor="let item of items" (click)="navigateTo(item)">
-            <img src="{{item.src}}"/>
-            <div class="dashboard-item-text">{{item.text}}</div>
-        </div>
+    <img src="assets/layout/j+d_logo_green.svg" alt="J+D" class="jd-logo" />
+    <div class="dashboard-welcome">
+        <img src="assets/layout/FC365-logo.svg" alt="FC365" />
+        <h1>Welcome</h1>
+        <h2>Your journey starts here</h2>
+    </div>
+    
+    <div class="dashboard-items" [@listAnimation]="items.length">
+            <div class="dashboard-item" *ngFor="let item of items" (click)="navigateTo(item)" >
+                <img src="{{item.src}}"/>
+                <div class="dashboard-item-text">
+                    <h3>{{item.text}}</h3>
+                    {{item.description}}
+                </div>
+            </div>
     </div>
     <div class="app-version">version {{version}}</div>
 </div>

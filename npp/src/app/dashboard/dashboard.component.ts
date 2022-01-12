@@ -3,28 +3,44 @@ import { TeamsService } from '../services/teams.service';
 import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
 import { environment } from 'src/environments/environment';
+import { animate, query, stagger, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss'],
+  animations: [
+    trigger('listAnimation', [
+      transition('* => *', [ 
+        query(':enter', [
+          style({ opacity: 0, marginTop: '1000px' }),
+          stagger(200, [
+            animate('2s', style({ opacity: 1, marginTop: '0px' }))
+          ])
+        ])
+      ])
+    ]),
+  ],
 })
 export class DashboardComponent implements OnInit {
   account: any;
   version = environment.version;
   items = [{
-    src: 'assets/npp-summary.svg',
+    src: 'assets/dashboard/npp-summary.svg',
     text: 'NPP Summary',
+    description: 'An overview of all your active opportunities/ brands',
     route: ['summary']
   }, {
-    src: 'assets/opportunities.svg',
+    src: 'assets/dashboard/opportunities.svg',
     text: 'Your Opportunities',
+    description: 'See all the detail behind your opportunities/ brands and create additional opportunities',
     route: ['opportunities']
   }];
 
   powerBiItem = {
-    src: 'assets/power-bi.svg',
+    src: 'assets/dashboard/analytics.svg',
     text: 'Analytics Report',
+    description: 'Explore your forecast outputs with powerful analytics and visual reports',
     route: ['power-bi']
   };
 
@@ -51,5 +67,6 @@ export class DashboardComponent implements OnInit {
   navigateTo(item: any) {
     this.router.navigate(item.route);
   }
+
 }
 
