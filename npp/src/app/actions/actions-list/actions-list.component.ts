@@ -304,7 +304,7 @@ export class ActionsListComponent implements OnInit {
         width: '405px',
         data: {
           folderList: this.currentFolders,
-          opportunityId: this.opportunity?.ID,
+          entity: this.opportunity,
           stageId: this.currentGate?.StageNameId
         }
       });
