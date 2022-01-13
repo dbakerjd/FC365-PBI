@@ -9,7 +9,7 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
-  @Input() isHome = false;
+  @Input() currentSection = 'none';
 
   public notificationsCounter = 0;
 
