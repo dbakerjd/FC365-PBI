@@ -1,6 +1,21 @@
 0.5.0
-   - Add column "isInternal" to "Master Opportunity Type List", type Boolean, default "No"
-
-
+   - Add column "isInternal" to "Master Opportunity Type List", type Boolean, default "No".
+   - Add Business Units List same as Inline APP.
+   - new list Entity combines fields from both Brand and Opportunity, note Indication is multiple as in Brands, so Opportunities do also have multiple indications now
+   - new lits Entity Actions List, Entity Geography and Entity Stages List, check BetaNPPDev for a detailed view of its fields
+    -Model Folders as in Inline "Approved Models", "Archived Models", "Work in Progress", all of them with new field EntityName as a lookup to Entities list, also added that field to Opportunity Library.
+   - Add columns to Model Folders
+      * EntityName Lookup
+      * Model Scenario Lookup
+      * Comments
+      * EntityGeography Lookup
+      * Indication Lookup
+      * (only archived models) Forecast Cycle lookup
+      * (only archived models) Year as number
+      * (only archived models) Complete boolean defaulted to No
+   - Archived Forecast Cycles list, similar to Archived Brand Forecast Cycles list on inline sharepoint, we actually need both if we plan on using NPP and Inline on the same sharepoint
+   - added stage type for internal and brands in order to be able to add folders into Master Folders list
 DevOps 196
    - Add column "Read At" to "Notifications" list, type Date with Time, can be null, default "null"
+
+

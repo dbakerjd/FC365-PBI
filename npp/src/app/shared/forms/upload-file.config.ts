@@ -24,7 +24,7 @@ export class UploadFileConfig {
             defaultValue: stageId
           },
           {
-            key: 'OpportunityNameId',
+            key: 'EntityNameId',
             defaultValue: opportunityId
           },
           {

@@ -1,0 +1,14 @@
+<app-dialog-header title="Model Comments"></app-dialog-header>
+<mat-dialog-content>
+    <div class="comments-wrapper">
+        <div class="comment" *ngFor="let c of comments.reverse()">
+            <label>{{ c.name }} at </label>{{ c.createdAt | date : 'short' }}<br/>
+            <p>{{ c.text }}</p>
+            <br/>
+        </div>
+    </div>
+</mat-dialog-content>
+<div class="dialog-footer">
+    <div class="dialog-cancel-button" mat-dialog-close>Close</div>
+</div>
+

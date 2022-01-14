@@ -48,34 +48,37 @@ export class SummaryComponent implements OnInit {
       this.opportunities.forEach(async (el, index) => {
         //populate gates/phases and isGateType
         let filteredGates = gates.filter(g => {
-          return g.OpportunityNameId == el.ID;
+          return g.EntityNameId == el.ID;
         });
         el.gates = filteredGates;
         if(el.gates.length > 0) {
           el.isGateType = el.gates[0].Title.indexOf('Gate') != -1;
         }
-
+        
         //populate therapyAreasData
-        if(el.Indication && el.Indication.TherapyArea) {
-          this.therapyAreasData.total += 1;
-          if(this.therapyAreasData.areas[el.Indication.TherapyArea]) {
-            this.therapyAreasData.areas[el.Indication.TherapyArea].count += 1;
-            if(this.therapyAreasData.areas[el.Indication.TherapyArea].indications[el.Indication.Title]) {
-              this.therapyAreasData.areas[el.Indication.TherapyArea].indications[el.Indication.Title] += 1;
+        if(el.Indication && el.Indication.length) {
+          for(let i=0; i < el.Indication.length; i++) {
+            this.therapyAreasData.total += 1;
+            let indication = el.Indication[i];
+            if(this.therapyAreasData.areas[indication.TherapyArea]) {
+              this.therapyAreasData.areas[indication.TherapyArea].count += 1;
+              if(this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
+                this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
+              } else {
+                this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
+              }
             } else {
-              this.therapyAreasData.areas[el.Indication.TherapyArea].indications[el.Indication.Title] = 1;
+              this.therapyAreasData.areas[indication.TherapyArea] = {
+                count: 1,
+                indications: {}
+              };
+              this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
             }
-          } else {
-            this.therapyAreasData.areas[el.Indication.TherapyArea] = {
-              count: 1,
-              indications: {}
-            };
-            this.therapyAreasData.areas[el.Indication.TherapyArea].indications[el.Indication.Title] = 1;
           }
         }
 
         let lastGate = el.gates[el.gates.length - 1];
-        let lastGateTasks = await this.sharepoint.getActionsRaw(lastGate.OpportunityNameId, lastGate.StageNameId);
+        let lastGateTasks = await this.sharepoint.getActionsRaw(lastGate.EntityNameId, lastGate.StageNameId);
         let lastTask = lastGateTasks.find(el => !el.Complete);
         let taskInfo = {
           opportunityName: el.Title,

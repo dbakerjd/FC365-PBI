@@ -1,0 +1,35 @@
+<app-npp-header [isHome]="false"></app-npp-header>
+<div class="brand-filter-wrapper">
+    <div class="brand-filter">
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+            <formly-form [form]="form" [fields]="fields" [model]="model" (change)="onSubmit()"></formly-form>
+        </form>
+    </div>
+    <div class="brand-add">
+        <div class="npp-btn" (click)="createBrand()">Add Brand</div>
+    </div>
+</div>
+<div class="brand-list-wrapper">
+    <ng-container *ngIf="filteredBrands && filteredBrands.length">
+        <div class="brand-list-item" *ngFor="let item of filteredBrands">
+            <div class="brand-status">
+                <p class="brand-forecast-cyle">{{item.ForecastCycle?.Title}} {{item.Year}}</p>
+                <p class="brand-indication"><label>Business Unit: </label>{{item.BusinessUnit?.Title}}</p>
+                <p class="brand-indication"><label>Indication: </label>{{getIndications(item.Indication)}}</p>
+            </div>
+            <div class="brand-name" (click)="navigateTo(item)">
+                <p class="brand-title">{{item.Title}}</p>
+            </div>
+            <div class="brand-progress" (click)="navigateTo(item)">
+                <p *ngIf="item.BrandOwner"><label>Brand Owner: </label> {{item.BrandOwner?.Title}}</p>
+                <!-- <p><label>Forecast Cycle Due Date: </label> {{item.FCDueDate | date : 'dd MMM y'}}</p>-->
+                <p *ngIf="item.Indication && item.Indication.length"><label>Therapy Area: </label> {{item.Indication[0].TherapyArea}}</p>
+            </div>
+            <div class="brand-actions">
+                <div class="brand-icon-edit" matTooltip="Edit Brand" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="editBrand(item)"></div>
+                <div class="brand-icon-settings" matTooltip="Create Forecast Cycle" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="createForecast(item)"></div>
+            </div>
+        </div>
+    </ng-container>
+    <h3 *ngIf="!filteredBrands || filteredBrands.length == 0" style="text-align: center;">No Results Found</h3>  
+</div> 

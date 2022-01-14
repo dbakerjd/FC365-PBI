@@ -26,6 +26,7 @@ export class TeamsService {
   public authObj: string = '';
   public hackyConsole: string = '';
   public statusSubject = new Subject<string>();
+  public initialized = false;
 
   //David's
   //'e504af88-0105-426f-bd33-9990e49c8122'
@@ -60,6 +61,7 @@ export class TeamsService {
   constructor( private router: Router, private errorService: ErrorService, private licensing: LicensingService) { 
 
     microsoftTeams.initialize(() => {
+      this.initialized = true;
       this.statusSubject.next("initialized");
     });
     

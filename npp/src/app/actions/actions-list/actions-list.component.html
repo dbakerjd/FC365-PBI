@@ -25,8 +25,8 @@
         </div>
         <div class="opportunity-owner-info">
             <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
-            <div class="opportunity-owner-info-name" *ngIf="opportunity.OpportunityOwner">
-                {{opportunity.OpportunityOwner.FirstName + ' ' + opportunity.OpportunityOwner.LastName}}
+            <div class="opportunity-owner-info-name" *ngIf="opportunity.EntityOwner">
+                {{opportunity.EntityOwner.FirstName + ' ' + opportunity.EntityOwner.LastName}}
             </div>
         </div>
     </div>
@@ -122,16 +122,16 @@
                         <ng-container *ngIf="displayingModels">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
-                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Geography'">
+                                <p *ngIf="file.ListItemAllFields.EntityGeography.EntityGeographyType == 'Geography'">
                                     <label>Geography: </label>
                                     <ng-container>
-                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
+                                        {{file.ListItemAllFields.EntityGeography.Title}}
                                     </ng-container>
                                 </p>
-                                <p *ngIf="file.ListItemAllFields.OpportunityGeography.OpportunityGeographyType == 'Country'">
+                                <p *ngIf="file.ListItemAllFields.EntityGeography.EntityGeographyType == 'Country'">
                                     <label>Country: </label>
                                     <ng-container>
-                                        {{file.ListItemAllFields.OpportunityGeography.Title}}
+                                        {{file.ListItemAllFields.EntityGeography.Title}}
                                     </ng-container>
                                 </p>
                                 <p>

@@ -53,6 +53,17 @@ import { EditFileComponent } from './modals/edit-file/edit-file.component';
 import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 import { PowerBIEmbedModule } from 'powerbi-client-angular';
+import { FilesListComponent } from './files/files-list/files-list.component';
+import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/create-forecast-cycle.component';
+import { CommentsListComponent } from './modals/comments-list/comments-list.component';
+import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
+import { InlineNppDisambiguationService } from './services/inline-npp-disambiguation.service';
+import { ExternalUploadFileComponent } from './modals/external-upload-file/external-upload-file.component';
+import { ExternalFolderPermissionsComponent } from './modals/external-folder-permissions/external-folder-permissions.component';
+import { ExternalApproveModelComponent } from './modals/external-approve-model/external-approve-model.component';
+import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
+import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
+import { BrandListComponent } from './brand/brand-list/brand-list.component';
 
 @NgModule({
   imports: [
@@ -79,6 +90,7 @@ import { PowerBIEmbedModule } from 'powerbi-client-angular';
     AppComponent,
     DashboardComponent,
     OpportunityListComponent,
+    FilesListComponent,
     OpportunityDetailComponent,
     ActionsListComponent,
     HeaderComponent,
@@ -106,7 +118,16 @@ import { PowerBIEmbedModule } from 'powerbi-client-angular';
     ExpiredLicenseComponent,
     SafePipe,
     AuthStartComponent,
-    AuthEndComponent
+    AuthEndComponent,
+    CreateForecastCycleComponent,
+    CommentsListComponent,
+    ApproveModelComponent,
+    ExternalUploadFileComponent,
+    ExternalFolderPermissionsComponent,
+    ExternalApproveModelComponent,
+    EntityEditFileComponent,
+    CreateBrandComponent,
+    BrandListComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
@@ -116,7 +137,8 @@ import { PowerBIEmbedModule } from 'powerbi-client-angular';
     SharepointService,
     LicensingService,
     WorkInProgressService,
-    PowerBiService
+    PowerBiService,
+    InlineNppDisambiguationService
   ],
   bootstrap: [AppComponent]
 })

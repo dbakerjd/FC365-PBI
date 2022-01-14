@@ -18,7 +18,7 @@ import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.comp
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -76,17 +76,17 @@ export class ActionsListComponent implements OnInit {
           this.router.navigate(['notfound']);
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
-        this.isOwner = this.currentUser.Id === this.opportunity.OpportunityOwnerId;
+        this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
 
-        if (this.opportunity.OpportunityOwner) {
-          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.OpportunityOwnerId);
-          this.opportunity.OpportunityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
-          this.profilePic = this.opportunity.OpportunityOwner.profilePicUrl;
+        if (this.opportunity.EntityOwner) {
+          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
+          this.opportunity.EntityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
+          this.profilePic = this.opportunity.EntityOwner.profilePicUrl;
         }
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
-          el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId);
+          el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
           // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
           this.setStatus(el.actions);
 
@@ -116,8 +116,9 @@ export class ActionsListComponent implements OnInit {
 
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (modelFolder) {
+    if (modelFolder && this.opportunity) {
       geographiesList = await this.sharepoint.getAccessibleGeographiesList(
+        this.opportunity.BusinessUnitId,
         this.opportunityId, 
         this.currentGate.StageNameId,
         modelFolder.ID
@@ -132,7 +133,8 @@ export class ActionsListComponent implements OnInit {
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
-        opportunityId: this.opportunityId
+        opportunityId: this.opportunityId,
+        businessUnitId: this.opportunity?.BusinessUnitId
       }
     });
 
@@ -145,10 +147,10 @@ export class ActionsListComponent implements OnInit {
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
           this.currentFiles = [];
           for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
           }
         } else {
-          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
         }
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
@@ -163,7 +165,9 @@ export class ActionsListComponent implements OnInit {
       height: '300px',
       width: '405px',
       data: {
-        fileId: file.ListItemAllFields?.ID
+        file,
+        rootFolder: FILES_FOLDER,
+        entity: this.opportunity
       }
     });
 
@@ -182,7 +186,7 @@ export class ActionsListComponent implements OnInit {
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -198,7 +202,7 @@ export class ActionsListComponent implements OnInit {
       file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
       this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
       await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
-        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
         `OO-${this.opportunityId}`,
         `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
       ]);
@@ -213,7 +217,9 @@ export class ActionsListComponent implements OnInit {
       height: '300px',
       width: '405px',
       data: {
-        fileId: file.ListItemAllFields?.ID
+        file,
+        rootFolder: FILES_FOLDER,
+        entity: this.opportunity
       }
     });
 
@@ -230,7 +236,7 @@ export class ActionsListComponent implements OnInit {
           }
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.OpportunityGeographyId}`,
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -257,7 +263,7 @@ export class ActionsListComponent implements OnInit {
           const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
           this.currentFiles = [];
           for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
           }
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
@@ -298,7 +304,7 @@ export class ActionsListComponent implements OnInit {
         width: '405px',
         data: {
           folderList: this.currentFolders,
-          opportunityId: this.opportunity?.ID,
+          entity: this.opportunity,
           stageId: this.currentGate?.StageNameId
         }
       });
@@ -405,7 +411,7 @@ export class ActionsListComponent implements OnInit {
               'initialize stage ' + result.data.ID, 
               'The stage is being initialized. The list of actions and starter permissions are being created.'
             );
-            let opp = await this.sharepoint.getOpportunity(result.data.OpportunityNameId);
+            let opp = await this.sharepoint.getOpportunity(result.data.EntityNameId);
             const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
             this.sharepoint.initializeStage(opp, result.data,oppGeographies).then(async r => {
@@ -563,15 +569,15 @@ export class ActionsListComponent implements OnInit {
     if (folderId) {
       this.loading = true;
       this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
-      this.currentFolderUri = `${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
+      this.currentFolderUri = `${this.opportunity?.BusinessUnitId}/${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       if (this.currentFolder?.containsModels) {
         const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
         this.currentFiles = [];
         for (const geofolder of geoFolders) {
-          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name, true));
+          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
         }
       } else {
-        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri, true);
+        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
       }
   
       this.displayingModels = false;
@@ -660,8 +666,8 @@ export class ActionsListComponent implements OnInit {
     let folderGroup = `DU-${this.opportunityId}-${departmentId}`;
 
     // is it a model with geography assigned?
-    if (file.ListItemAllFields?.OpportunityGeographyId) {
-      folderGroup += '-' + file.ListItemAllFields?.OpportunityGeographyId;
+    if (file.ListItemAllFields?.EntityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.EntityGeographyId;
     }
     
     // users with access

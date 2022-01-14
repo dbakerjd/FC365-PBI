@@ -4,12 +4,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { from } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
+import { Opportunity, OpportunityType, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
@@ -26,6 +25,7 @@ export class OpportunityListComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
   loading = true;
+  opportunityTypes: OpportunityType[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
@@ -41,7 +41,8 @@ export class OpportunityListComponent implements OnInit {
 
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
-    let opportunityTypes = await this.sharepoint.getOpportunityTypesList();
+    this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
+    let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
     let opportunityFields = await this.sharepoint.getOpportunityFields();
     
     this.fields = [{
@@ -88,16 +89,26 @@ export class OpportunityListComponent implements OnInit {
     ];
 
     this.opportunities = await this.sharepoint.getOpportunities();
+    this.opportunities.forEach(el => {
+      this.initIndicationString(el);
+    })
     this.loading = false;
     for (let op of this.opportunities) {
       op.progress = await this.computeProgress(op);
     }
   }
 
+  initIndicationString(el: Opportunity) {
+    if(el.Indication && el.Indication.length) {
+      (el as any).IndicationAsString = el.Indication.map(el => el.Title).join(", ");
+      (el as any).TherapyAreaAsString = el.Indication.map(el => el.TherapyArea).join(", ");
+    }
+  }
+
   createOpportunity(fromOpp: Opportunity | null, forceType = false) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '700px',
-      width: '405px',
+      height: '70vh',
+      width: '500px',
       data: {
         opportunity: fromOpp ? fromOpp : null,
         createFrom: fromOpp ? true : false,
@@ -122,11 +133,12 @@ export class OpportunityListComponent implements OnInit {
           // set active
           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
           opp.OpportunityStatus = 'Active';
+          this.initIndicationString(opp);
           this.opportunities = [...this.opportunities, opp];
           this.jobs.finishJob(job.id);
           this.toastr.success("The opportunity is now active", opp.Title);
           await this.notifications.opportunityOwnerNotification(result.data.opportunity);
-          await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+          if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);
@@ -153,7 +165,7 @@ export class OpportunityListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success) {
         this.toastr.success("The opportunity was updated successfully", result.data.Title);
-        if (opp.OpportunityOwnerId !== result.data.OpportunityOwnerId) {
+        if (opp.EntityOwnerId !== result.data.EntityOwnerId) {
           await this.notifications.opportunityOwnerNotification(result.data);
         }
         Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
@@ -169,7 +181,13 @@ export class OpportunityListComponent implements OnInit {
 
   navigateTo(item: Opportunity) {
     if (item.OpportunityStatus === "Processing") return;
-    this.router.navigate(['opportunities', item.ID, 'actions']);
+    let opType = this.opportunityTypes.find(el => el.Title == item.OpportunityType?.Title);
+    if(opType?.isInternal) {
+      this.router.navigate(['opportunities', item.ID, 'files']);
+    } else {
+      this.router.navigate(['opportunities', item.ID, 'actions']);
+    }
+    
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {

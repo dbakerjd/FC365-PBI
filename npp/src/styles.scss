@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;600;700&display=swap');
 @import "~@ng-select/ng-select/themes/default.theme.css";
 
 /* You can add global styles to this file, and also import other style files */
@@ -7,7 +7,7 @@ html, body {
     padding: 0;
     margin: 0;
     font-size: 12px;
-    font-family: "Open Sans";
+    font-family: "Roboto", sans-serif;
 }
 
 input, select, textarea {
@@ -17,7 +17,11 @@ input, select, textarea {
     color: #000;
     border-radius: 5px;
     border: solid 1px #000000;
-    width: calc(100% - 1rem);
+    width: calc(100% - 1.2rem);
+}
+
+select {
+    width: 100%;
 }
 
 div.custom-checkbox {
@@ -211,8 +215,9 @@ div.has-error .ng-select-container {
 .datepicker-modal {
     position: absolute;
     .calendar-container {
-        top: -150px !important;
-        left: 0;
+        position: fixed !important;
+        top: 40% !important;
+        left: 40% !important;
         font-weight: 700;
     }
 }
