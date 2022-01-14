@@ -120,7 +120,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'input',
           templateOptions: {
             label: 'Opportunity Name:',
-            placeholder: 'Opportunity Name',
             required: true,
           },
           defaultValue: this.opportunity?.Title
@@ -129,7 +128,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'input',
           templateOptions: {
             label: 'Molecule Name:',
-            placeholder: 'Molecule Name',
             required: true,
           },
           defaultValue: this.opportunity?.MoleculeName
@@ -227,7 +225,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
-          className: 'date-input',
+          className: 'date-input firstHalf',
           templateOptions: {
             label: 'Project Start Date:',
             required: true,
@@ -237,7 +235,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
-          className: 'date-input',
+          className: 'date-input secondHalf',
           templateOptions: {
             label: 'Project End Date:',
             required: true,
