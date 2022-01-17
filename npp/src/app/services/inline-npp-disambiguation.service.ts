@@ -51,20 +51,22 @@ export class InlineNppDisambiguationService {
     }
   }
 
-  getOwnerId(entity: Brand | Opportunity) {
-    if(this.isInline) {
-      return (entity as Brand).BrandOwnerId;
+  async getEntities() {
+    if(this.app) {
+      return this.sharepoint.getAllEntities(this.app.ID);
     } else {
-      return (entity as Opportunity).EntityOwnerId;
+      this.error.toastr.error("Tried to get Entities but the app was not ready yet.")
+      return [];
     }
+    
+  }
+
+  getOwnerId(entity: Brand | Opportunity) {
+    return entity.EntityOwnerId;
   }
 
   getOwner(entity: Brand | Opportunity) {
-    if(this.isInline) {
-      return (entity as Brand).BrandOwner;
-    } else {
-      return (entity as Opportunity).EntityOwner;
-    }
+    return entity.EntityOwner;
   }
 
   getForecastCycles(entity: Brand | Opportunity) {
@@ -72,11 +74,7 @@ export class InlineNppDisambiguationService {
   }
 
   readFolderFiles(folder: string, expandProperties: boolean) {
-    if(this.isInline) {
-      return this.sharepoint.readBrandFolderFiles(folder, expandProperties);
-    } else {
-      return this.sharepoint.readOpportunityFolderFiles(folder, expandProperties);
-    }
+    return this.sharepoint.readEntityFolderFiles(folder, expandProperties);
   }
 
   getAccessibleGeographiesList(entity: Brand | Opportunity) {
@@ -88,11 +86,7 @@ export class InlineNppDisambiguationService {
   }
 
   getFileByScenarios(fileFolder: string, scenario: number[]) {
-    if(this.isInline) {
-      return this.sharepoint.getFileByScenarios(fileFolder, scenario);
-    } else {
-      return this.sharepoint.getNPPFileByScenarios(fileFolder, scenario);
-    }
+    return this.sharepoint.getFileByScenarios(fileFolder, scenario);
   }
 
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
@@ -104,11 +98,7 @@ export class InlineNppDisambiguationService {
   }
 
   async updateEntityGeographyUsers(entityId: number, geoId: number, currentUsersList: number[], newUsersList: number[]) {
-    if(this.isInline) {
-      return this.sharepoint.updateBrandGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
-    } else {
-      return this.sharepoint.updateEntityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
-    }
+    return this.sharepoint.updateEntityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {

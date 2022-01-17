@@ -9,6 +9,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { Brand, Indication, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
@@ -29,7 +30,7 @@ export class BrandListComponent implements OnInit {
   masterCycles: SelectInputList[] = [];
   updateSearchTimeout: any; 
 
-  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService) { }
+  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
 
   async ngOnInit() {
     if(this.teams.initialized) this.init();
@@ -124,7 +125,7 @@ export class BrandListComponent implements OnInit {
       }
     ];
 
-    this.brands = await this.sharepoint.getBrands();
+    this.brands = await this.disambiguator.getEntities() as Brand[];
     //console.log(this.brands);
     this.onSubmit();
   }
@@ -136,7 +137,7 @@ export class BrandListComponent implements OnInit {
     });
 
     this.dialogInstance.afterClosed().subscribe(async (result:Brand) => {
-      this.brands = await this.sharepoint.getBrands();
+      this.brands = await this.disambiguator.getEntities() as Brand[];
       this.onSubmit();
     });
     

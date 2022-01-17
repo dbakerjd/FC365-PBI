@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Brand, NPPNotification, SharepointService } from 'src/app/services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from 'src/app/services/teams.service';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -23,7 +24,8 @@ export class BrandSummaryComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
-    private teams: TeamsService
+    private teams: TeamsService,
+    private disambiguator: InlineNppDisambiguationService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -49,7 +51,7 @@ export class BrandSummaryComponent implements OnInit {
     this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
     this.therapyAreasData  = { areas: {}, total: 0 };
 
-    this.brands = await this.sharepoint.getBrands();
+    this.brands = await this.disambiguator.getEntities() as Brand[];
 
     this.brands.forEach(async (el, index) => {
       

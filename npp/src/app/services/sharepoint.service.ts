@@ -49,6 +49,7 @@ export interface OpportunityInput {
   ProjectEndDate: Date;
   OpportunityTypeId: number;
   IndicationId: number;
+  AppTypeId: number;
 }
 
 export interface StageInput {
@@ -338,6 +339,7 @@ export interface BrandInput {
   ForecastCycleId: number;
   FCDueDate?: Date;
   Year: number;
+  AppTypeId: number;
 }
 
 export interface AppType {
@@ -345,7 +347,7 @@ export interface AppType {
   Title: string;
 }
 
-export const BRAND_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
+export const ENTITIES_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
 export const BUSINESS_UNIT_LIST = "lists/getbytitle('Master Business Units')";
 export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
 export const FOLDER_APPROVED = 'Approved Models';
@@ -528,10 +530,13 @@ export class SharepointService {
       filter = "$select=*,ClinicalTrialPhase/Title,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner,ClinicalTrialPhase";
     }
     if (onlyActive) {
-      if (!filter) filter = "$filter=OpportunityStatus eq 'Active'";
-      else filter += "&$filter=OpportunityStatus eq 'Active'";
+      if (!filter) filter = "$filter=AppTypeId eq '"+this.app?.ID+"' and OpportunityStatus eq 'Active'";
+      else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"' and OpportunityStatus eq 'Active'";
+    } else {
+      if (!filter) filter = "$filter=AppTypeId eq '"+this.app?.ID+"'";
+      else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"'";
     }
-    console.log(await this.getAllItems(OPPORTUNITIES_LIST,filter));
+
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
   }
 
@@ -541,7 +546,7 @@ export class SharepointService {
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
     Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
-
+    if(this.app) opp.AppTypeId = this.app.ID;
     const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
@@ -1219,7 +1224,7 @@ export class SharepointService {
     if(metadata) {
       let scenarios = metadata.ModelScenarioId;
       if(scenarios) {
-        let file = await this.getNPPFileByScenarios(folder, scenarios);
+        let file = await this.getFileByScenarios(folder, scenarios);
         if(file) this.deleteFile(file?.ServerRelativeUrl);
       }
     }
@@ -1358,7 +1363,7 @@ export class SharepointService {
     return files;
   }
 
-  async readOpportunityFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+  async readEntityFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${folder}')/Files`,
@@ -1373,7 +1378,7 @@ export class SharepointService {
       for (let i = 0; i < files.length; i++) {
         let fileItems = files[i];
         if (fileItems) {
-          let info = await this.getOpportunityFileInfo(folder, fileItems);
+          let info = await this.getEntityFileInfo(folder, fileItems);
           fileItems = Object.assign(fileItems.ListItemAllFields, info);
         }
       }
@@ -2121,8 +2126,8 @@ export class SharepointService {
   async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Brand|undefined> {
     const owner = await this.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
-
-    let brand = await this.createItem(BRAND_LIST, b);
+    if(this.app) b.AppTypeId = this.app.ID;
+    let brand = await this.createItem(ENTITIES_LIST, b);
     const BUGroup = await this.createGroup('BU-'+brand.ID);
     const BOGroup = await this.createGroup('BO-'+brand.ID);
     if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
@@ -2131,7 +2136,7 @@ export class SharepointService {
     await this.addUserToGroup(owner.LoginName, BUGroup.Id);
 
     //create geographies
-    await this.createBrandGeographies(brand.ID,geographies, countries);
+    await this.createGeographies(brand.ID,geographies, countries);
 
     //create models folders
     let folders = await this.createInternalFolders(brand);
@@ -2271,7 +2276,7 @@ export class SharepointService {
     }
     return folders;
   }
-
+/*
   private async createBrandGeographyFolders(brand: Brand, geographies: EntityGeography[], mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
@@ -2286,20 +2291,24 @@ export class SharepointService {
     return folders;
   }
 
+*/
 
-  async getBrands(): Promise<Brand[]> {
-    let max = await this.countItems(BRAND_LIST);
-    let cond = "$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
+  async getAllEntities(appId: number) {
+    let countCond = `$filter=AppTypeId eq ${appId}`;
+    let max = await this.countItems(ENTITIES_LIST, countCond);
+
+    let cond = countCond+"$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
     
-    let results = await this.getAllItems(BRAND_LIST, cond);
+    let results = await this.getAllItems(ENTITIES_LIST, cond);
     
     return results;
+
   }
 
   async getBrand(id: number): Promise<Brand> {
     let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
    
-    let results = await this.getOneItem(BRAND_LIST, "$filter=Id eq "+id+cond);
+    let results = await this.getOneItem(ENTITIES_LIST, "$filter=Id eq "+id+cond);
     
     return results;
   }
@@ -2323,16 +2332,16 @@ export class SharepointService {
   }
 
   async getBrandFolderFilesCount(brand: Brand, folder: string) {
-    let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/'+FORECAST_MODELS_FOLDER_NAME;
+    let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0';
     const geoFolders = await this.getSubfolders(currentFolder);
     let currentFiles = [];
     for (const geofolder of geoFolders) {
-      let folder = currentFolder + '/' + geofolder.Name;
-      currentFiles.push(...await this.readBrandFolderFiles(folder, true));
+      let folder = currentFolder + '/' + geofolder.Name+'/0';
+      currentFiles.push(...await this.readEntityFolderFiles(folder, true));
     }
     return currentFiles.length;
   }
-
+/*
   //return all geographies for now
   async getBrandAccessibleGeographiesList(brand: Brand): Promise<SelectInputList[]> {
     const geographiesList = await this.getBrandGeographies(brand.ID);
@@ -2341,7 +2350,7 @@ export class SharepointService {
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
-
+*/
   async getEntityAccessibleGeographiesList(entity: Opportunity | Brand): Promise<SelectInputList[]> {
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
@@ -2373,7 +2382,7 @@ export class SharepointService {
     this.masterForecastCycles = results.map(el => { return {value: el.ID, label: el.Title }});
     return this.masterForecastCycles;
   }
-
+/*
   async getBrandGeographies(brandId: number, all?: boolean) {
     let filter = `$filter=BrandId eq ${brandId}`;
     if (!all) {
@@ -2382,7 +2391,7 @@ export class SharepointService {
     return await this.getAllItems(
       GEOGRAPHIES_LIST, filter,
     );
-  }
+  }*/
 
   async getEntityGeographies(entityId: number, all?: boolean) {
     let filter = `$filter=EntityNameId eq ${entityId}`;
@@ -2393,7 +2402,7 @@ export class SharepointService {
       GEOGRAPHIES_LIST, filter,
     );
   }
-
+/*
   async updateBrandGeographies(brand: Brand, newGeographies: string[]) {
     let brandId = brand.ID;
     let allGeo: EntityGeography[] = await this.getBrandGeographies(brandId, true);
@@ -2526,10 +2535,10 @@ export class SharepointService {
 
     return res;
   }
-
+*/
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
-    const oppBeforeChanges: Brand = await this.getOneItemById(brandId, BRAND_LIST);
-    const success = await this.updateItem(brandId, BRAND_LIST, brandData);
+    const oppBeforeChanges: Brand = await this.getOneItemById(brandId, ENTITIES_LIST);
+    const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
       return this.changeEntityOwnerPermissions(brandId, oppBeforeChanges.EntityOwnerId, brandData.EntityOwnerId);
@@ -2537,7 +2546,7 @@ export class SharepointService {
 
     return success;
   }
-
+/*
   async readBrandFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
     const result = await this.query(
@@ -2582,9 +2591,9 @@ export class SharepointService {
       select,
       'all'
     ).toPromise();
-  }
+  }*/
   
-  async getOpportunityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
+  async getEntityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
     let arrFolder = folder.split("/");
     let rootFolder = arrFolder[0];
     let select = '';
@@ -2728,7 +2737,7 @@ export class SharepointService {
       Year: values.Year
     };
 
-    await this.updateItem(brand.ID, BRAND_LIST, changes);
+    await this.updateItem(brand.ID, ENTITIES_LIST, changes);
 
     await this.setAllModelsStatusInFolder(brand, workInProgressBasePath, "In Progress");
     return changes;
@@ -2779,7 +2788,7 @@ export class SharepointService {
     return changes;
 
   }
-
+/*
   async setAllModelsStatusInFolder(brand: Brand, folder: string, status: string) {
     
     const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
@@ -2796,7 +2805,7 @@ export class SharepointService {
       }
     }
     
-  }
+  }*/
 
   async setAllEntityModelsStatusInFolder(entity: Opportunity | Brand, folder: string, status: string) {
     
@@ -2807,7 +2816,7 @@ export class SharepointService {
 
     for(let i=0; i<geographies.length; i++) {
       let geo = geographies[i];
-      let files = await this.readOpportunityFolderFiles(folder+"/"+geo.ID+"/0", true);
+      let files = await this.readEntityFolderFiles(folder+"/"+geo.ID+"/0", true);
       for(let j=0; files && j<files.length; j++) {
         let model = files[j];
         await this.setEntityApprovalStatus(rootFolder, model, entity, "In Progress");
@@ -2817,7 +2826,7 @@ export class SharepointService {
   }
 
   async moveAllFolderFiles(origin: string, dest: string) {
-    let files = await this.readBrandFolderFiles(origin);
+    let files = await this.readEntityFolderFiles(origin);
     for(let i=0;i<files.length; i++){
       let model = files[i];
       await this.moveFile(model.ServerRelativeUrl, dest);
@@ -2992,7 +3001,7 @@ export class SharepointService {
       let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
-      let model = await this.getNPPFileByScenarios(path, scenarios);
+      let model = await this.getFileByScenarios(path, scenarios);
       if(model) {
         await this.deleteFile(model.ServerRelativeUrl);
       }
@@ -3000,19 +3009,7 @@ export class SharepointService {
   }
 
   async getFileByScenarios(path: string, scenarios: number[]) {
-    let files = await this.readBrandFolderFiles(path,false);
-    for(let i=0;i<files.length; i++){
-      let model = files[i];
-      let sameScenario = this.sameScenarios(model, scenarios);
-      if(sameScenario) {
-        return model;
-      }
-    }
-    return null;
-  }
-
-  async getNPPFileByScenarios(path: string, scenarios: number[]) {
-    let files = await this.readOpportunityFolderFiles(path,false);
+    let files = await this.readEntityFolderFiles(path,false);
     for(let i=0;i<files.length; i++){
       let model = files[i];
       let sameScenario = this.sameScenarios(model, scenarios);
