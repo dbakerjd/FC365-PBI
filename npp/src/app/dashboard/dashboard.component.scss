@@ -5,49 +5,76 @@
     height: 100%;
     width:100%;
 }
+img.jd-logo {
+    width: 5rem;
+    height: auto;
+    position: absolute;
+    top: 34px;
+    right: 50px;
+}
 .dashboard-wrapper {
-    background-color: #000;
+    background-image: url("/assets/layout/fc65-dashboard-background.jpg"); /* The image used */
+    background-color: #000; /* Used if the image is unavailable */
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-size: cover; /* Resize the background image to cover the entire container */
     color: #fff;
     height: 100%;
 
-    h1, h2 {
-        margin: 0;
-        padding: 0;
-        margin-left: 7.125rem;
-    }
-
-    h1 {
+    .dashboard-welcome {
         padding-top: 8rem;
-        font-size: 2.5rem;
-        font-weight: normal;
-        font-stretch: normal;
-        font-style: normal;
-        line-height: normal;
-        letter-spacing: normal;
-        color: #ffffff;
+        text-align: center;
+        img {
+            height: 72px;
+            width: 143px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            margin: 0;
+            padding: 0;
+        }
+    
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: normal;
+            letter-spacing: normal;
+            color: #ffffff;
+        }
+    
+        h2 {
+            padding-top: 0.5rem;
+            font-size: 2.5rem;
+            font-weight: normal;
+            font-stretch: normal;
+            font-style: normal;
+            line-height: normal;
+            letter-spacing: normal;
+            color: #ffffff;
+        }
     }
 
-    h2 {
-        padding-top: 1rem;
-        font-size: 1.5rem;
-        font-weight: normal;
-        font-stretch: normal;
-        font-style: normal;
-        line-height: normal;
-        letter-spacing: normal;
-        color: #ffffff;
-    }
+    
 
     .dashboard-items {
         padding-top: 5.75rem;
         display: block;
-        padding-left: 5.17rem;
+        // padding-left: 5.17rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
         .dashboard-item {
+            width: 266px;
+            height: 272px;
             max-width: 31rem;
-            width: 25%;
-            height: 17.42rem;
+            // width: 25%;
+            // height: 17.42rem;
             border: solid 1px #ffffff;
+            border-radius: 10px;
             display: inline-block;
             cursor: pointer;
             text-align: center;
@@ -58,16 +85,18 @@
             }
 
             &:hover {
-                background-color: #ffa13e;
+                background-color: #f26211;
             }
 
             img {
-                margin: 4.58rem auto 0 auto;
+                margin: 2.5rem auto 0 auto;
             }
 
             .dashboard-item-text {
-                margin-top: 1.16rem;
-                font-size: 1.5rem;
+                margin: 1.16rem 2.5rem;
+                h3 {
+                    font-size: 1.4rem;
+                }
             }
         }
     }

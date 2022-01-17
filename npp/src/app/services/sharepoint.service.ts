@@ -144,8 +144,6 @@ export interface NPPFileMetadata {
   ModelScenarioId?: number[];
   AuthorId: number;
   Author: User;
-  TargetUserId: number;
-  TargetUser?: User;
   Comments: string;
   IndicationId: number[];
   Indication?: Indication[];
@@ -188,7 +186,7 @@ export interface EntityGeography {
   ServerRedirectedEmbedUri: string;
   ServerRedirectedEmbedUrl: string;
   Title: string;
-  Deleted: "true" | "false";
+  Removed: "true" | "false";
 }
 
 export interface MasterGeography {
@@ -265,7 +263,7 @@ const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
 const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
 const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
 const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
-const COUNTRIES_LIST = "lists/getByTitle('Countries')";
+const COUNTRIES_LIST = "lists/getByTitle('Master Countries')";
 const GEOGRAPHIES_LIST = "lists/getByTitle('" + GEOGRAPHIES_LIST_NAME + "')";
 const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
 export const MASTER_CLINICAL_TRIAL_PHASES_LIST = "lists/getByTitle('Master Clinical Trial Phases')";
@@ -286,7 +284,7 @@ export interface BusinessUnit {
 export interface ForecastCycle {
   ID: number;
   Title: string;
-  Descriptor: string;
+  ForecastCycleDescriptor: string;
   SortOrder: number;
 }
 
@@ -298,7 +296,7 @@ export interface BrandForecastCycle {
   ForecastCycleTypeId: number;
   ForecastCycleType?: ForecastCycle;
   Year: string;
-  Descriptor: string;
+  ForecastCycleDescriptor: string;
 }
 
 export interface OpportunityForecastCycle {
@@ -308,7 +306,7 @@ export interface OpportunityForecastCycle {
   Entity?: Opportunity;
   ForecastCycleTypeId: number;
   ForecastCycleType?: ForecastCycle;
-  Descriptor: string;
+  ForecastCycleDescriptor: string;
   Year: string;
 }
 
@@ -364,7 +362,7 @@ export interface AppType {
 }
 
 export const BRAND_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
-export const BUSINESS_UNIT_LIST = "lists/getbytitle('Business Units')";
+export const BUSINESS_UNIT_LIST = "lists/getbytitle('Master Business Units')";
 export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
 export const FOLDER_APPROVED = 'Approved Models';
 export const FOLDER_ARCHIVED = 'Archived Models';
@@ -590,7 +588,8 @@ export class SharepointService {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
         EntityNameId: oppId,
-        GeographyId: g
+        GeographyId: g,
+        EntityGeographyType: 'Geography'
       });
       res.push(newGeo);
     }
@@ -598,7 +597,8 @@ export class SharepointService {
       let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
         EntityNameId: oppId,
-        CountryId: c
+        CountryId: c,
+        EntityGeographyType: 'Country'
       });
       res.push(newGeo);
     }
@@ -1415,9 +1415,9 @@ export class SharepointService {
   async getFileInfo(fileId: number): Promise<NPPFile> {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
-      '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title,TargetUser/FirstName,TargetUser/LastName, \
+      '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title, \
         EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
-        &$expand=StageName,Author,TargetUser,EntityGeography,ModelScenario,ApprovalStatus',
+        &$expand=StageName,Author,EntityGeography,ModelScenario,ApprovalStatus',
       'all'
     ).toPromise();
   }
@@ -2014,7 +2014,7 @@ export class SharepointService {
         }
       });
 
-      if (geo && geo.Deleted == "true") {
+      if (geo && geo.Removed == "true") {
         restoreGeo.push(geo);
       }
     });
@@ -2029,7 +2029,7 @@ export class SharepointService {
         }
       });
 
-      return !geo && el.Deleted != "true";
+      return !geo && el.Removed != "true";
     });
 
     await this.deleteGeographies(removeGeo);
@@ -2774,7 +2774,7 @@ export class SharepointService {
       ForecastCycleTypeId: entity.ForecastCycleId,
       Year: entity.Year+"",
       Title: entity.ForecastCycle?.Title + ' ' + entity.Year,
-      Descriptor: entity.ForecastCycleDescriptor
+      ForecastCycleDescriptor: entity.ForecastCycleDescriptor
     });
 
     const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
