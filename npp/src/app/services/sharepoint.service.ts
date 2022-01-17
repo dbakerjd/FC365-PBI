@@ -32,6 +32,8 @@ export interface Opportunity {
   ClinicalTrialPhaseId: number;
   ClinicalTrialPhase?: ClinicalTrialPhase[];
   ForecastCycleDescriptor: string;
+  AppType?: AppType;
+  AppTypeId: number;
 }
 
 export interface ClinicalTrialPhase {
@@ -313,8 +315,6 @@ export interface OpportunityForecastCycle {
 export interface Brand {
   ID: number;
   Title: string;
-  BrandOwnerId: number;
-  BrandOwner?: User;
   EntityOwnerId: number;
   EntityOwner?: User;
   BusinessUnitId: number;
@@ -326,34 +326,18 @@ export interface Brand {
   FCDueDate?: Date;
   Year: number;
   ForecastCycleDescriptor: string;
+  AppType?: AppType;
+  AppTypeId: number;
 }
 
 export interface BrandInput {
   Title: string;
-  BrandOwnerId: number;
+  EntityOwnerId: number;
   IndicationId: number;
   BusinessUnitId: number;
   ForecastCycleId: number;
   FCDueDate?: Date;
   Year: number;
-}
-
-export interface BrandGeography {
-  Attachments: boolean;
-  AuthorId: number;
-  ContentTypeId: number;
-  CountryId: number;
-  Created: Date;
-  EditorId: number;
-  Master_x0020_GeographyId: number;
-  ID: number;
-  Id: number;
-  Modified: Date;
-  BrandId: number;
-  ServerRedirectedEmbedUri: string;
-  ServerRedirectedEmbedUrl: string;
-  Title: string;
-  Removed: "true" | "false" | boolean;
 }
 
 export interface AppType {
@@ -652,7 +636,7 @@ export class SharepointService {
     const success = await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== oppData.EntityOwnerId) { // owner changed
-      return this.changeOpportunityOwnerPermissions(oppId, oppBeforeChanges.EntityOwnerId, oppData.EntityOwnerId);
+      return this.changeEntityOwnerPermissions(oppId, oppBeforeChanges.EntityOwnerId, oppData.EntityOwnerId);
     }
 
     return success;
@@ -1729,7 +1713,7 @@ export class SharepointService {
     }
   }
 
-  private async changeOpportunityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
+  private async changeEntityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
 
     const newOwner = await this.getUserInfo(newOwnerId);
     const OOGroup = await this.getGroup('OO-' + oppId); // Opportunity Owner (OO)
@@ -2135,7 +2119,7 @@ export class SharepointService {
   }
 
   async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Brand|undefined> {
-    const owner = await this.getUserInfo(b.BrandOwnerId);
+    const owner = await this.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
 
     let brand = await this.createItem(BRAND_LIST, b);
@@ -2288,7 +2272,7 @@ export class SharepointService {
     return folders;
   }
 
-  private async createBrandGeographyFolders(brand: Brand, geographies: BrandGeography[], mf: string): Promise<SystemFolder[]> {
+  private async createBrandGeographyFolders(brand: Brand, geographies: EntityGeography[], mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
     for (const geo of geographies) {
@@ -2305,7 +2289,7 @@ export class SharepointService {
 
   async getBrands(): Promise<Brand[]> {
     let max = await this.countItems(BRAND_LIST);
-    let cond = "$select=*,Indication/Title,Indication/TherapyArea,BrandOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=BrandOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
+    let cond = "$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
     
     let results = await this.getAllItems(BRAND_LIST, cond);
     
@@ -2313,7 +2297,7 @@ export class SharepointService {
   }
 
   async getBrand(id: number): Promise<Brand> {
-    let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,BrandOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=BrandOwner,ForecastCycle,BusinessUnit,Indication";
+    let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
    
     let results = await this.getOneItem(BRAND_LIST, "$filter=Id eq "+id+cond);
     
@@ -2412,7 +2396,7 @@ export class SharepointService {
 
   async updateBrandGeographies(brand: Brand, newGeographies: string[]) {
     let brandId = brand.ID;
-    let allGeo: BrandGeography[] = await this.getBrandGeographies(brandId, true);
+    let allGeo: EntityGeography[] = await this.getBrandGeographies(brandId, true);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -2420,7 +2404,7 @@ export class SharepointService {
       let id = arrId[1];
       let geo = allGeo.find(el => {
         if (kindOfGeo == 'G') {
-          return el.Master_x0020_GeographyId == parseInt(id);
+          return el.GeographyId == parseInt(id);
         } else {
           return el.CountryId == parseInt(id);
         }
@@ -2447,14 +2431,14 @@ export class SharepointService {
       return parseInt(arrId[1]);
     })
 
-    let restoreGeo: BrandGeography[] = [];
+    let restoreGeo: EntityGeography[] = [];
     newGeographies.forEach(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
       let id = arrId[1];
       let geo = allGeo.find(el => {
         if (kindOfGeo == 'G') {
-          return el.Master_x0020_GeographyId == parseInt(id);
+          return el.GeographyId == parseInt(id);
         } else {
           return el.CountryId == parseInt(id);
         }
@@ -2471,7 +2455,7 @@ export class SharepointService {
         if (isCountry) {
           return g == 'C-' + el.CountryId;
         } else {
-          return g == 'G-' + el.Master_x0020_GeographyId;
+          return g == 'G-' + el.GeographyId;
         }
       });
 
@@ -2503,7 +2487,7 @@ export class SharepointService {
     }
   }
 
-  async deleteBrandGeographies(removeGeo: BrandGeography[]) {
+  async deleteBrandGeographies(removeGeo: EntityGeography[]) {
     for (let i = 0; i < removeGeo.length; i++) {
       await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
         Removed: true
@@ -2511,7 +2495,7 @@ export class SharepointService {
     }
   }
 
-  async restoreBrandGeographies(restoreGeo: BrandGeography[]) {
+  async restoreBrandGeographies(restoreGeo: EntityGeography[]) {
     for (let i = 0; i < restoreGeo.length; i++) {
       await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
         Removed: false
@@ -2547,24 +2531,11 @@ export class SharepointService {
     const oppBeforeChanges: Brand = await this.getOneItemById(brandId, BRAND_LIST);
     const success = await this.updateItem(brandId, BRAND_LIST, brandData);
 
-    if (success && oppBeforeChanges.BrandOwnerId !== brandData.BrandOwnerId) { // owner changed
-      return this.changeBrandOwnerPermissions(brandId, oppBeforeChanges.BrandOwnerId, brandData.BrandOwnerId);
+    if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
+      return this.changeEntityOwnerPermissions(brandId, oppBeforeChanges.EntityOwnerId, brandData.EntityOwnerId);
     }
 
     return success;
-  }
-
-  private async changeBrandOwnerPermissions(brandId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
-
-    const newOwner = await this.getUserInfo(newOwnerId);
-    const BOGroup = await this.getGroup('BO-' + brandId); // Opportunity Owner (OO)
-    const BUGroup = await this.getGroup('BU-' + brandId); // Opportunity Users (OO)
-    if (!newOwner.LoginName || !BOGroup || !BUGroup) return false;
-
-    let success = await this.removeUserFromAllGroups(brandId, currentOwnerId, ['BO', 'BU']);
-
-    success = await this.addUserToGroup(newOwner.LoginName, BOGroup.Id) && success;
-    return await this.addUserToGroup(newOwner.LoginName, BUGroup.Id) && success;
   }
 
   async readBrandFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
@@ -2599,10 +2570,10 @@ export class SharepointService {
         select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
         break;
       case FOLDER_ARCHIVED:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title&$expand=Author,Editor,BrandGeography,ModelScenario,Indication';  
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
         break;
       default:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,BrandGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,BrandGeography,ModelScenario,ApprovalStatus,Indication';
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
         break;
     }
     
@@ -2711,6 +2682,7 @@ export class SharepointService {
     ); 
   }
 
+  /*
   async getBrandForecastCycles(brand: Brand) {
     let filter = `$filter=BrandId eq ${brand.ID}`;
     
@@ -2761,7 +2733,7 @@ export class SharepointService {
     await this.setAllModelsStatusInFolder(brand, workInProgressBasePath, "In Progress");
     return changes;
 
-  }
+  }*/
 
   async createEntityForecastCycle(entity: Opportunity | Brand, values: any) {
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
