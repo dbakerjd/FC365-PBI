@@ -4,6 +4,7 @@ import { ActionsListComponent } from './actions/actions-list/actions-list.compon
 import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
+import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
 import { FilesListComponent } from './files/files-list/files-list.component';
@@ -15,6 +16,7 @@ import { SummaryComponent } from './summary/summary.component';
 const routes: Routes = [
   { path: '', component: DashboardComponent },
   { path: 'summary', component: SummaryComponent },
+  { path: 'brands-summary', component: BrandSummaryComponent },
   { path: 'opportunities', component: OpportunityListComponent },
   { path: 'opportunities/:id/actions', component: ActionsListComponent },
   { path: 'opportunities/:id/files', component: FilesListComponent},
