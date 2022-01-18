@@ -236,7 +236,7 @@ export class BrandListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        brand
+        entity: brand
       }
     });
 

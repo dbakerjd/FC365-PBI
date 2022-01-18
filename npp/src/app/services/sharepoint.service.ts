@@ -648,7 +648,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -2128,8 +2128,8 @@ export class SharepointService {
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     if(this.app) b.AppTypeId = this.app.ID;
     let brand = await this.createItem(ENTITIES_LIST, b);
-    const BUGroup = await this.createGroup('BU-'+brand.ID);
-    const BOGroup = await this.createGroup('BO-'+brand.ID);
+    const BUGroup = await this.createGroup('OU-'+brand.ID);
+    const BOGroup = await this.createGroup('OO-'+brand.ID);
     if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
 
     await this.addUserToGroup(owner.LoginName, BOGroup.Id);
@@ -2143,21 +2143,27 @@ export class SharepointService {
 
     let permissions = await this.getGroupPermissions(FOLDER_WIP);
     let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'BU', data: BUGroup });
-    groups.push({ type: 'BO', data: BOGroup });
+    groups.push({ type: 'OU', data: BUGroup });
+    groups.push({ type: 'OO', data: BOGroup });
 
     for (const f of folders.rw) {
       let folderGroups = [...groups]; // copy default groups
       let GUGroup;
       if (f.GeographyID) {
         GUGroup = await this.createGroup(
-          `BU-${brand.ID}-${f.GeographyID}`, 
+          `OU-${brand.ID}-${f.GeographyID}`, 
           'Geography ID ' + f.GeographyID);
         if (GUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
           await this.addUserToGroup(owner.LoginName, GUGroup.Id);
         }
-      } 
+      } else if(f.DepartmentID) {
+        let DUGroup = await this.createGroup(`DU-${brand.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) {
+          folderGroups.push({ type: 'DU', data: DUGroup });
+          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+        }
+      }
 
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
     }
@@ -2168,11 +2174,16 @@ export class SharepointService {
       let GUGroup;
       if (f.GeographyID) {
         GUGroup = await this.createGroup(
-          `BU-${brand.ID}-${f.GeographyID}`, 
+          `OU-${brand.ID}-${f.GeographyID}`, 
           'Geography ID ' + f.GeographyID);
-        if (GUGroup) {
+        let DUGroup = await this.createGroup(
+            `DU-${brand.ID}-0-${f.GeographyID}`, 
+            'Geography ID ' + f.GeographyID);
+        if (GUGroup && DUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
+          folderGroups.push( { type: 'DU', data: DUGroup} );
           await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
         }
       } 
 
@@ -2297,7 +2308,7 @@ export class SharepointService {
     let countCond = `$filter=AppTypeId eq ${appId}`;
     let max = await this.countItems(ENTITIES_LIST, countCond);
 
-    let cond = countCond+"$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
+    let cond = countCond+"&$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
     
     let results = await this.getAllItems(ENTITIES_LIST, cond);
     
