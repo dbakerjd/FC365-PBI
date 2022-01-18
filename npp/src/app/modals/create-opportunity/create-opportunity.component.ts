@@ -5,7 +5,6 @@ import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -136,7 +135,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'ngsearchable',
           templateOptions: {
             label: 'Opportunity Owner:',
-            placeholder: 'Opportunity Owner',
             required: true,
             options: defaultUsersList
             /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
