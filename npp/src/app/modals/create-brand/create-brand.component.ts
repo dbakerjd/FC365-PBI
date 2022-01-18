@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { Brand, BrandGeography, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { Brand, EntityGeography, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -26,7 +26,7 @@ export class CreateBrandComponent implements OnInit {
   brand: Brand | null = null;
   loading = true;
   updating = false;
-  geographies: BrandGeography[] = [];
+  geographies: EntityGeography[] = [];
 
   constructor(
     private sharepoint: SharepointService, 
@@ -52,8 +52,8 @@ export class CreateBrandComponent implements OnInit {
     if (this.brand) {
       //this.brand.FCDueDate = new Date(this.brand.FCDueDate);
       this.isEdit = true;
-      this.geographies = await this.sharepoint.getBrandGeographies(this.brand?.ID);
-      this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.Master_x0020_GeographyId);
+      this.geographies = await this.sharepoint.getEntityGeographies(this.brand?.ID);
+      this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       
       // default indications for the therapy selected
@@ -82,7 +82,7 @@ export class CreateBrandComponent implements OnInit {
           },
           defaultValue: this.brand?.Title
         }, {
-          key: 'Brand.BrandOwnerId',
+          key: 'Brand.EntityOwnerId',
           type: 'ngsearchable',
           templateOptions: {
             label: 'Brand Owner:',
@@ -92,7 +92,7 @@ export class CreateBrandComponent implements OnInit {
             /*filterLocally: false,
             query: 'siteusers'*/
           },
-          defaultValue: this.brand?.BrandOwnerId
+          defaultValue: this.brand?.EntityOwnerId
         }, {
           key: 'therapy',
           type: 'select',
@@ -194,7 +194,7 @@ export class CreateBrandComponent implements OnInit {
     try {
       if (this.isEdit) {
         this.updating = this.dialogRef.disableClose = true;
-        await this.sharepoint.updateBrandGeographies(this.data.brand, this.model.geographies);
+        await this.sharepoint.updateEntityGeographies(this.data.brand, this.model.geographies);
         const success = await this.sharepoint.updateBrand(this.data.brand.ID, this.model.Brand);
         this.updating = this.dialogRef.disableClose = false;
         this.jobs.finishJob(job.id);

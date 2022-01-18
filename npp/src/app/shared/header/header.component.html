@@ -5,13 +5,14 @@
   <div class="header-button header-home" *ngIf="isHome">
     <img src="assets/home.svg"/>
   </div>
-  <div class="header-title">NPP Opportunity Assessment</div>
+  <div class="header-title" *ngIf="!isInline">NPP Opportunity Assessment</div>
+  <div class="header-title" *ngIf="isInline">Inline Brand Assessment</div>
   <div class="header-logo">
     <a href="/" [routerLink]="['/']" class="nav-link active">
       <img src="assets/fc365.svg" alt="FC365" />
     </a>
   </div>
-  <div class="header-menu">
+  <div class="header-menu" *ngIf="!isInline">
     <div class="header-menu-link" title="Summary">
       <a href="/summary" [routerLink]="['/summary']" (click)="clearNotifications()" class="nav-link active notification-container">
         <img src="assets/npp-summary.svg" alt="Summary"/>
@@ -21,6 +22,24 @@
     <div class="header-menu-link" title="Opportunities">
       <a href="/opportunities" [routerLink]="['/opportunities']" class="nav-link active">
         <img src="assets/opportunities.svg" alt="Opportunities"/>
+      </a>
+    </div>
+    <div class="header-menu-link" title="Analytics">
+      <a href="/power-bi" [routerLink]="['/power-bi']" class="nav-link active">
+        <img src="assets/power-bi.svg" alt="Analytics"/>
+      </a>
+    </div>
+  </div>
+  <div class="header-menu" *ngIf="isInline">
+    <div class="header-menu-link" title="Summary">
+      <a href="/brands-summary" [routerLink]="['/brands-summary']" (click)="clearNotifications()" class="nav-link active notification-container">
+        <img src="assets/npp-summary.svg" alt="Summary"/>
+        <span class="notification-counter" *ngIf="notificationsCounter > 0">{{ notificationsCounter }}</span>
+      </a>
+    </div>
+    <div class="header-menu-link" title="Brands">
+      <a href="/brands" [routerLink]="['/brands']" class="nav-link active">
+        <img src="assets/opportunities.svg" alt="Brands"/>
       </a>
     </div>
     <div class="header-menu-link" title="Analytics">
