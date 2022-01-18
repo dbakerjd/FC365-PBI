@@ -3,11 +3,11 @@
     <div class="opportunity-name">
         <h2>{{opportunity.Title}}</h2>
         <div>
-            <div class="opportunity-active" *ngIf="opportunity.opportunityStatus == 'Active'"></div>
-            <div class="opportunity-archived" *ngIf="opportunity.opportunityStatus == 'Archived'"></div>
-            {{opportunity.OpportunityStatus}}
+            <div class="opportunity-active" *ngIf="opportunity.OpportunityStatus == 'Active'"></div>
+            <div class="opportunity-archived" *ngIf="opportunity.OpportunityStatus == 'Archived'"></div>
+            <span class="opportunity-status">{{opportunity.OpportunityStatus}}</span>
             &nbsp;·&nbsp;
-            <label>{{opportunity.OpportunityType.Title}}</label>
+            {{opportunity.OpportunityType.Title}}
         </div>
     </div>
     <div class="opportunity-dates">
@@ -62,20 +62,21 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
-                <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
-                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
-                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
+                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
+                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
                 <div class="gate-info-icons-documents" title="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
+                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
+                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                
+                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
@@ -191,15 +192,17 @@
                         <label> by </label>
                         <ng-container *ngIf="action.TargetUser">{{action.TargetUser.FirstName + ' ' + action.TargetUser.LastName}}</ng-container>
                     </div>
-                    <div class="action-item-completed" *ngIf="!action.Complete">Not completed yet</div>
+                    <div class="action-item-completed" *ngIf="!action.Complete"><label>Not completed yet</label></div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
                         <label>Due by </label>
                         <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner || currentUser?.IsSiteAdmin"></ngx-datepicker>
                         <span *ngIf="!isOwner && !currentUser?.IsSiteAdmin">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
                     </div>
-                    <div class="action-item-complete" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
-                        <span>{{action.status}}</span>
-                        <div class="action-item-status-icon"></div>
+                    <div class="action-item-status">
+                        <div class="action-item-status-button" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
+                            <span>{{action.status}}</span>
+                            <div class="action-item-status-icon"></div>
+                        </div>
                     </div>
                 </div>
             </div>

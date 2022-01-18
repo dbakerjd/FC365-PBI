@@ -1,22 +1,27 @@
 .opportunity-info-wrapper {
     width: 100%;
-    background-color: #f5f5f5;
     padding: 1rem 0;
     position: relative;
     height: 3.17rem;
     overflow: hidden;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
+    color: #98989B;
+    font-size: 0.9rem;
+    line-height: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    background-color: #fff;
+
     & > div {
-        display: block;
         float: left;
         height: 3rem;
         position: relative;
         line-height: 1.5rem;
         top: 0;
+        flex: 1;
     }
 
     h2 {
+        color: #000;
         padding: 0;
         margin: 0;
         font-size: 1.25rem;
@@ -25,7 +30,11 @@
         font-style: normal;
         line-height: normal;
         letter-spacing: normal;
-        color: #000000;
+    }
+
+    span.opportunity-status {
+        color: #545353;
+        padding-left: 0.5rem;
     }
     
     .opportunity-name {
@@ -61,10 +70,13 @@
     }
 
     .opportunity-owner {
-        width: 15%;
-        & > div {
-            display: inline-block;
-        }
+        font-size: 0.85rem;
+        line-height: 1rem;
+        max-width: 23%;
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        
         .opportunity-owner-pic {
             margin-left: 1rem;
             width: 3rem;
@@ -95,36 +107,35 @@
             }
         }
 
-        .opportunity-owner-info {
-            height: 3rem;
-            position: absolute;
-        }
+    }
+
+    label {
+        color: #000;
     }
 }
 
 .gates-and-actions-wrapper {
-    height: 100%;
+    background-color: #fff;
+    margin-top: 5rem;
+    display: grid;
+    grid-template-columns: 1fr 8fr;
+    grid-auto-rows: 1fr;
+
     .gates-wrapper {
-        background-color: #f5f5f5;
-        width: 10.14%;
+        background-color: #545353;
+        color: #fff;
         float: left;
         clear: left;
         height: 100%;
+        font-size: 1.2rem;
 
         .gates-item {
-            background-color: #ebebeb;
+            background-color: #545353;
             height: 3.42rem;
             line-height: 3.42rem;
             text-align: center;
-            color: #000;
             cursor: pointer;
-            border-top: 1px solid #fff;
-            border-left: 1px solid #fff;
-            border-right: 1px solid #fff;
             position: relative;
-            &:last-child {
-                border-bottom: 1px solid #fff;
-            }
             &.selected-gate {
                 color: #fff;
                 background-color: #000;
@@ -296,20 +307,28 @@
         }
     }
     .actions-wrapper {
-        background-color: #f5f5f5;
-        width: 89.86%;
+        background-color: #fff;
+        width: 100%;
         float: left;
         height: 100%;
+        flex: 1;
 
         .gate-info-wrapper {
-            background-color: #ebebeb;
+            background-color: #545353;
+            color: #fff;
             height: 3.42rem;
             line-height: 3.42rem;
             width: 100%;
-            border-top: 1px solid #fff;
+            font-size: 1.2rem;
+            display: flex;
+
             & > div {
                 display: block;
                 float: left;
+            }
+
+            label {
+                color: #fff;
             }
 
             .gate-info-review {
@@ -319,7 +338,7 @@
                 }
             }
             .gate-info-progress {
-                width: 45.69%;
+                flex: 1;
                 app-progress-bar {
                     display: inline-block;
                     margin-left: 1rem;
@@ -328,63 +347,64 @@
                 }
             }
             .gate-info-icons {
-                width: 25.06%;
+                width: auto;
                 height: 100%;
                 text-align: right;
+                display: flex;
+                align-items: center;
+                margin-right: 2rem;
+
                 &>div {
-                    width: 18px;
+                    width: 1.5rem;
                     height: 100%;
                     cursor: pointer;
                     float: right;
-                    margin-right: 1.25rem;
-                }
-                &>div:first-child {
-                    margin-right: 2rem;
+                    margin-right: 0.6rem;
                 }
                 &>div:hover {
                     opacity: 0.6;
                 }
                 .gate-info-icons-upload {
-                    background: url("/assets/up.svg") no-repeat center;
+                    background: url("/assets/gate-icons/upload.svg") no-repeat center;
                 }
                 .gate-info-icons-actions {
                     min-width: 16px !important;
-                    background: url("/assets/menu.svg") no-repeat center;
+                    background: url("/assets/gate-icons/tasks-list.svg") no-repeat center;
                     &:hover .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-documents {
-                    background: url("/assets/folder.svg") no-repeat center;
+                    background: url("/assets/gate-icons/docs.svg") no-repeat center;
 
                     &:has(.gate-section-selected) .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-models {
-                    background: url("/assets/alldocuments.svg") no-repeat center;
+                    background: url("/assets/gate-icons/models.svg") no-repeat center;
                     &:hover .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-refresh-bi {
-                    background: url("/assets/cilindro.svg") no-repeat center;
+                    background: url("/assets/gate-icons/powerbi.svg") no-repeat center;
                 }
                 .gate-info-icons-power-bi {
                     background: url("/assets/PBI/powerbi.svg") no-repeat center;
                 }
                 .gate-info-icons-stage-settings {
-                    background: url("/assets/settings.svg") no-repeat center;
+                    background: url("/assets/gate-icons/settings.svg") no-repeat center;
                 }
                 .gate-info-icons-department-users {
-                    background: url("/assets/addpeople.svg") no-repeat center;
+                    background: url("/assets/gate-icons/users-access.svg") no-repeat center;
                     padding-top: 3px;
                 }
 
                 .gate-section-selected .gate-info-icons-selected-section {
                     display: block;
-                    border-bottom: 2px solid black;
-                    height: 95%;
+                    border-bottom: 4px solid #fff;
+                    height: 92%;
                 }
             }
         }
@@ -392,21 +412,25 @@
         .action-item,
         .actions-list-button {
             width: 100%;
-            height: 3.42rem;
+            height: 5rem;
             clear: left;
+            color: #000;
+            font-size: 1.1rem;
         }
         .action-item {
+            display: flex;
+            align-items: center;
+
+            &:nth-child(odd) {
+                background-color: #f4f4f4;
+            }
+
             &:last-child > div {
                 border-bottom: 1px solid #fff;
             } 
 
             & > div {
                 display: block;
-                float: left;
-                line-height: 3.42rem;
-                background-color: #f5f5f5;
-                border-top: 1px solid #fff;
-                border-left: 1px solid #fff;
                 padding-left: 1.59rem;
             }
 
@@ -417,14 +441,20 @@
             .action-item-completed {
                 width: calc(27.7% - 1px - 1.25rem);
                 padding-left: 1.25rem;
+                font-size: 0.9rem;
+                font-weight: 700;
+                label {
+                    color: #98989B;
+                }
             }
 
             .action-item-due {
                 width: calc(26.84% - 1px - 1.59rem);
-                
+                font-size: 0.9rem;
+                font-weight: 700;
             }
 
-            .action-item-complete {
+            .action-item-status {
                 width: calc(17.06% - 2px - 1.59rem);
                 font-weight: normal;
                 font-stretch: normal;
@@ -432,49 +462,60 @@
                 line-height: normal;
                 letter-spacing: normal;
                 color: rgba(0, 0, 0, 0.6);
-                line-height: 3.42rem;
-                cursor: pointer;
-                &.action-completed {
-                    background-color: #bdffd1;    
-                    position: relative;
-                    .action-item-status-icon {
-                        background: url('/assets/Check.svg') no-repeat;
-                        background-size: cover;
-                        width: 1.5rem;
-                        height: 1.5rem;
-                        position: absolute;
-                        top: 1rem;
-                        right: 2rem;
-                    }
-                }
 
-                &.action-late {
-                    background-color: #ffc1c1;
-                    position: relative;
+                > div {
+                    background-color: #f5f5f5;
+                    border-radius: 10px;
+                    color: #000;
+                    cursor: pointer;
+                    font-size: 0.85rem;
+                    font-weight: 700;
+                    height: 2rem;
+                    line-height: 2rem;
+                    width: 85%;
+
+                    &:hover {
+                        opacity: 0.8;
+                    }
+
+                    span {
+                        padding-left: 1rem;
+                    }
+
                     .action-item-status-icon {
-                        background: url('/assets/Warning.svg') no-repeat;
                         background-size: cover;
                         width: 1.5rem;
                         height: 1.5rem;
                         position: absolute;
-                        top: 1rem;
-                        right: 2rem;
+                        top: 0.4rem;
+                        right: 1rem;
+                    }
+
+                    &.action-completed {
+                        background-color: #00E8B5;    
+                        position: relative;
+                        .action-item-status-icon {
+                            background: url('/assets/gate-icons/tick.svg') no-repeat;
+                        }
+                    }
+    
+                    &.action-late {
+                        background-color: #F26211;
+                        position: relative;
+                        .action-item-status-icon {
+                            background: url('/assets//gate-icons/late.svg') no-repeat;
+                        }
+                    }
+                    
+                    &.action-pending {
+                        background-color: #d2d2d2;
+                        position: relative;
+                        .action-item-status-icon {
+                            background: url('/assets/Pending.svg') no-repeat;
+                        }
                     }
                 }
                 
-                &.action-pending {
-                    background-color: #f5f5f5;
-                    position: relative;
-                    .action-item-status-icon {
-                        background: url('/assets/Pending.svg') no-repeat;
-                        background-size: cover;
-                        width: 1.5rem;
-                        height: 1.5rem;
-                        position: absolute;
-                        top: 1rem;
-                        right: 2rem;
-                    }
-                }
 
             }
 
