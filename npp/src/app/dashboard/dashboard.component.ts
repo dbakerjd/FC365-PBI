@@ -25,30 +25,50 @@ import { animate, query, stagger, state, style, transition, trigger } from '@ang
 export class DashboardComponent implements OnInit {
   account: any;
   version = environment.version;
-  items = [{
-    src: 'assets/dashboard/npp-summary.svg',
-    text: 'NPP Summary',
-    description: 'An overview of all your active opportunities/ brands',
-    route: ['summary']
-  }, {
-    src: 'assets/dashboard/opportunities.svg',
-    text: 'Your Opportunities',
-    description: 'See all the detail behind your opportunities/ brands and create additional opportunities',
-    route: ['opportunities']
-  }];
-
-  powerBiItem = {
-    src: 'assets/dashboard/analytics.svg',
-    text: 'Analytics Report',
-    description: 'Explore your forecast outputs with powerful analytics and visual reports',
-    route: ['power-bi']
-  };
-
+  items: any[] = [];
   constructor(private readonly teams: TeamsService, private router: Router, private licensing: LicensingService) { }
 
   ngOnInit(): void {
+
+    let NPPitems = [{
+      src: 'assets/dashboard/npp-summary.svg',
+      text: 'NPP Summary',
+      description: 'An overview of all your active opportunities',
+      route: ['summary']
+    }, {
+      src: 'assets/dashboard/opportunities.svg',
+      text: 'Your Opportunities',
+      description: 'See all the detail behind your opportunities and create additional opportunities',
+      route: ['opportunities']
+    }];
+
+    let Inlineitems = [{
+      src: 'assets/dashboard/npp-summary.svg',
+      text: 'Inline Summary',
+      description: 'An overview of all your active brands',
+      route: ['brands-summary']
+    }, {
+      src: 'assets/dashboard/opportunities.svg',
+      text: 'Your Brands',
+      description: 'See all the detail behind your brands and create additional brands',
+      route: ['brands']
+    }];
+  
+    let powerBiItem = {
+      src: 'assets/dashboard/analytics.svg',
+      text: 'Analytics Report',
+      description: 'Explore your forecast outputs with powerful analytics and visual reports',
+      route: ['power-bi']
+    };
+
+    if(environment.isInlineApp) {
+      this.items = Inlineitems;
+    } else {
+      this.items = NPPitems;
+    }
+    
     if(this.licensing.license && this.licensing.license.HasPowerBi) {
-      this.items.push(this.powerBiItem);
+      this.items.push(powerBiItem);
     }
   }
 

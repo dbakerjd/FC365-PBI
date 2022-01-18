@@ -1,0 +1,39 @@
+<app-npp-header [isHome]="false"></app-npp-header>
+<div class="summary-content-wrapper">
+    <div class="summary-graph">
+        <div class="header">
+            <h4><div class="doc-btn-icon"></div> Brands Insights</h4>
+        </div>
+        <div class="graph">
+            <div id="chartTherapyAreas"></div>
+        </div>
+        <div class="graph">
+            <div id="chartIndications"></div>
+        </div>
+        <div class="next-tasks">
+            <div class="next-tasks-title">Brands</div>
+            <div class="next-tasks-header">
+                <div class="next-tasks-brand-name">Brand Name</div>
+                <div class="next-tasks-forecast-cycle">Forecast Cycle</div>
+                <div class="next-tasks-models">Models</div>
+                <div class="next-tasks-approved">Approved Models</div>
+            </div>
+            <div class="next-tasks-content" *ngFor="let b of brandData">
+                <div class="next-tasks-brand-name">{{ b.brandName}}</div>
+                <div class="next-tasks-forecast-cycle">{{ b.cycle}}</div>
+                <div class="next-tasks-models">{{ b.modelsCount }}</div>
+                <div class="next-tasks-approved">{{ b.approvedModelsCount }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="summary-notifications">
+        <div class="header">
+            <h4><div class="bell-btn-icon"></div> Notifications</h4>
+        </div>
+        <div class="notifications-column">
+            <div class="notification-item" *ngFor="let n of notificationsList">
+                {{n.Title}}
+            </div>
+        </div>
+    </div>
+</div>

@@ -64,6 +64,7 @@ import { ExternalApproveModelComponent } from './modals/external-approve-model/e
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
+import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 
 @NgModule({
   imports: [
@@ -127,7 +128,8 @@ import { BrandListComponent } from './brand/brand-list/brand-list.component';
     ExternalApproveModelComponent,
     EntityEditFileComponent,
     CreateBrandComponent,
-    BrandListComponent
+    BrandListComponent,
+    BrandSummaryComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
