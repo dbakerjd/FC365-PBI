@@ -21,7 +21,7 @@
         <div class="brand-owner-info">
             <div class="brand-owner-info-title"><label>Owner</label></div>
             <div class="brand-owner-info-name">
-                {{entity?.EntityOwner?.FirstName+" "+entity?.EntityOwner?.LastName}}
+                {{entity?.EntityOwner?.Title}}
             </div>
         </div>
     </div>
@@ -186,7 +186,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" matTooltip="Open file" *ngIf="currentStatus == 'Work in Progress'" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, file.ListItemAllFields.BrandGeographyId)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, file.ListItemAllFields.EntityGeographyId)"></div>
                                 <div class="documents-files-item-icons-edit" matTooltip="Edit file name" *ngIf="currentStatus == 'Work in Progress'" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" matTooltip="Delete file" *ngIf="currentStatus == 'Work in Progress'" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
