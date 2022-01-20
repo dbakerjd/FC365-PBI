@@ -45,7 +45,7 @@ export class UploadFileConfig {
             placeholder: 'Description',
             templateOptions: {
                 label: 'Description:',
-                rows: 2
+                rows: 3
             }
           },
           

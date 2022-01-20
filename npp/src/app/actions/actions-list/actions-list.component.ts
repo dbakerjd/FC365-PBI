@@ -248,7 +248,7 @@ export class ActionsListComponent implements OnInit {
 
   createScenario(file: NPPFile) {
     this.dialogInstance = this.matDialog.open(CreateScenarioComponent, {
-      height: '400px',
+      height: '450px',
       width: '405px',
       data: {
         file: file
@@ -698,8 +698,8 @@ export class ActionsListComponent implements OnInit {
     if (!fileInfo) return;
 
     const dialogRef = this.matDialog.open(EditFileComponent, {
-      width: "300px",
-      height: "225px",
+      width: "400px",
+      height: "300px",
       data: {
         fileInfo,
       }
@@ -722,8 +722,10 @@ export class ActionsListComponent implements OnInit {
     if (!fileInfo) return;
 
     const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+      width: "370px",
       maxWidth: "400px",
-      height: "200px",
+      height: "250px",
+      maxHeight: "300px",
       data: {
         message: 'Are you sure you want to delete the file <em>' + fileInfo.Name + '</em> ?',
         confirmButtonText: 'Yes, delete'

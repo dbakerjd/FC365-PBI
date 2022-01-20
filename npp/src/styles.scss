@@ -8,6 +8,7 @@ html, body {
     margin: 0;
     font-size: 12px;
     font-family: "Roboto", sans-serif;
+    background-color: #fff;
 }
 
 input, select, textarea {
@@ -15,13 +16,18 @@ input, select, textarea {
     opacity: 1;
     color: #000;
     width: calc(100% - 1.2rem);
-    height: 32px;
-    line-height: 36px;
-    min-height: 32px;
+    height: auto;
+    line-height: 1.5rem;
+
     // &::placeholder {
     //     color: #000;
     //     font-weight: 700;
     // }
+}
+
+input, select {
+    height: 32px;
+    min-height: 32px;
 }
 
 input, select, textarea,
@@ -59,6 +65,8 @@ div.custom-checkbox {
     }
     label {
         clear: none;
+        line-height: 36px;
+        padding-left: 2rem;
     }
 }
 
@@ -136,14 +144,14 @@ app-opportunity-list {
     position: relative;
     .dialog-footer {
         height: 3rem;
-        width: 88%;
         padding: 1rem 2rem;
         background-color: #fff;
 
         .dialog-cancel-button,
         .dialog-submit-button {
-            width: calc(30% - 2px);
-            max-width: 135px;
+            min-width: calc(30% - 2px);
+            width: auto;
+            padding: 0 1.5rem;
             border-radius: 10px;
             height: 44px;
             line-height: 44px;

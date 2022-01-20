@@ -4,7 +4,7 @@
         <h2>{{opportunity.Title}}</h2>
         <div>
             <div class="opportunity-active" *ngIf="opportunity.OpportunityStatus == 'Active'"></div>
-            <div class="opportunity-archived" *ngIf="opportunity.OpportunityStatus == 'Archived'"></div>
+            <div class="opportunity-archived" *ngIf="opportunity.OpportunityStatus == 'Archive'"></div>
             <span class="opportunity-status">{{opportunity.OpportunityStatus}}</span>
             &nbsp;·&nbsp;
             {{opportunity.OpportunityType.Title}}
