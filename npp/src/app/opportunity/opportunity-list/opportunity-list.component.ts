@@ -11,6 +11,7 @@ import { Opportunity, OpportunityType, SharepointService, User } from 'src/app/s
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -34,11 +35,21 @@ export class OpportunityListComponent implements OnInit {
     private router: Router, 
     public matDialog: MatDialog,
     public jobs: WorkInProgressService,
-    public teams: TeamsService
+    public teams: TeamsService,
+    public disambiguator: InlineNppDisambiguationService
     ) { }
 
   async ngOnInit() {
+    if(this.disambiguator.isReady) {
+      this.init();
+    }else {
+      this.disambiguator.readySubscriptions.subscribe(val => {
+        this.init();
+      });
+    }
+  }
 
+  async init() {
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     let indications = await this.sharepoint.getIndicationsList();
     this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
@@ -107,7 +118,7 @@ export class OpportunityListComponent implements OnInit {
 
   createOpportunity(fromOpp: Opportunity | null, forceType = false) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '70vh',
+      height: '75vh',
       width: '500px',
       data: {
         opportunity: fromOpp ? fromOpp : null,

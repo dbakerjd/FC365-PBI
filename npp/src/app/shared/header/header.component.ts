@@ -10,7 +10,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
-  @Input() isHome = false;
+  @Input() currentSection = 'none';
   isInline: boolean = false;
 
   public notificationsCounter = 0;

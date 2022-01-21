@@ -5,7 +5,6 @@ import { Opportunity, EntityGeography, SelectInputList, SharepointService, Stage
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -120,7 +119,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'input',
           templateOptions: {
             label: 'Opportunity Name:',
-            placeholder: 'Opportunity Name',
             required: true,
           },
           defaultValue: this.opportunity?.Title
@@ -129,7 +127,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'input',
           templateOptions: {
             label: 'Molecule Name:',
-            placeholder: 'Molecule Name',
             required: true,
           },
           defaultValue: this.opportunity?.MoleculeName
@@ -138,7 +135,6 @@ export class CreateOpportunityComponent implements OnInit {
           type: 'ngsearchable',
           templateOptions: {
             label: 'Opportunity Owner:',
-            placeholder: 'Opportunity Owner',
             required: true,
             options: defaultUsersList
             /** ALERT: Needed when we retrieve all users. For now, only owners (admin set permissions limitation)   */
@@ -227,7 +223,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectStartDate',
           type: 'datepicker',
-          className: 'date-input',
+          className: 'date-input firstHalf',
           templateOptions: {
             label: 'Project Start Date:',
             required: true,
@@ -237,7 +233,7 @@ export class CreateOpportunityComponent implements OnInit {
         }, {
           key: 'Opportunity.ProjectEndDate',
           type: 'datepicker',
-          className: 'date-input',
+          className: 'date-input secondHalf',
           templateOptions: {
             label: 'Project End Date:',
             required: true,
