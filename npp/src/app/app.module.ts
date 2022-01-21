@@ -64,6 +64,7 @@ import { ExternalApproveModelComponent } from './modals/external-approve-model/e
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
+import { BreadcrumbModule } from 'xng-breadcrumb';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 
 @NgModule({
@@ -82,6 +83,7 @@ import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.compo
     MatDialogModule,
     MatProgressSpinnerModule,
     PowerBIEmbedModule,  
+    BreadcrumbModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 7000,
