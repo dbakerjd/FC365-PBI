@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-npp-header',
@@ -10,6 +11,7 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
 })
 export class HeaderComponent implements OnInit {
   @Input() currentSection = 'none';
+  isInline: boolean = false;
 
   public notificationsCounter = 0;
 
@@ -20,6 +22,7 @@ export class HeaderComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
+    this.isInline = environment.isInlineApp;
     if (this.router.url != '/summary') { // si summary, continuar a 0
       this.notificationsCounter = await this.notifications.getUnreadNotifications();
     }

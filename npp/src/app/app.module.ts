@@ -65,6 +65,7 @@ import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-f
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BreadcrumbModule } from 'xng-breadcrumb';
+import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 
 @NgModule({
   imports: [
@@ -129,7 +130,8 @@ import { BreadcrumbModule } from 'xng-breadcrumb';
     ExternalApproveModelComponent,
     EntityEditFileComponent,
     CreateBrandComponent,
-    BrandListComponent
+    BrandListComponent,
+    BrandSummaryComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
