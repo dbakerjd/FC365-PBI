@@ -1,5 +1,4 @@
 .opportunity-info-wrapper {
-    width: 100%;
     padding: 0 4rem;
     position: relative;
     height: 3.17rem;
@@ -75,6 +74,7 @@
         display: flex;
         align-items: center;
         justify-content: left;
+        flex: 0 1 auto;
         
         .opportunity-owner-pic {
             margin-left: 1rem;
