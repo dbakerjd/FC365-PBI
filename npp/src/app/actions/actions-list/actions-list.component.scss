@@ -1,6 +1,6 @@
 .opportunity-info-wrapper {
     width: 100%;
-    padding: 1rem 0;
+    padding: 0 4rem;
     position: relative;
     height: 3.17rem;
     overflow: hidden;
@@ -38,7 +38,6 @@
     }
     
     .opportunity-name {
-        padding-left: 2rem;
         width: calc(25% - 2rem);
 
         .opportunity-active {

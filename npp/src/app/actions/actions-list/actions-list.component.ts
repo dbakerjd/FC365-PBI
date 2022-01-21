@@ -20,6 +20,7 @@ import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { BreadcrumbService } from 'xng-breadcrumb';
 
 @Component({
   selector: 'app-actions-list',
@@ -64,7 +65,8 @@ export class ActionsListComponent implements OnInit {
     private toastr: ToastrService,
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
-    public powerBi: PowerBiService
+    public powerBi: PowerBiService,
+    private breadcrumbService: BreadcrumbService
     ) { }
 
   ngOnInit(): void {
@@ -77,6 +79,7 @@ export class ActionsListComponent implements OnInit {
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
+        this.breadcrumbService.set('@opportunityName', this.opportunity.Title);
 
         if (this.opportunity.EntityOwner) {
           let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
