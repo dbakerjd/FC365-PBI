@@ -51,9 +51,14 @@ export class UploadFileComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
+
+    const user = await this.sharepoint.getCurrentUserInfo();
+    let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
+
     let fileData = {
       StageNameId: this.model.StageNameId,
       EntityNameId: this.model.EntityNameId,
+      Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',createdAt":"'+new Date().toISOString()+'"}]' : '[]',
     };
 
     this.uploading = this.dialogRef.disableClose = true;

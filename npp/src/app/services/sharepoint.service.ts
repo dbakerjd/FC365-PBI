@@ -648,7 +648,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -1955,8 +1955,11 @@ export class SharepointService {
   }
 
   async updateEntityGeographies(entity: Opportunity | Brand, newGeographies: string[]) {
+    const owner = await this.getUserInfo(entity.EntityOwnerId);
+    if (!owner.LoginName) throw new Error("Could not determine entity's owner");
+    
     let allGeo: EntityGeography[] = await this.getEntityGeographies(entity.ID, true);
-
+    
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
@@ -2065,16 +2068,26 @@ export class SharepointService {
       } 
     } else {
       const folders = await this.createInternalFolders(entity, newGeos);
-
+      
       // add groups to folders
       permissions = await this.getGroupPermissions(FILES_FOLDER);
       for (const f of folders.rw) {
+        let folderGroups = [...groups]; // copy default groups
         if (f.DepartmentID) {
-          let folderGroups = [...groups]; // copy default groups
           let DUGroup = await this.createGroup(`DU-${entity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
           if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+        } else {
+          if (f.GeographyID) {
+            let DUGroup = await this.createGroup(
+              `DU-${entity.ID}-0-${f.GeographyID}`, 
+              'Geography ID ' + f.GeographyID);
+            if (DUGroup) {
+              folderGroups.push( { type: 'DU', data: DUGroup} );
+              await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+            }
+          } 
         }
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
 
       permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
@@ -2085,13 +2098,14 @@ export class SharepointService {
           GUGroup = await this.createGroup(
             `OU-${entity.ID}-${f.GeographyID}`, 
             'Geography ID ' + f.GeographyID);
-          if (GUGroup) {
+          let DUGroup = await this.createGroup(
+            `DU-${entity.ID}-0-${f.GeographyID}`, 
+            'Geography ID ' + f.GeographyID);
+          if (GUGroup && DUGroup) {
             folderGroups.push( { type: 'GU', data: GUGroup} );
-            const owner = await this.getUserInfo(entity.EntityOwnerId);
-            if(owner && owner.LoginName) {
-              await this.addUserToGroup(owner.LoginName, GUGroup.Id);
-            }
-            
+            folderGroups.push( { type: 'DU', data: DUGroup} );
+            await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+            await this.addUserToGroup(owner.LoginName, DUGroup.Id);
           }
         } 
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
@@ -2904,7 +2918,8 @@ export class SharepointService {
       let newComment = {
         text: str,
         email: currentUser.Email,
-        name: currentUser.Title,
+        name: currentUser.Title?.indexOf("@") == -1 ? currentUser.Title : currentUser.Email,
+        userId: currentUser.Id,
         createdAt: new Date().toISOString()
       }
       parsedComments.push(newComment);

@@ -585,7 +585,8 @@ export class FilesListComponent implements OnInit {
               Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
               ID: success.ForecastCycleId
             },
-            Year: success.Year
+            Year: success.Year,
+            ForecastCycleDescriptor: success.ForecastCycleDescriptor
           });
           this.updateCurrentFiles();
         } else if (success === false) {
@@ -639,7 +640,7 @@ export class FilesListComponent implements OnInit {
   
   getLatestComments(file: NPPFile): FileComments[] {
     let comments: FileComments[] = [];
-    let numComments = 2;
+    let numComments = 1;
     let lastComments = [];
 
     if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
@@ -672,11 +673,6 @@ export class FilesListComponent implements OnInit {
         data: {
           comments
         }
-      });
-
-      this.dialogInstance.afterClosed()
-      .subscribe(() => {
-        this.updateCurrentFiles();
       });
     }
   }

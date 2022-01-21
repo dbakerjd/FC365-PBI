@@ -18,7 +18,7 @@ export class CommentsListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.comments = this.data.comments;
+    this.comments = this.data.comments.reverse();
   }
 
 }

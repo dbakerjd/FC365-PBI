@@ -75,12 +75,13 @@ export class ExternalUploadFileComponent implements OnInit {
       const oppGeographies = await this.disambiguator.getEntityGeographies(this.data.entity.ID);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
       const user = await this.sharepoint.getCurrentUserInfo();
+      let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
 
       Object.assign(fileData, {
         CountryId: this.model.country,
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
-        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","createdAt":"'+new Date().toISOString()+'"}]' : '[]',
+        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',createdAt":"'+new Date().toISOString()+'"}]' : '[]',
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
         IndicationId: this.model.IndicationId
       });
