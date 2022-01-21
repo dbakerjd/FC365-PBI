@@ -1,17 +1,6 @@
 <div class="header-wrapper">
-  <div class="header-button header-back" *ngIf="!isHome" (click)="goBack()">
-    <img src="assets/left-arrow.svg"/>
-  </div>  
-  <div class="header-button header-home" *ngIf="isHome">
-    <img src="assets/home.svg"/>
-  </div>
-  <div class="header-title" *ngIf="!isInline">NPP Opportunity Assessment</div>
   <div class="header-title" *ngIf="isInline">Inline Brand Assessment</div>
-  <div class="header-logo">
-    <a href="/" [routerLink]="['/']" class="nav-link active">
-      <img src="assets/fc365.svg" alt="FC365" />
-    </a>
-  </div>
+  
   <div class="header-menu" *ngIf="!isInline">
     <div class="header-menu-link" title="Summary">
       <div class="header-menu-link-wrapper" [ngClass]="{'selected': currentSection == 'summary'}">
