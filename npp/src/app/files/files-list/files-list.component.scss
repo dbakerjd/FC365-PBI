@@ -1,23 +1,27 @@
 .brand-info-wrapper {
     width: 100%;
-    background-color: #f5f5f5;
-    padding: 1rem 0;
+    padding: 0 4rem;
     position: relative;
     height: 3.17rem;
     overflow: hidden;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
+    color: #98989B;
+    font-size: 0.9rem;
+    line-height: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    background-color: #fff;
 
     & > div {
-        display: block;
         float: left;
         height: 3rem;
         position: relative;
         line-height: 1.5rem;
         top: 0;
+        flex: 1;
     }
 
     h2 {
+        color: #000;
         padding: 0;
         margin: 0;
         font-size: 1.25rem;
@@ -26,11 +30,9 @@
         font-style: normal;
         line-height: normal;
         letter-spacing: normal;
-        color: #000000;
     }
     
     .brand-name {
-        padding-left: 2rem;
         width: calc(25% - 2rem);
 
         .brand-active {
@@ -62,10 +64,13 @@
     }
 
     .brand-owner {
-        width: 15%;
-        & > div {
-            display: inline-block;
-        }
+        font-size: 0.85rem;
+        line-height: 1rem;
+        max-width: 23%;
+        display: flex;
+        align-items: center;
+        justify-content: left;
+
         .brand-owner-pic {
             margin-left: 1rem;
             width: 3rem;
@@ -95,46 +100,44 @@
                 margin-right: 1rem;
             }
         }
+    }
 
-        .brand-owner-info {
-            height: 3rem;
-            position: absolute;
-        }
+    label {
+        color: #000;
     }
 }
 
 .folder-and-actions-wrapper {
-    height: 100%;
+    background-color: #fff;
+    margin-top: 5rem;
+    display: grid;
+    grid-template-columns: 1fr 8fr;
+    grid-auto-rows: 1fr;
+
     .folder-wrapper {
-        background-color: #f5f5f5;
-        width: 10.14%;
+        background-color: #545353;
+        color: #fff;
         float: left;
         clear: left;
         height: 100%;
+        font-size: 1.2rem;
 
         .folder-item {
-            background-color: #ebebeb;
+            background-color: #545353;
             height: 3.42rem;
             line-height: 3.42rem;
             text-align: center;
-            color: #000;
             cursor: pointer;
-            border-top: 1px solid #fff;
-            border-left: 1px solid #fff;
-            border-right: 1px solid #fff;
             position: relative;
-            &:last-child {
-                border-bottom: 1px solid #fff;
-            }
             &.selected-folder {
                 color: #fff;
                 background-color: #000;
-                svg {
-                    fill: white;
-                    transform: rotate(180deg);
-                }
-                &.models-folder{
-                    background-color: #4e4e4e;           
+                &.folders-visible {
+                    background-color: #545353; 
+                    svg {
+                        fill: white;
+                        transform: rotate(180deg);
+                    }       
                 }
             }
 
@@ -156,17 +159,18 @@
         }
 
         .folders-item {
-            background-color: #4e4e4e;
-            height: 3.42rem;
-            line-height: 3.42rem;
+            background-color: #545353;
+            height: 5rem;
+            line-height: 5rem;
             text-align: left;
             color: #000;
             cursor: pointer;
-            border-top: 1px solid #fff;
-            border-left: 1px solid #fff;
-            border-right: 1px solid #fff;
             color: #fff;
             position: relative;
+            
+            &:nth-child(even) {
+                background-color: #767575;
+            }
             span {
                 margin-left: 5px;
                 position: relative;
@@ -194,49 +198,50 @@
     .documents-files {
         width: 100%;
         float: left;
+
         .documents-files-item {
-            width: 100%;
             clear: left;
-            border-top: 1px solid #fff;
             overflow: hidden;
+            height: 5rem;
+            display: flex;
+            align-items: center;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0 2rem 0 2.5rem;
 
-            &:last-child {
-                border-bottom: 1px solid #fff;
+            &>div {
+                padding-right: 1%;
             }
 
-            & > div {
-                float: left;
-                padding: 1rem 0;
-                border-right: 1px solid #fff;
+            label {
+                color: #98989B;
             }
+
+            &:nth-child(odd) {
+                background-color: #f4f4f4;
+            }
+
             .documents-files-item-name {
-                clear: left;
-                width: calc(35% - 1px);
-                p {
-                    padding-left: 1.35rem;
-                }
+                width: 30%;
+                font-size: 0.9rem;
             }
 
             .documents-files-item-uploaded {
-                width: calc(23% - 1px);
-                p {
-                    padding-left: 1.35rem;
-                }
-
-                .documents-files-item-model-status {
-                    width: 50%;
+                & > div {
                     float: left;
                 }
+                width: 23%;
 
                 .documents-files-item-model-actions {
-                    width: 50%;
-                    float: left;
+                    padding-left: 1.35rem;
+    
                     &>div {
                         width: 20px;
                         height: 16px;
                         padding-left: 0.5rem;
                         cursor: pointer;
-                        display: inline-block;
+                        float: left;
                         margin: 0 !important;
                     }
                     .model-send-approve-icon {
@@ -259,7 +264,7 @@
             }
             
             .documents-files-item-comments {
-                width: calc(27.5% - 1px);
+                flex: 1;
                 p {
                     padding-left: 1.35rem;
                 }
@@ -269,7 +274,8 @@
                 width: calc(14.5% - 1px);
                 overflow: hidden;
                 height: 100%;
-                padding: 0;
+                display: flex;
+                align-items: center;
                 
                 &>div {
                     width: 19%;
@@ -278,35 +284,39 @@
                     cursor: pointer;
                     float: left;
                     margin-left: 1%;
+
+                    &:hover {
+                        opacity: 0.7;
+                    }
                 }
                 .documents-files-item-icons-file {
-                    background: url("/assets/doc.svg") no-repeat center;
+                    background: url("/assets/gate-icons/open-file.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-download {
-                    background: url("/assets/down.png") no-repeat center;
+                    background: url("/assets/gate-icons/download-file.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-share {
-                    background: url("/assets/share.svg") no-repeat center;
+                    background: url("/assets/gate-icons/share-file.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-edit {
-                    background: url("/assets/edit.svg") no-repeat center;
+                    background: url("/assets/gate-icons/edit-file.svg") no-repeat center;
                 }
 
                 .documents-files-item-icons-remove {
-                    background: url("/assets/bin.svg") no-repeat center;
-                }            
-            }
+                    background: url("/assets/gate-icons/delete-file.svg") no-repeat center;
+                }            }
         }
     }
 
     .files-wrapper {
-        background-color: #f5f5f5;
-        width: 89.86%;
+        background-color: #fff;
+        width: 100%;
         float: left;
         height: 100%;
+        flex: 1;
         
         .comment-text {
             width: 90%;
@@ -335,11 +345,14 @@
             }
         }
         .folder-info-wrapper {
-            background-color: #ebebeb;
+            background-color: #545353;
+            color: #fff;
             height: 3.42rem;
             line-height: 3.42rem;
-            width: 100%;
-            border-top: 1px solid #fff;
+            font-size: 1.2rem;
+            display: flex;
+            padding: 0 2rem 0 2.5rem;
+
             & > div {
                 display: block;
                 float: left;
@@ -361,53 +374,64 @@
                 }
             }
             .folder-info-icons {
-                width: 17.06%;
+                width: auto;
                 height: 100%;
-                float: right;
+                text-align: right;
+                display: flex;
+                align-items: center;
+                flex: 1;
+
                 &>div {
-                    width: 16.66%;
+                    width: 1.5rem;
                     height: 100%;
                     cursor: pointer;
-                    float: left;
+                    float: right;
+                    margin-right: 0.6rem;
+                }
+                &>div:hover {
+                    opacity: 0.6;
                 }
                 .folder-info-icons-upload {
-                    background: url("/assets/up.svg") no-repeat 1.35rem center;
+                    background: url("/assets/gate-icons/upload.svg") no-repeat center;
                 }
                 .folder-info-icons-actions {
-                    background: url("/assets/menu.svg") no-repeat 1.1rem center;
+                    min-width: 16px !important;
+                    background: url("/assets/gate-icons/tasks-list.svg") no-repeat center;
+                    &:hover .folder-info-icons-selected-section {
+                        display: block;
+                    }
                 }
                 .folder-info-icons-documents {
-                    background: url("/assets/folder.svg") no-repeat 1.1rem center;
-                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
+                    background: url("/assets/gate-icons/docs.svg") no-repeat center;
+
+                    &:has(.folder-section-selected) .folder-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .folder-info-icons-models {
-                    background: url("/assets/alldocuments.svg") no-repeat 1.1rem center;
-                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
+                    background: url("/assets/gate-icons/models.svg") no-repeat center;
+                    &:hover .folder-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .folder-info-icons-refresh-bi {
-                    background: url("/assets/cilindro.svg") no-repeat 1.1rem center;
+                    background: url("/assets/gate-icons/powerbi.svg") no-repeat center;
+                }
+                .folder-info-icons-power-bi {
+                    background: url("/assets/PBI/powerbi.svg") no-repeat center;
                 }
                 .folder-info-icons-folder-settings {
-                    background: url("/assets/settings.svg") no-repeat 1.1rem center;
-                    &:has(.folder-info-icon-selected) .folder-info-icons-selected-section {
-                        display: block;
-                    }
+                    background: url("/assets/gate-icons/settings.svg") no-repeat center;
                 }
                 .folder-info-icons-department-users {
-                    background: url("/assets/addpeople.svg") no-repeat center;
+                    background: url("/assets/gate-icons/users-access.svg") no-repeat center;
                     padding-top: 3px;
                 }
 
-                .folder-info-icon-selected {
-                    .folder-info-icons-selected-section {
-                        display: block;
-                        border-bottom: 2px solid black;
-                        height: 95%;   
-                    }
+                .folder-section-selected .gate-info-icons-selected-section {
+                    display: block;
+                    border-bottom: 4px solid #fff;
+                    height: 92%;
                 }
             }
 
