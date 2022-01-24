@@ -65,7 +65,7 @@ export class UploadFileConfig {
             options: folders.map((f: NPPFolder) => {
                 return {
                     'name': f.Title,
-                    'value': f.ID,
+                    'value': f.DepartmentID,
                 };
             }),
             valueProp: 'value',
@@ -96,7 +96,7 @@ export class UploadFileConfig {
             required: true
         },
         "hideExpression": (model: any) => {
-          return !folders.find(f => f.ID === model.category)?.containsModels;
+          return !folders.find(f => f.DepartmentID === model.category)?.containsModels;
         },
     };
   }
@@ -114,7 +114,7 @@ export class UploadFileConfig {
             required: true
         },
         "hideExpression": (model: any) => {
-          return !folders.find(f => f.ID === model.category)?.containsModels;
+          return !folders.find(f => f.DepartmentID === model.category)?.containsModels;
         },
     }
   }

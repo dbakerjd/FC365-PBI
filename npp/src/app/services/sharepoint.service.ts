@@ -968,7 +968,7 @@ export class SharepointService {
     if (opportunityId && (businessUnitId !== null)) {
       // only folders user can access
       const allowedFolders = await this.getSubfolders(`/${businessUnitId}/${opportunityId}/${masterStageId}`);
-      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.ID));
+      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.DepartmentID));
     }
     return masterFolders;
   }
@@ -1013,14 +1013,14 @@ export class SharepointService {
     let folders: SystemFolder[] = [];
 
     for (const mf of masterFolders) {
-      let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
+      let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}`);
       if (folder) {
         if (mf.DepartmentID) {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
-          folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0`);
+          folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0`);
           if (folder) {
-            folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0/0`);
+            folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0/0`);
             if (folder) {
               folder.DepartmentID = mf.DepartmentID;
               folders.push(folder);
@@ -1028,9 +1028,9 @@ export class SharepointService {
           }
         } else {
           for (let geo of geographies) {
-            let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
+            let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
             if (folder) {
-              folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}/0`);
+              folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
               if (folder) {
                 folder.DepartmentID = 0;
                 folder.GeographyID = geo.ID;
@@ -1902,11 +1902,11 @@ export class SharepointService {
   }
 
   /** Accessible Geographies for the user (subfolders with read/write permission) */
-  async getAccessibleGeographiesList(busId: number, oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
+  async getAccessibleGeographiesList(entity: Opportunity, stageId: number): Promise<SelectInputList[]> {
 
-    const geographiesList = await this.getOpportunityGeographies(oppId);
+    const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`/${busId}/${oppId}/${stageId}/${departmentID}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`${FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }

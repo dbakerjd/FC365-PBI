@@ -291,6 +291,7 @@ export class FilesListComponent implements OnInit {
         file: file,
         entity: this.entity,
         rootFolder: this.getCurrentRootFolder(),
+        departmentID: this.currentDepartmentId
       }
     });
 
@@ -302,7 +303,7 @@ export class FilesListComponent implements OnInit {
           this.updateCurrentFiles();
           this.toastr.success("The model has been approved!", "Forecast Model");
         } else if (result.success === false) {
-          this.toastr.error("There were a problem approving the forecast model", 'Try again');
+          this.toastr.error("There was a problem approving the forecast model", 'Try again');
         }
       });
   }

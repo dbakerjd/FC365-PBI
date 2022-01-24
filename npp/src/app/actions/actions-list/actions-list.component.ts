@@ -9,6 +9,7 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
+import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -18,7 +19,7 @@ import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.comp
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { BreadcrumbService } from 'xng-breadcrumb';
 
@@ -119,20 +120,18 @@ export class ActionsListComponent implements OnInit {
 
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (modelFolder && this.opportunity) {
+    if (this.opportunity) {
       geographiesList = await this.sharepoint.getAccessibleGeographiesList(
-        this.opportunity.BusinessUnitId,
-        this.opportunityId, 
-        this.currentGate.StageNameId,
-        modelFolder.ID
-      )
+        this.opportunity,
+        this.currentGate.StageNameId
+      );
     }
     this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
       data: {
         folderList: this.currentFolders,
-        selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.ID : null,
+        selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.DepartmentID : null,
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
@@ -201,17 +200,29 @@ export class ActionsListComponent implements OnInit {
 
   async approveModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
-    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
-      file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
-      this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
-      await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
-        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
-        `OO-${this.opportunityId}`,
-        `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
-      ]);
-    } else {
-      this.toastr.error("There were a problem approving the forecast model", 'Try again');
-    }
+    if (!this.opportunity) return;
+
+    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file,
+        entity: this.opportunity,
+        rootFolder: FOLDER_DOCUMENTS,
+        departmentID: this.currentFolder?.DepartmentID
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          this.toastr.success("The model has been approved!", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+        }
+      });
   }
 
   async rejectModel(file: NPPFile, departmentId: number) {
@@ -328,14 +339,14 @@ export class ActionsListComponent implements OnInit {
 
   showFolders() {
     this.currentSection = 'documents';
-    if (this.currentFolders.length > 0) this.setFolder(this.currentFolders[0].ID);
-    else this.setFolder(null)
+    if (this.currentFolders.length > 0) this.setFolder(this.currentFolders[0].DepartmentID);
+    else this.setFolder(undefined);
   }
 
   showModels() {
     this.setSection('documents');
     let modelsFolder = this.currentFolders.find(el => el.containsModels === true);
-    if (modelsFolder) this.setFolder(modelsFolder.ID);
+    if (modelsFolder) this.setFolder(modelsFolder.DepartmentID);
   }
 
   setStatus(actions: Action[]) {
@@ -563,15 +574,15 @@ export class ActionsListComponent implements OnInit {
       this.currentFiles = [];
     } else {
       this.currentFolders = this.currentGate.folders;
-      if (this.currentFolders.length) this.setFolder(this.currentFolders[0].ID);
+      if (this.currentFolders.length) this.setFolder(this.currentFolders[0].DepartmentID);
     }
   }
 
-  async setFolder(folderId: number | null) {
+  async setFolder(folderId: number | undefined) {
     this.currentFiles = [];
-    if (folderId) {
+    if (folderId || folderId === 0) {
       this.loading = true;
-      this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
+      this.currentFolder = this.currentFolders.find(el => el.DepartmentID === folderId);
       this.currentFolderUri = `${this.opportunity?.BusinessUnitId}/${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
       if (this.currentFolder?.containsModels) {
         const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);

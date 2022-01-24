@@ -60,7 +60,7 @@ export class UploadFileComponent implements OnInit {
 
     let fileFolder = '/' + this.businessUnitId + '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
     
-    if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
+    if (this.data.folderList.find((f: NPPFolder) => f.DepartmentID == this.model.category).containsModels) {
       // add geography to folder route
       fileFolder += '/' + this.model.geography + '/0';
 
