@@ -756,6 +756,7 @@ export class ActionsListComponent implements OnInit {
         if (result.success) {
           fileInfo.Name = result.filename;
           this.toastr.success(`The file has been renamed`, "File Renamed");
+          await this.updateCurrentFiles();
         } else {
           this.toastr.error("Sorry, there was a problem renaming the file");
         }
