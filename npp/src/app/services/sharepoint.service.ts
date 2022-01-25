@@ -139,7 +139,6 @@ export interface NPPFileMetadata {
   ID: number;
   EntityNameId?: number;
   StageNameId?: number;
-  ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
   EntityGeographyId?: number;
@@ -968,7 +967,7 @@ export class SharepointService {
     if (opportunityId && (businessUnitId !== null)) {
       // only folders user can access
       const allowedFolders = await this.getSubfolders(`/${businessUnitId}/${opportunityId}/${masterStageId}`);
-      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.ID));
+      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.DepartmentID));
     }
     return masterFolders;
   }
@@ -1013,14 +1012,14 @@ export class SharepointService {
     let folders: SystemFolder[] = [];
 
     for (const mf of masterFolders) {
-      let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}`);
+      let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}`);
       if (folder) {
         if (mf.DepartmentID) {
           folder.DepartmentID = mf.DepartmentID;
           folders.push(folder);
-          folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0`);
+          folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0`);
           if (folder) {
-            folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/0/0`);
+            folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0/0`);
             if (folder) {
               folder.DepartmentID = mf.DepartmentID;
               folders.push(folder);
@@ -1028,9 +1027,9 @@ export class SharepointService {
           }
         } else {
           for (let geo of geographies) {
-            let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}`);
+            let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
             if (folder) {
-              folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.ID}/${geo.Id}/0`);
+              folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
               if (folder) {
                 folder.DepartmentID = 0;
                 folder.GeographyID = geo.ID;
@@ -1272,7 +1271,7 @@ export class SharepointService {
     if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
       const newData = {
         ModelScenarioId: newScenarios,
-        ModelApprovalComments: comments ? comments : null,
+        Comments: comments ? comments : null,
         ApprovalStatusId: await this.getApprovalStatusId("In Progress")
       }
       success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
@@ -1416,7 +1415,7 @@ export class SharepointService {
     if (!statusId) return false;
 
     let data = { ApprovalStatusId: statusId };
-    if (comments) Object.assign(data, { ModelApprovalComments: comments });
+    if (comments) Object.assign(data, { Comments: comments });
 
     return await this.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
   }
@@ -1902,11 +1901,11 @@ export class SharepointService {
   }
 
   /** Accessible Geographies for the user (subfolders with read/write permission) */
-  async getAccessibleGeographiesList(busId: number, oppId: number, stageId: number, departmentID: number): Promise<SelectInputList[]> {
+  async getAccessibleGeographiesList(entity: Opportunity, stageId: number): Promise<SelectInputList[]> {
 
-    const geographiesList = await this.getOpportunityGeographies(oppId);
+    const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`/${busId}/${oppId}/${stageId}/${departmentID}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`${FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
@@ -2980,7 +2979,7 @@ export class SharepointService {
   
       await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
       let res;
-      if(status === "Approved" && entity) {
+      if(status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(entity, file);
         res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
