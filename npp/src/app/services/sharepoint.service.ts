@@ -139,7 +139,6 @@ export interface NPPFileMetadata {
   ID: number;
   EntityNameId?: number;
   StageNameId?: number;
-  ModelApprovalComments: string;
   ApprovalStatusId?: number;
   ApprovalStatus?: any;
   EntityGeographyId?: number;
@@ -1272,7 +1271,7 @@ export class SharepointService {
     if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
       const newData = {
         ModelScenarioId: newScenarios,
-        ModelApprovalComments: comments ? comments : null,
+        Comments: comments ? comments : null,
         ApprovalStatusId: await this.getApprovalStatusId("In Progress")
       }
       success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
@@ -1416,7 +1415,7 @@ export class SharepointService {
     if (!statusId) return false;
 
     let data = { ApprovalStatusId: statusId };
-    if (comments) Object.assign(data, { ModelApprovalComments: comments });
+    if (comments) Object.assign(data, { Comments: comments });
 
     return await this.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
   }
@@ -2980,7 +2979,7 @@ export class SharepointService {
   
       await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
       let res;
-      if(status === "Approved" && entity) {
+      if(status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(entity, file);
         res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
