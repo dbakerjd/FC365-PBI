@@ -5,10 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
+import { CommentsListComponent } from 'src/app/modals/comments-list/comments-list.component';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
+import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -18,7 +20,7 @@ import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.comp
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { BreadcrumbService } from 'xng-breadcrumb';
 
@@ -119,20 +121,18 @@ export class ActionsListComponent implements OnInit {
 
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (modelFolder && this.opportunity) {
+    if (this.opportunity) {
       geographiesList = await this.sharepoint.getAccessibleGeographiesList(
-        this.opportunity.BusinessUnitId,
-        this.opportunityId, 
-        this.currentGate.StageNameId,
-        modelFolder.ID
-      )
+        this.opportunity,
+        this.currentGate.StageNameId
+      );
     }
     this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
       data: {
         folderList: this.currentFolders,
-        selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.ID : null,
+        selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.DepartmentID : null,
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
@@ -146,21 +146,72 @@ export class ActionsListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success && result.uploaded) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
-        if (this.currentFolder?.containsModels) {
-          const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
-          this.currentFiles = [];
-          for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
-          }
-        } else {
-          this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
-        }
+        await this.updateCurrentFiles();
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
       }
     });
 
     
+  }
+
+  openCommentsDetail(file: NPPFile) {
+    let comments: FileComments[] = [];
+    if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
+      try {
+        comments = JSON.parse(file.ListItemAllFields.Comments);
+      } catch(e) {
+        console.log("Error parsing comments for file "+file.ListItemAllFields.ID);
+      }
+
+      this.dialogInstance = this.matDialog.open(CommentsListComponent, {
+        height: '700px',
+        width: '600px',
+        data: {
+          comments
+        }
+      });
+    }
+  }
+
+  async updateCurrentFiles() {
+    if (this.currentFolder?.containsModels) {
+      const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+      this.currentFiles = [];
+      for (const geofolder of geoFolders) {
+        this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+      }
+    } else {
+      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
+    }
+
+    this.initLastComments();
+  }
+
+  initLastComments() {
+    this.currentFiles.forEach(el => {
+      el.lastComments = this.getLatestComments(el);
+    });
+  }
+
+  getLatestComments(file: NPPFile): FileComments[] {
+    let comments: FileComments[] = [];
+    let numComments = 1;
+    let lastComments = [];
+
+    if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
+      try {
+        comments = JSON.parse(file.ListItemAllFields.Comments);
+      } catch(e) {
+        console.log("Error parsing comments for file "+file.ListItemAllFields.ID);
+      }
+
+      for(let i = (comments.length - 1); i >= 0 && (numComments - ((comments.length - 1 ) - i) > 0); i--) {
+        lastComments.push(comments[i]);
+      }
+    }
+
+    return lastComments;
   }
 
   async sendForApproval(file: NPPFile, departmentId: number) {
@@ -179,13 +230,7 @@ export class ActionsListComponent implements OnInit {
       .subscribe(async (result: any) => {
         if (result.success) {
           // update view
-          if (file.ListItemAllFields?.ApprovalStatus?.Title) {
-            file.ListItemAllFields.ApprovalStatus.Title = 'Submitted';
-            if (result.comments) {
-              file.ListItemAllFields.ModelApprovalComments = result.comments;
-            }
-          }
-
+          this.updateCurrentFiles();
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
@@ -201,17 +246,30 @@ export class ActionsListComponent implements OnInit {
 
   async approveModel(file: NPPFile, departmentId: number) {
     if (!file.ListItemAllFields) return;
-    if (await this.sharepoint.setApprovalStatus(file.ListItemAllFields.ID, "Approved")) {
-      file.ListItemAllFields.ApprovalStatus.Title = 'Approved';
-      this.toastr.success("The model " + file.Name + " has been approved!", "Forecast Model");
-      await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
-        `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
-        `OO-${this.opportunityId}`,
-        `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
-      ]);
-    } else {
-      this.toastr.error("There were a problem approving the forecast model", 'Try again');
-    }
+    if (!this.opportunity) return;
+
+    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+      height: '300px',
+      width: '405px',
+      data: {
+        file: file,
+        entity: this.opportunity,
+        rootFolder: FOLDER_DOCUMENTS,
+        departmentID: this.currentFolder?.DepartmentID
+      }
+    });
+
+    this.dialogInstance.afterClosed()
+      .pipe(take(1))
+      .subscribe(async (result: any) => {
+        if (result.success) {
+          // update view
+          await this.updateCurrentFiles();
+          this.toastr.success("The model has been approved!", "Forecast Model");
+        } else if (result.success === false) {
+          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+        }
+      });
   }
 
   async rejectModel(file: NPPFile, departmentId: number) {
@@ -231,12 +289,7 @@ export class ActionsListComponent implements OnInit {
       .subscribe(async (result: any) => {
         if (result.success) {
           // update view
-          if (file.ListItemAllFields?.ApprovalStatus?.Title) {
-            file.ListItemAllFields.ApprovalStatus.Title = 'In Progress';
-            if (result.comments) {
-              file.ListItemAllFields.ModelApprovalComments = result.comments;
-            }
-          }
+          await this.updateCurrentFiles();
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
             `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
@@ -263,11 +316,7 @@ export class ActionsListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success === true) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
-          const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
-          this.currentFiles = [];
-          for (const geofolder of geoFolders) {
-            this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
-          }
+          await this.updateCurrentFiles();
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
         }
@@ -328,14 +377,14 @@ export class ActionsListComponent implements OnInit {
 
   showFolders() {
     this.currentSection = 'documents';
-    if (this.currentFolders.length > 0) this.setFolder(this.currentFolders[0].ID);
-    else this.setFolder(null)
+    if (this.currentFolders.length > 0) this.setFolder(this.currentFolders[0].DepartmentID);
+    else this.setFolder(undefined);
   }
 
   showModels() {
     this.setSection('documents');
     let modelsFolder = this.currentFolders.find(el => el.containsModels === true);
-    if (modelsFolder) this.setFolder(modelsFolder.ID);
+    if (modelsFolder) this.setFolder(modelsFolder.DepartmentID);
   }
 
   setStatus(actions: Action[]) {
@@ -563,25 +612,18 @@ export class ActionsListComponent implements OnInit {
       this.currentFiles = [];
     } else {
       this.currentFolders = this.currentGate.folders;
-      if (this.currentFolders.length) this.setFolder(this.currentFolders[0].ID);
+      if (this.currentFolders.length) this.setFolder(this.currentFolders[0].DepartmentID);
     }
   }
 
-  async setFolder(folderId: number | null) {
+  async setFolder(folderId: number | undefined) {
     this.currentFiles = [];
-    if (folderId) {
+    if (folderId || folderId === 0) {
       this.loading = true;
-      this.currentFolder = this.currentFolders.find(el => el.ID === folderId);
+      this.currentFolder = this.currentFolders.find(el => el.DepartmentID === folderId);
       this.currentFolderUri = `${this.opportunity?.BusinessUnitId}/${this.opportunityId}/${this.currentGate?.StageNameId}/`+folderId;
-      if (this.currentFolder?.containsModels) {
-        const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
-        this.currentFiles = [];
-        for (const geofolder of geoFolders) {
-          this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name + '/0', true));
-        }
-      } else {
-        this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
-      }
+      
+      await this.updateCurrentFiles();
   
       this.displayingModels = false;
       if (this.currentFolder) {
@@ -714,6 +756,7 @@ export class ActionsListComponent implements OnInit {
         if (result.success) {
           fileInfo.Name = result.filename;
           this.toastr.success(`The file has been renamed`, "File Renamed");
+          await this.updateCurrentFiles();
         } else {
           this.toastr.error("Sorry, there was a problem renaming the file");
         }
