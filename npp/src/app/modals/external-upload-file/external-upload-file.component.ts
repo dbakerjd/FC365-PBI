@@ -81,7 +81,7 @@ export class ExternalUploadFileComponent implements OnInit {
         CountryId: this.model.country,
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
-        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',createdAt":"'+new Date().toISOString()+'"}]' : '[]',
+        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
         IndicationId: this.model.IndicationId
       });

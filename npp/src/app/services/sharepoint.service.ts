@@ -1384,6 +1384,12 @@ export class SharepointService {
     }
     return files;
   }
+
+  async getEntityFileFromURL(url: string)  {
+    return await this.query(
+      `GetFileByServerRelativeUrl('${url}')/listItemAllFields`
+    ).toPromise();
+  }
   
 
   async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
@@ -2930,13 +2936,14 @@ export class SharepointService {
 
   async copyFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<any> {
     const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
-    let destinationUrl = `copyTo('${destinationFolder + this.clearFileName(newFileName)}')`;
+    let path = destinationFolder + this.clearFileName(newFileName);
+    let destinationUrl = `copyTo('${path}')`;
     try {
       const r = await this.http.post(
         this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
         null
       ).toPromise();
-      return r;
+      return path;
     }
     catch (e) {
       return false;
@@ -2998,6 +3005,19 @@ export class SharepointService {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(entity, file);
         res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
+
+        if (res) {
+          await this.http.post(
+            this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${res}')/ListItemAllFields`,
+            {ForecastId: file.ListItemAllFields.ID},
+            {
+              headers: new HttpHeaders({
+                'If-Match': '*',
+                'X-HTTP-Method': "MERGE"
+              }),
+            }
+          ).toPromise();
+        }
         return res;
       };
       
