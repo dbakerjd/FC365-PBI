@@ -1145,8 +1145,13 @@ export class SharepointService {
     }
   }
 
-  async deleteFile(fileUri: string): Promise<boolean> {
+  async deleteFile(fileUri: string, checkCSV: boolean = true): Promise<boolean> {
     try {
+      //First check if it has related CSV files to remove
+      if(checkCSV) {
+        await this.deleteRelatedCSV(fileUri);
+      }
+      //then remove
       await this.http.post(
         this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')`,
         null,
@@ -2436,140 +2441,7 @@ export class SharepointService {
       GEOGRAPHIES_LIST, filter,
     );
   }
-/*
-  async updateBrandGeographies(brand: Brand, newGeographies: string[]) {
-    let brandId = brand.ID;
-    let allGeo: EntityGeography[] = await this.getBrandGeographies(brandId, true);
 
-    let neoGeo = newGeographies.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      let id = arrId[1];
-      let geo = allGeo.find(el => {
-        if (kindOfGeo == 'G') {
-          return el.GeographyId == parseInt(id);
-        } else {
-          return el.CountryId == parseInt(id);
-        }
-      });
-
-      return !geo;
-    });
-
-    let neoCountry = neoGeo.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      return kindOfGeo == 'C';
-    }).map(el => {
-      let arrId = el.split("-");
-      return parseInt(arrId[1]);
-    });
-
-    let neoGeography = neoGeo.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      return kindOfGeo == 'G';
-    }).map(el => {
-      let arrId = el.split("-");
-      return parseInt(arrId[1]);
-    })
-
-    let restoreGeo: EntityGeography[] = [];
-    newGeographies.forEach(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      let id = arrId[1];
-      let geo = allGeo.find(el => {
-        if (kindOfGeo == 'G') {
-          return el.GeographyId == parseInt(id);
-        } else {
-          return el.CountryId == parseInt(id);
-        }
-      });
-
-      if (geo && geo.Removed == true) {
-        restoreGeo.push(geo);
-      }
-    });
-
-    let removeGeo = allGeo.filter(el => {
-      let isCountry = !!el.CountryId;
-      let geo = newGeographies.find(g => {
-        if (isCountry) {
-          return g == 'C-' + el.CountryId;
-        } else {
-          return g == 'G-' + el.GeographyId;
-        }
-      });
-
-      return !geo && el.Removed != true;
-    });
-
-    await this.deleteBrandGeographies(removeGeo);
-    await this.restoreBrandGeographies(restoreGeo);
-    let newGeos = await this.createBrandGeographies(brandId, neoGeography, neoCountry);
-
-    let BOGroup = await this.getGroup(`BO-${brandId}`);
-    let BUGroup = await this.getGroup(`BU-${brandId}`);
-    if (!BOGroup || !BUGroup) throw new Error("Error obtaining user groups.");
-
-    let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'BO', data: BOGroup });
-
-    let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-
-    for (const oppGeo of newGeos) {
-      await this.setPermissions(permissions, groups, oppGeo.Id);
-    }
-
-    let folderNames = [FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP];
-    
-    let folders: SystemFolder[] = [];
-    for (const mf of folderNames) {
-      folders = await this.createBrandGeographyFolders(brand, newGeos, mf);
-    }
-  }
-
-  async deleteBrandGeographies(removeGeo: EntityGeography[]) {
-    for (let i = 0; i < removeGeo.length; i++) {
-      await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
-        Removed: true
-      });
-    }
-  }
-
-  async restoreBrandGeographies(restoreGeo: EntityGeography[]) {
-    for (let i = 0; i < restoreGeo.length; i++) {
-      await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
-        Removed: false
-      });
-    }
-  }
-
-  async createBrandGeographies(brandId: number, geographies: number[], countries: number[]) {
-    const geographiesList = await this.getGeographiesList();
-    const countriesList = await this.getCountriesList();
-    let res = [];
-    for (const g of geographies) {
-      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
-        Title: geographiesList.find(el => el.value == g)?.label,
-        BrandId: brandId,
-        Master_x0020_GeographyId: g
-      });
-      res.push(newGeo);
-    }
-    for (const c of countries) {
-      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
-        Title: countriesList.find(el => el.value == c)?.label,
-        BrandId: brandId,
-        CountryId: c
-      });
-      res.push(newGeo);
-    }
-
-    return res;
-  }
-*/
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
     const oppBeforeChanges: Brand = await this.getOneItemById(brandId, ENTITIES_LIST);
     const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
@@ -2580,52 +2452,6 @@ export class SharepointService {
 
     return success;
   }
-/*
-  async readBrandFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
-    let files: NPPFile[] = []
-    const result = await this.query(
-      `GetFolderByServerRelativeUrl('${folder}')/Files`,
-      '$expand=ListItemAllFields',
-    ).toPromise();
-
-    if (result.value) {
-      files = result.value;
-    }
-
-    if (expandProperties && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        let fileItems = files[i];
-        if (fileItems) {
-          let info = await this.getBrandFileInfo(folder, fileItems);
-          fileItems = Object.assign(fileItems.ListItemAllFields, info);
-        }
-      }
-    }
-    return files;
-  }
-  
-  async getBrandFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
-    let arrFolder = folder.split("/");
-    let rootFolder = arrFolder[0];
-    let select = '';
-    switch(rootFolder) {
-      case FOLDER_DOCUMENTS:
-        select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
-        break;
-      case FOLDER_ARCHIVED:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
-        break;
-      default:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
-        break;
-    }
-    
-    return await this.query(
-      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
-      select,
-      'all'
-    ).toPromise();
-  }*/
   
   async getEntityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
     let arrFolder = folder.split("/");
@@ -2953,6 +2779,15 @@ export class SharepointService {
     }
 
     return files;
+  }
+
+  async deleteRelatedCSV(url: string) {
+    let metadata: NPPFileMetadata = (await this.http.get(
+    this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${url}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
+    let csvFiles = await this.getModelCSVFiles({ ServerRelativeUrl: url, ListItemAllFields: metadata } as NPPFile);
+    for(let i = 0; i < csvFiles.length; i++) {
+      this.deleteFile(csvFiles[i].ServerRelativeUrl, false);
+    } 
   }
 
   async copyCSV(file: NPPFile, path: string) {
