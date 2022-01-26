@@ -51,27 +51,33 @@ export class UploadFileComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
+
+    const user = await this.sharepoint.getCurrentUserInfo();
+    let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
+
     let fileData = {
       StageNameId: this.model.StageNameId,
       EntityNameId: this.model.EntityNameId,
+      Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
     };
 
     this.uploading = this.dialogRef.disableClose = true;
 
     let fileFolder = '/' + this.businessUnitId + '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
     
-    if (this.data.folderList.find((f: NPPFolder) => f.ID == this.model.category).containsModels) {
+    if (this.data.folderList.find((f: NPPFolder) => f.DepartmentID == this.model.category).containsModels) {
       // add geography to folder route
       fileFolder += '/' + this.model.geography + '/0';
 
       // read opp geography to get master ID of country / geography
       const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
+      const user = await this.sharepoint.getCurrentUserInfo();
+      let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
 
       Object.assign(fileData, {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
-        ModelApprovalComments: this.model.description,
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
@@ -108,7 +114,7 @@ export class UploadFileComponent implements OnInit {
       fileFolder = fileFolder + '/0/0';
       // regular file
       Object.assign(fileData, {
-        ModelApprovalComments: this.model.description
+        Comments: this.model.description
       });
       const cleanFilename = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
       if (await this.sharepoint.existsFile(cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
