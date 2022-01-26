@@ -41,7 +41,7 @@
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.ID === gate.ID">
-                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder.ID === folder.ID}" (click)="setFolder(folder.ID)">
+                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder && (currentFolder.DepartmentID === folder.DepartmentID)}" (click)="setFolder(folder.DepartmentID)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
@@ -105,9 +105,9 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-comments">
-                                <p *ngIf="file.ListItemAllFields.ModelApprovalComments">
+                                <p *ngIf="file.ListItemAllFields.Comments">
                                     <label>Description: </label>
-                                    {{file.ListItemAllFields.ModelApprovalComments}}
+                                    {{file.ListItemAllFields.Comments}}
                                 </p>
                             </div>
                             <div class="documents-files-item-icons">
@@ -165,9 +165,12 @@
                                 <p *ngIf="file.Description">
                                     <label>Description: </label>{{file.Description}}
                                 </p>
-                                <p *ngIf="file.ListItemAllFields?.ModelApprovalComments">
-                                    <label>Comments: </label>{{file.ListItemAllFields?.ModelApprovalComments}}
-                                </p>
+                                <ng-container *ngIf="file.ListItemAllFields?.Comments">
+                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" title="Open Comments Detail">
+                                        <p><label>{{comment.name}} at </label> {{ comment.createdAt | date : 'Y-M-d'}}</p>
+                                        <p class="comment-text">{{comment.text}}</p>
+                                    </div>
+                                </ng-container>
                             </div>
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>

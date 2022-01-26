@@ -19,6 +19,7 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
+import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
@@ -66,7 +67,8 @@ export class FilesListComponent implements OnInit {
     private toastr: ToastrService, 
     private teams: TeamsService,
     public licensing: LicensingService,
-    public disambiguator: InlineNppDisambiguationService) { }
+    public disambiguator: InlineNppDisambiguationService,
+    public notifications: NotificationsService) { }
 
   ngOnInit(): void {
     if(this.teams.initialized) this.init();
@@ -259,6 +261,10 @@ export class FilesListComponent implements OnInit {
           // update view
           this.updateCurrentFiles();
           this.toastr.success("The model has been sent for approval", "Forecast Model");
+          await this.notifications.modelSubmittedNotification(file.Name, this.entityId, [
+            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.entityId}`
+          ]);
         } else if (result.success === false) {
           this.toastr.error("The model couldn't be sent for approval");
         }
@@ -291,6 +297,7 @@ export class FilesListComponent implements OnInit {
         file: file,
         entity: this.entity,
         rootFolder: this.getCurrentRootFolder(),
+        departmentID: this.currentDepartmentId
       }
     });
 
@@ -302,7 +309,7 @@ export class FilesListComponent implements OnInit {
           this.updateCurrentFiles();
           this.toastr.success("The model has been approved!", "Forecast Model");
         } else if (result.success === false) {
-          this.toastr.error("There were a problem approving the forecast model", 'Try again');
+          this.toastr.error("There was a problem approving the forecast model", 'Try again');
         }
       });
   }
@@ -585,7 +592,8 @@ export class FilesListComponent implements OnInit {
               Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
               ID: success.ForecastCycleId
             },
-            Year: success.Year
+            Year: success.Year,
+            ForecastCycleDescriptor: success.ForecastCycleDescriptor
           });
           this.updateCurrentFiles();
         } else if (success === false) {
@@ -623,8 +631,12 @@ export class FilesListComponent implements OnInit {
       .subscribe(async (result: any) => {
         if (result.success) {
           // update view
-          this.updateCurrentFiles();
+          await this.updateCurrentFiles();
           this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          await this.notifications.modelRejectedNotification(file.Name, this.entityId, [
+            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.entityId}`
+          ]);
         } else if (result.success === false) {
           this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
         }
@@ -639,7 +651,7 @@ export class FilesListComponent implements OnInit {
   
   getLatestComments(file: NPPFile): FileComments[] {
     let comments: FileComments[] = [];
-    let numComments = 2;
+    let numComments = 1;
     let lastComments = [];
 
     if (file.ListItemAllFields && file.ListItemAllFields.Comments) {
@@ -672,11 +684,6 @@ export class FilesListComponent implements OnInit {
         data: {
           comments
         }
-      });
-
-      this.dialogInstance.afterClosed()
-      .subscribe(() => {
-        this.updateCurrentFiles();
       });
     }
   }
