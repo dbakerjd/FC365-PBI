@@ -37,9 +37,9 @@
                 <p><label>Therapy Area: </label> {{item.TherapyAreaAsString}}</p>
             </div>
             <div class="opportunity-actions">
-                <div class="opportunity-icon-edit" title="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId" (click)="editOpportunity(item)"></div>
-                <div class="opportunity-icon-archive" title="Archive Opportunity" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="archiveOpportunity(item)"></div>
-                <div class="opportunity-icon-restore" title="Restore Opportunity" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="restoreOpportunity(item)"></div>
+                <div class="opportunity-icon-edit" matTooltip="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId" (click)="editOpportunity(item)"></div>
+                <div class="opportunity-icon-archive" matTooltip="Archive Opportunity" *ngIf="item.OpportunityStatus != 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="archiveOpportunity(item)"></div>
+                <div class="opportunity-icon-restore" matTooltip="Restore Opportunity" *ngIf="item.OpportunityStatus == 'Archive' && (currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId)" (click)="restoreOpportunity(item)"></div>
             </div>
         </div>
         <h3 *ngIf="result.length === 0" style="text-align: center;">No Results Found</h3>  

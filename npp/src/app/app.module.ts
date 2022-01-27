@@ -66,6 +66,7 @@ import { CreateBrandComponent } from './modals/create-brand/create-brand.compone
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BreadcrumbModule } from 'xng-breadcrumb';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @NgModule({
   imports: [
@@ -81,6 +82,7 @@ import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.compo
     FormlyBootstrapModule,
     MatButtonModule,
     MatDialogModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     PowerBIEmbedModule,  
     BreadcrumbModule,

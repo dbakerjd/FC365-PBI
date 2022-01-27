@@ -62,21 +62,21 @@
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
             <div class="gate-info-icons">
-                <div class="gate-info-icons-upload" title="Upload file" (click)="openUploadDialog()"></div>
-                <div class="gate-info-icons-actions" title="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
+                <div class="gate-info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
+                <div class="gate-info-icons-actions" matTooltip="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-documents" title="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
+                <div class="gate-info-icons-documents" matTooltip="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-models" title="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
+                <div class="gate-info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-stage-settings" title="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-department-users" title="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-stage-settings" matTooltip="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="gate-info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 
-                <div class="gate-info-icons-refresh-bi" title="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
-                <div class="gate-info-icons-power-bi" title="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
+                <div class="gate-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="gate-info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
@@ -111,11 +111,11 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-icons">
-                                <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
-                                <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
-                                <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
-                                <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-file" matTooltip="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
+                                <div class="documents-files-item-icons-edit" matTooltip="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-remove" matTooltip="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
 
@@ -157,8 +157,8 @@
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" title="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
-                                    <div class="model-create-scenario-icon" title="Create Scenario" (click)="createScenario(file)"></div>
+                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
+                                    <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">
@@ -173,11 +173,11 @@
                                 </ng-container>
                             </div>
                             <div class="documents-files-item-icons">
-                                <div class="documents-files-item-icons-file" title="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
-                                <div class="documents-files-item-icons-download" title="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" title="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
-                                <div class="documents-files-item-icons-edit" title="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
-                                <div class="documents-files-item-icons-remove" title="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-file" matTooltip="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.DepartmentID)"></div>
+                                <div class="documents-files-item-icons-edit" matTooltip="Edit file name" (click)="editFile(file.ListItemAllFields.ID)"></div>
+                                <div class="documents-files-item-icons-remove" matTooltip="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </ng-container>
                     </div>
