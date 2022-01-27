@@ -115,7 +115,7 @@
 
 .gates-and-actions-wrapper {
     background-color: #fff;
-    margin-top: 5rem;
+    margin-top: 2rem;
     display: grid;
     grid-template-columns: 1fr 8fr;
     grid-auto-rows: 1fr;
@@ -216,10 +216,6 @@
 
             &>div {
                 padding-right: 1%;
-            }
-
-            label {
-                color: #98989B;
             }
 
             &:nth-child(odd) {
@@ -358,49 +354,52 @@
                 align-items: center;
 
                 &>div {
-                    width: 1.5rem;
+                    width: 1.3rem;
                     height: 100%;
                     cursor: pointer;
                     float: right;
-                    margin-right: 0.6rem;
+                    margin-right: 1rem;
+                    background-size: 1.3rem;
+                    background-repeat: no-repeat;
+                    background-position: center;
                 }
                 &>div:hover {
                     opacity: 0.6;
                 }
                 .gate-info-icons-upload {
-                    background: url("/assets/gate-icons/upload.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/upload.svg");
                 }
                 .gate-info-icons-actions {
                     min-width: 16px !important;
-                    background: url("/assets/gate-icons/tasks-list.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/tasks-list.svg");
                     &:hover .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-documents {
-                    background: url("/assets/gate-icons/docs.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/docs.svg");
 
                     &:has(.gate-section-selected) .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-models {
-                    background: url("/assets/gate-icons/models.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/models.svg");
                     &:hover .gate-info-icons-selected-section {
                         display: block;
                     }
                 }
                 .gate-info-icons-refresh-bi {
-                    background: url("/assets/gate-icons/powerbi.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/powerbi.svg");
                 }
                 .gate-info-icons-power-bi {
-                    background: url("/assets/PBI/powerbi.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/analytics.svg");
                 }
                 .gate-info-icons-stage-settings {
-                    background: url("/assets/gate-icons/settings.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/settings.svg");
                 }
                 .gate-info-icons-department-users {
-                    background: url("/assets/gate-icons/users-access.svg") no-repeat center;
+                    background-image: url("/assets/gate-icons/users-access.svg");
                     padding-top: 3px;
                 }
 
@@ -440,9 +439,8 @@
                 flex: 1;
                 font-size: 0.9rem;
                 font-weight: 700;
-                label {
-                    color: #98989B;
-                }
+                color: #98989B;
+                
             }
 
             .action-item-due {
@@ -499,7 +497,7 @@
                         background-color: #F26211;
                         position: relative;
                         .action-item-status-icon {
-                            background: url('/assets//gate-icons/late.svg') no-repeat;
+                            background: url('/assets/gate-icons/late.svg') no-repeat;
                         }
                     }
                     
@@ -507,7 +505,7 @@
                         background-color: #d2d2d2;
                         position: relative;
                         .action-item-status-icon {
-                            background: url('/assets/Pending.svg') no-repeat;
+                            background: url('/assets/gate-icons/filled-clock.svg') no-repeat;
                         }
                     }
                 }

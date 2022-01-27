@@ -56,7 +56,7 @@ export class DashboardComponent implements OnInit {
   
     let powerBiItem = {
       src: 'assets/dashboard/analytics.svg',
-      text: 'Analytics Report',
+      text: 'Analytics Reports',
       description: 'Explore your forecast outputs with powerful analytics and visual reports',
       route: ['power-bi']
     };

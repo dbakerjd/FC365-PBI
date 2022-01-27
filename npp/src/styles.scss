@@ -15,7 +15,7 @@ input, select, textarea {
     font-size: 0.9rem;
     opacity: 1;
     color: #000;
-    width: calc(100% - 1.2rem);
+    width: auto;
     height: auto;
     line-height: 1.5rem;
 
@@ -23,6 +23,10 @@ input, select, textarea {
     //     color: #000;
     //     font-weight: 700;
     // }
+}
+
+input, textarea {
+    width: calc(100% - 1.2rem);
 }
 
 input, select {
@@ -83,7 +87,7 @@ p {
 }
 
 label {
-    color: rgba(0, 0, 0, 0.5);
+    color: #000;
 }
 
 app-opportunity-list {
@@ -101,9 +105,9 @@ app-opportunity-list {
         select, input {
             max-width: 100%;
             padding: 4px 4px 3px 7.5px;
-            opacity: 0.4;
             border-radius: 5px;
-            border: solid 1px #000000;
+            border: solid 1px #aaa;
+            color: #666;
         }
 
         &:nth-child(1) {
