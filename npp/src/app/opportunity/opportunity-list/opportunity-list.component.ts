@@ -202,6 +202,10 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {
+    let opType = this.opportunityTypes.find(el => el.Title == opportunity.OpportunityType?.Title);
+    if(opType?.isInternal) {
+      return -1; // progress no applies
+    }
     let actions = await this.sharepoint.getActions(opportunity.ID);
     if (actions.length) {
       let gates: {'total': number; 'completed': number}[] = [];
