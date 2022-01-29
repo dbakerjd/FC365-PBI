@@ -275,7 +275,7 @@ export class FilesListComponent implements OnInit {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
       let folders = [...this.documentFolders]
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
-        height: '400px',
+        height: '500px',
         width: '405px',
         data: {
           entity: this.entity,
@@ -678,8 +678,8 @@ export class FilesListComponent implements OnInit {
       }
 
       this.dialogInstance = this.matDialog.open(CommentsListComponent, {
-        height: '700px',
-        width: '600px',
+        height: '75vh',
+        width: '500px',
         data: {
           comments
         }

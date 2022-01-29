@@ -1,5 +1,42 @@
-.comments-wrapper {
-    height: 550px;
+
+.dialog-content-wrapper {
+    height: calc(75vh - 14rem);
+    padding: 0 2rem;
+    position: relative;
     overflow-y: auto;
-    overflow-x: none;
+    width: 88%;
+    background-color: #fff;
+
+    div.comment {
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 1rem;
+        color: #98989B;
+
+        &:last-child {
+            border: none;
+        }
+
+        span.date {
+            color: #000;
+        }
+
+        p {
+            font-weight: 700;
+            padding-top: 0.5rem;
+        }
+
+        label {
+            color: #000;
+            font-weight: 700;
+        }
+    }
 }
+
+.dialog-footer {
+    .dialog-cancel-button {
+        max-width: 200px;
+        margin: 0 auto;
+        float: none;
+    }
+}
+

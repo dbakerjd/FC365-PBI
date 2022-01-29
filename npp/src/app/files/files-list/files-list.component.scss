@@ -1,17 +1,14 @@
 .folder-and-actions-wrapper {
 
-    .files-wrapper {
-        
-        .comment-text {
-            width: 90%;
-            height: 3rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            margin-bottom: 0.6rem;
-            cursor: pointer;
+    .folder-item {
+        &.selected-item {
+            text-align: left;
+            span {
+                margin-left: 2rem;
+            }
         }
+    }
+    .files-wrapper {
 
         .documents-folders {
             .document-folder-item {

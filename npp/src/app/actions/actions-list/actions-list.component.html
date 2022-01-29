@@ -34,7 +34,7 @@
 <div class="gates-and-actions-wrapper opportunity-contents">
     <div class="gates-wrapper left-selection">
         <div class="gates-item-wrapper" *ngFor="let gate of gates">
-            <div class="gates-item left-top-selection"  [ngClass]="{'selected-item': currentGate && currentGate.ID === gate.ID, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.ID)">
+            <div class="gates-item left-top-selection"  [ngClass]="{'selected-item': currentGate && currentGate.ID === gate.ID, 'expanded-item': currentSection == 'documents'}" (click)="setGate(gate.ID)">
                 <span>{{gate.Title}}</span>
                 <svg>
                     <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
@@ -64,13 +64,13 @@
             <div class="gate-info-icons opportunity-top-actions">
                 <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
                 <div class="info-icons-actions" matTooltip="Task List" (click)="setSection('actions')" [ngClass]="{ 'top-action-selected': currentSection == 'actions' }">
-                    <div class="gate-info-icons-selected-section"></div>
+                    <div class="info-icons-selected-section"></div>
                 </div>
                 <div class="info-icons-documents" matTooltip="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'top-action-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
-                    <div class="gate-info-icons-selected-section"></div>
+                    <div class="info-icons-selected-section"></div>
                 </div>
                 <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'documents' && currentFolder?.containsModels}">
-                    <div class="gate-info-icons-selected-section"></div>
+                    <div class="info-icons-selected-section"></div>
                 </div>
                 <div class="info-icons-settings" matTooltip="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
@@ -90,7 +90,8 @@
                     <h3 *ngIf="currentFiles.length < 1 && !currentFolder && !loading" style="text-align: center;">
                         There are no stage folders or you don't have access to them 
                     </h3>
-                    <div class="documents-files-item" *ngFor="let file of currentFiles">
+                    <ng-container *ngFor="let file of currentFiles">
+                    <div class="documents-files-item" [ngClass]="{'model-file-item': displayingModels }">
                         <!-- NORMAL DOCUMENTS -->
                         <ng-container *ngIf="!displayingModels">
                             <div class="documents-files-item-name">
@@ -152,8 +153,8 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" title="Approve the Forecast Model">Approve</span> / 
-                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" title="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> 
+                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
@@ -166,7 +167,7 @@
                                     <label>Description: </label>{{file.Description}}
                                 </p>
                                 <ng-container *ngIf="file.ListItemAllFields?.Comments">
-                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" title="Open Comments Detail">
+                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" matTooltip="Open Comments Detail" class="comments-action">
                                         <p><label>{{comment.name}} at </label> {{ comment.createdAt | date : 'Y-M-d'}}</p>
                                         <p class="comment-text">{{comment.text}}</p>
                                     </div>
@@ -181,6 +182,7 @@
                             </div>
                         </ng-container>
                     </div>
+                    </ng-container>
                 </div>
             </div>
             <!-- ACTIONS LIST -->

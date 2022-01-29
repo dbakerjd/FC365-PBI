@@ -128,7 +128,7 @@
                 </div>
                 <div class="documents-files" *ngIf="currentStatus != 'Archived' || selectedCycle">
                     <ng-container *ngIf="currentFiles && currentFiles.length">
-                        <div class="documents-files-item" *ngFor="let file of currentFiles">
+                        <div class="documents-files-item model-file-item" *ngFor="let file of currentFiles">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
                                 <p>
@@ -180,7 +180,7 @@
                                     <label>Description: </label>{{file.Description}}
                                 </p>
                                 <ng-container *ngIf="file.ListItemAllFields?.Comments">
-                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" title="Open Comments Detail">
+                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" matTooltip="Open Comments Detail" class="comments-action">
                                         <p><label>{{comment.name}} at </label> {{ comment.createdAt | date : 'Y-M-d'}}</p>
                                         <p class="comment-text">{{comment.text}}</p>
                                     </div>

@@ -163,8 +163,8 @@ export class OpportunityListComponent implements OnInit {
 
   async editOpportunity(opp: Opportunity) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '700px',
-      width: '405px',
+      height: '75vh',
+      width: '500px',
       data: {
         opportunity: opp
       },

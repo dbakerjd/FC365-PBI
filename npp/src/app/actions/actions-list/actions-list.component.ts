@@ -165,8 +165,8 @@ export class ActionsListComponent implements OnInit {
       }
 
       this.dialogInstance = this.matDialog.open(CommentsListComponent, {
-        height: '700px',
-        width: '600px',
+        height: '75vh',
+        width: '500px',
         data: {
           comments
         }
@@ -352,7 +352,7 @@ export class ActionsListComponent implements OnInit {
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
-        height: '400px',
+        height: '500px',
         width: '405px',
         data: {
           folderList: this.currentFolders,
@@ -525,8 +525,8 @@ export class ActionsListComponent implements OnInit {
 
                   // create new
                   this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-                    height: '700px',
-                    width: '405px',
+                    height: '75vh',
+                    width: '500px',
                     data: {
                       opportunity: { ...this.opportunity },
                       createFrom: true,
