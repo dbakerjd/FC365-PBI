@@ -58,6 +58,7 @@ export class FilesListComponent implements OnInit {
   updatingFiles = false;
   updateFilesTimeout: any;
   selectedCycle: any = false;
+  loading = false;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -82,6 +83,7 @@ export class FilesListComponent implements OnInit {
   }
 
   init() {
+    this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.sharepoint.getCurrentUserInfo();
       this.masterCycles = await this.sharepoint.getForecastCycles();
@@ -147,10 +149,11 @@ export class FilesListComponent implements OnInit {
     this.currentStatus = 'none';
     this.selectedFolder = folder;
     this.selectedDepartmentId = folder.DepartmentID ? folder.DepartmentID : 0;
-    this.updateCurrentFiles();
+    await this.updateCurrentFiles();
   }
 
   async updateCurrentFiles() {
+    this.loading = true;
     try {
       if(!this.updatingFiles) {
         this.updatingFiles = true;
@@ -187,11 +190,11 @@ export class FilesListComponent implements OnInit {
         }, 500);
         
       }
+      this.loading = false;
     } catch(e: any) {
       this.updatingFiles = false;
+      this.loading = false;
     }
-    
-    
   }
 
   getCurrentFolder() {

@@ -394,6 +394,13 @@ label {
             font-size: 0.9rem;
             padding: 0 2rem 0 2.5rem;
 
+            &.model-file-item {
+                height: 8rem;
+                .documents-files-item-name {
+                    font-size: 1.1rem;
+                }
+            }
+
             &>div {
                 padding-right: 1%;
             }
@@ -518,13 +525,7 @@ label {
                 }            
             }
         }
-        
-        .model-file-item {
-            height: 8rem;
-            .documents-files-item-name {
-                font-size: 1.1rem;
-            }
-        }
+
 
     }
 }
