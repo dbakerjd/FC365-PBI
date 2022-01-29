@@ -1,5 +1,5 @@
 <app-npp-header [currentSection]="'opportunities'"></app-npp-header>
-<div class="opportunity-info-wrapper" *ngIf="opportunity">
+<div class="opportunity-info-wrapper top-info-wrapper" *ngIf="opportunity">
     <div class="opportunity-name">
         <h2>{{opportunity.Title}}</h2>
         <div>
@@ -19,29 +19,29 @@
         <p><label>Indication: </label> {{opportunity.Indication.Title}}</p> 
     </div>
     <div class="opportunity-owner">
-        <div class="opportunity-owner-pic">
-            <div class="opportunity-owner-pic-background"></div>
+        <div class="owner-pic">
+            <div class="owner-pic-background"></div>
             <img [src]="profilePic" *ngIf="profilePic"/>
         </div>
-        <div class="opportunity-owner-info">
-            <div class="opportunity-owner-info-title"><label>Opportunity Owner</label></div>
-            <div class="opportunity-owner-info-name" *ngIf="opportunity.EntityOwner">
+        <div class="owner-info">
+            <div class="owner-info-title"><label>Opportunity Owner</label></div>
+            <div class="owner-info-name" *ngIf="opportunity.EntityOwner">
                 {{opportunity.EntityOwner.FirstName + ' ' + opportunity.EntityOwner.LastName}}
             </div>
         </div>
     </div>
 </div>
-<div class="gates-and-actions-wrapper">
-    <div class="gates-wrapper">
+<div class="gates-and-actions-wrapper opportunity-contents">
+    <div class="gates-wrapper left-selection">
         <div class="gates-item-wrapper" *ngFor="let gate of gates">
-            <div class="gates-item"  [ngClass]="{'selected-gate': currentGate && currentGate.ID === gate.ID, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.ID)">
+            <div class="gates-item left-top-selection"  [ngClass]="{'selected-item': currentGate && currentGate.ID === gate.ID, 'folders-visible': currentSection == 'documents'}" (click)="setGate(gate.ID)">
                 <span>{{gate.Title}}</span>
-                <svg *ngIf="currentSection == 'documents'">
+                <svg>
                     <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents' && currentGate && currentGate.ID === gate.ID">
-                <div class="folders-item" *ngFor="let folder of gate.folders" [ngClass]="{'selected-folder': currentFolder && (currentFolder.DepartmentID === folder.DepartmentID)}" (click)="setFolder(folder.DepartmentID)">
+                <div class="folders-item left-dd-selection" *ngFor="let folder of gate.folders" [ngClass]="{'selected-status': currentFolder && (currentFolder.DepartmentID === folder.DepartmentID)}" (click)="setFolder(folder.DepartmentID)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
@@ -61,22 +61,22 @@
                 &nbsp;{{currentGateProgress}}%
                 <app-progress-bar [progress]="currentGateProgress"></app-progress-bar>
             </div>
-            <div class="gate-info-icons">
-                <div class="gate-info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
-                <div class="gate-info-icons-actions" matTooltip="Task List" (click)="setSection('actions')" [ngClass]="{ 'gate-section-selected': currentSection == 'actions' }">
+            <div class="gate-info-icons opportunity-top-actions">
+                <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
+                <div class="info-icons-actions" matTooltip="Task List" (click)="setSection('actions')" [ngClass]="{ 'top-action-selected': currentSection == 'actions' }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-documents" matTooltip="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
+                <div class="info-icons-documents" matTooltip="Supporting Docs" (click)="showFolders()" [ngClass]="{ 'top-action-selected': currentSection == 'documents' && !currentFolder?.containsModels }">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'gate-section-selected': currentSection == 'documents' && currentFolder?.containsModels}">
+                <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'documents' && currentFolder?.containsModels}">
                     <div class="gate-info-icons-selected-section"></div>
                 </div>
-                <div class="gate-info-icons-stage-settings" matTooltip="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
-                <div class="gate-info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="info-icons-settings" matTooltip="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
+                <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 
-                <div class="gate-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
-                <div class="gate-info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
+                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi"  (click)="refreshPowerBi()"></div>
+                <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
@@ -212,11 +212,9 @@
             <div class="actions-list-button" *ngIf="currentSection == 'actions' && currentGateProgress == 100 && currentGate?.ID == lastStageId && (isOwner || currentUser?.IsSiteAdmin)">
                 <div class="action-item-next-button" (click)="goNextStage()" *ngIf="nextStage">
                     Go to Next Stage
-                    <div class="action-item-next-button-icon"></div>
                 </div>
                 <div class="action-item-next-button" (click)="completeOpportunity()" *ngIf="!nextStage && opportunity.OpportunityStatus == 'Active'">
                     Complete Opportunity
-                    <div class="action-item-next-button-icon"></div>
                 </div>
             </div>
         </div>
