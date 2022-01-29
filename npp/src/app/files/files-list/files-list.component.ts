@@ -595,7 +595,8 @@ export class FilesListComponent implements OnInit {
               Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
               ID: success.ForecastCycleId
             },
-            Year: success.Year
+            Year: success.Year,
+            ForecastCycleDescriptor: success.ForecastCycleDescriptor
           });
           this.updateCurrentFiles();
         } else if (success === false) {

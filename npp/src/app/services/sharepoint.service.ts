@@ -353,6 +353,10 @@ export const FOLDER_APPROVED = 'Approved Models';
 export const FOLDER_ARCHIVED = 'Archived Models';
 export const FOLDER_WIP = 'Work in Progress';
 export const FOLDER_DOCUMENTS = FILES_FOLDER;
+export const FOLDER_POWER_BI_DOCUMENTS = "Power BI Current Opportunity Library";
+export const FOLDER_POWER_BI_WIP = "Power BI Work In Progress";
+export const FOLDER_POWER_BI_APPROVED = "Power BI Approved Models";
+export const FOLDER_POWER_BI_ARCHIVED = "Power BI Archived Models";
 export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
 export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
 export const MASTER_APPS = "lists/getbytitle('Master APPs')";
@@ -647,7 +651,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -1141,8 +1145,13 @@ export class SharepointService {
     }
   }
 
-  async deleteFile(fileUri: string): Promise<boolean> {
+  async deleteFile(fileUri: string, checkCSV: boolean = true): Promise<boolean> {
     try {
+      //First check if it has related CSV files to remove
+      if(checkCSV) {
+        await this.deleteRelatedCSV(fileUri);
+      }
+      //then remove
       await this.http.post(
         this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${fileUri}')`,
         null,
@@ -1383,6 +1392,12 @@ export class SharepointService {
       }
     }
     return files;
+  }
+
+  async getEntityFileFromURL(url: string)  {
+    return await this.query(
+      `GetFileByServerRelativeUrl('${url}')/listItemAllFields`
+    ).toPromise();
   }
   
 
@@ -1954,8 +1969,11 @@ export class SharepointService {
   }
 
   async updateEntityGeographies(entity: Opportunity | Brand, newGeographies: string[]) {
+    const owner = await this.getUserInfo(entity.EntityOwnerId);
+    if (!owner.LoginName) throw new Error("Could not determine entity's owner");
+    
     let allGeo: EntityGeography[] = await this.getEntityGeographies(entity.ID, true);
-
+    
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
       let kindOfGeo = arrId[0];
@@ -2064,16 +2082,26 @@ export class SharepointService {
       } 
     } else {
       const folders = await this.createInternalFolders(entity, newGeos);
-
+      
       // add groups to folders
       permissions = await this.getGroupPermissions(FILES_FOLDER);
       for (const f of folders.rw) {
+        let folderGroups = [...groups]; // copy default groups
         if (f.DepartmentID) {
-          let folderGroups = [...groups]; // copy default groups
           let DUGroup = await this.createGroup(`DU-${entity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
           if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+        } else {
+          if (f.GeographyID) {
+            let DUGroup = await this.createGroup(
+              `DU-${entity.ID}-0-${f.GeographyID}`, 
+              'Geography ID ' + f.GeographyID);
+            if (DUGroup) {
+              folderGroups.push( { type: 'DU', data: DUGroup} );
+              await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+            }
+          } 
         }
+        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
 
       permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
@@ -2084,13 +2112,14 @@ export class SharepointService {
           GUGroup = await this.createGroup(
             `OU-${entity.ID}-${f.GeographyID}`, 
             'Geography ID ' + f.GeographyID);
-          if (GUGroup) {
+          let DUGroup = await this.createGroup(
+            `DU-${entity.ID}-0-${f.GeographyID}`, 
+            'Geography ID ' + f.GeographyID);
+          if (GUGroup && DUGroup) {
             folderGroups.push( { type: 'GU', data: GUGroup} );
-            const owner = await this.getUserInfo(entity.EntityOwnerId);
-            if(owner && owner.LoginName) {
-              await this.addUserToGroup(owner.LoginName, GUGroup.Id);
-            }
-            
+            folderGroups.push( { type: 'DU', data: DUGroup} );
+            await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+            await this.addUserToGroup(owner.LoginName, DUGroup.Id);
           }
         } 
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
@@ -2412,140 +2441,7 @@ export class SharepointService {
       GEOGRAPHIES_LIST, filter,
     );
   }
-/*
-  async updateBrandGeographies(brand: Brand, newGeographies: string[]) {
-    let brandId = brand.ID;
-    let allGeo: EntityGeography[] = await this.getBrandGeographies(brandId, true);
 
-    let neoGeo = newGeographies.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      let id = arrId[1];
-      let geo = allGeo.find(el => {
-        if (kindOfGeo == 'G') {
-          return el.GeographyId == parseInt(id);
-        } else {
-          return el.CountryId == parseInt(id);
-        }
-      });
-
-      return !geo;
-    });
-
-    let neoCountry = neoGeo.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      return kindOfGeo == 'C';
-    }).map(el => {
-      let arrId = el.split("-");
-      return parseInt(arrId[1]);
-    });
-
-    let neoGeography = neoGeo.filter(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      return kindOfGeo == 'G';
-    }).map(el => {
-      let arrId = el.split("-");
-      return parseInt(arrId[1]);
-    })
-
-    let restoreGeo: EntityGeography[] = [];
-    newGeographies.forEach(el => {
-      let arrId = el.split("-");
-      let kindOfGeo = arrId[0];
-      let id = arrId[1];
-      let geo = allGeo.find(el => {
-        if (kindOfGeo == 'G') {
-          return el.GeographyId == parseInt(id);
-        } else {
-          return el.CountryId == parseInt(id);
-        }
-      });
-
-      if (geo && geo.Removed == true) {
-        restoreGeo.push(geo);
-      }
-    });
-
-    let removeGeo = allGeo.filter(el => {
-      let isCountry = !!el.CountryId;
-      let geo = newGeographies.find(g => {
-        if (isCountry) {
-          return g == 'C-' + el.CountryId;
-        } else {
-          return g == 'G-' + el.GeographyId;
-        }
-      });
-
-      return !geo && el.Removed != true;
-    });
-
-    await this.deleteBrandGeographies(removeGeo);
-    await this.restoreBrandGeographies(restoreGeo);
-    let newGeos = await this.createBrandGeographies(brandId, neoGeography, neoCountry);
-
-    let BOGroup = await this.getGroup(`BO-${brandId}`);
-    let BUGroup = await this.getGroup(`BU-${brandId}`);
-    if (!BOGroup || !BUGroup) throw new Error("Error obtaining user groups.");
-
-    let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'BO', data: BOGroup });
-
-    let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-
-    for (const oppGeo of newGeos) {
-      await this.setPermissions(permissions, groups, oppGeo.Id);
-    }
-
-    let folderNames = [FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP];
-    
-    let folders: SystemFolder[] = [];
-    for (const mf of folderNames) {
-      folders = await this.createBrandGeographyFolders(brand, newGeos, mf);
-    }
-  }
-
-  async deleteBrandGeographies(removeGeo: EntityGeography[]) {
-    for (let i = 0; i < removeGeo.length; i++) {
-      await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
-        Removed: true
-      });
-    }
-  }
-
-  async restoreBrandGeographies(restoreGeo: EntityGeography[]) {
-    for (let i = 0; i < restoreGeo.length; i++) {
-      await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
-        Removed: false
-      });
-    }
-  }
-
-  async createBrandGeographies(brandId: number, geographies: number[], countries: number[]) {
-    const geographiesList = await this.getGeographiesList();
-    const countriesList = await this.getCountriesList();
-    let res = [];
-    for (const g of geographies) {
-      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
-        Title: geographiesList.find(el => el.value == g)?.label,
-        BrandId: brandId,
-        Master_x0020_GeographyId: g
-      });
-      res.push(newGeo);
-    }
-    for (const c of countries) {
-      let newGeo = await this.createItem(GEOGRAPHIES_LIST, {
-        Title: countriesList.find(el => el.value == c)?.label,
-        BrandId: brandId,
-        CountryId: c
-      });
-      res.push(newGeo);
-    }
-
-    return res;
-  }
-*/
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
     const oppBeforeChanges: Brand = await this.getOneItemById(brandId, ENTITIES_LIST);
     const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
@@ -2556,52 +2452,6 @@ export class SharepointService {
 
     return success;
   }
-/*
-  async readBrandFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
-    let files: NPPFile[] = []
-    const result = await this.query(
-      `GetFolderByServerRelativeUrl('${folder}')/Files`,
-      '$expand=ListItemAllFields',
-    ).toPromise();
-
-    if (result.value) {
-      files = result.value;
-    }
-
-    if (expandProperties && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        let fileItems = files[i];
-        if (fileItems) {
-          let info = await this.getBrandFileInfo(folder, fileItems);
-          fileItems = Object.assign(fileItems.ListItemAllFields, info);
-        }
-      }
-    }
-    return files;
-  }
-  
-  async getBrandFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
-    let arrFolder = folder.split("/");
-    let rootFolder = arrFolder[0];
-    let select = '';
-    switch(rootFolder) {
-      case FOLDER_DOCUMENTS:
-        select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
-        break;
-      case FOLDER_ARCHIVED:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
-        break;
-      default:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
-        break;
-    }
-    
-    return await this.query(
-      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
-      select,
-      'all'
-    ).toPromise();
-  }*/
   
   async getEntityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
     let arrFolder = folder.split("/");
@@ -2701,59 +2551,6 @@ export class SharepointService {
     ); 
   }
 
-  /*
-  async getBrandForecastCycles(brand: Brand) {
-    let filter = `$filter=BrandId eq ${brand.ID}`;
-    
-    return await this.getAllItems(
-      BRAND_FORECAST_CYCLE_LIST, filter,
-    ); 
-  }
-
-  async createForecastCycle(brand: Brand, values: any) {
-    console.log(values);
-    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
-    let archivedBasePath = `${FOLDER_ARCHIVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let approvedBasePath = `${FOLDER_APPROVED}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-    let workInProgressBasePath = `${FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`;
-
-    let cycle = await this.createItem(BRAND_FORECAST_CYCLE_LIST, {
-      BrandId: brand.ID,
-      ForecastCycleTypeId: brand.ForecastCycleId,
-      Year: brand.Year+"",
-      Title: brand.ForecastCycle?.Title + ' ' + brand.Year
-    });
-
-    const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    
-    for (const geo of geographies) {
-      let GUGroup = await this.getGroup(`BU-${brand.ID}-${geo.ID}`);
-      if(GUGroup) {
-        let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
-        const cycleFolder = await this.createFolder(geoFolder);
-        if(cycleFolder) {
-          await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
-          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}`, geoFolder);
-        }else {
-          throw new Error("Could not create Forecast Cycle folder");
-        }
-      } else {
-        throw new Error("Could not get geography group.");
-      }
-    }
-
-    let changes = {
-      ForecastCycleId: values.ForecastCycle,
-      Year: values.Year
-    };
-
-    await this.updateItem(brand.ID, ENTITIES_LIST, changes);
-
-    await this.setAllModelsStatusInFolder(brand, workInProgressBasePath, "In Progress");
-    return changes;
-
-  }*/
-
   async createEntityForecastCycle(entity: Opportunity | Brand, values: any) {
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
     let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
@@ -2795,27 +2592,11 @@ export class SharepointService {
     await this.updateItem(entity.ID, OPPORTUNITIES_LIST, changes);
 
     await this.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
+
     return changes;
 
   }
-/*
-  async setAllModelsStatusInFolder(brand: Brand, folder: string, status: string) {
-    
-    const geographies = await this.getBrandGeographies(brand.ID); // 1 = stage id would be dynamic in the future
-    
-    let arrFolder = folder.split("/");
-    let rootFolder = arrFolder[0];
 
-    for(let i=0; i<geographies.length; i++) {
-      let geo = geographies[i];
-      let files = await this.readBrandFolderFiles(folder+"/"+geo.ID, true);
-      for(let j=0; files && j<files.length; j++) {
-        let model = files[j];
-        await this.setBrandApprovalStatus(rootFolder, model, brand, "In Progress");
-      }
-    }
-    
-  }*/
 
   async setAllEntityModelsStatusInFolder(entity: Opportunity | Brand, folder: string, status: string) {
     
@@ -2835,39 +2616,18 @@ export class SharepointService {
     
   }
 
-  async moveAllFolderFiles(origin: string, dest: string) {
+  async moveAllFolderFiles(origin: string, dest: string, moveCSVs: boolean = true) {
     let files = await this.readEntityFolderFiles(origin);
     for(let i=0;i<files.length; i++){
       let model = files[i];
-      await this.moveFile(model.ServerRelativeUrl, dest);
+      let path = await this.moveFile(model.ServerRelativeUrl, dest);
+      if(moveCSVs) {
+        await this.moveCSV(model, path);
+      }
     }
   }
 
   async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
-
-    /*
-    // set readonly field to false
-
-    const data: any = await this.http.get(
-      this.licensing.getSharepointApiUri() + "lists/getByTitle('" + BRAND_FOLDER_WIP + "')/fields?$filter=Title eq 'Created By'",
-    ).toPromise();
-
-    if (data.value.length < 1) return;
-
-    const fieldId = data.value[0].Id;
-
-    await this.http.post(
-      this.licensing.getSharepointApiUri() + `lists/getByTitle('${BRAND_FOLDER_WIP}')/fields(guid'${fieldId}')`, {
-      // '__metadata': { 'type': 'SP.Field' },
-      'ReadOnlyField': false
-    },
-      {
-        headers: new HttpHeaders({
-          'If-Match': '*',
-          'X-HTTP-Method': "PATCH"
-        })
-      }).toPromise();
-    */
 
     await this.http.post(
       this.licensing.getSharepointApiUri() + `lists/getByTitle('${list}')/items(${elementId})/validateUpdateListItem`,
@@ -2903,7 +2663,8 @@ export class SharepointService {
       let newComment = {
         text: str,
         email: currentUser.Email,
-        name: currentUser.Title,
+        name: currentUser.Title?.indexOf("@") == -1 ? currentUser.Title : currentUser.Email,
+        userId: currentUser.Id,
         createdAt: new Date().toISOString()
       }
       parsedComments.push(newComment);
@@ -2915,28 +2676,32 @@ export class SharepointService {
 
   async copyFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<any> {
     const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
-    let destinationUrl = `copyTo('${destinationFolder + this.clearFileName(newFileName)}')`;
+    let path = destinationFolder + this.clearFileName(newFileName);
+    let destinationUrl = `copyTo('${path}')`;
     try {
       const r = await this.http.post(
         this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
         null
       ).toPromise();
-      return r;
+      return path;
     }
     catch (e) {
       return false;
     }
   }
 
-  async moveFile(originServerRelativeUrl: string, destinationFolder: string): Promise<any> {
+  async moveFile(originServerRelativeUrl: string, destinationFolder: string, newFilename: string = ''): Promise<any> {
     let arrUrl = originServerRelativeUrl.split("/");
     let fileName = arrUrl[arrUrl.length - 1];
     const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
-    let destinationUrl = `moveTo('${destinationFolder + "/" + fileName}')`;
+    let path = destinationFolder + "/" + (newFilename ? newFilename : fileName);
+    let destinationUrl = `moveTo('${path}')`;
     const r = await this.http.post(
       this.licensing.getSharepointApiUri() + originUrl + destinationUrl,
       null
     ).toPromise();
+
+    return "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path;
   }
 
   async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Brand | null, status: string, comments: string | null = null) {
@@ -2965,6 +2730,103 @@ export class SharepointService {
     }
   }
 
+  async updateFileFields(path: string, fields: any) {
+    this.http.post(
+      this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${path}')/ListItemAllFields`,
+      fields,
+      {
+        headers: new HttpHeaders({
+          'If-Match': '*',
+          'X-HTTP-Method': "MERGE"
+        }),
+      }
+    ).toPromise();
+  }
+
+
+  getPowerBICSVRootPathFromModelPath(path: string) {
+    let mappings: any = {}
+    mappings[FOLDER_DOCUMENTS] =  FOLDER_POWER_BI_DOCUMENTS,
+    mappings[FOLDER_WIP] =  FOLDER_POWER_BI_WIP,
+    mappings[FOLDER_APPROVED] =  FOLDER_POWER_BI_APPROVED,
+    mappings[FOLDER_ARCHIVED] =  FOLDER_POWER_BI_ARCHIVED
+    
+
+    for (const [key, value] of Object.entries(mappings)) {
+      if(path.indexOf(key) !== -1) {
+        return value;
+      }
+    }
+
+    return false;
+
+  }
+
+  async getModelCSVFiles(file: NPPFile) {
+    let powerBiLibrary = this.getPowerBICSVRootPathFromModelPath(file.ServerRelativeUrl);
+    let files: NPPFile[] = []
+
+    if (powerBiLibrary && file.ListItemAllFields) {
+      
+      const result = await this.query(
+        `GetFolderByServerRelativeUrl('${powerBiLibrary}')/Files`,
+        '$expand=ListItemAllFields&$filter=ListItemAllFields/ForecastId eq '+file.ListItemAllFields.ID,
+      ).toPromise();
+  
+      if (result.value) {
+        files = result.value;
+      }   
+    }
+
+    return files;
+  }
+
+  async deleteRelatedCSV(url: string) {
+    let metadata: NPPFileMetadata = (await this.http.get(
+    this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${url}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
+    let csvFiles = await this.getModelCSVFiles({ ServerRelativeUrl: url, ListItemAllFields: metadata } as NPPFile);
+    for(let i = 0; i < csvFiles.length; i++) {
+      this.deleteFile(csvFiles[i].ServerRelativeUrl, false);
+    } 
+  }
+
+  async copyCSV(file: NPPFile, path: string) {
+    if (file.ListItemAllFields) {
+      let arrFolder = file.ServerRelativeUrl.split("/");
+      let destLibrary = this.getPowerBICSVRootPathFromModelPath(path);
+  
+      let csvFiles = await this.getModelCSVFiles(file);
+      let destModel: NPPFileMetadata = (await this.http.get(
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${path}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
+  
+      for(let i = 0; i < csvFiles.length; i++) {
+        let tmpFile = csvFiles[i];
+        let newFileName = tmpFile.Name.replace('_'+file.ListItemAllFields.ID+'.', '_'+destModel.ID+'.');
+        let newPath = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+destLibrary+'/';
+        await this.copyFile(tmpFile.ServerRelativeUrl, newPath, newFileName);
+        await this.updateFileFields(newPath+newFileName, {ForecastId: destModel.ID});
+      } 
+    }
+  }
+
+  async moveCSV(file: NPPFile, path: string) {
+    if (file.ListItemAllFields) {
+      let arrFolder = file.ServerRelativeUrl.split("/");
+      let destLibrary = this.getPowerBICSVRootPathFromModelPath(path);
+  
+      let csvFiles = await this.getModelCSVFiles(file);
+      let destModel: NPPFileMetadata = (await this.http.get(
+        this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${path}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
+  
+      for(let i = 0; i < csvFiles.length; i++) {
+        let tmpFile = csvFiles[i];
+        let newFileName = tmpFile.Name.replace('_'+file.ListItemAllFields.ID+'.', '_'+destModel.ID+'.');
+        let newPath = destLibrary+'';
+        await this.moveFile(tmpFile.ServerRelativeUrl, newPath, newFileName);
+        await this.updateFileFields("/"+arrFolder[1]+"/"+arrFolder[2]+"/"+newPath+"/"+newFileName, {ForecastId: destModel.ID});
+      } 
+    }
+  }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
@@ -2983,6 +2845,11 @@ export class SharepointService {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(entity, file);
         res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
+
+        if (res) {
+          await this.updateFileFields(res, {OriginalModelId: file.ListItemAllFields.ID});
+          await this.copyCSV(file, res);
+        }
         return res;
       };
       
