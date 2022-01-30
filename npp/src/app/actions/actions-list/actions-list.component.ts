@@ -17,12 +17,12 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
-import { BreadcrumbService } from 'xng-breadcrumb';
 
 @Component({
   selector: 'app-actions-list',
@@ -68,7 +68,7 @@ export class ActionsListComponent implements OnInit {
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
-    private breadcrumbService: BreadcrumbService
+    private breadcrumbService: BreadcrumbsService
     ) { }
 
   ngOnInit(): void {
@@ -81,7 +81,7 @@ export class ActionsListComponent implements OnInit {
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
-        this.breadcrumbService.set('@opportunityName', this.opportunity.Title);
+        this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
 
         if (this.opportunity.EntityOwner) {
           let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);

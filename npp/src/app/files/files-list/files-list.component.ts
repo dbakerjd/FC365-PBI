@@ -17,6 +17,7 @@ import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/fo
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
+import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
@@ -69,7 +70,9 @@ export class FilesListComponent implements OnInit {
     private teams: TeamsService,
     public licensing: LicensingService,
     public disambiguator: InlineNppDisambiguationService,
-    public notifications: NotificationsService) { }
+    public notifications: NotificationsService,
+    private breadcrumbService: BreadcrumbsService
+  ) { }
 
   ngOnInit(): void {
     if(this.teams.initialized) this.init();
@@ -96,6 +99,7 @@ export class FilesListComponent implements OnInit {
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
+          this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
           
           this.cycles = await this.disambiguator.getForecastCycles(this.entity);
 
