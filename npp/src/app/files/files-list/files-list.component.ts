@@ -17,6 +17,7 @@ import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/fo
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
+import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
@@ -58,6 +59,7 @@ export class FilesListComponent implements OnInit {
   updatingFiles = false;
   updateFilesTimeout: any;
   selectedCycle: any = false;
+  loading = false;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -68,7 +70,9 @@ export class FilesListComponent implements OnInit {
     private teams: TeamsService,
     public licensing: LicensingService,
     public disambiguator: InlineNppDisambiguationService,
-    public notifications: NotificationsService) { }
+    public notifications: NotificationsService,
+    private breadcrumbService: BreadcrumbsService
+  ) { }
 
   ngOnInit(): void {
     if(this.teams.initialized) this.init();
@@ -82,6 +86,7 @@ export class FilesListComponent implements OnInit {
   }
 
   init() {
+    this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.sharepoint.getCurrentUserInfo();
       this.masterCycles = await this.sharepoint.getForecastCycles();
@@ -94,6 +99,7 @@ export class FilesListComponent implements OnInit {
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
+          this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
           
           this.cycles = await this.disambiguator.getForecastCycles(this.entity);
 
@@ -147,10 +153,11 @@ export class FilesListComponent implements OnInit {
     this.currentStatus = 'none';
     this.selectedFolder = folder;
     this.selectedDepartmentId = folder.DepartmentID ? folder.DepartmentID : 0;
-    this.updateCurrentFiles();
+    await this.updateCurrentFiles();
   }
 
   async updateCurrentFiles() {
+    this.loading = true;
     try {
       if(!this.updatingFiles) {
         this.updatingFiles = true;
@@ -187,11 +194,11 @@ export class FilesListComponent implements OnInit {
         }, 500);
         
       }
+      this.loading = false;
     } catch(e: any) {
       this.updatingFiles = false;
+      this.loading = false;
     }
-    
-    
   }
 
   getCurrentFolder() {
@@ -275,7 +282,7 @@ export class FilesListComponent implements OnInit {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
       let folders = [...this.documentFolders]
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
-        height: '400px',
+        height: '500px',
         width: '405px',
         data: {
           entity: this.entity,
@@ -679,8 +686,8 @@ export class FilesListComponent implements OnInit {
       }
 
       this.dialogInstance = this.matDialog.open(CommentsListComponent, {
-        height: '700px',
-        width: '600px',
+        height: '75vh',
+        width: '500px',
         data: {
           comments
         }

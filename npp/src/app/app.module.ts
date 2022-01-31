@@ -64,8 +64,9 @@ import { ExternalApproveModelComponent } from './modals/external-approve-model/e
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
-import { BreadcrumbModule } from 'xng-breadcrumb';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 
 @NgModule({
   imports: [
@@ -81,9 +82,9 @@ import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.compo
     FormlyBootstrapModule,
     MatButtonModule,
     MatDialogModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     PowerBIEmbedModule,  
-    BreadcrumbModule,
     ToastrModule.forRoot({
       positionClass: 'toast-bottom-right',
       timeOut: 7000,
@@ -131,7 +132,8 @@ import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.compo
     EntityEditFileComponent,
     CreateBrandComponent,
     BrandListComponent,
-    BrandSummaryComponent
+    BrandSummaryComponent,
+    BreadcrumbsComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

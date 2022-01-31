@@ -1,5 +1,5 @@
 <app-npp-header [currentSection]="'opportunities'"></app-npp-header>
-<div class="brand-info-wrapper" *ngIf="entity">
+<div class="brand-info-wrapper top-info-wrapper" *ngIf="entity">
     <div class="brand-name">
         <h2>{{entity?.Title}}</h2>
         <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}} {{entity?.ForecastCycleDescriptor}}</p>
@@ -14,26 +14,29 @@
         <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
     </div>
     <div class="brand-owner">
-        <div class="brand-owner-pic">
-            <div class="brand-owner-pic-background"></div>
+        <div class="owner-pic">
+            <div class="owner-pic-background"></div>
             <img [src]="profilePic" *ngIf="profilePic"/>
         </div>
-        <div class="brand-owner-info">
-            <div class="brand-owner-info-title"><label>Owner</label></div>
-            <div class="brand-owner-info-name">
+        <div class="owner-info">
+            <div class="owner-info-title"><label>Owner</label></div>
+            <div class="owner-info-name">
                 {{entity?.EntityOwner?.Title}}
             </div>
         </div>
     </div>
 </div>
-<div class="folder-and-actions-wrapper">
-    <div class="folder-wrapper">
+<div class="folder-and-actions-wrapper opportunity-contents">
+    <div class="folder-wrapper left-selection">
         <div class="folder-item-wrapper">
-            <div class="folder-item"  [ngClass]="{'selected-folder': currentSection == 'documents'}" (click)="setSection('documents')">
+            <div class="folder-item left-top-selection"  [ngClass]="{'selected-item': currentSection == 'documents'}" (click)="setSection('documents')">
                 <span>Reference Documents</span>
+                <svg>
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents'">
-                <div class="folders-item" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status':selectedFolderId === folder.ID}" (click)="setFolder(folder)">
+                <div class="folders-item left-dd-selection" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status':selectedFolderId === folder.ID}" (click)="setFolder(folder)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
@@ -42,14 +45,14 @@
             </div>
         </div>
         <div class="folder-item-wrapper">
-            <div class="folder-item models-folder"  [ngClass]="{'selected-folder': currentSection == 'models'}" (click)="setSection('models')">
+            <div class="folder-item models-folder left-top-selection"  [ngClass]="{'selected-item': currentSection == 'models'}" (click)="setSection('models')">
                 <span>Forecast Models</span>
-                <svg *ngIf=" currentSection == 'models' ">
+                <svg>
                     <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'models'">
-                <div class="folders-item" *ngFor="let status of modelStatus" [ngClass]="{'selected-status':currentStatus === status}" (click)="setStatus(status)">
+                <div class="folders-item left-dd-selection" *ngFor="let status of modelStatus" [ngClass]="{'selected-status':currentStatus === status}" (click)="setStatus(status)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
@@ -65,26 +68,28 @@
                     <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
                 </div>
             </div>
-            <div class="folder-info-progress">
-                
-            </div>
-            <div class="folder-info-icons">
-                <div class="folder-info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
-                <div class="folder-info-icons-documents" matTooltip="Documents" (click)="showFolders()" [ngClass]="{ 'folder-info-icon-selected': currentSection == 'documents'}">
-                    <div class="folder-info-icons-selected-section"></div>
+
+            <div class="folder-info-progress">&nbsp;</div>
+
+            <div class="folder-info-icons opportunity-top-actions">
+                <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
+                <div class="info-icons-documents" matTooltip="Documents" (click)="showFolders()" [ngClass]="{ 'top-action-selected': currentSection == 'documents'}">
+                    <div class="info-icons-selected-section"></div>
                 </div>
-                <div class="folder-info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'folder-info-icon-selected': currentSection == 'models'}">
-                    <div class="folder-info-icons-selected-section"></div>
+                <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'models'}">
+                    <div class="info-icons-selected-section"></div>
                 </div>
-                <div class="folder-info-icons-folder-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
-                <div class="folder-info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi" (click)="refreshPowerBi()"></div>
-                <div class="folder-info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
+                <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
+                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi" (click)="refreshPowerBi()"></div>
+                <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
             </div>
         </div>
         <div [ngSwitch]="currentSection">
             <!-- DOCUMENTS LIST -->
             <div *ngSwitchCase="'documents'">
                 <div class="documents-files">
+                    <app-progress-spinner *ngIf="loading"></app-progress-spinner>
+
                     <ng-container *ngIf="currentFiles && currentFiles.length">
                         <div class="documents-files-item" *ngFor="let file of currentFiles">
                             <div class="documents-files-item-name">
@@ -107,12 +112,12 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" matTooltip="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, currentFolder.ID)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, selectedFolder.ID)"></div>
                                 <div class="documents-files-item-icons-remove" matTooltip="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </div>
                     </ng-container>
-                    <h3 *ngIf="!currentFiles || currentFiles.length == 0" style="text-align: center;">No Results Found</h3>  
+                    <h3 *ngIf="(!currentFiles || currentFiles.length == 0) && !loading" style="text-align: center;">No Files Found in {{ selectedFolder?.Title }}</h3>  
                 </div>
             </div>
             <div *ngSwitchCase="'models'">
@@ -124,8 +129,9 @@
                     </div>
                 </div>
                 <div class="documents-files" *ngIf="currentStatus != 'Archived' || selectedCycle">
+                    <app-progress-spinner *ngIf="loading"></app-progress-spinner>
                     <ng-container *ngIf="currentFiles && currentFiles.length">
-                        <div class="documents-files-item" *ngFor="let file of currentFiles">
+                        <div class="documents-files-item model-file-item" *ngFor="let file of currentFiles">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
                                 <p>
@@ -177,7 +183,7 @@
                                     <label>Description: </label>{{file.Description}}
                                 </p>
                                 <ng-container *ngIf="file.ListItemAllFields?.Comments">
-                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" title="Open Comments Detail">
+                                    <div *ngFor="let comment of file.lastComments" (click)="openCommentsDetail(file)" matTooltip="Open Comments Detail" class="comments-action">
                                         <p><label>{{comment.name}} at </label> {{ comment.createdAt | date : 'Y-M-d'}}</p>
                                         <p class="comment-text">{{comment.text}}</p>
                                     </div>
@@ -193,7 +199,7 @@
                         </div>
     
                     </ng-container>
-                    <h3 *ngIf="(currentStatus != 'Archived' || selectedCycle) && (!currentFiles || currentFiles.length == 0)" style="text-align: center;">No Results Found</h3>  
+                    <h3 *ngIf="(currentStatus != 'Archived' || selectedCycle) && (!currentFiles || currentFiles.length == 0) && !loading" style="text-align: center;">No Results Found</h3>  
                 </div>
             </div>
         </div>        

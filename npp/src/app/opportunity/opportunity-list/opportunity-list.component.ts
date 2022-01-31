@@ -137,8 +137,7 @@ export class OpportunityListComponent implements OnInit {
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         let job = this.jobs.startJob(
-          "initialize opportunity "+result.data.opportunity.id,
-          'The new opportunity is being initialized. Stages and permissions are being created.'
+          "initialize opportunity "+result.data.opportunity.id
           );
         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           // set active
@@ -163,8 +162,8 @@ export class OpportunityListComponent implements OnInit {
 
   async editOpportunity(opp: Opportunity) {
     this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-      height: '700px',
-      width: '405px',
+      height: '75vh',
+      width: '500px',
       data: {
         opportunity: opp
       },
@@ -202,6 +201,10 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {
+    let opType = this.opportunityTypes.find(el => el.Title == opportunity.OpportunityType?.Title);
+    if(opType?.isInternal) {
+      return -1; // progress no applies
+    }
     let actions = await this.sharepoint.getActions(opportunity.ID);
     if (actions.length) {
       let gates: {'total': number; 'completed': number}[] = [];

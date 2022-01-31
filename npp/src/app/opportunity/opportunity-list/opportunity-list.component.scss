@@ -8,6 +8,8 @@
     overflow: hidden;
     height: 123px;
     font-size: 0.9rem;
+    padding: 0 3rem 0 2rem;
+    display: flex;
 
     &:nth-child(odd) {
         background-color: #f4f4f4;
@@ -19,11 +21,7 @@
     }
     & > div p, & > div div {
         margin-left: 2rem;
-
-        label {
-            color: rgba(0, 0, 0, 0.5);
-        }
-
+        
         &.signal-icon {
             margin-left: 0;
         }
@@ -31,13 +29,13 @@
 
     .opportunity-status {
         width: calc(21% - 1px);
-        float: left;
     }
 
     .opportunity-name,
     .opportunity-progress {
-        color: #545353;
-        
+        color: #98989B;
+        font-weight: 700;
+        flex: 1;
 
         p {
             line-height: 1.25rem;
@@ -49,7 +47,6 @@
 
     .opportunity-name {
         width: calc(40% - 1px);
-        float: left;
         cursor: pointer;
 
         .opportunity-title {
@@ -61,7 +58,6 @@
 
     .opportunity-progress {
         width: calc(25% - 1px);
-        float: left;
         cursor: pointer;
         padding-right: 2%;
 
@@ -82,10 +78,14 @@
     }
 
     .opportunity-actions {
-        width: calc(8% - 1px);
+        width: auto;
+        flex: 0 1 auto;
         overflow: hidden;
         height: 100%;
         padding-left: 1rem;
+        min-width: 10%;
+        display: flex;
+        justify-content: flex-end;
         
         &>div {
             width: 43px;
@@ -119,21 +119,17 @@ formly-form {
 
 .opportunity-filter-wrapper {
     margin: 0;
-    padding: 0 2rem;
-    border-top: 1px solid #fff;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
-    clear: both;
+    padding: 0 3rem 0 2rem;
     overflow: hidden;
-    height: 5rem;
+    height: 3rem;
     background-color: #fff;
+    display: flex;
 
     .opportunity-filter {
         display: block;
-        float: left;
-        width: 90%;
         margin: 0;
         padding: 0;
+        flex: 1;
 
         input {
             border-radius: 10px;

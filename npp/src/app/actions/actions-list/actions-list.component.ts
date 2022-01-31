@@ -17,12 +17,12 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
-import { BreadcrumbService } from 'xng-breadcrumb';
 
 @Component({
   selector: 'app-actions-list',
@@ -68,7 +68,7 @@ export class ActionsListComponent implements OnInit {
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
-    private breadcrumbService: BreadcrumbService
+    private breadcrumbService: BreadcrumbsService
     ) { }
 
   ngOnInit(): void {
@@ -81,7 +81,7 @@ export class ActionsListComponent implements OnInit {
         }
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
-        this.breadcrumbService.set('@opportunityName', this.opportunity.Title);
+        this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
 
         if (this.opportunity.EntityOwner) {
           let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
@@ -165,8 +165,8 @@ export class ActionsListComponent implements OnInit {
       }
 
       this.dialogInstance = this.matDialog.open(CommentsListComponent, {
-        height: '700px',
-        width: '600px',
+        height: '75vh',
+        width: '500px',
         data: {
           comments
         }
@@ -352,7 +352,7 @@ export class ActionsListComponent implements OnInit {
   openFolderPermissions() {
     if (this.isOwner || this.currentUser?.IsSiteAdmin) { // TODO: open to all stage users when using API
       this.dialogInstance = this.matDialog.open(FolderPermissionsComponent, {
-        height: '400px',
+        height: '500px',
         width: '405px',
         data: {
           folderList: this.currentFolders,
@@ -460,8 +460,7 @@ export class ActionsListComponent implements OnInit {
         .subscribe(async (result: any) => {
           if (result.success) {
             let job = this.jobs.startJob(
-              'initialize stage ' + result.data.ID, 
-              'The stage is being initialized. The list of actions and starter permissions are being created.'
+              'initialize stage ' + result.data.ID
             );
             let opp = await this.sharepoint.getOpportunity(result.data.EntityNameId);
             const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
@@ -525,8 +524,8 @@ export class ActionsListComponent implements OnInit {
 
                   // create new
                   this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
-                    height: '700px',
-                    width: '405px',
+                    height: '75vh',
+                    width: '500px',
                     data: {
                       opportunity: { ...this.opportunity },
                       createFrom: true,
@@ -547,8 +546,7 @@ export class ActionsListComponent implements OnInit {
                         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
-                          "initialize opportunity " + result.data.opportunity.id,
-                          'The new opportunity is being initialized. First stage and permissions are being created.'
+                          "initialize opportunity " + result.data.opportunity.id
                         );
                         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           // set active
