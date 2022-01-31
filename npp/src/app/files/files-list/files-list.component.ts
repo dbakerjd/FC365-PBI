@@ -348,6 +348,7 @@ export class FilesListComponent implements OnInit {
       this.setStatus(this.modelStatus[0]);
     } else {
       this.setStatus('none');
+      // if (this.documentFolders[0]) this.setFolder(this.documentFolders[0]);
     }
   }
 
@@ -357,7 +358,11 @@ export class FilesListComponent implements OnInit {
     this.currentStatus = status;
     this.selectedFolder = undefined;
     this.selectedDepartmentId = 0;
-    this.updateCurrentFiles();
+    if (status == 'none' && this.documentFolders[0]) {
+      this.setFolder(this.documentFolders[0]);
+    } else {
+      this.updateCurrentFiles();
+    }
   }
 
   showFolders() {
@@ -434,41 +439,36 @@ export class FilesListComponent implements OnInit {
     }
   }
 
-  async shareFile(fileId: number, geoId: number | null = null, countryId: number | null = null) {
+  async shareFile(fileId: number, departmentId: number) {
     const file = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
-    if (!file) return;
-    
-    const oppGeo = await this.disambiguator.getEntityGeographies(this.entityId);
+    if (!file) return
 
-    let involvedGeo = null;
-    if (geoId) {
-      involvedGeo = oppGeo.find(el => el.Master_x0020_GeographyId == geoId);
-    } else if (countryId) {
-      involvedGeo = oppGeo.find(el => el.CountryId == countryId);
-    }
-    if (!involvedGeo && (geoId || countryId)) return;
+    let folderGroup = `DU-${this.entityId}-${departmentId}`;
 
-    let folderUsersList: User[] = [];
-    if (involvedGeo) {
-      let folderGroup = this.disambiguator.getGroupName(`EU-${this.entityId}-${involvedGeo.Id}`);
-      folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    // is it a model with geography assigned?
+    if (file.ListItemAllFields?.EntityGeographyId) {
+      folderGroup += '-' + file.ListItemAllFields?.EntityGeographyId;
     }
-    
+
     // users with access
+    let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers( this.disambiguator.getGroupName('EO-' + this.entityId))
+      await this.sharepoint.getGroupMembers('OO-' + this.entityId),
+      await this.sharepoint.getGroupMembers('SU-' + this.entityId + '-0')
     );
 
+    // clean users list
+    let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
     const currentUser = await this.sharepoint.getCurrentUserInfo();
-    folderUsersList = folderUsersList.filter(el => el.Id !== currentUser.Id);
+    uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
-      height: '250px',
+      height: '300px',
       width: '405px',
       data: {
         file,
-        folderUsersList
+        folderUsersList: uniqueFolderUsersList
       }
     });
   }
