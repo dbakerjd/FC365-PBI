@@ -36,7 +36,7 @@
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents'">
-                <div class="folders-item left-dd-selection" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status':selectedFolderId === folder.ID}" (click)="setFolder(folder)">
+                <div class="folders-item left-dd-selection" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status': selectedFolder.Id === folder.ID}" (click)="setFolder(folder)">
                     <svg>
                         <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
                     </svg>
@@ -112,7 +112,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" matTooltip="Open file" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, selectedFolder.ID)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, selectedDepartmentId)"></div>
                                 <div class="documents-files-item-icons-remove" matTooltip="Delete file" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
                         </div>
@@ -192,7 +192,7 @@
                             <div class="documents-files-item-icons">
                                 <div class="documents-files-item-icons-file" matTooltip="Open file" *ngIf="currentStatus == 'Work in Progress'" (click)="openFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-download" matTooltip="Download file" (click)="openFile(file.ListItemAllFields.ID, true)"></div>
-                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, file.ListItemAllFields.EntityGeographyId)"></div>
+                                <div class="documents-files-item-icons-share" matTooltip="Share file" (click)="shareFile(file.ListItemAllFields.ID, 0)"></div>
                                 <div class="documents-files-item-icons-edit" matTooltip="Edit file name" *ngIf="currentStatus == 'Work in Progress'" (click)="editFile(file.ListItemAllFields.ID)"></div>
                                 <div class="documents-files-item-icons-remove" matTooltip="Delete file" *ngIf="currentStatus == 'Work in Progress'" (click)="deleteFile(file.ListItemAllFields.ID)"></div>
                             </div>
