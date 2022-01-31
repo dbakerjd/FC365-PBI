@@ -14,6 +14,7 @@ export interface Breadcrumb {
 export class BreadcrumbsService {
 
   private breadcrumbsList: Breadcrumb[] = []; 
+  
   // Subject emitting the breadcrumb hierarchy 
   private readonly _breadcrumbs$ = new BehaviorSubject<Breadcrumb[]>([]);
   
@@ -27,7 +28,6 @@ export class BreadcrumbsService {
       this.breadcrumbsList = [];
       // Construct the breadcrumb hierarchy 
       const root = this.router.routerState.snapshot.root; 
-      // const breadcrumbs: Breadcrumb[] = []; 
       this.addBreadcrumb(root, []); 
  
       // Emit the new hierarchy 
@@ -55,7 +55,6 @@ export class BreadcrumbsService {
           this.breadcrumbsList.push(breadcrumb);
         }
       } 
-      console.log('breadcrumb', this.breadcrumbsList);
       // Add another element for the next route part 
       if (route.firstChild) {
         this.addBreadcrumb(route.firstChild, routeUrl); 
@@ -69,7 +68,6 @@ export class BreadcrumbsService {
       url
     }; 
     this.breadcrumbsList.push(breadcrumb);
-    console.log('breadrumb add', this.breadcrumbsList);
     this._breadcrumbs$.next(this.breadcrumbsList); 
   }
  
