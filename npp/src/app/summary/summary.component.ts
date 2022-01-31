@@ -156,13 +156,18 @@ export class SummaryComponent implements OnInit {
           enabled: false
         },
         chart: {
-            plotShadow: true,
+            plotBorderWidth: null,
+            plotShadow: false,
             plotBorderColor: "#ff0000",
-            backgroundColor: "#ebebeb",
+            backgroundColor: "#fff",
             type: 'pie'
         },
         title: {
-            text: 'Current Gate: '+this.gateCount.Total+' Projects'
+            text: 'Current Gate: '+this.gateCount.Total+' Projects',
+            style: {
+              "fontSize": "1.2rem",
+              "color": "#000"
+            }
         },
         tooltip: {
             pointFormat: '{series.name}: <b>{point.value} projects</b>'
@@ -178,7 +183,12 @@ export class SummaryComponent implements OnInit {
                 cursor: 'pointer',
                 dataLabels: {
                     enabled: true,
-                    format: '<b>{point.name}</b>: {point.value} projects'
+                    format: '<b>{point.name}</b>: {point.value} projects',
+                    style: {
+                      "fontSize": "0.8rem",
+                      "color": "#333",
+                      "fontWeight": "normal"
+                    }
                 }
             }
         },
@@ -201,12 +211,17 @@ export class SummaryComponent implements OnInit {
           enabled: false
         },
         chart: {
-            plotShadow: true,
-            backgroundColor: "#ebebeb",
+            plotBorderWidth: null,
+            plotShadow: false,
+            backgroundColor: "#fff",
             type: 'pie'
         },
         title: {
-            text: 'Current Phase: '+this.phaseCount.Total+' Projects'
+            text: 'Current Phase: '+this.phaseCount.Total+' Projects',
+            style: {
+              "fontSize": "1.2rem",
+              "color": "#000"
+            }
         },
         tooltip: {
             pointFormat: '{series.name}: <b>{point.value} projects</b>'
@@ -222,7 +237,12 @@ export class SummaryComponent implements OnInit {
                 cursor: 'pointer',
                 dataLabels: {
                     enabled: true,
-                    format: '<b>{point.name}</b>: {point.value} projects'
+                    format: '<b>{point.name}</b>: {point.value} projects',
+                    style: {
+                      "fontSize": "0.8rem",
+                      "color": "#333",
+                      "fontWeight": "normal"
+                    }
                 }
             }
         },
@@ -245,12 +265,17 @@ export class SummaryComponent implements OnInit {
           enabled: false
         },
         chart: {
-            plotShadow: true,
-            backgroundColor: "#ebebeb",
+            plotBorderWidth: null,
+            plotShadow: false,
+            backgroundColor: "#fff",
             type: 'pie'
         },
         title: {
-            text: 'Therapy Areas: '+this.therapyAreasData.total+' Projects'
+            text: 'Therapy Areas: '+this.therapyAreasData.total+' Projects',
+            style: {
+              "fontSize": "1.2rem",
+              "color": "#000"
+            }
         },
         tooltip: {
             pointFormat: '{series.name}: <b>{point.value} projects</b>'
@@ -266,7 +291,12 @@ export class SummaryComponent implements OnInit {
                 cursor: 'pointer',
                 dataLabels: {
                     enabled: true,
-                    format: '<b>{point.name}</b>: {point.value} projects'
+                    format: '<b>{point.name}</b>: {point.value} projects',
+                    style: {
+                      "fontSize": "0.8rem",
+                      "color": "#333",
+                      "fontWeight": "normal"
+                    }
                 }
             },
             series: {
@@ -336,12 +366,17 @@ export class SummaryComponent implements OnInit {
         enabled: false
       },
       chart: {
-          plotShadow: true,
-          backgroundColor: "#ebebeb",
+          plotBorderWidth: null,
+          plotShadow: false,
+          backgroundColor: "#fff",
           type: 'pie'
       },
       title: {
-          text: 'Indications for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' Projects'
+          text: 'Indications for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' Projects',
+          style: {
+            "fontSize": "1.2rem",
+            "color": "#000"
+          }
       },
       tooltip: {
           pointFormat: '{series.name}: <b>{point.value} projects</b>'
@@ -357,7 +392,12 @@ export class SummaryComponent implements OnInit {
               cursor: 'pointer',
               dataLabels: {
                   enabled: true,
-                  format: '<b>{point.name}</b>: {point.value} projects'
+                  format: '<b>{point.name}</b>: {point.value} projects',
+                  style: {
+                    "fontSize": "0.8rem",
+                    "color": "#333",
+                    "fontWeight": "normal"
+                  }
               }
           }
       },
