@@ -34,8 +34,11 @@ ul.breadcrumb-list {
             
         }
 
-        &:last-child span:after {
-            content: ''
+        &:last-child span {
+            text-decoration: underline;
+            &:after {
+                content: '';
+            }
         }
         
         &:first-child span {
