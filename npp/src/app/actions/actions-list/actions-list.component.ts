@@ -460,8 +460,7 @@ export class ActionsListComponent implements OnInit {
         .subscribe(async (result: any) => {
           if (result.success) {
             let job = this.jobs.startJob(
-              'initialize stage ' + result.data.ID, 
-              'The stage is being initialized. The list of actions and starter permissions are being created.'
+              'initialize stage ' + result.data.ID
             );
             let opp = await this.sharepoint.getOpportunity(result.data.EntityNameId);
             const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
@@ -547,8 +546,7 @@ export class ActionsListComponent implements OnInit {
                         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
-                          "initialize opportunity " + result.data.opportunity.id,
-                          'The new opportunity is being initialized. First stage and permissions are being created.'
+                          "initialize opportunity " + result.data.opportunity.id
                         );
                         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           // set active

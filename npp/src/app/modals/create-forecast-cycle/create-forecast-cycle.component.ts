@@ -84,8 +84,7 @@ export class CreateForecastCycleComponent implements OnInit {
 
   async onSubmit() {
     let job = this.jobs.startJob(
-      "Creating Forecast Cycle",
-      'The new forecast cycle is being initialized. Folders and permissions are being created.'
+      "Creating Forecast Cycle"
       );
     try {
       if (this.form.invalid || !this.entity) {

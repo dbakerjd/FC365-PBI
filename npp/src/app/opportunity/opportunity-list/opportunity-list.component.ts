@@ -137,8 +137,7 @@ export class OpportunityListComponent implements OnInit {
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         let job = this.jobs.startJob(
-          "initialize opportunity "+result.data.opportunity.id,
-          'The new opportunity is being initialized. Stages and permissions are being created.'
+          "initialize opportunity "+result.data.opportunity.id
           );
         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           // set active

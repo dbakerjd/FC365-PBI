@@ -188,8 +188,7 @@ export class CreateBrandComponent implements OnInit {
 
   async onSubmit() {
     let job = this.jobs.startJob(
-      "Creating Brand",
-      'The new brand is being initialized. Folders and permissions are being created.'
+      "Creating Brand"
       );
     try {
       if (this.isEdit) {
