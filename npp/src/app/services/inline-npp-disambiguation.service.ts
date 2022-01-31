@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ErrorService } from './error.service';
 import { AppType, Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
@@ -10,10 +11,13 @@ import { TeamsService } from './teams.service';
 export class InlineNppDisambiguationService {
   
   isInline: boolean = false;
+  isReady: boolean = false;
+  readySubscriptions: Subject<boolean> = new Subject<boolean>();
   app: AppType | undefined;
 
   constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService) { 
     this.isInline = environment.isInlineApp;
+    this.isReady = false;
 
     if (this.teams.initialized) {
       this.setApp();
@@ -40,6 +44,8 @@ export class InlineNppDisambiguationService {
       this.error.handleError(new Error("Could not find ID for app: "+appTitle));
     } else {
       this.sharepoint.app = this.app;
+      this.isReady = true;
+      this.readySubscriptions.next(true);
     }
   }
 
