@@ -106,10 +106,10 @@ export class TeamsService {
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
     }
+    
     protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
-    protectedResourceMap.set('fc365.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
+    protectedResourceMap.set(environment.functionAppDomain,['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
     
     return {
       interactionType: InteractionType.Redirect,
