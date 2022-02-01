@@ -770,11 +770,10 @@ export class SharepointService {
   }
 
   async initializeInternalEntityFolders(opportunity: Opportunity | Brand, geographies: EntityGeography[]) {
-    const SUGroup = await this.createGroup(`SU-${opportunity.ID}-0`);
     const OUGroup = await this.createGroup('OU-' + opportunity.ID);
     const OOGroup = await this.createGroup('OO-' + opportunity.ID);
 
-    if (!OUGroup || !OOGroup || !SUGroup) return false; // something happened with groups
+    if (!OUGroup || !OOGroup) return false; // something happened with groups
 
     const owner = await this.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
@@ -787,7 +786,6 @@ export class SharepointService {
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OU', data: OUGroup });
     groups.push({ type: 'OO', data: OOGroup });
-    groups.push({ type: 'SU', data: SUGroup });
 
     // add groups to the Stage
     let permissions = await this.getGroupPermissions(ENTITY_STAGES_LIST_NAME);

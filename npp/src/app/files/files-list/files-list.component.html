@@ -90,7 +90,7 @@
                 <div class="documents-files">
                     <app-progress-spinner *ngIf="loading"></app-progress-spinner>
 
-                    <ng-container *ngIf="currentFiles && currentFiles.length">
+                    <ng-container *ngIf="currentFiles && currentFiles.length && !loading">
                         <div class="documents-files-item" *ngFor="let file of currentFiles">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
@@ -130,7 +130,7 @@
                 </div>
                 <div class="documents-files" *ngIf="currentStatus != 'Archived' || selectedCycle">
                     <app-progress-spinner *ngIf="loading"></app-progress-spinner>
-                    <ng-container *ngIf="currentFiles && currentFiles.length">
+                    <ng-container *ngIf="currentFiles && currentFiles.length && !loading">
                         <div class="documents-files-item model-file-item" *ngFor="let file of currentFiles">
                             <div class="documents-files-item-name">
                                 <p><label>Name: </label>{{file.Name}}</p>
@@ -165,7 +165,7 @@
                                             <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
                                         </div>
                                         <div *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
-                                            <span (click)="approve(file)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> / 
+                                            <span (click)="approve(file)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span>
                                             <span (click)="rejectModel(file)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
                                         </div>
                                     </div>

@@ -95,6 +95,7 @@ export class FilesListComponent implements OnInit {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
         this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
+        this.documentFolders = this.documentFolders.filter(f => !f.containsModels); // don't show models like folder in internal
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
@@ -348,7 +349,6 @@ export class FilesListComponent implements OnInit {
       this.setStatus(this.modelStatus[0]);
     } else {
       this.setStatus('none');
-      // if (this.documentFolders[0]) this.setFolder(this.documentFolders[0]);
     }
   }
 
@@ -453,8 +453,7 @@ export class FilesListComponent implements OnInit {
     // users with access
     let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('OO-' + this.entityId),
-      await this.sharepoint.getGroupMembers('SU-' + this.entityId + '-0')
+      await this.sharepoint.getGroupMembers('OO-' + this.entityId)
     );
 
     // clean users list
