@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
 import { environment } from 'src/environments/environment';
 import { animate, query, stagger, state, style, transition, trigger } from '@angular/animations';
+import { SharepointService } from '../services/sharepoint.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -26,9 +27,22 @@ export class DashboardComponent implements OnInit {
   account: any;
   version = environment.version;
   items: any[] = [];
-  constructor(private readonly teams: TeamsService, private router: Router, private licensing: LicensingService) { }
+  constructor(
+    private readonly teams: TeamsService, 
+    private router: Router, 
+    private licensing: LicensingService,
+    private sharepoint: SharepointService
+  ) { }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+
+    if (!this.licensing.license) {
+      this.router.navigate(['splash/non-access']);
+    }
+
+    if (!await this.sharepoint.canConnect()) {
+      this.router.navigate(['splash/non-access']);
+    }
 
     let NPPitems = [{
       src: 'assets/dashboard/npp-summary.svg',

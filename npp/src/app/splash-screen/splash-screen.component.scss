@@ -57,49 +57,28 @@ img.jd-logo {
         }
     }
 
-    
+    .splash-message {
+        margin: 3rem auto;
+        text-align: center;
+        max-width: 50%;
 
-    .dashboard-items {
-        padding-top: 5.75rem;
-        display: block;
-        // padding-left: 5.17rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        h2 {
+            line-height: 2.5rem;
+        }
+        span.client {
+            color: #F15A29;
 
-        .dashboard-item {
-            width: 266px;
-            height: 272px;
-            max-width: 31rem;
-            // width: 25%;
-            // height: 17.42rem;
-            border: solid 1px #ffffff;
-            border-radius: 10px;
-            display: inline-block;
-            cursor: pointer;
-            text-align: center;
+            a {
+                color: #F15A29;
+                text-decoration: none;
 
-            &:nth-child(2) {
-                margin-right: 5.42rem;
-                margin-left: 5.42rem;
-            }
-
-            &:hover {
-                background-color: #f26211;
-            }
-
-            img {
-                margin: 2.5rem auto 0 auto;
-            }
-
-            .dashboard-item-text {
-                margin: 1.16rem 2.5rem;
-                h3 {
-                    font-size: 1.4rem;
+                &:hover {
+                    opacity: 0.8;
                 }
             }
         }
     }
+
 }
 
 .app-version {

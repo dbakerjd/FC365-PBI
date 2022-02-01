@@ -61,14 +61,13 @@ export class LicensingService {
   async validateLicense(context: any) {
     try {
       await this.setJDLicense(context);
-      
       if(!this.isValidJDLicense()) {
         this.error.toastr.error("License not valid: "+JSON.stringify(this.license));
-        this.router.navigate(['expired-license']);
+        this.router.navigate(['splash/expired']);
       }
       return true;
     } catch(e) {
-      this.router.navigate(['expired-license']);
+      this.router.navigate(['splash/expired']);
       this.error.handleError(e as Error);
       return false;
     }

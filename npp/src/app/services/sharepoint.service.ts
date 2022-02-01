@@ -406,6 +406,16 @@ export class SharepointService {
     console.log('users', r);
   }
 
+  async canConnect(): Promise<boolean> {
+    try {
+      const currentUser = await this.getCurrentUserInfo();
+      const userInfo = await this.getUserInfo(currentUser.Id);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
 
