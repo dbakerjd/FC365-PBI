@@ -140,15 +140,21 @@ export class OpportunityListComponent implements OnInit {
           "initialize opportunity "+result.data.opportunity.id
           );
         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
-          // set active
-          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
-          opp.OpportunityStatus = 'Active';
-          this.initIndicationString(opp);
-          this.opportunities = [...this.opportunities, opp];
-          this.jobs.finishJob(job.id);
-          this.toastr.success("The opportunity is now active", opp.Title);
-          await this.notifications.opportunityOwnerNotification(result.data.opportunity);
-          if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+          if (r) {
+            // set active
+            await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+            opp.OpportunityStatus = 'Active';
+            this.initIndicationString(opp);
+            this.opportunities = [...this.opportunities, opp];
+            this.jobs.finishJob(job.id);
+            this.toastr.success("The opportunity is now active", opp.Title);
+            await this.notifications.opportunityOwnerNotification(result.data.opportunity);
+            if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+          } else {
+            this.sharepoint.deleteOpportunity(opp.ID);
+            this.jobs.finishJob(job.id);
+            this.toastr.error("The opportunity couldn't be created", "Try again");
+          }
         }).catch(e => {
           this.jobs.finishJob(job.id);
           this.toastr.error((e as Error).message);

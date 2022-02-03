@@ -41,7 +41,7 @@ import { ShareDocumentComponent } from './modals/share-document/share-document.c
 import { ToastrModule } from 'ngx-toastr';
 import { ChartModule, HIGHCHARTS_MODULES } from 'angular-highcharts';
 import * as xrange from 'highcharts/modules/xrange.src';
-import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
+import { SplashScreenComponent } from './splash-screen/splash-screen.component';
 import { SafePipe } from './shared/safe.pipe';
 import { WorkInProgressService } from './services/work-in-progress.service';
 import { FolderPermissionsComponent } from './modals/folder-permissions/folder-permissions.component';
@@ -119,7 +119,7 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
     BlockDialogComponent,
     ProgressSpinnerComponent,
     NotFoundComponent,
-    ExpiredLicenseComponent,
+    SplashScreenComponent,
     SafePipe,
     AuthStartComponent,
     AuthEndComponent,
