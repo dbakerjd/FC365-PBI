@@ -36,12 +36,14 @@
                 </svg>
             </div>
             <div class="folders-wrapper" *ngIf="currentSection == 'documents'">
-                <div class="folders-item left-dd-selection" *ngFor="let folder of documentFolders" [ngClass]="{'selected-status': selectedFolder.Id === folder.ID}" (click)="setFolder(folder)">
-                    <svg>
-                        <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
-                    </svg>
-                    <span>{{folder.Title}}</span>
-                </div>
+                <ng-container *ngFor="let folder of documentFolders">
+                    <div class="folders-item left-dd-selection" *ngIf="!folder.containsModels" [ngClass]="{'selected-status': selectedFolder.Id === folder.ID}" (click)="setFolder(folder)">
+                        <svg>
+                            <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                        </svg>
+                        <span>{{folder.Title}}</span>
+                    </div>
+                </ng-container>
             </div>
         </div>
         <div class="folder-item-wrapper">

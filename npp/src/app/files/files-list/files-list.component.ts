@@ -95,7 +95,6 @@ export class FilesListComponent implements OnInit {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
         this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
-        this.documentFolders = this.documentFolders.filter(f => !f.containsModels); // don't show models like folder in internal
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
