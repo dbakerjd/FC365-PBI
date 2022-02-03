@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
 
 
 export interface Opportunity {
@@ -394,7 +395,7 @@ export class SharepointService {
   provisioningAPI = "https://nppprovisioning20210831.azurewebsites.net/api/";
   public app: AppType | undefined;
 
-  constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService) { }
+  constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService, private readonly toastr: ToastrService) { }
 
   async test() {
     // const r = await this.query('siteusers').toPromise();
@@ -531,6 +532,25 @@ export class SharepointService {
     return true;
   }
 
+  public async deleteItem(id: number, list: string): Promise<boolean> {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointApiUri() + list + `/items(${id})`,
+        null,
+        {
+          headers: new HttpHeaders({
+            'If-Match': '*',
+            'X-HTTP-Method': "DELETE"
+          }),
+        }
+      ).toPromise();
+      return true;
+    } catch (e: any) {
+      this.error.handleError(e);
+      return false;
+    }
+  }
+
   public async getApp(appId: string) {
     return await this.getAllItems(MASTER_APPS, "$select=*&$filter=Title eq '"+appId+"'");
   }
@@ -610,6 +630,7 @@ export class SharepointService {
 
   async initializeOpportunity(opportunity: Opportunity, stage: Stage | null): Promise<boolean> {
     const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID);
+    if (groups.length < 1) return false;
 
     let permissions;
     // add groups to lists
@@ -660,6 +681,10 @@ export class SharepointService {
     return success;
   }
 
+  async deleteOpportunity(oppId: number): Promise<boolean> {
+    return await this.deleteItem(oppId, OPPORTUNITIES_LIST);
+  }
+
   async getOpportunity(id: number): Promise<Opportunity> {
     return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
@@ -704,18 +729,20 @@ export class SharepointService {
     const owner = await this.getUserInfo(ownerId);
     if (!owner.LoginName) return [];
 
-    // Opportunity Owner (OO)
-    group = await this.createGroup(`OO-${oppId}`);
-    if (group) {
-      groups.push({ type: 'OO', data: group });
-      await this.addUserToGroup(owner.LoginName, group.Id);
-    }
-
     // Opportunity Users (OU)
     group = await this.createGroup(`OU-${oppId}`);
     if (group) {
       groups.push({ type: 'OU', data: group });
-      await this.addUserToGroup(owner.LoginName, group.Id);
+      if (!await this.addUserToGroup(owner, group.Id, true)) {
+        return [];
+      }
+    }
+
+    // Opportunity Owner (OO)
+    group = await this.createGroup(`OO-${oppId}`);
+    if (group) {
+      groups.push({ type: 'OO', data: group });
+      await this.addUserToGroup(owner, group.Id);
     }
 
     return groups;
@@ -788,8 +815,10 @@ export class SharepointService {
     const owner = await this.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    await this.addUserToGroup(owner.LoginName, OUGroup.Id);
-    await this.addUserToGroup(owner.LoginName, OOGroup.Id);
+    if (!await this.addUserToGroup(owner, OUGroup.Id, true)) {
+      return false;
+    }
+    await this.addUserToGroup(owner, OOGroup.Id);
     
     // await this.addUserToGroup(owner.LoginName, SUGroup.Id); // not needed
 
@@ -819,7 +848,7 @@ export class SharepointService {
             'Geography ID ' + f.GeographyID);
           if (DUGroup) {
             folderGroups.push( { type: 'DU', data: DUGroup} );
-            await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+            await this.addUserToGroup(owner, DUGroup.Id);
           }
         } 
       }
@@ -840,8 +869,8 @@ export class SharepointService {
         if (GUGroup && DUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
           folderGroups.push( { type: 'DU', data: DUGroup} );
-          await this.addUserToGroup(owner.LoginName, GUGroup.Id);
-          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+          await this.addUserToGroup(owner, GUGroup.Id);
+          await this.addUserToGroup(owner, DUGroup.Id);
         }
       } 
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
@@ -860,10 +889,11 @@ export class SharepointService {
     const owner = await this.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    await this.addUserToGroup(owner.LoginName, OUGroup.Id);
-    await this.addUserToGroup(owner.LoginName, OOGroup.Id);
-    // await this.addUserToGroup(owner.LoginName, SUGroup.Id); // not needed
-
+    if (!await this.addUserToGroup(owner, OUGroup.Id, true)) {
+      return false;
+    }
+    await this.addUserToGroup(owner, OOGroup.Id);
+    
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OU', data: OUGroup });
     groups.push({ type: 'OO', data: OOGroup });
@@ -874,12 +904,21 @@ export class SharepointService {
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU and SU
+    let addedSU = [];
     for (const userId of stage.StageUsersId) {
       const user = await this.getUserInfo(userId);
-      if (user.LoginName) {
-        await this.addUserToGroup(user.LoginName, OUGroup.Id);
-        await this.addUserToGroup(user.LoginName, SUGroup.Id);
-      }
+      if (!await this.addUserToGroup(user, OUGroup.Id, true)) continue;
+      await this.addUserToGroup(user, SUGroup.Id);
+      addedSU.push(user.Id);
+    }
+    if (addedSU.length < 1) {
+      // add owner as stage user to don't leave the field blank
+      // owner has seat assigned in this point
+      await this.addUserToGroup(owner, SUGroup.Id);
+      await this.updateItem(stage.ID, ENTITY_STAGES_LIST, { StageUsersId: [owner.Id]});
+    } else if (addedSU.length < stage.StageUsersId.length) {
+      // update with only the stage users with seat
+      await this.updateItem(stage.ID, ENTITY_STAGES_LIST, { StageUsersId: addedSU});
     }
 
     // Actions
@@ -1571,29 +1610,44 @@ export class SharepointService {
 
     for (const userId of addedUsers) {
       const user = await this.getUserInfo(userId);
-      if (user.LoginName) {
-        success = success && await this.addUserToGroup(user.LoginName, DUGroup.Id);
-        success = success && await this.addUserToGroup(user.LoginName, OUGroup.Id);
-        if (!success) return success;
+      if (!await this.addUserToGroup(user, OUGroup.Id, true)) {
+        continue;
       }
+      success = success && await this.addUserToGroup(user, DUGroup.Id);
+      if (!success) return success;
     }
     return success;
   }
 
-  async addUserToGroup(loginName: string, groupId: number): Promise<boolean> {
+  async addUserToGroup(user: User, groupId: number, askForSeat = false): Promise<boolean> {
     try {
+      if (askForSeat && user.Email) {
+        //check if is previously in the group, to avoid ask again for the same seat
+        if (await this.isInGroup(user.Id, groupId)) {
+          return true;
+        }
+
+        await this.licensing.addSeat(user.Email);
+      }
       await this.http.post(
         this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
-        { LoginName: loginName }
+        { LoginName: user.LoginName }
       ).toPromise();
       return true;
     } catch (e: any) {
-      this.error.handleError(e);
+      if (e.status === 422) {
+        this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
+        user could not be assigned.`, "No Seats Available!", {
+          disableTimeOut: true,
+          closeButton: true
+        });
+        return false;
+      }
       return false;
     }
   }
 
-  async removeUserFromGroup(group: string | number, userId: number): Promise<boolean> {
+  async removeUserFromGroup(group: string | number, userId: number, removeSeat = false): Promise<boolean> {
     let url = '';
     if (typeof group == 'string') {
       url = this.licensing.getSharepointApiUri() + `sitegroups//getbyname('${group}')/users/removebyid(${userId})`;
@@ -1601,6 +1655,12 @@ export class SharepointService {
       url = this.licensing.getSharepointApiUri() + `sitegroups(${group})/users/removebyid(${userId})`;
     }
     try {
+      if (removeSeat) {
+        const user = await this.getUserInfo(userId);
+        if (user.Email) {
+          await this.licensing.removeSeat(user.Email);
+        }
+      }
       await this.http.post(
         url,
         null,
@@ -1628,15 +1688,29 @@ export class SharepointService {
     return [];
   }
 
-  async getGroupMembers(groupName: string): Promise<User[]> {
+  async getGroupMembers(groupNameOrId: string | number): Promise<User[]> {
     try {
-      let users = await this.query(`sitegroups/getbyname('${groupName}')/users`).toPromise();
+      let users = [];
+      if (typeof groupNameOrId == 'number') {
+        users = await this.query(`sitegroups/getbyid('${groupNameOrId}')/users`).toPromise();
+      } else {
+        users = await this.query(`sitegroups/getbyname('${groupNameOrId}')/users`).toPromise();
+      }
       if (users && users.value.length > 0) {
         return users.value;
       }
       return [];
     } catch (e) {
       return [];
+    }
+  }
+
+  async isInGroup(userId: number, groupId: number): Promise<boolean> {
+    try {
+      const groupUsers = await this.getGroupMembers(groupId);
+      return groupUsers.some(user => user.Id === userId);
+    } catch (e) {
+      return false;
     }
   }
 
@@ -1749,8 +1823,11 @@ export class SharepointService {
 
     let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
 
-    success = await this.addUserToGroup(newOwner.LoginName, OOGroup.Id) && success;
-    return await this.addUserToGroup(newOwner.LoginName, OUGroup.Id) && success;
+    if (success = await this.addUserToGroup(newOwner, OUGroup.Id, true) && success) {
+      success = await this.addUserToGroup(newOwner, OOGroup.Id) && success;
+    }
+
+    return success;
   }
 
   private async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsers: number[], newUsers: number[]): Promise<boolean> {
@@ -1772,11 +1849,11 @@ export class SharepointService {
 
       for (const userId of addedUsers) {
         const user = await this.getUserInfo(userId);
-        if (user.LoginName) {
-          success = success && await this.addUserToGroup(user.LoginName, OUGroup.Id);
-          success = success && await this.addUserToGroup(user.LoginName, SUGroup.Id);
-          if (!success) return false;
+        if (success = await this.addUserToGroup(user, OUGroup.Id, true) && success) {
+          continue;
         }
+        success = success && await this.addUserToGroup(user, SUGroup.Id);
+        if (!success) return false;
       }
     }
     return success;
@@ -1802,7 +1879,7 @@ export class SharepointService {
       const updatedGroups = await this.getUserGroups(userId);
       if (updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()).length === 1) {
         // not involved in any group of the opportunity
-        success = await this.removeUserFromGroup('OU-' + oppId, userId);
+        success = await this.removeUserFromGroup('OU-' + oppId, userId, true);
       }
     }
     return success;
@@ -2105,7 +2182,7 @@ export class SharepointService {
               'Geography ID ' + f.GeographyID);
             if (DUGroup) {
               folderGroups.push( { type: 'DU', data: DUGroup} );
-              await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+              await this.addUserToGroup(owner, DUGroup.Id);
             }
           } 
         }
@@ -2126,8 +2203,8 @@ export class SharepointService {
           if (GUGroup && DUGroup) {
             folderGroups.push( { type: 'GU', data: GUGroup} );
             folderGroups.push( { type: 'DU', data: DUGroup} );
-            await this.addUserToGroup(owner.LoginName, GUGroup.Id);
-            await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+            await this.addUserToGroup(owner, GUGroup.Id);
+            await this.addUserToGroup(owner, DUGroup.Id);
           }
         } 
         await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
@@ -2168,8 +2245,8 @@ export class SharepointService {
     const BOGroup = await this.createGroup('OO-'+brand.ID);
     if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
 
-    await this.addUserToGroup(owner.LoginName, BOGroup.Id);
-    await this.addUserToGroup(owner.LoginName, BUGroup.Id);
+    await this.addUserToGroup(owner, BOGroup.Id);
+    await this.addUserToGroup(owner, BUGroup.Id);
 
     //create geographies
     await this.createGeographies(brand.ID,geographies, countries);
@@ -2191,13 +2268,13 @@ export class SharepointService {
           'Geography ID ' + f.GeographyID);
         if (GUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
-          await this.addUserToGroup(owner.LoginName, GUGroup.Id);
+          await this.addUserToGroup(owner, GUGroup.Id);
         }
       } else if(f.DepartmentID) {
         let DUGroup = await this.createGroup(`DU-${brand.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
         if (DUGroup) {
           folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+          await this.addUserToGroup(owner, DUGroup.Id);
         }
       }
 
@@ -2218,8 +2295,8 @@ export class SharepointService {
         if (GUGroup && DUGroup) {
           folderGroups.push( { type: 'GU', data: GUGroup} );
           folderGroups.push( { type: 'DU', data: DUGroup} );
-          await this.addUserToGroup(owner.LoginName, GUGroup.Id);
-          await this.addUserToGroup(owner.LoginName, DUGroup.Id);
+          await this.addUserToGroup(owner, GUGroup.Id);
+          await this.addUserToGroup(owner, DUGroup.Id);
         }
       } 
 
@@ -2511,8 +2588,8 @@ export class SharepointService {
     for (const userId of addedUsers) {
       const user = await this.getUserInfo(userId);
       if (user.LoginName) {
-        success = success && await this.addUserToGroup(user.LoginName, GUGroup.Id);
-        success = success && await this.addUserToGroup(user.LoginName, BUGroup.Id);
+        success = success && await this.addUserToGroup(user, GUGroup.Id);
+        success = success && await this.addUserToGroup(user, BUGroup.Id);
         if (!success) return success;
       }
     }
@@ -2542,8 +2619,8 @@ export class SharepointService {
     for (const userId of addedUsers) {
       const user = await this.getUserInfo(userId);
       if (user.LoginName) {
-        success = success && await this.addUserToGroup(user.LoginName, GUGroup.Id);
-        success = success && await this.addUserToGroup(user.LoginName, BUGroup.Id);
+        success = success && await this.addUserToGroup(user, GUGroup.Id);
+        success = success && await this.addUserToGroup(user, BUGroup.Id);
         if (!success) return success;
       }
     }
