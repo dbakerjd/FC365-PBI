@@ -503,6 +503,7 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
+          /*
           const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
           if (await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId) !== 'Phase') {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
@@ -574,6 +575,11 @@ export class ActionsListComponent implements OnInit {
             this.opportunity.OpportunityStatus = 'Approved';
             this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }
+          */
+         // complete
+         await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+         this.opportunity.OpportunityStatus = 'Approved';
+         this.toastr.success("The opportunity has been completed", this.opportunity.Title);
         }
       });
   }
