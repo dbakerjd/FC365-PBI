@@ -37,7 +37,7 @@ export class DashboardComponent implements OnInit {
   async ngOnInit() {
 
     if (!this.licensing.license) {
-      this.router.navigate(['splash/non-access']);
+      this.router.navigate(['splash/non-license']);
     }
 
     if (!await this.sharepoint.canConnect()) {

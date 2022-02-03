@@ -7,7 +7,8 @@
     <div class="splash-message" *ngIf="client">
         <ng-container [ngSwitch]="messageToShow">
             <h1 *ngSwitchCase="'expired'">It seems your license is expired</h1>
-            <h1 *ngSwitchCase="'non-access'">It looks like you don't have permission to access the FC365 {{appTitle}} App.</h1>
+            <h1 *ngSwitchCase="'non-license'">There is no license to use the FC365 {{appTitle}} App</h1>
+            <h1 *ngSwitchCase="'non-access'">It looks like you don't have permission to access the FC365 {{appTitle}} App</h1>
         </ng-container>
         <h2>
             This application is currently intended for <span class="client">{{ client.name }}</span>. 
