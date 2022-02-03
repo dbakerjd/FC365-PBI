@@ -6,7 +6,7 @@ import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { ExpiredLicenseComponent } from './expired-license/expired-license.component';
+import { SplashScreenComponent } from './splash-screen/splash-screen.component';
 import { FilesListComponent } from './files/files-list/files-list.component';
 import { NotFoundComponent } from './not-found/not-found.component';
 import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
@@ -23,10 +23,10 @@ const routes: Routes = [
   { path: 'brands', component: BrandListComponent, data: { breadcrumb: 'Brands' } },
   { path: 'brands/:id/files', component: FilesListComponent, data: { breadcrumb: { label: 'Brands', url: 'brands' } } },
   { path: 'power-bi', component: PowerBiComponent, data: { breadcrumb: 'Power BI' } },
-  { path: 'expired-license', component: ExpiredLicenseComponent, data: { breadcrumb: { skip: true } } },
+  { path: 'splash/:message', component: SplashScreenComponent },
   { path: 'auth-start', component: AuthStartComponent },
   { path: 'auth-end', component: AuthEndComponent },
-  { path: '**', pathMatch: 'full', component: NotFoundComponent, data: { breadcrumb: { skip: true } } },
+  { path: '**', pathMatch: 'full', component: NotFoundComponent },
 ];
 
 @NgModule({
