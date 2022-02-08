@@ -129,14 +129,39 @@
             display: inline-block;
         }
 
-        .next-tasks-title {
-            width: 100%;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
         padding-bottom: 50px;
     }
 
-    
+    .summary-seats {
+        table {
+            width: 50%;
+            margin: 0 auto;
+            th {
+                text-align: left;
+                background-color: #73726d;
+                color: #fff;
+                padding: 3px;
+            }
+            tr {
+                &:nth-child(odd) {
+                    background-color: #eee;
+                }
+                &:hover {
+                    background-color: #ddd;
+                }
+                td {
+                    padding: 3px;
+                }
+                border-bottom: 1px solid #ddd
+            }
+            
+        }
+    }
+
+    .section-title {
+        width: 100%;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
 }

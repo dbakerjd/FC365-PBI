@@ -61,6 +61,7 @@ export class LicensingService {
       appId : context.entityId,
       teamSiteDomain : context.teamSiteDomain
     };
+    console.log('SEATS: License', this.license);
   }
 
   isValidJDLicense() {
@@ -122,6 +123,46 @@ export class LicensingService {
             userEmail: email
           },
         }).toPromise();
+    } catch(e: any) {
+      if (e.status === 422) {
+        throw e;
+      }
+      return false;
+    }
+  }
+
+  async getSeats(email: string) {
+    let headers = new HttpHeaders({
+      'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+    });
+    try {
+      // return await this.http.get(this.licensingApiUrl + '/seats',{
+      //   applicationIdentity: this.licenseContext,
+      //   userEmail: email
+      // }).toPromise();
+      if (this.licenseContext)
+      // return await this.http.get(this.licensingApiUrl + '/seats', {
+      //   headers: headers,
+      //   params: {
+      //     userEmail: email,
+      //     teamSiteDomain: this.licenseContext?.teamSiteDomain,
+      //     appId: this.licenseContext?.appId
+      //   }
+      // }).toPromise();
+      return await this.http.request(
+        'get',
+        this.licensingApiUrl + '/seats', 
+        { 
+          headers: headers,
+          body: {
+            applicationIdentity: this.licenseContext,
+            userEmail: email
+          },
+        }).toPromise();
+
+      return 0;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;

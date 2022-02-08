@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NPPNotification, Opportunity, SharepointService } from '../services/sharepoint.service';
+import { NPPNotification, Opportunity, SharepointService, User } from '../services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from '../services/teams.service';
 import { NotificationsService } from '../services/notifications.service';
@@ -30,6 +30,8 @@ export class SummaryComponent implements OnInit {
     archived: number
   } | null = null;
 
+  usersList: User[] = [];
+
   constructor(
     private sharepoint: SharepointService, 
     private notifications: NotificationsService,
@@ -39,6 +41,27 @@ export class SummaryComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.notificationsList = await this.notifications.getNotifications();
+
+      /** seats */
+      this.usersList = await this.sharepoint.getUsers();
+      console.log('SEATS: users', this.usersList);
+
+      for (let index = 0; index < this.usersList.length; index++) {
+        const element: any = this.usersList[index];
+        // element['seats'] = await this.sharepoint.getSeats(element.Email);
+
+        const groups = await this.sharepoint.getUserGroups(element.Id);
+        const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
+        const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
+        element['opportunities'] = OUgroups.length;
+        element['owner'] = OOgroups.length;
+        console.log('SEATS: groups', OUgroups);
+        console.log('SEATS: element', element);
+      }
+
+      console.log('SEATS: users2', this.usersList);
+      
+      /** endseats */
 
       this.opportunities = await this.sharepoint.getOpportunities(true, true);
       const gates = await this.sharepoint.getAllStages();

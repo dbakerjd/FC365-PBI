@@ -17,7 +17,7 @@
             <div id="chart-4"></div>
         </div>
         <div class="next-tasks">
-            <div class="next-tasks-title">Current Task Deadline</div>
+            <div class="next-tasks-title section-title">Current Task Deadline</div>
             <div class="next-tasks-header">
                 <div class="next-tasks-opportunity-name">Opportunity Name</div>
                 <div class="next-tasks-task-name">Action/Task Name</div>
@@ -30,6 +30,27 @@
                 <div class="next-tasks-deadline" *ngIf="!t.taskDeadLine"> - </div>
             </div>
         </div>
+        <div class="summary-seats">
+            <div class="next-tasks-title section-title">Seats</div>
+            <table>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Seat</th>
+                    <th>Opportunities</th>
+                    <th>Opportunity Owner</th>
+                </tr>
+                <ng-container *ngFor="let user of usersList">
+                    <tr *ngIf="user.Email">
+                        <td>{{ user.Title }}</td>
+                        <td>{{ user.Email }}</td>
+                        <td>a</td>
+                        <td>{{ user.opportunities }}</td>
+                        <td>{{ user.owner }}</td>
+                    </tr>
+                </ng-container>
+            </table>
+        </div>
     </div>
     <div class="summary-notifications">
         <div class="header">
@@ -41,4 +62,5 @@
             </div>
         </div>
     </div>
+    
 </div>

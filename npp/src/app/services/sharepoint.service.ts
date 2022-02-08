@@ -570,6 +570,17 @@ export class SharepointService {
       else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"'";
     }
 
+    /*
+    await this.licensing.removeSeat('aspedding@jdforecasting.com');
+    // await this.licensing.removeSeat('arandall@jdforecasting.com');
+    await this.licensing.removeSeat('BetaNPPDev@janddconsulting.onmicrosoft.com');
+    // await this.licensing.removeSeat('awu@jdforecasting.com');
+    // await this.licensing.removeSeat('cburrows@jdforecasting.com');
+    // await this.licensing.removeSeat('cdavies@jdforecasting.com');
+    */
+    // await this.licensing.removeSeat('awu@jdforecasting.com');
+    // await this.licensing.addSeat('awu@jdforecasting.com');
+
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
   }
 
@@ -1842,6 +1853,8 @@ export class SharepointService {
 
     if (!success) return false;
 
+    console.log('SEATS: added users stage', addedUsers);
+    console.log('SEATS: removed users stage', removedUsers);
     if (addedUsers.length > 0) {
       const OUGroup = await this.getGroup('OU-' + oppId);
       const SUGroup = await this.getGroup(`SU-${oppId}-${masterStageId}`);
@@ -1849,9 +1862,11 @@ export class SharepointService {
 
       for (const userId of addedUsers) {
         const user = await this.getUserInfo(userId);
-        if (success = await this.addUserToGroup(user, OUGroup.Id, true) && success) {
+        if (!(success = await this.addUserToGroup(user, OUGroup.Id, true) && success)) {
+          console.log('SEATS: continue');
           continue;
         }
+        console.log('SEATS: set SU',  user.Title);
         success = success && await this.addUserToGroup(user, SUGroup.Id);
         if (!success) return false;
       }
@@ -1909,6 +1924,18 @@ export class SharepointService {
 
   async getUserInfo(userId: number): Promise<User> {
     return await this.query(`siteusers/getbyid('${userId}')`).toPromise();
+  }
+
+  async getUsers(): Promise<User[]> {
+    const result = await this.query('siteusers').toPromise();
+    if (result.value) {
+      return result.value;
+    }
+    return [];
+  }
+
+  async getSeats(email: string) {
+    return await this.licensing.getSeats(email);
   }
 
   async getSiteOwners(): Promise<User[]> {
