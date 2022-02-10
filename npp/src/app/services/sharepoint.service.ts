@@ -1988,7 +1988,8 @@ export class SharepointService {
 
   async getCountriesList(): Promise<SelectInputList[]> {
     if (this.masterCountriesList.length < 1) {
-      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, "$orderby=Title asc")).map(t => { return { value: t.ID, label: t.Title } });
+      let count = await this.countItems(COUNTRIES_LIST);
+      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, `$orderby=Title asc&$top=${count}`)).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterCountriesList;
   }
