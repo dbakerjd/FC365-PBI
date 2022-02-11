@@ -19,7 +19,7 @@ export class CreateOpportunityComponent implements OnInit {
   model: any = { };
   options: FormlyFormOptions = {
     formState: {
-      hideStageNumbers: true,
+      // hideStageNumbers: true,
     },
   };
   fields: FormlyFieldConfig[] = [];
@@ -56,7 +56,7 @@ export class CreateOpportunityComponent implements OnInit {
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
     let businessUnits = await this.sharepoint.getBusinessUnitsList();
-    let stageNumbersList: SelectInputList[] = [];
+    // let stageNumbersList: SelectInputList[] = [];
     let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
@@ -71,16 +71,18 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.opportunity) {
       let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
       this.isInternal = type.extra?.isInternal;
+      console.log('complete isInternal', type, this.oppTypes, this.isInternal);
       this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
-      if (this.data?.forceType) { // force Phase opportunity (complete opportunity option)
-        this.oppTypes = await this.sharepoint.getOpportunityTypesList('Phase');
+      if (this.data?.forceInternal) { // force Phase opportunity (complete opportunity option)
+        this.isInternal = true;
+        this.oppTypes = this.oppTypes.filter(el => el.extra.isInternal);
         this.opportunity.OpportunityTypeId = -1;
         if (this.oppTypes.length > 0) {
           this.opportunity.OpportunityTypeId = this.oppTypes[0].value;
-          this.model.stageType = 'Phase';
-          stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
+          // this.model.stageType = 'Phase';
+          // stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
         }
       }
 
@@ -89,7 +91,7 @@ export class CreateOpportunityComponent implements OnInit {
         indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
       }
       // if we are cloning opportunity, get first stage info
-      if (this.data?.createFrom && !this.data?.forceType) {
+      if (this.data?.createFrom && !this.data?.forceInternal) {
         this.stage = await this.sharepoint.getFirstStage(this.opportunity);
         if (this.stage) {
           defaultStageUsersList = await this.sharepoint.getUsersList(this.stage.StageUsersId);
@@ -302,7 +304,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'stageType',
           type: 'input',
           hideExpression: true,
-        }, {
+        }, /*{
           key: 'StageNumber',
           type: 'select',
           templateOptions: {
@@ -311,7 +313,7 @@ export class CreateOpportunityComponent implements OnInit {
             required: true,
           },
           hideExpression: (m, fs) => fs.hideStageNumbers,
-        }, {
+        }, */{
           key: 'Stage.StageUsersId',
           type: 'ngsearchable',
           templateOptions: {
@@ -359,9 +361,9 @@ export class CreateOpportunityComponent implements OnInit {
     this.fields[0].hideExpression = true;
     this.fields[1].hideExpression = this.fields[2].hideExpression = false;
 
-    if (this.data?.forceType) {
-      this.options.formState.hideStageNumbers = !this.data.forceType;
-    }
+    // if (this.data?.forceInternal) {
+    //   this.options.formState.hideStageNumbers = !this.data.forceInternal;
+    // }
   }
 
   async onSubmit() {
@@ -381,7 +383,7 @@ export class CreateOpportunityComponent implements OnInit {
         data: this.model.Opportunity
       });
     } else {
-      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage, this.model.StageNumber);
+      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
       if (newOpp) {
         await this.sharepoint.createGeographies(
           newOpp.opportunity.ID,

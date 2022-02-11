@@ -963,12 +963,21 @@ export class SharepointService {
     return result.StageType;
   }
 
+  async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
+    const oppType = await this.getOpportunityType(oppTypeId);
+    console.log('complete opptype', oppType);
+    if (oppType?.isInternal) {
+      return oppType.isInternal;
+    }
+    return false;
+  }
+
   async getOpportunityType(OpportunityTypeId: number): Promise<OpportunityType | null> {
     let result: OpportunityType | undefined;
     if (this.masterOpportunitiesTypes.length > 0) {
       result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
     } else {
-      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
+      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId);
     }
     if (result == null) {
       return null;

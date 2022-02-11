@@ -498,19 +498,20 @@ export class ActionsListComponent implements OnInit {
 
     dialogRef.afterClosed()
       .pipe(take(1))
-      .subscribe(async response => {
-        if (response) {
+      .subscribe(async completeResponse => {
+        if (completeResponse) {
           // complete opportunity
           if (!this.opportunity) return;
 
-          /*
-          const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
-          if (await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId) !== 'Phase') {
+          // const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
+          // console.log('complete stageType', stageType);
+          console.log('complete isInternak', await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId));
+          if (!await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
               data: {
-                message: `You can move to a Phase process from this opportunity. Do you want to start it?`,
+                message: `You can move to a Product Development Opportunity. Do you want to start it?`,
                 confirmButtonText: 'Yes',
                 cancelButtonText: 'No, complete only'
               }
@@ -518,10 +519,9 @@ export class ActionsListComponent implements OnInit {
 
             newPhaseDialog.afterClosed()
               .pipe(take(1))
-              .subscribe(async response => {
+              .subscribe(async newInternalResponse => {
                 if (!this.opportunity) return;
-
-                if (response) {
+                if (newInternalResponse) {
 
                   // create new
                   this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
@@ -530,7 +530,7 @@ export class ActionsListComponent implements OnInit {
                     data: {
                       opportunity: { ...this.opportunity },
                       createFrom: true,
-                      forceType: true
+                      forceInternal: true
                     }
                   });
 
@@ -543,7 +543,7 @@ export class ActionsListComponent implements OnInit {
                         // complete current opp
                         await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
 
-                        this.toastr.success("A opportunity of type 'phase' was created successfully", result.data.opportunity.Title);
+                        this.toastr.success("A new opportunity was created successfully", result.data.opportunity.Title);
                         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
@@ -562,24 +562,22 @@ export class ActionsListComponent implements OnInit {
                         this.toastr.error("The opportunity couldn't be created", "Try again");
                       }
                     });
-                } else if (response === false) {
-                  // complete
+                } else if (newInternalResponse === false) {
+                  // only complete
                   await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
                   this.opportunity.OpportunityStatus = 'Approved';
                   this.toastr.success("The opportunity has been completed", this.opportunity.Title);
                 }
               });
-          } else {
-            // complete
+          } else { // without possibility of pass to internal => complete
             await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
             this.opportunity.OpportunityStatus = 'Approved';
             this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }
-          */
          // complete
-         await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
-         this.opportunity.OpportunityStatus = 'Approved';
-         this.toastr.success("The opportunity has been completed", this.opportunity.Title);
+        //  await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+        //  this.opportunity.OpportunityStatus = 'Approved';
+        //  this.toastr.success("The opportunity has been completed", this.opportunity.Title);
         }
       });
   }
