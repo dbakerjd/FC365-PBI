@@ -965,7 +965,6 @@ export class SharepointService {
 
   async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
     const oppType = await this.getOpportunityType(oppTypeId);
-    console.log('complete opptype', oppType);
     if (oppType?.isInternal) {
       return oppType.isInternal;
     }
@@ -2722,6 +2721,18 @@ export class SharepointService {
     }
   }
 
+  async copyAllFolderFiles(origin: string, dest: string, copyCSVs: boolean = true) {
+    let files = await this.readEntityFolderFiles(origin);
+    for(let i=0;i<files.length; i++){
+      let model = files[i];
+      let path = await this.copyFile(model.ServerRelativeUrl, dest, model.Name);
+      if(copyCSVs) {
+        let arrUrl = model.ServerRelativeUrl.split("/"); // server relative url base for path
+        await this.copyCSV(model, "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path);
+      }
+    }
+  }
+
   async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
 
     await this.http.post(
@@ -3007,4 +3018,28 @@ export class SharepointService {
     } else return false;
   }
 
-}
+  /** Copy files of one external opportunity to an internal one */
+  async copyFilesExternalToInternal(extOppId: number, intOppId: number) {
+    const externalEntity = await this.getOpportunity(extOppId);
+    const internalEntity = await this.getOpportunity(intOppId);
+
+    // copy models
+    // [TODO] search for last stage number (now 3, but can change?)
+    const externalModelsFolder = FILES_FOLDER + `/${externalEntity.BusinessUnitId}/${externalEntity.ID}/3/0`;
+    const internalModelsFolder = FOLDER_WIP + `/${internalEntity.BusinessUnitId}/${internalEntity.ID}/0/0`;
+    const externalGeographies = await this.getEntityGeographies(externalEntity.ID);
+    const internalGeographies = await this.getEntityGeographies(internalEntity.ID);
+    for (const extGeo of externalGeographies) {
+      const intGeo = internalGeographies.find((g: EntityGeography) => {
+        if (g.EntityGeographyType == 'Geography') return extGeo.GeographyId === g.GeographyId;
+        else if (g.EntityGeographyType == 'Country') return extGeo.CountryId === g.CountryId;
+        else return false;
+      });
+
+      if (intGeo) {
+        await this.copyAllFolderFiles(`${externalModelsFolder}/${extGeo.Id}/0/`, `${internalModelsFolder}/${intGeo.Id}/0/`);
+      }
+    }
+  }
+
+} 

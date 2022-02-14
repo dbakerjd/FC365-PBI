@@ -503,9 +503,6 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
-          // const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
-          // console.log('complete stageType', stageType);
-          console.log('complete isInternak', await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId));
           if (!await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
@@ -550,11 +547,13 @@ export class ActionsListComponent implements OnInit {
                           "initialize opportunity " + result.data.opportunity.id
                         );
                         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+                          if (!this.opportunity) return;
+                          this.sharepoint.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active
                           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
                           this.jobs.finishJob(job.id);
                           this.toastr.success("The opportunity is now active", opp.Title);
-                          this.router.navigate(['opportunities', opp.ID, 'actions']);
+                          this.router.navigate(['opportunities', opp.ID, 'files']);
                         }).catch(e => {
                           this.jobs.finishJob(job.id);
                         });

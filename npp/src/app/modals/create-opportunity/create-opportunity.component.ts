@@ -71,7 +71,6 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.opportunity) {
       let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
       this.isInternal = type.extra?.isInternal;
-      console.log('complete isInternal', type, this.oppTypes, this.isInternal);
       this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
