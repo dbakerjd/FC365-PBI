@@ -106,7 +106,7 @@ export class TeamsService {
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
     }
-    protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
+    protectedResourceMap.set('graph.microsoft.com', ['User.Read', 'GroupMember.ReadWrite.All']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
     //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
     protectedResourceMap.set('fc365.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
@@ -134,6 +134,7 @@ export class TeamsService {
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       scopes.push('https://'+sharepointUri+'/.default');
+      // scopes.push('https://graph.microsoft.com/.default');
     }
 
     return { 
