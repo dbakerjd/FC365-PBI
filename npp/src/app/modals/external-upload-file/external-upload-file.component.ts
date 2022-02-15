@@ -1,5 +1,4 @@
 import { Inject, Component, OnInit } from '@angular/core';
-import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
