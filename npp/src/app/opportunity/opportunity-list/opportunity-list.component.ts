@@ -136,6 +136,10 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
+        console.log('opportunity created', opp);
+        if (opp.OpportunityType?.isInternal) {
+          opp.progress = -1;
+        }
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );

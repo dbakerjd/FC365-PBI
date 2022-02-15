@@ -103,7 +103,7 @@ export class InlineNppDisambiguationService {
     return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }
 
-  async createForecastCycle(entity: Brand | Opportunity, values: any) {
+  async createForecastCycle(entity: Opportunity, values: any) {
     return this.sharepoint.createEntityForecastCycle(entity, values);    
   }
 

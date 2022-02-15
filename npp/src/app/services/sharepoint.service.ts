@@ -699,7 +699,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,OpportunityType/isInternal,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -867,18 +867,19 @@ export class SharepointService {
     permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
     for (const f of folders.ro) {
       let folderGroups = [...groups]; // copy default groups
-      let GUGroup;
+      // let GUGroup;
       if (f.GeographyID) {
-        GUGroup = await this.createGroup(
-          `OU-${opportunity.ID}-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
+        // GUGroup = await this.createGroup(
+        //   `OU-${opportunity.ID}-${f.GeographyID}`, 
+        //   'Geography ID ' + f.GeographyID);
         let DUGroup = await this.createGroup(
           `DU-${opportunity.ID}-0-${f.GeographyID}`, 
           'Geography ID ' + f.GeographyID);
-        if (GUGroup && DUGroup) {
-          folderGroups.push( { type: 'GU', data: GUGroup} );
+        // if (GUGroup && DUGroup) {
+        if (DUGroup) {
+          // folderGroups.push( { type: 'GU', data: GUGroup} );
           folderGroups.push( { type: 'DU', data: DUGroup} );
-          await this.addUserToGroup(owner, GUGroup.Id);
+          // await this.addUserToGroup(owner, GUGroup.Id);
           await this.addUserToGroup(owner, DUGroup.Id);
         }
       } 
@@ -2719,37 +2720,6 @@ export class SharepointService {
     return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
   }
 
-  async updateBrandGeographyUsers(brandId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
-    // groups needed
-    const BUGroup = await this.getGroup('BU-' + brandId);
-    const BOGroup = await this.getGroup('BO-' + brandId);
-    let groupName = `BU-${brandId}-${geoId}`;
-    const GUGroup = await this.getGroup(groupName);
-
-    if (!BUGroup || !BOGroup || !GUGroup) throw new Error("Permission groups missing.");
-
-    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
-    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
-
-    let success = true;
-    for (const userId of removedUsers) {
-      success = success && await this.removeUserFromGroup(GUGroup.Id, userId);
-      success = success && await this.removeUserFromGroup(BUGroup.Id, userId);
-    }
-
-    if (!success) return success;
-
-    for (const userId of addedUsers) {
-      const user = await this.getUserInfo(userId);
-      if (user.LoginName) {
-        success = success && await this.addUserToGroup(user, GUGroup.Id);
-        success = success && await this.addUserToGroup(user, BUGroup.Id);
-        if (!success) return success;
-      }
-    }
-    return success;
-  }
-
   async getEntityForecastCycles(entity: Brand | Opportunity) {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
@@ -2758,7 +2728,7 @@ export class SharepointService {
     ); 
   }
 
-  async createEntityForecastCycle(entity: Opportunity | Brand, values: any) {
+  async createEntityForecastCycle(entity: Opportunity, values: any) {
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
     let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
     let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
@@ -2846,7 +2816,8 @@ export class SharepointService {
     }
   }
 
-  async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
+  /** Updates a read only field fieldname of the list's element with the value */
+  private async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
 
     await this.http.post(
       this.licensing.getSharepointApiUri() + `lists/getByTitle('${list}')/items(${elementId})/validateUpdateListItem`,
