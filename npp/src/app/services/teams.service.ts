@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { LogLevel, PopupRequest, AccountInfo, RedirectRequest, AuthenticationResult, PublicClientApplication, BrowserCacheLocation, InteractionType } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { Subject } from 'rxjs';
@@ -58,7 +57,7 @@ export class TeamsService {
     }
   });
 
-  constructor( private router: Router, private errorService: ErrorService, private licensing: LicensingService) { 
+  constructor( private errorService: ErrorService, private licensing: LicensingService) { 
 
     microsoftTeams.initialize(() => {
       this.initialized = true;

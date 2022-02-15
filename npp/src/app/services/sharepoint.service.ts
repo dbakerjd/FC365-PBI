@@ -5,6 +5,7 @@ import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
+import { GraphService } from './graph.service';
 
 
 export interface Opportunity {
@@ -398,7 +399,13 @@ export class SharepointService {
   provisioningAPI = "https://nppprovisioning20210831.azurewebsites.net/api/";
   public app: AppType | undefined;
 
-  constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService, private readonly toastr: ToastrService) { }
+  constructor(
+    private http: HttpClient, 
+    private error: ErrorService, 
+    private licensing: LicensingService, 
+    private readonly msgraph: GraphService,
+    private readonly toastr: ToastrService
+  ) { }
 
   async test() {
     // const r = await this.query('siteusers').toPromise();
@@ -1641,6 +1648,7 @@ export class SharepointService {
     return success;
   }
 
+  /** Adds a user to a Sharepoint group. If ask for seat, also try to assign a seat for the user */
   async addUserToGroup(user: User, groupId: number, askForSeat = false): Promise<boolean> {
     try {
       if (askForSeat && user.Email) {
@@ -1648,8 +1656,9 @@ export class SharepointService {
         if (await this.isInGroup(user.Id, groupId)) {
           return true;
         }
-
-        await this.licensing.addSeat(user.Email);
+        if (await this.licensing.addSeat(user.Email)) {
+          this.msgraph.addCurrentUserToPowerBI_RLSGroup();
+        }
       }
       await this.http.post(
         this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
@@ -1669,10 +1678,11 @@ export class SharepointService {
     }
   }
 
+  /** Remove a user from a Sharepoint group. If removeSeat, also free his seat */
   async removeUserFromGroup(group: string | number, userId: number, removeSeat = false): Promise<boolean> {
     let url = '';
     if (typeof group == 'string') {
-      url = this.licensing.getSharepointApiUri() + `sitegroups//getbyname('${group}')/users/removebyid(${userId})`;
+      url = this.licensing.getSharepointApiUri() + `sitegroups/getbyname('${group}')/users/removebyid(${userId})`;
     } else if (typeof group == 'number') {
       url = this.licensing.getSharepointApiUri() + `sitegroups(${group})/users/removebyid(${userId})`;
     }
@@ -1680,7 +1690,9 @@ export class SharepointService {
       if (removeSeat) {
         const user = await this.getUserInfo(userId);
         if (user.Email) {
-          await this.licensing.removeSeat(user.Email);
+          if (await this.licensing.removeSeat(user.Email)) {
+            this.msgraph.removeCurrentUserToPowerBI_RLSGroup();
+          }
         }
       }
       await this.http.post(
