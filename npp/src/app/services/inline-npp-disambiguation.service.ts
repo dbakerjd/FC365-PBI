@@ -96,11 +96,7 @@ export class InlineNppDisambiguationService {
   }
 
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
-    if(this.isInline) {
-      return this.sharepoint.uploadInlineFile(fileData, folder, fileName, metadata);
-    } else {
-      return this.sharepoint.uploadNPPFile(fileData, folder, fileName, metadata);
-    }
+    return this.sharepoint.uploadInternalFile(fileData, folder, fileName, metadata);
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
