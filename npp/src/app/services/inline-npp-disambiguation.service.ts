@@ -103,10 +103,6 @@ export class InlineNppDisambiguationService {
     }
   }
 
-  async updateEntityGeographyUsers(entityId: number, geoId: number, currentUsersList: number[], newUsersList: number[]) {
-    return this.sharepoint.updateEntityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
-  }
-
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
     return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }

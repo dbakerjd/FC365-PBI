@@ -2790,50 +2790,6 @@ export class SharepointService {
     return success;
   }
 
-  async updateEntityGeographyUsers(oppId: number, geoId: number, currentUsersList: number[], newUsersList: number[]){
-    // groups needed
-    const BUGroup = await this.getGroup('OU-' + oppId);
-    const BOGroup = await this.getGroup('OO-' + oppId);
-    let groupName = `OU-${oppId}-${geoId}`;
-    const GUGroup = await this.getGroup(groupName);
-
-    if (!BUGroup || !BOGroup || !GUGroup) throw new Error("Permission groups missing.");
-
-    let geoCountriesList: Country[] = [];
-    if (geoId) {
-      // groupName += `-${geoId}`;
-      geoCountriesList = await this.getCountriesOfEntityGeography(geoId);
-    }
-
-    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
-    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
-
-    let success = true;
-    for (const userId of removedUsers) {
-      success = success && await this.removeUserFromGroup(GUGroup.Id, userId);
-      if (success && geoId) { // it's model folder
-        this.removePowerBI_RLS(oppId, geoCountriesList, userId);
-      }
-      success = success && await this.removeUserFromGroup(BUGroup.Id, userId);
-    }
-
-    if (!success) return success;
-
-    for (const userId of addedUsers) {
-      const user = await this.getUserInfo(userId);
-      if (user.LoginName) {
-        success = success && await this.addUserToGroup(user, GUGroup.Id);
-        if (success && geoId) { // it's model folder
-          this.addPowerBI_RLS(user, oppId, geoCountriesList);
-        }
-        success = success && await this.addUserToGroup(user, BUGroup.Id);
-        if (!success) return success;
-      }
-    }
-    return success;
-  }
-
-
   async getEntityForecastCycles(entity: Brand | Opportunity) {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     

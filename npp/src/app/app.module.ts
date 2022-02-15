@@ -59,7 +59,6 @@ import { CommentsListComponent } from './modals/comments-list/comments-list.comp
 import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
 import { InlineNppDisambiguationService } from './services/inline-npp-disambiguation.service';
 import { ExternalUploadFileComponent } from './modals/external-upload-file/external-upload-file.component';
-import { ExternalFolderPermissionsComponent } from './modals/external-folder-permissions/external-folder-permissions.component';
 import { ExternalApproveModelComponent } from './modals/external-approve-model/external-approve-model.component';
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
@@ -127,7 +126,6 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
     CommentsListComponent,
     ApproveModelComponent,
     ExternalUploadFileComponent,
-    ExternalFolderPermissionsComponent,
     ExternalApproveModelComponent,
     EntityEditFileComponent,
     CreateBrandComponent,
