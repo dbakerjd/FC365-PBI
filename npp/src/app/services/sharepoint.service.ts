@@ -89,7 +89,7 @@ export interface OpportunityType {
   ID: number;
   Title: string;
   StageType: string;
-  isInternal: boolean;
+  IsInternal: boolean;
 }
 
 export interface Indication {
@@ -412,9 +412,9 @@ export class SharepointService {
     // const r = await this.query('siteusers', "$filter=isSiteAdmin eq true").toPromise();
     // const r = await this.query("/_vti_bin/ListData.svc/UserInformationList?$filter=IsSiteAdmin eq true").toPromise();
     // const r = await this.getAllItems(USER_INFO_LIST, "$filter=IsSiteAdmin eq true");
-    const siteTitle = await this.query('title').toPromise();
-    const r = await this.getGroupMembers(siteTitle.value + ' Owners');
-    console.log('users', r);
+    // const siteTitle = await this.query('title').toPromise();
+    // const r = await this.getGroupMembers(siteTitle.value + ' Owners');
+    // console.log('users', r);
   }
 
   async canConnect(): Promise<boolean> {
@@ -597,7 +597,7 @@ export class SharepointService {
     const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
     let stage = null;
 
-    if(!opportunityType?.isInternal) {
+    if(!opportunityType?.IsInternal) {
       const stageType = opportunityType?.StageType;
       if(!stageType) throw new Error("Could not determine Opportunity Type");
       const masterStage = await this.getMasterStage(stageType, stageStartNumber);
@@ -699,7 +699,7 @@ export class SharepointService {
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,OpportunityType/isInternal,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
+    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -833,58 +833,22 @@ export class SharepointService {
     }
     await this.addUserToGroup(owner, OOGroup.Id);
     
-    // await this.addUserToGroup(owner.LoginName, SUGroup.Id); // not needed
-
     let groups: SPGroupListItem[] = [];
     groups.push({ type: 'OU', data: OUGroup });
     groups.push({ type: 'OO', data: OOGroup });
-
-    // add groups to the Stage
-    let permissions = await this.getGroupPermissions(ENTITY_STAGES_LIST_NAME);
-    await this.setPermissions(permissions, groups, 0);
 
     // Folders
     const folders = await this.createInternalFolders(opportunity, geographies);
 
     // add groups to folders
-    permissions = await this.getGroupPermissions(FILES_FOLDER);
-    for (const f of folders.rw) {
-      let folderGroups = [...groups]; // copy default groups
-      if (f.DepartmentID) {
-        let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-      } else {
-        if (f.GeographyID) {
-          let DUGroup = await this.createGroup(
-            `DU-${opportunity.ID}-0-${f.GeographyID}`, 
-            'Geography ID ' + f.GeographyID);
-          if (DUGroup) folderGroups.push( { type: 'DU', data: DUGroup });
-        } 
-      }
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-    }
-
-    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    for (const f of folders.ro) {
-      let folderGroups = [...groups]; // copy default groups
-      // let GUGroup;
-      if (f.GeographyID) {
-        // GUGroup = await this.createGroup(
-        //   `OU-${opportunity.ID}-${f.GeographyID}`, 
-        //   'Geography ID ' + f.GeographyID);
-        let DUGroup = await this.createGroup(
-          `DU-${opportunity.ID}-0-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
-        // if (GUGroup && DUGroup) {
-        if (DUGroup) {
-          // folderGroups.push( { type: 'GU', data: GUGroup} );
-          folderGroups.push( { type: 'DU', data: DUGroup} );
-          // await this.addUserToGroup(owner, GUGroup.Id);
-          await this.addUserToGroup(owner, DUGroup.Id);
-        }
-      } 
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-    }
+    const RefDocsPermissions = await this.getGroupPermissions(FILES_FOLDER);
+    await this.createFolderGroups(opportunity.ID, RefDocsPermissions, folders.rw.filter(el => el.DepartmentID), groups);
+    const WIPpermissions = await this.getGroupPermissions(FOLDER_WIP);
+    await this.createFolderGroups(opportunity.ID, WIPpermissions, folders.rw.filter(el => el.GeographyID), groups);
+    const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
+    await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
+    const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
+    await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);
       
     return true;
   }
@@ -960,6 +924,29 @@ export class SharepointService {
     return true;
   }
 
+  /** Creates the DU folder groups and sets permissions for a list of folders 
+   * 
+   * @param oppId The opportunity ID containing the folders
+   * @param permissions List of group permissions to set
+   * @param folders List of folders to create the groups
+   * @param baseGroups Base of groups to include in the permissions
+  */
+  private async createFolderGroups(oppId: number, permissions: GroupPermission[], folders: SystemFolder[], baseGroups: SPGroupListItem[]) {
+    console.log('createFolderGroups', folders, permissions);
+    for (const f of folders) {
+      let folderGroups = [...baseGroups]; // copy default groups
+      if (f.DepartmentID) {
+        let DUGroup = await this.createGroup(`DU-${oppId}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+      } else if (f.GeographyID) {
+        let DUGroup = await this.createGroup(`DU-${oppId}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+      }
+      console.log('createFolderGroups groups', folderGroups);
+      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    }
+  }
+
   async getStageType(OpportunityTypeId: number): Promise<string> {
     let result: OpportunityType | undefined;
     if (this.masterOpportunitiesTypes.length > 0) {
@@ -975,8 +962,8 @@ export class SharepointService {
 
   async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
     const oppType = await this.getOpportunityType(oppTypeId);
-    if (oppType?.isInternal) {
-      return oppType.isInternal;
+    if (oppType?.IsInternal) {
+      return oppType.IsInternal;
     }
     return false;
   }
@@ -2246,24 +2233,24 @@ export class SharepointService {
       const folders = await this.createInternalFolders(entity, newGeos);
       
       // add groups to folders
-      permissions = await this.getGroupPermissions(FILES_FOLDER);
+      const departmentPermissions = await this.getGroupPermissions(FILES_FOLDER);
+      const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
       for (const f of folders.rw) {
         let folderGroups = [...groups]; // copy default groups
         if (f.DepartmentID) {
           let DUGroup = await this.createGroup(`DU-${entity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
           if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+          await this.setPermissions(departmentPermissions, folderGroups, f.ServerRelativeUrl);
         } else {
           if (f.GeographyID) {
-            let DUGroup = await this.createGroup(
-              `DU-${entity.ID}-0-${f.GeographyID}`, 
-              'Geography ID ' + f.GeographyID);
+            let DUGroup = await this.createGroup(`DU-${entity.ID}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
             if (DUGroup) {
-              folderGroups.push( { type: 'DU', data: DUGroup} );
+              folderGroups.push({ type: 'DU', data: DUGroup });
               await this.addUserToGroup(owner, DUGroup.Id);
             }
-          } 
+            await this.setPermissions(WIPPermissions, folderGroups, f.ServerRelativeUrl);
+          }
         }
-        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
       }
 
       permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');

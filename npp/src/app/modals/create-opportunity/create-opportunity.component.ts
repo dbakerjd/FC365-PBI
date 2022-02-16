@@ -70,13 +70,13 @@ export class CreateOpportunityComponent implements OnInit {
     
     if (this.opportunity) {
       let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
-      this.isInternal = type.extra?.isInternal;
+      this.isInternal = type.extra?.IsInternal;
       this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       if (this.data?.forceInternal) { // force Phase opportunity (complete opportunity option)
         this.isInternal = true;
-        this.oppTypes = this.oppTypes.filter(el => el.extra.isInternal);
+        this.oppTypes = this.oppTypes.filter(el => el.extra.IsInternal);
         this.opportunity.OpportunityTypeId = -1;
         if (this.oppTypes.length > 0) {
           this.opportunity.OpportunityTypeId = this.oppTypes[0].value;
@@ -211,7 +211,7 @@ export class CreateOpportunityComponent implements OnInit {
                 .subscribe(
                   (selectedValue) => {
                     let t = this.oppTypes.find(el => el.value == selectedValue);
-                    this.isInternal = t ? t.extra.isInternal : false;
+                    this.isInternal = t ? t.extra.IsInternal : false;
                     this.sharepoint.getStageType(selectedValue).then(r => {
                       if (r) this.model.stageType = r;
                     });
@@ -350,7 +350,7 @@ export class CreateOpportunityComponent implements OnInit {
       return;
     }
     let optype = this.oppTypes.find(el => el.extra.ID == this.model.Opportunity.OpportunityTypeId);
-    if(optype && optype.extra && optype.extra.isInternal) {
+    if(optype && optype.extra && optype.extra.IsInternal) {
       this.onSubmit();
       return;
     }
