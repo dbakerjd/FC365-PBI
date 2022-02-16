@@ -194,9 +194,11 @@ export class ActionsListComponent implements OnInit {
   }
 
   initLastComments() {
-    this.currentFiles.forEach(el => {
-      el.lastComments = this.getLatestComments(el);
-    });
+    if (this.currentSection === 'documents' && this.currentFolder?.containsModels) {
+      this.currentFiles.forEach(el => {
+        el.lastComments = this.getLatestComments(el);
+      });
+    }
   }
 
   getLatestComments(file: NPPFile): FileComments[] {
