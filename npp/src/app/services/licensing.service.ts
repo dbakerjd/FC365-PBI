@@ -19,6 +19,13 @@ interface JDLicenseContext {
   teamSiteDomain: string;
 }
 
+interface SeatsResponse {
+  TotalSeats: number;
+  AssignedSeats: number;
+  AvailableSeats: number;
+  UserGroupsCount: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -87,7 +94,7 @@ export class LicensingService {
     
   }
 
-  async addSeat(email: string) {
+  async addSeat(email: string): Promise<SeatsResponse | boolean> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -99,7 +106,7 @@ export class LicensingService {
         userEmail: email
       }, {
         headers: headers
-      }).toPromise();
+      }).toPromise() as SeatsResponse;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
@@ -108,7 +115,7 @@ export class LicensingService {
     }
   }
 
-  async removeSeat(email: string) {
+  async removeSeat(email: string): Promise<SeatsResponse | boolean> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -124,7 +131,7 @@ export class LicensingService {
             applicationIdentity: this.licenseContext,
             userEmail: email
           },
-        }).toPromise();
+        }).toPromise() as SeatsResponse;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;

@@ -1621,9 +1621,10 @@ export class SharepointService {
         if (await this.isInGroup(user.Id, groupId)) {
           return true;
         }
-        if (await this.licensing.addSeat(user.Email)) {
-          this.msgraph.addCurrentUserToPowerBI_RLSGroup();
-        }
+        const seated = await this.licensing.addSeat(user.Email);
+        // if (seated?.UserGroupsCount == 1) {
+          this.msgraph.addUserToPowerBI_RLSGroup();
+        // }
       }
       await this.http.post(
         this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
@@ -1656,7 +1657,7 @@ export class SharepointService {
         const user = await this.getUserInfo(userId);
         if (user.Email) {
           if (await this.licensing.removeSeat(user.Email)) {
-            this.msgraph.removeCurrentUserToPowerBI_RLSGroup();
+            this.msgraph.removeUserToPowerBI_RLSGroup();
           }
         }
       }
