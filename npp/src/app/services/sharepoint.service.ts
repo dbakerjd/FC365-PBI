@@ -1981,6 +1981,14 @@ export class SharepointService {
     return await this.licensing.getSeats(email);
   }
 
+  async addseattouser(email: string) {
+    await this.licensing.addSeat(email);
+  }
+
+  async removeseattouser(email: string) {
+    await this.licensing.removeSeat(email);
+  }
+
   async getSiteOwners(): Promise<User[]> {
     const siteTitle = await this.query('title').toPromise();
     if (siteTitle.value) {

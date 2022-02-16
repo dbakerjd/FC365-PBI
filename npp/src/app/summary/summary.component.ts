@@ -45,7 +45,11 @@ export class SummaryComponent implements OnInit {
       /** seats */
       this.usersList = await this.sharepoint.getUsers();
       console.log('SEATS: users', this.usersList);
+      this.sharepoint.addseattouser('demouser@jdforecasting.com');
+      this.sharepoint.removeseattouser('demouser@jdforecasting.com');
+      // this.sharepoint.getSeats('demouser@jdforecasting.com');
 
+      /*
       for (let index = 0; index < this.usersList.length; index++) {
         const element: any = this.usersList[index];
         // element['seats'] = await this.sharepoint.getSeats(element.Email);
@@ -53,6 +57,7 @@ export class SummaryComponent implements OnInit {
         const groups = await this.sharepoint.getUserGroups(element.Id);
         const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
         const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
+        // element['seats'] = this.sharepoint.getSeats(element.Email);
         element['opportunities'] = OUgroups.length;
         element['owner'] = OOgroups.length;
         console.log('SEATS: groups', OUgroups);
@@ -60,6 +65,7 @@ export class SummaryComponent implements OnInit {
       }
 
       console.log('SEATS: users2', this.usersList);
+      */
       
       /** endseats */
 

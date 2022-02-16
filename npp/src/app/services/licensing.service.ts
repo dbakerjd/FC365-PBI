@@ -95,12 +95,15 @@ export class LicensingService {
       'Access-Control-Allow-Methods': 'POST',
     });
     try {
-      return await this.http.post(this.licensingApiUrl + '/seats', {
-        applicationIdentity: this.licenseContext,
-        userEmail: email
-      }, {
-        headers: headers
-      }).toPromise();
+      if (this.licenseContext) {
+        return await this.http.post(this.licensingApiUrl + '/seats', {
+          applicationIdentity: this.licenseContext,
+          userEmail: email
+        }, {
+          headers: headers
+        }).toPromise();
+      }
+      return false;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
@@ -116,16 +119,19 @@ export class LicensingService {
       'Access-Control-Allow-Methods': 'DELETE',
     });
     try {
-      return await this.http.request(
-        'delete',
-        this.licensingApiUrl + '/seats',
-        {
-          headers: headers,
-          body: {
-            applicationIdentity: this.licenseContext,
-            userEmail: email
-          },
-        }).toPromise();
+      if (this.licenseContext) {
+        return await this.http.request(
+          'delete',
+          this.licensingApiUrl + '/seats',
+          {
+            headers: headers,
+            body: {
+              applicationIdentity: this.licenseContext,
+              userEmail: email
+            },
+          }).toPromise();
+        }
+        return false;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
@@ -134,43 +140,29 @@ export class LicensingService {
     }
   }
 
-  async getSeats(email: string) {
+  async getSeats(email: string): Promise<number> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET',
     });
     try {
-      // return await this.http.get(this.licensingApiUrl + '/seats',{
-      //   applicationIdentity: this.licenseContext,
-      //   userEmail: email
-      // }).toPromise();
-      if (this.licenseContext)
-      // return await this.http.get(this.licensingApiUrl + '/seats', {
-      //   headers: headers,
-      //   params: {
-      //     userEmail: email,
-      //     teamSiteDomain: this.licenseContext?.teamSiteDomain,
-      //     appId: this.licenseContext?.appId
-      //   }
-      // }).toPromise();
-      return await this.http.request(
-        'get',
-        this.licensingApiUrl + '/seats', 
-        { 
-          headers: headers,
-          body: {
-            applicationIdentity: this.licenseContext,
-            userEmail: email
-          },
+      if (this.licenseContext) {
+        const result = await this.http.post(this.licensingApiUrl + '/userseats', {
+          applicationIdentity: this.licenseContext,
+          userEmail: email
+        }, {
+          headers: headers
         }).toPromise();
-
+        console.log('result', 0);
+        return 0;
+      }
       return 0;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return false;
+      return -1;
     }
   }
 
