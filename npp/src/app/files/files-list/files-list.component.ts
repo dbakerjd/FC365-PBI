@@ -406,7 +406,7 @@ export class FilesListComponent implements OnInit {
       */
 
       if(!fileInfo.LinkingUri) {
-        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        this.toastr.error("This file type can't be opened online. Try downloading it instead.");
         return;
       }
       
