@@ -273,6 +273,11 @@ export class ActionsListComponent implements OnInit {
           // update view
           await this.updateCurrentFiles();
           this.toastr.success("The model has been approved!", "Forecast Model");
+          await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (result.success === false) {
           this.toastr.error("There was a problem approving the forecast model", 'Try again');
         }
@@ -309,7 +314,7 @@ export class ActionsListComponent implements OnInit {
       });
   }
 
-  createScenario(file: NPPFile) {
+  createScenario(file: NPPFile, departmentId: number) {
     this.dialogInstance = this.matDialog.open(CreateScenarioComponent, {
       height: '450px',
       width: '405px',
@@ -324,6 +329,11 @@ export class ActionsListComponent implements OnInit {
         if (success === true) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
           await this.updateCurrentFiles();
+          await this.notifications.modelNewScenarioNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
         }
