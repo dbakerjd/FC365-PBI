@@ -909,18 +909,7 @@ export class SharepointService {
 
     // add groups to folders
     permissions = await this.getGroupPermissions(FILES_FOLDER);
-    for (const f of folders) {
-      let folderGroups = [...groups]; // copy default groups
-      if (f.DepartmentID) {
-        let DUGroup = await this.createGroup(`DU-${opportunity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-      } else {
-        let DUGroup = await this.createGroup(`DU-${opportunity.ID}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
-        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-      }
-    }
+    await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
     return true;
   }
 
@@ -2233,46 +2222,15 @@ export class SharepointService {
       const folders = await this.createInternalFolders(entity, newGeos);
       
       // add groups to folders
-      const departmentPermissions = await this.getGroupPermissions(FILES_FOLDER);
+      // department folders non needed
+      // const departmentPermissions = await this.getGroupPermissions(FILES_FOLDER);
+      // await this.createFolderGroups(entity.ID, departmentPermissions, folders.rw.filter(el => el.DepartmentID), groups);
       const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
-      for (const f of folders.rw) {
-        let folderGroups = [...groups]; // copy default groups
-        if (f.DepartmentID) {
-          let DUGroup = await this.createGroup(`DU-${entity.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-          if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.setPermissions(departmentPermissions, folderGroups, f.ServerRelativeUrl);
-        } else {
-          if (f.GeographyID) {
-            let DUGroup = await this.createGroup(`DU-${entity.ID}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
-            if (DUGroup) {
-              folderGroups.push({ type: 'DU', data: DUGroup });
-              await this.addUserToGroup(owner, DUGroup.Id);
-            }
-            await this.setPermissions(WIPPermissions, folderGroups, f.ServerRelativeUrl);
-          }
-        }
-      }
-
-      permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-      for (const f of folders.ro) {
-        let folderGroups = [...groups]; // copy default groups
-        let GUGroup;
-        if (f.GeographyID) {
-          GUGroup = await this.createGroup(
-            `OU-${entity.ID}-${f.GeographyID}`, 
-            'Geography ID ' + f.GeographyID);
-          let DUGroup = await this.createGroup(
-            `DU-${entity.ID}-0-${f.GeographyID}`, 
-            'Geography ID ' + f.GeographyID);
-          if (GUGroup && DUGroup) {
-            folderGroups.push( { type: 'GU', data: GUGroup} );
-            folderGroups.push( { type: 'DU', data: DUGroup} );
-            await this.addUserToGroup(owner, GUGroup.Id);
-            await this.addUserToGroup(owner, DUGroup.Id);
-          }
-        } 
-        await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-      }
+      await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
+      const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
+      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
+      const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
+      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);
     }
   }
 
