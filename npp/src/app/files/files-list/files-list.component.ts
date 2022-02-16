@@ -231,7 +231,7 @@ export class FilesListComponent implements OnInit {
           geographies: geographiesList,
           scenarios: await this.sharepoint.getScenariosList(),
           folderList: folders,
-          selectedFolder: this.currentSection == 'none' && this.selectedFolder ?  this.selectedFolder.ID : 'Forecast Models',
+          selectedFolder: this.currentSection == 'documents' && this.selectedFolder ?  this.selectedFolder.DepartmentID : 0,
           entity: this.entity
         }
       });
