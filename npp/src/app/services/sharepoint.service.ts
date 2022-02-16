@@ -1259,7 +1259,7 @@ export class SharepointService {
   }
 
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
-    let uploaded: any = await this.uploadFileQuery(fileData, folder, fileName);
+    let uploaded: any = await this.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
 
     if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
 
