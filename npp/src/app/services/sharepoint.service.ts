@@ -718,7 +718,7 @@ export class SharepointService {
     if (therapy !== 'all') {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
-    let results = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond);
+    let results = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond + '&$orderby=TherapyArea asc,Title asc');
     this.masterIndications.push({
       therapy: therapy,
       indications: results
