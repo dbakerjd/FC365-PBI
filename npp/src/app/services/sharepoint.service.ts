@@ -1491,6 +1491,7 @@ export class SharepointService {
 
   /** --- PERMISSIONS --- **/
 
+  /** Create a Sharepoint group. If previously exists, gets the Group */
   async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
     // if exists, return grup
     const group = await this.getGroup(name);
@@ -1512,6 +1513,7 @@ export class SharepointService {
     }
   }
 
+  /** Returns the Sharepoint Group named as 'name' */
   async getGroup(name: string): Promise<SPGroup | null> {
     try {
       const result = await this.query(`sitegroups/getbyname('${name}')`).toPromise();
@@ -1521,6 +1523,7 @@ export class SharepointService {
     }
   }
 
+  /** Gets the Id of the group named as 'name' */
   async getGroupId(name: string): Promise<number | null> {
     try {
       const result = await this.query(`sitegroups/getbyname('${name}')/id`).toPromise();
@@ -2174,10 +2177,15 @@ export class SharepointService {
     console.log('geos neoGeography', neoGeography);
     console.log('geos neoCountry', neoCountry);
 
-    await this.deleteGeographies(entity, removeGeo);
-    await this.restoreGeographies(entity, restoreGeo);
-    let newGeos = await this.createGeographies(entity.ID, neoGeography, neoCountry);
+    if (removeGeo.length > 0) await this.deleteGeographies(entity, removeGeo);
+    if (restoreGeo.length > 0) await this.restoreGeographies(entity, restoreGeo);
+    
+    let newGeos: EntityGeography[] = [];
+    if (neoGeography.length > 0 || neoCountry.length > 0) {
+      newGeos = await this.createGeographies(entity.ID, neoGeography, neoCountry);
+    }
     console.log('geos newGeos', newGeos);
+    if (newGeos.length < 1) return; // finish
 
     let OOGroup = await this.getGroup(`OO-${entity.ID}`);
     let OUGroup = await this.getGroup(`OU-${entity.ID}`);
@@ -2234,13 +2242,13 @@ export class SharepointService {
     }
   }
 
-  /** Soft delete entity geographies. Delete DU geography groups */
-  private async deleteGeographies(entity: Opportunity | Brand, removeGeo: EntityGeography[]) {
+  /** Soft delete entity geographies. Delete DU geography groups related */
+  private async deleteGeographies(entity: Opportunity, removeGeos: EntityGeography[]) {
     //removes groups
     let stages = await this.getStages(entity.ID);
     if (stages && stages.length) {
       // external
-      for (const geo of removeGeo) {
+      for (const geo of removeGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
           console.log('geos stagefolders', stageFolders);
@@ -2250,30 +2258,34 @@ export class SharepointService {
           console.log('geos modelFolders', modelFolders);
 
           for (const mf of modelFolders) {
-            const DUGroup = await this.getGroup(`DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`);
-            console.log('geos DUGroup to remove', DUGroup);
-            if (DUGroup) {
-              await this.deleteGroup(DUGroup.Id);
-            }
+            const DUGroupId = await this.getGroupId(`DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`);
+            console.log('geos DUGroup to remove', DUGroupId);
+            if (DUGroupId) await this.deleteGroup(DUGroupId);
           }
         }
+      }
+    } else {
+      // internal
+      for (const geo of removeGeos) {
+        const DUGroupId = await this.getGroupId(`DU-${entity.ID}-0-${geo.Id}`);
+        if (DUGroupId) await this.deleteGroup(DUGroupId);
       }
     }
 
     // soft delete entity geographies
-    for (let i = 0; i < removeGeo.length; i++) {
-      await this.updateItem(removeGeo[i].ID, GEOGRAPHIES_LIST, {
+    for (let i = 0; i < removeGeos.length; i++) {
+      await this.updateItem(removeGeos[i].ID, GEOGRAPHIES_LIST, {
         Removed: "true"
       });
 
       // Power BI RLS access 
-      const geoCountriesList = await this.getCountriesOfEntityGeography(removeGeo[i].ID);
+      const geoCountriesList = await this.getCountriesOfEntityGeography(removeGeos[i].ID);
       await this.removePowerBI_RLS(entity.ID, geoCountriesList);
     }
   }
 
-  /** Restore previously soft deleted entity geographies and create DU groups */
-  private async restoreGeographies(entity: Opportunity | Brand, restoreGeo: EntityGeography[]) {
+  /** Restore previously soft deleted entity geographies and create DU groups related */
+  private async restoreGeographies(entity: Opportunity, restoreGeos: EntityGeography[]) {
     //removes groups
     let OOGroup = await this.getGroup(`OO-${entity.ID}`);
     let OUGroup = await this.getGroup(`OU-${entity.ID}`);
@@ -2286,7 +2298,7 @@ export class SharepointService {
     let stages = await this.getStages(entity.ID);
     if (stages && stages.length) {
       // external
-      for (const geo of restoreGeo) {
+      for (const geo of restoreGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
           console.log('geos stagefolders', stageFolders);
@@ -2295,35 +2307,30 @@ export class SharepointService {
 
           console.log('geos modelFolders', modelFolders);
 
+          let systemFolders: SystemFolder[] = [];
           for (const mf of modelFolders) {
-            const DUGroupName = `DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`;
-            let DUGroup = await this.getGroup(DUGroupName);
-            if (!DUGroup) {
-              DUGroup = await this.createGroup(DUGroupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + geo.Id);
-            }
-            console.log('geos DUGroup to remove', DUGroup);
-            const permissions = await this.getGroupPermissions(FILES_FOLDER);
-  
-            if (DUGroup) {
-              const folder = await this.getFolderByUrl(this.getBaseFilesFolder() + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
-              console.log('geos folder', folder);
-              if (folder) {
-                let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
-                await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
-              } else {
-                throw new Error("Models folder not found")
-              }
-            } else {
-              throw new Error("Error creating geography group permissions.")
-            }
+            const folder = await this.getFolderByUrl(this.getBaseFilesFolder() + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
+            if (folder) systemFolders.push(folder);
           }
+          const permissions = await this.getGroupPermissions(FILES_FOLDER);
+          await this.createFolderGroups(entity.ID, permissions, systemFolders, groups);
         }
       }
+    } else {
+      // internal
+      const folders = await this.createInternalFolders(entity, restoreGeos);
+
+      const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
+      await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
+      const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
+      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
+      const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
+      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);   
     }
 
     // restore entity geographies
-    for (let i = 0; i < restoreGeo.length; i++) {
-      await this.updateItem(restoreGeo[i].ID, GEOGRAPHIES_LIST, {
+    for (let i = 0; i < restoreGeos.length; i++) {
+      await this.updateItem(restoreGeos[i].ID, GEOGRAPHIES_LIST, {
         Removed: "false"
       });
     }
