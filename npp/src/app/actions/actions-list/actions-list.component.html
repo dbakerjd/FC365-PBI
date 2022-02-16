@@ -137,11 +137,12 @@
                                     </ng-container>
                                 </p>
                                 <p>
-                                    <label>Scenario: </label>
+                                    <label>Scenarios: </label>
                                     <ng-container *ngFor="let s of file.ListItemAllFields.ModelScenario; let $last = last">
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
+                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>

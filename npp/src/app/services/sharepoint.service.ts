@@ -1375,7 +1375,7 @@ export class SharepointService {
     }
   }
 
-  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
+  /** TODEL ? */
   async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
     const result = await this.query(
@@ -1397,6 +1397,8 @@ export class SharepointService {
     return files;
   }
 
+  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
+
   async readEntityFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
     const result = await this.query(
@@ -1412,7 +1414,7 @@ export class SharepointService {
       for (let i = 0; i < files.length; i++) {
         let fileItems = files[i];
         if (fileItems) {
-          let info = await this.getEntityFileInfo(folder, fileItems);
+          const info = await this.getEntityFileInfo(folder, fileItems);
           fileItems = Object.assign(fileItems.ListItemAllFields, info);
         }
       }
@@ -1441,6 +1443,7 @@ export class SharepointService {
     return subfolders;
   }
 
+  /** TODEL */
   async getFileInfo(fileId: number): Promise<NPPFile> {
     return await this.query(
       `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
@@ -2651,7 +2654,7 @@ export class SharepointService {
     let select = '';
     switch(rootFolder) {
       case FOLDER_DOCUMENTS:
-        select = '$select=*,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName&$expand=Author,Editor';
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';
         break;
       case FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  

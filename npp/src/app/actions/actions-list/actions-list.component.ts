@@ -21,7 +21,7 @@ import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -116,6 +116,13 @@ export class ActionsListComponent implements OnInit {
     });
   }
 
+  getIndications(indications: Indication[]) {
+    if(indications) {
+      return indications.map(el => el.Title).join(", ");
+    }
+    return '';
+  }
+
   async openUploadDialog() {
     if (!this.currentGate) return;
 
@@ -136,8 +143,7 @@ export class ActionsListComponent implements OnInit {
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
-        opportunityId: this.opportunityId,
-        businessUnitId: this.opportunity?.BusinessUnitId
+        entity: this.opportunity
       }
     });
 
@@ -179,12 +185,11 @@ export class ActionsListComponent implements OnInit {
       const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
     }
-
     this.initLastComments();
   }
 
