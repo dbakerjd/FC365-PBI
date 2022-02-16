@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { IndividualConfig } from 'ngx-toastr';
 import { ErrorService } from './error.service';
 
 export interface JDLicense {
@@ -32,7 +31,11 @@ export class LicensingService {
   public license: JDLicense | null = null;
   private licenseContext: JDLicenseContext | null = null;
 
-  constructor(private error: ErrorService, private http: HttpClient, private router: Router) { 
+  constructor(
+    private error: ErrorService, 
+    private http: HttpClient, 
+    private router: Router
+  ) { 
     let license = localStorage.getItem("JDLicense");
     if(license) {
       this.license = JSON.parse(license);
@@ -95,7 +98,7 @@ export class LicensingService {
       return await this.http.post(this.licensingApiUrl + '/seats', {
         applicationIdentity: this.licenseContext,
         userEmail: email
-      }, { 
+      }, {
         headers: headers
       }).toPromise();
     } catch(e: any) {
@@ -115,8 +118,8 @@ export class LicensingService {
     try {
       return await this.http.request(
         'delete',
-        this.licensingApiUrl + '/seats', 
-        { 
+        this.licensingApiUrl + '/seats',
+        {
           headers: headers,
           body: {
             applicationIdentity: this.licenseContext,

@@ -21,7 +21,7 @@ import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -116,6 +116,13 @@ export class ActionsListComponent implements OnInit {
     });
   }
 
+  getIndications(indications: Indication[]) {
+    if(indications) {
+      return indications.map(el => el.Title).join(", ");
+    }
+    return '';
+  }
+
   async openUploadDialog() {
     if (!this.currentGate) return;
 
@@ -136,8 +143,7 @@ export class ActionsListComponent implements OnInit {
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
-        opportunityId: this.opportunityId,
-        businessUnitId: this.opportunity?.BusinessUnitId
+        entity: this.opportunity
       }
     });
 
@@ -179,12 +185,11 @@ export class ActionsListComponent implements OnInit {
       const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
     }
-
     this.initLastComments();
   }
 
@@ -498,19 +503,17 @@ export class ActionsListComponent implements OnInit {
 
     dialogRef.afterClosed()
       .pipe(take(1))
-      .subscribe(async response => {
-        if (response) {
+      .subscribe(async completeResponse => {
+        if (completeResponse) {
           // complete opportunity
           if (!this.opportunity) return;
 
-          /*
-          const stageType = await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId);
-          if (await this.sharepoint.getStageType(this.opportunity.OpportunityTypeId) !== 'Phase') {
+          if (!await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
               data: {
-                message: `You can move to a Phase process from this opportunity. Do you want to start it?`,
+                message: `You can move to a Product Development Opportunity. Do you want to start it?`,
                 confirmButtonText: 'Yes',
                 cancelButtonText: 'No, complete only'
               }
@@ -518,10 +521,9 @@ export class ActionsListComponent implements OnInit {
 
             newPhaseDialog.afterClosed()
               .pipe(take(1))
-              .subscribe(async response => {
+              .subscribe(async newInternalResponse => {
                 if (!this.opportunity) return;
-
-                if (response) {
+                if (newInternalResponse) {
 
                   // create new
                   this.dialogInstance = this.matDialog.open(CreateOpportunityComponent, {
@@ -530,7 +532,7 @@ export class ActionsListComponent implements OnInit {
                     data: {
                       opportunity: { ...this.opportunity },
                       createFrom: true,
-                      forceType: true
+                      forceInternal: true
                     }
                   });
 
@@ -543,18 +545,20 @@ export class ActionsListComponent implements OnInit {
                         // complete current opp
                         await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
 
-                        this.toastr.success("A opportunity of type 'phase' was created successfully", result.data.opportunity.Title);
+                        this.toastr.success("A new opportunity was created successfully", result.data.opportunity.Title);
                         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
                           "initialize opportunity " + result.data.opportunity.id
                         );
                         this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+                          if (!this.opportunity) return;
+                          this.sharepoint.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active
                           await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
                           this.jobs.finishJob(job.id);
                           this.toastr.success("The opportunity is now active", opp.Title);
-                          this.router.navigate(['opportunities', opp.ID, 'actions']);
+                          this.router.navigate(['opportunities', opp.ID, 'files']);
                         }).catch(e => {
                           this.jobs.finishJob(job.id);
                         });
@@ -562,24 +566,22 @@ export class ActionsListComponent implements OnInit {
                         this.toastr.error("The opportunity couldn't be created", "Try again");
                       }
                     });
-                } else if (response === false) {
-                  // complete
+                } else if (newInternalResponse === false) {
+                  // only complete
                   await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
                   this.opportunity.OpportunityStatus = 'Approved';
                   this.toastr.success("The opportunity has been completed", this.opportunity.Title);
                 }
               });
-          } else {
-            // complete
+          } else { // without possibility of pass to internal => complete
             await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
             this.opportunity.OpportunityStatus = 'Approved';
             this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }
-          */
          // complete
-         await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
-         this.opportunity.OpportunityStatus = 'Approved';
-         this.toastr.success("The opportunity has been completed", this.opportunity.Title);
+        //  await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+        //  this.opportunity.OpportunityStatus = 'Approved';
+        //  this.toastr.success("The opportunity has been completed", this.opportunity.Title);
         }
       });
   }

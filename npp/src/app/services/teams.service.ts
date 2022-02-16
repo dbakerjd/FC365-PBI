@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { Router } from '@angular/router';
 import { LogLevel, PopupRequest, AccountInfo, RedirectRequest, AuthenticationResult, PublicClientApplication, BrowserCacheLocation, InteractionType } from '@azure/msal-browser';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { Subject } from 'rxjs';
@@ -58,7 +57,7 @@ export class TeamsService {
     }
   });
 
-  constructor( private router: Router, private errorService: ErrorService, private licensing: LicensingService) { 
+  constructor( private errorService: ErrorService, private licensing: LicensingService) { 
 
     microsoftTeams.initialize(() => {
       this.initialized = true;
@@ -106,7 +105,7 @@ export class TeamsService {
     if(sharepointUri) {
       protectedResourceMap.set(sharepointUri, ['https://'+sharepointUri+'/.default']);
     }
-    protectedResourceMap.set('graph.microsoft.com', ['User.Read']);
+    protectedResourceMap.set('graph.microsoft.com', ['User.Read', 'GroupMember.ReadWrite.All']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
     //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
     protectedResourceMap.set('fc365.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
@@ -134,6 +133,7 @@ export class TeamsService {
     let sharepointUri = this.licensing.getSharepointDomain();
     if(sharepointUri) {
       scopes.push('https://'+sharepointUri+'/.default');
+      // scopes.push('https://graph.microsoft.com/.default');
     }
 
     return { 

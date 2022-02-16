@@ -13,8 +13,9 @@ export class UploadFileConfig {
     folders: NPPFolder[], 
     selectedFolder: number | null,
     geographiesList: SelectInputList[], 
-    scenariosList: SelectInputList[]): FormlyFieldConfig[] {
-    let {categories, geographies, scenarios} = this;
+    scenariosList: SelectInputList[],
+    indicationsList: SelectInputList[]): FormlyFieldConfig[] {
+    let {categories, geographies, scenarios, indications} = this;
 
     let config = [
       {
@@ -37,6 +38,7 @@ export class UploadFileConfig {
             },
           },
           categories(folders, selectedFolder),
+          indications(indicationsList, folders),
           geographies(geographiesList, folders),
           scenarios(scenariosList, folders),
           {
@@ -116,6 +118,23 @@ export class UploadFileConfig {
         "hideExpression": (model: any) => {
           return !folders.find(f => f.DepartmentID === model.category)?.containsModels;
         },
+    }
+  }
+
+
+  indications(options: SelectInputList[], folders: NPPFolder[]) {
+    return {
+      key: 'IndicationId',
+      type: 'ngsearchable',
+      templateOptions: {
+        label: 'Indication Name:',
+        options,
+        multiple: true,
+        required: true,
+      },
+      "hideExpression": (model: any) => {
+        return !folders.find(f => f.DepartmentID === model.category)?.containsModels;
+      }
     }
   }
 
