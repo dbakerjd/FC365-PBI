@@ -18,7 +18,7 @@ export class CreateForecastCycleComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   form: FormGroup = new FormGroup({});
   model: any = {};
-  entity: Brand | Opportunity | undefined;
+  entity: Opportunity | undefined;
   cycles: SelectInputList[] = [];
 
   // flow control

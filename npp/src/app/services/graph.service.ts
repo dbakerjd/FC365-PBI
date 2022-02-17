@@ -183,7 +183,7 @@ export class GraphService {
   }
 
   /** Adds the current user to the Azure Group controling Power BI RLS Access */
-  async addCurrentUserToPowerBI_RLSGroup(): Promise<boolean> {
+  async addUserToPowerBI_RLSGroup(): Promise<boolean> {
     const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
     const user = await this.getCurrentMSGraphUser();
     if (group) return this.addUserToAzureGroup(user.id, group.id);
@@ -191,7 +191,7 @@ export class GraphService {
   }
 
   /** Removes the current user of the Azure Group controling Power BI RLS Access */
-  async removeCurrentUserToPowerBI_RLSGroup(): Promise<boolean> {
+  async removeUserToPowerBI_RLSGroup(): Promise<boolean> {
     const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
     const user = await this.getCurrentMSGraphUser();
     if (group) return this.removeUserToAzureGroup(user.id, group.id);

@@ -315,6 +315,10 @@ export class FilesListComponent implements OnInit {
           // update view
           this.updateCurrentFiles();
           this.toastr.success("The model has been approved!", "Forecast Model");
+          await this.notifications.modelApprovedNotification(file.Name, this.entityId, [
+            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.entityId}`
+          ]);
         } else if (result.success === false) {
           this.toastr.error("There was a problem approving the forecast model", 'Try again');
         }
@@ -336,6 +340,10 @@ export class FilesListComponent implements OnInit {
         if (success) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
           this.updateCurrentFiles();
+          await this.notifications.modelNewScenarioNotification(file.Name, this.entityId, [
+            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.entityId}`,
+          ]);
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
         }
@@ -406,7 +414,7 @@ export class FilesListComponent implements OnInit {
       */
 
       if(!fileInfo.LinkingUri) {
-        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        this.toastr.error("This file type can't be opened online. Try downloading it instead.");
         return;
       }
       
@@ -649,9 +657,11 @@ export class FilesListComponent implements OnInit {
   }
 
   initLastComments() {
-    this.currentFiles.forEach(el => {
-      el.lastComments = this.getLatestComments(el);
-    });
+    if (this.currentSection == 'models') {
+      this.currentFiles.forEach(el => {
+        el.lastComments = this.getLatestComments(el);
+      });
+    }
   }
   
   getLatestComments(file: NPPFile): FileComments[] {

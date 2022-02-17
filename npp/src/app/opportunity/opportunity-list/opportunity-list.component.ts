@@ -133,9 +133,12 @@ export class OpportunityListComponent implements OnInit {
     .subscribe(async (result: any) => {
      
       if (result.success) {
-        this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
+        this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
+        if (await this.sharepoint.isInternalOpportunity(opp.OpportunityTypeId)) {
+          opp.progress = -1;
+        }
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );
@@ -198,7 +201,7 @@ export class OpportunityListComponent implements OnInit {
   navigateTo(item: Opportunity) {
     if (item.OpportunityStatus === "Processing") return;
     let opType = this.opportunityTypes.find(el => el.Title == item.OpportunityType?.Title);
-    if(opType?.isInternal) {
+    if(opType?.IsInternal) {
       this.router.navigate(['opportunities', item.ID, 'files']);
     } else {
       this.router.navigate(['opportunities', item.ID, 'actions']);
@@ -208,7 +211,7 @@ export class OpportunityListComponent implements OnInit {
 
   async computeProgress(opportunity: Opportunity): Promise<number> {
     let opType = this.opportunityTypes.find(el => el.Title == opportunity.OpportunityType?.Title);
-    if(opType?.isInternal) {
+    if(opType?.IsInternal) {
       return -1; // progress no applies
     }
     let actions = await this.sharepoint.getActions(opportunity.ID);

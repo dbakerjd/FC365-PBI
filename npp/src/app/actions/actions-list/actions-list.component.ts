@@ -21,7 +21,7 @@ import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -116,6 +116,13 @@ export class ActionsListComponent implements OnInit {
     });
   }
 
+  getIndications(indications: Indication[]) {
+    if(indications) {
+      return indications.map(el => el.Title).join(", ");
+    }
+    return '';
+  }
+
   async openUploadDialog() {
     if (!this.currentGate) return;
 
@@ -136,8 +143,7 @@ export class ActionsListComponent implements OnInit {
         geographies: geographiesList,
         scenarios: await this.sharepoint.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
-        opportunityId: this.opportunityId,
-        businessUnitId: this.opportunity?.BusinessUnitId
+        entity: this.opportunity
       }
     });
 
@@ -179,19 +185,20 @@ export class ActionsListComponent implements OnInit {
       const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.sharepoint.readFolderFiles(this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.sharepoint.readFolderFiles(this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
     }
-
     this.initLastComments();
   }
 
   initLastComments() {
-    this.currentFiles.forEach(el => {
-      el.lastComments = this.getLatestComments(el);
-    });
+    if (this.currentSection === 'documents' && this.currentFolder?.containsModels) {
+      this.currentFiles.forEach(el => {
+        el.lastComments = this.getLatestComments(el);
+      });
+    }
   }
 
   getLatestComments(file: NPPFile): FileComments[] {
@@ -266,6 +273,11 @@ export class ActionsListComponent implements OnInit {
           // update view
           await this.updateCurrentFiles();
           this.toastr.success("The model has been approved!", "Forecast Model");
+          await this.notifications.modelApprovedNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (result.success === false) {
           this.toastr.error("There was a problem approving the forecast model", 'Try again');
         }
@@ -302,7 +314,7 @@ export class ActionsListComponent implements OnInit {
       });
   }
 
-  createScenario(file: NPPFile) {
+  createScenario(file: NPPFile, departmentId: number) {
     this.dialogInstance = this.matDialog.open(CreateScenarioComponent, {
       height: '450px',
       width: '405px',
@@ -317,6 +329,11 @@ export class ActionsListComponent implements OnInit {
         if (success === true) {
           this.toastr.success(`The new model scenario has been created successfully`, "New Forecast Model");
           await this.updateCurrentFiles();
+          await this.notifications.modelNewScenarioNotification(file.Name, this.opportunityId, [
+            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
+            `OO-${this.opportunityId}`,
+            `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
+          ]);
         } else if (success === false) {
           this.toastr.error('The new model scenario could not be created', 'Try Again');
         }
@@ -673,7 +690,7 @@ export class ActionsListComponent implements OnInit {
       */
 
       if(!fileInfo.LinkingUri) {
-        this.toastr.error("This file type can't be openned online. Try downloading it instead.");
+        this.toastr.error("This file type can't be opened online. Try downloading it instead.");
         return;
       }
       
