@@ -71,7 +71,6 @@ export class LicensingService {
       appId : context.entityId,
       teamSiteDomain : context.teamSiteDomain
     };
-    console.log('SEATS: License', this.license);
   }
 
   isValidJDLicense() {
@@ -104,7 +103,7 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        return await this.http.post(this.licensingApiUrl + '/userseats', {
+        return await this.http.post(this.licensingApiUrl + '/seats', {
           applicationIdentity: this.licenseContext,
           userEmail: email
         }, {
