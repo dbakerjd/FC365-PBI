@@ -932,7 +932,6 @@ export class SharepointService {
    * @param baseGroups Base of groups to include in the permissions
   */
   private async createFolderGroups(oppId: number, permissions: GroupPermission[], folders: SystemFolder[], baseGroups: SPGroupListItem[]) {
-    console.log('createFolderGroups', folders, permissions);
     for (const f of folders) {
       let folderGroups = [...baseGroups]; // copy default groups
       if (f.DepartmentID) {
@@ -942,7 +941,6 @@ export class SharepointService {
         let DUGroup = await this.createGroup(`DU-${oppId}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
         if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
       }
-      console.log('createFolderGroups groups', folderGroups);
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
     }
   }
@@ -1773,7 +1771,6 @@ export class SharepointService {
   /** todel */
   async deleteAllGroups() {
     const groups = await this.getGroups();
-    console.log('groups', groups);
     for (const g of groups) {
       if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SU')) {
         this.deleteGroup(g.Id);
@@ -1898,8 +1895,6 @@ export class SharepointService {
 
     if (!success) return false;
 
-    console.log('SEATS: added users stage', addedUsers);
-    console.log('SEATS: removed users stage', removedUsers);
     if (addedUsers.length > 0) {
       const OUGroup = await this.getGroup('OU-' + oppId);
       const SUGroup = await this.getGroup(`SU-${oppId}-${masterStageId}`);
@@ -1908,10 +1903,8 @@ export class SharepointService {
       for (const userId of addedUsers) {
         const user = await this.getUserInfo(userId);
         if (!(success = await this.addUserToGroup(user, OUGroup.Id, true) && success)) {
-          console.log('SEATS: continue');
           continue;
         }
-        console.log('SEATS: set SU',  user.Title);
         success = success && await this.addUserToGroup(user, SUGroup.Id);
         if (!success) return false;
       }
@@ -2142,9 +2135,6 @@ export class SharepointService {
     if (!owner.LoginName) throw new Error("Could not determine entity's owner");
     
     let allGeo: EntityGeography[] = await this.getEntityGeographies(entity.ID, true);
-    console.log('geos ---------------');
-    console.log('geos newGeographies', newGeographies);
-    console.log('geos allGeo', allGeo);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -2160,7 +2150,6 @@ export class SharepointService {
 
       return !geo;
     });
-    console.log('geos neogeo', neoGeo);
 
     let neoCountry = neoGeo.filter(el => {
       let arrId = el.split("-");
@@ -2170,7 +2159,6 @@ export class SharepointService {
       let arrId = el.split("-");
       return parseInt(arrId[1]);
     });
-    console.log('geos neo country', neoCountry);
 
     let neoGeography = neoGeo.filter(el => {
       let arrId = el.split("-");
@@ -2180,7 +2168,6 @@ export class SharepointService {
       let arrId = el.split("-");
       return parseInt(arrId[1]);
     })
-    console.log('geos neo geography', neoGeography);
 
     let restoreGeo: EntityGeography[] = [];
     newGeographies.forEach(el => {
@@ -2199,7 +2186,6 @@ export class SharepointService {
         restoreGeo.push(geo);
       }
     });
-    console.log('geos restoreGeo', restoreGeo);
 
     let removeGeo = allGeo.filter(el => {
       let isCountry = !!el.CountryId;
@@ -2213,9 +2199,6 @@ export class SharepointService {
 
       return !geo && !el.Removed;
     });
-    console.log('geos removeGeo', removeGeo);
-    console.log('geos neoGeography', neoGeography);
-    console.log('geos neoCountry', neoCountry);
 
     if (removeGeo.length > 0) await this.deleteGeographies(entity, removeGeo);
     if (restoreGeo.length > 0) await this.restoreGeographies(entity, restoreGeo);
@@ -2224,7 +2207,6 @@ export class SharepointService {
     if (neoGeography.length > 0 || neoCountry.length > 0) {
       newGeos = await this.createGeographies(entity.ID, neoGeography, neoCountry);
     }
-    console.log('geos newGeos', newGeos);
     if (newGeos.length < 1) return; // finish
 
     let OOGroup = await this.getGroup(`OO-${entity.ID}`);
@@ -2291,15 +2273,11 @@ export class SharepointService {
       for (const geo of removeGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
-          console.log('geos stagefolders', stageFolders);
           let modelFolders = stageFolders.filter(el => el.containsModels);
           if (modelFolders.length < 1) continue;
 
-          console.log('geos modelFolders', modelFolders);
-
           for (const mf of modelFolders) {
             const DUGroupId = await this.getGroupId(`DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`);
-            console.log('geos DUGroup to remove', DUGroupId);
             if (DUGroupId) await this.deleteGroup(DUGroupId);
           }
         }
@@ -2341,11 +2319,8 @@ export class SharepointService {
       for (const geo of restoreGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
-          console.log('geos stagefolders', stageFolders);
           let modelFolders = stageFolders.filter(el => el.containsModels);
           if (modelFolders.length < 1) continue;
-
-          console.log('geos modelFolders', modelFolders);
 
           let systemFolders: SystemFolder[] = [];
           for (const mf of modelFolders) {
