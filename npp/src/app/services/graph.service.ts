@@ -148,9 +148,8 @@ export class GraphService {
   }
 
   /** List all the Azure Groups */
-  async getAllGroups() {
-    const groups = await this.getRequest('groups');
-    console.log('all groups', groups);
+  async getAllGroups(): Promise<AzureGroup[]> {
+    return await this.getRequest('groups');
   }
 
   /** Returns the Azure Group with the id requested */
@@ -182,19 +181,25 @@ export class GraphService {
     return await this.getRequest('me');
   }
 
+  /** Find a Microsoft Graph User by Principal Name (email) */
+  async getUserByPrincipalName(name: string): Promise<MSGraphUser | null> {
+    return await this.getRequest(`users/${name}`);
+  }
+
   /** Adds the current user to the Azure Group controling Power BI RLS Access */
-  async addUserToPowerBI_RLSGroup(): Promise<boolean> {
+  async addUserToPowerBI_RLSGroup(email: string): Promise<boolean> {
     const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
-    const user = await this.getCurrentMSGraphUser();
-    if (group) return this.addUserToAzureGroup(user.id, group.id);
+    const user = await this.getUserByPrincipalName(email);
+
+    if (group && user) return this.addUserToAzureGroup(user.id, group.id);
     return false;
   }
 
   /** Removes the current user of the Azure Group controling Power BI RLS Access */
-  async removeUserToPowerBI_RLSGroup(): Promise<boolean> {
+  async removeUserToPowerBI_RLSGroup(email: string): Promise<boolean> {
     const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
-    const user = await this.getCurrentMSGraphUser();
-    if (group) return this.removeUserToAzureGroup(user.id, group.id);
+    const user = await this.getUserByPrincipalName(email);
+    if (group && user) return this.removeUserToAzureGroup(user.id, group.id);
     return false;
   }
 }

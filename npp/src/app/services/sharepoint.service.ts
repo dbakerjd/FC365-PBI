@@ -580,6 +580,17 @@ export class SharepointService {
       else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"'";
     }
 
+    /*
+    await this.licensing.removeSeat('aspedding@jdforecasting.com');
+    // await this.licensing.removeSeat('arandall@jdforecasting.com');
+    await this.licensing.removeSeat('BetaNPPDev@janddconsulting.onmicrosoft.com');
+    // await this.licensing.removeSeat('awu@jdforecasting.com');
+    // await this.licensing.removeSeat('cburrows@jdforecasting.com');
+    // await this.licensing.removeSeat('cdavies@jdforecasting.com');
+    */
+    // await this.licensing.removeSeat('awu@jdforecasting.com');
+    // await this.licensing.addSeat('awu@jdforecasting.com');
+
     return await this.getAllItems(OPPORTUNITIES_LIST, filter);
   }
 
@@ -921,7 +932,6 @@ export class SharepointService {
    * @param baseGroups Base of groups to include in the permissions
   */
   private async createFolderGroups(oppId: number, permissions: GroupPermission[], folders: SystemFolder[], baseGroups: SPGroupListItem[]) {
-    console.log('createFolderGroups', folders, permissions);
     for (const f of folders) {
       let folderGroups = [...baseGroups]; // copy default groups
       if (f.DepartmentID) {
@@ -931,7 +941,6 @@ export class SharepointService {
         let DUGroup = await this.createGroup(`DU-${oppId}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
         if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
       }
-      console.log('createFolderGroups groups', folderGroups);
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
     }
   }
@@ -1621,10 +1630,10 @@ export class SharepointService {
         if (await this.isInGroup(user.Id, groupId)) {
           return true;
         }
-        const seated = await this.licensing.addSeat(user.Email);
-        // if (seated?.UserGroupsCount == 1) {
-          this.msgraph.addUserToPowerBI_RLSGroup();
-        // }
+        const response = await this.licensing.addSeat(user.Email);
+        if (response?.UserGroupsCount == 1) { // assigned seat for first time
+          this.msgraph.addUserToPowerBI_RLSGroup(user.Email);
+        }
       }
       await this.http.post(
         this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
@@ -1656,8 +1665,9 @@ export class SharepointService {
       if (removeSeat) {
         const user = await this.getUserInfo(userId);
         if (user.Email) {
-          if (await this.licensing.removeSeat(user.Email)) {
-            this.msgraph.removeUserToPowerBI_RLSGroup();
+          const response = await this.licensing.removeSeat(user.Email);
+          if (response?.UserGroupsCount == 0) { // removed the last seat for user
+            this.msgraph.removeUserToPowerBI_RLSGroup(user.Email);
           }
         }
       }
@@ -1761,7 +1771,6 @@ export class SharepointService {
   /** todel */
   async deleteAllGroups() {
     const groups = await this.getGroups();
-    console.log('groups', groups);
     for (const g of groups) {
       if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SU')) {
         this.deleteGroup(g.Id);
@@ -1893,7 +1902,7 @@ export class SharepointService {
 
       for (const userId of addedUsers) {
         const user = await this.getUserInfo(userId);
-        if (success = await this.addUserToGroup(user, OUGroup.Id, true) && success) {
+        if (!(success = await this.addUserToGroup(user, OUGroup.Id, true) && success)) {
           continue;
         }
         success = success && await this.addUserToGroup(user, SUGroup.Id);
@@ -1953,6 +1962,26 @@ export class SharepointService {
 
   async getUserInfo(userId: number): Promise<User> {
     return await this.query(`siteusers/getbyid('${userId}')`).toPromise();
+  }
+
+  async getUsers(): Promise<User[]> {
+    const result = await this.query('siteusers').toPromise();
+    if (result.value) {
+      return result.value;
+    }
+    return [];
+  }
+
+  async getSeats(email: string) {
+    return await this.licensing.getSeats(email);
+  }
+
+  async addseattouser(email: string) {
+    await this.licensing.addSeat(email);
+  }
+
+  async removeseattouser(email: string) {
+    await this.licensing.removeSeat(email);
   }
 
   async getSiteOwners(): Promise<User[]> {
@@ -2106,9 +2135,6 @@ export class SharepointService {
     if (!owner.LoginName) throw new Error("Could not determine entity's owner");
     
     let allGeo: EntityGeography[] = await this.getEntityGeographies(entity.ID, true);
-    console.log('geos ---------------');
-    console.log('geos newGeographies', newGeographies);
-    console.log('geos allGeo', allGeo);
 
     let neoGeo = newGeographies.filter(el => {
       let arrId = el.split("-");
@@ -2124,7 +2150,6 @@ export class SharepointService {
 
       return !geo;
     });
-    console.log('geos neogeo', neoGeo);
 
     let neoCountry = neoGeo.filter(el => {
       let arrId = el.split("-");
@@ -2134,7 +2159,6 @@ export class SharepointService {
       let arrId = el.split("-");
       return parseInt(arrId[1]);
     });
-    console.log('geos neo country', neoCountry);
 
     let neoGeography = neoGeo.filter(el => {
       let arrId = el.split("-");
@@ -2144,7 +2168,6 @@ export class SharepointService {
       let arrId = el.split("-");
       return parseInt(arrId[1]);
     })
-    console.log('geos neo geography', neoGeography);
 
     let restoreGeo: EntityGeography[] = [];
     newGeographies.forEach(el => {
@@ -2163,7 +2186,6 @@ export class SharepointService {
         restoreGeo.push(geo);
       }
     });
-    console.log('geos restoreGeo', restoreGeo);
 
     let removeGeo = allGeo.filter(el => {
       let isCountry = !!el.CountryId;
@@ -2177,9 +2199,6 @@ export class SharepointService {
 
       return !geo && !el.Removed;
     });
-    console.log('geos removeGeo', removeGeo);
-    console.log('geos neoGeography', neoGeography);
-    console.log('geos neoCountry', neoCountry);
 
     if (removeGeo.length > 0) await this.deleteGeographies(entity, removeGeo);
     if (restoreGeo.length > 0) await this.restoreGeographies(entity, restoreGeo);
@@ -2188,7 +2207,6 @@ export class SharepointService {
     if (neoGeography.length > 0 || neoCountry.length > 0) {
       newGeos = await this.createGeographies(entity.ID, neoGeography, neoCountry);
     }
-    console.log('geos newGeos', newGeos);
     if (newGeos.length < 1) return; // finish
 
     let OOGroup = await this.getGroup(`OO-${entity.ID}`);
@@ -2255,15 +2273,11 @@ export class SharepointService {
       for (const geo of removeGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
-          console.log('geos stagefolders', stageFolders);
           let modelFolders = stageFolders.filter(el => el.containsModels);
           if (modelFolders.length < 1) continue;
 
-          console.log('geos modelFolders', modelFolders);
-
           for (const mf of modelFolders) {
             const DUGroupId = await this.getGroupId(`DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`);
-            console.log('geos DUGroup to remove', DUGroupId);
             if (DUGroupId) await this.deleteGroup(DUGroupId);
           }
         }
@@ -2305,11 +2319,8 @@ export class SharepointService {
       for (const geo of restoreGeos) {
         for (const stage of stages) {
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
-          console.log('geos stagefolders', stageFolders);
           let modelFolders = stageFolders.filter(el => el.containsModels);
           if (modelFolders.length < 1) continue;
-
-          console.log('geos modelFolders', modelFolders);
 
           let systemFolders: SystemFolder[] = [];
           for (const mf of modelFolders) {
