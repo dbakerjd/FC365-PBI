@@ -31,6 +31,12 @@ export class SummaryComponent implements OnInit {
   } | null = null;
 
   usersList: User[] = [];
+  usersOpportunitiesListItem: { type: string | null, userId: number | null, list: Opportunity[] } = {
+    type: null,
+    userId: null,
+    list: []
+  };
+  generatingSeatsTable = true;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -41,34 +47,6 @@ export class SummaryComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       this.notificationsList = await this.notifications.getNotifications();
-
-      /** seats */
-      this.usersList = await this.sharepoint.getUsers();
-      console.log('SEATS: users', this.usersList);
-      this.sharepoint.addseattouser('demouser@jdforecasting.com');
-      // this.sharepoint.removeseattouser('demouser@jdforecasting.com');
-      this.sharepoint.getSeats('demouser@jdforecasting.com');
-
-      /*
-      for (let index = 0; index < this.usersList.length; index++) {
-        const element: any = this.usersList[index];
-        // element['seats'] = await this.sharepoint.getSeats(element.Email);
-
-        const groups = await this.sharepoint.getUserGroups(element.Id);
-        const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
-        const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
-        // element['seats'] = this.sharepoint.getSeats(element.Email);
-        element['opportunities'] = OUgroups.length;
-        element['owner'] = OOgroups.length;
-        console.log('SEATS: groups', OUgroups);
-        console.log('SEATS: element', element);
-      }
-
-      console.log('SEATS: users2', this.usersList);
-      */
-      
-      /** endseats */
-
       this.opportunities = await this.sharepoint.getOpportunities(true, true);
       const gates = await this.sharepoint.getAllStages();
 
@@ -366,6 +344,9 @@ export class SummaryComponent implements OnInit {
         if(Object.keys(this.therapyAreasData.areas).length) this.renderIndicationsGraph();
       }
 
+      // seats
+      this.loadSeatsInfo();
+
     } catch(e) {
       this.teams.hackyConsole += "********RUNTIME ERROR********    "+JSON.stringify(e);
     }
@@ -445,5 +426,46 @@ export class SummaryComponent implements OnInit {
     };
     //@ts-ignore
     if(Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chart-4', optionsIndications);  
+  }
+
+  private async loadSeatsInfo() {
+    /** seats */
+    this.generatingSeatsTable = true;
+    this.usersList = await this.sharepoint.getUsers();
+    this.usersList = this.usersList.filter(el => el.Email).slice(0,4);
+
+    for (let index = 0; index < this.usersList.length; index++) {
+      const user: any = this.usersList[index];
+      const result = await this.sharepoint.getSeats(user.Email);
+      user['seats'] = result?.UserGroupsCount;
+      const groups = await this.sharepoint.getUserGroups(user.Id);
+      const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
+      const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
+      user['opportunities'] = OUgroups.length;
+      user['owner'] = OOgroups.length;
+    }
+
+    this.generatingSeatsTable = false;
+    /** endseats */
+  }
+
+  async listOpportunities(userId: number, group: 'OU' | 'OO') {
+    if (this.usersOpportunitiesListItem.type == group && this.usersOpportunitiesListItem.userId == userId) {
+      this.usersOpportunitiesListItem.type = null;
+      this.usersOpportunitiesListItem.userId = null;
+      this.usersOpportunitiesListItem.list = [];
+      return;
+    }
+    const groups = await this.sharepoint.getUserGroups(userId);
+    const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
+    const allOpportunities = await this.sharepoint.getOpportunities(false, false);
+    const oppsList = OUgroups.map(e => {
+      const splittedName = e.Title.split('-');
+      return splittedName[1];
+    });
+    const oppsListRelated = allOpportunities.filter(opp => oppsList.includes(opp.ID.toString()));
+    this.usersOpportunitiesListItem.type = group;
+    this.usersOpportunitiesListItem.userId = userId;
+    this.usersOpportunitiesListItem.list = oppsListRelated;
   }
 }

@@ -31,22 +31,40 @@
             </div>
         </div>
         <div class="summary-seats">
-            <div class="next-tasks-title section-title">Seats</div>
-            <table>
+            <div class="next-tasks-title section-title">Seats Control</div>
+            <app-progress-spinner *ngIf="generatingSeatsTable"></app-progress-spinner>
+            <table *ngIf="!generatingSeatsTable" class="seats-table">
                 <tr>
                     <th>User</th>
                     <th>Email</th>
-                    <th>Seat</th>
-                    <th>Opportunities</th>
-                    <th>Opportunity Owner</th>
+                    <th class="centered-value">Has Seat</th>
+                    <th class="centered-value">Seats Value</th>
+                    <th class="centered-value">#Opportunities (Groups)</th>
+                    <th class="centered-value">Opportunity Owner</th>
                 </tr>
                 <ng-container *ngFor="let user of usersList">
-                    <tr *ngIf="user.Email">
+                    <tr>
                         <td>{{ user.Title }}</td>
                         <td>{{ user.Email }}</td>
-                        <td>a</td>
-                        <td>{{ user.opportunities }}</td>
-                        <td>{{ user.owner }}</td>
+                        <td class="centered-value">{{ user.seats > 0 ? 'Yes' : 'No' }}</td>
+                        <td class="centered-value">{{ user.seats }}</td>
+                        <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OU')">{{ user.opportunities }}</td>
+                        <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OO')">{{ user.owner }}</td>
+                    </tr>
+                    <tr *ngIf="usersOpportunitiesListItem.userId == user.Id && usersOpportunitiesListItem.list.length > 0" class="opps-list">
+                        <td colspan="6">
+                            <h5 *ngIf="usersOpportunitiesListItem.type == 'OU'">
+                                {{ user.Title }} - Opportunities' user
+                            </h5>
+                            <h5 *ngIf="usersOpportunitiesListItem.type == 'OO'">
+                                {{ user.Title }} - Opportunities' owner
+                            </h5>
+                            <ul>
+                                <li *ngFor="let opp of usersOpportunitiesListItem.list">
+                                    {{ opp.Title }}
+                                </li>
+                            </ul>
+                        </td>
                     </tr>
                 </ng-container>
             </table>

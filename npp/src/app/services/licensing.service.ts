@@ -95,7 +95,7 @@ export class LicensingService {
     
   }
 
-  async addSeat(email: string): Promise<SeatsResponse | boolean> {
+  async addSeat(email: string): Promise<SeatsResponse | null> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -110,16 +110,16 @@ export class LicensingService {
           headers: headers
         }).toPromise() as SeatsResponse;
       }
-      return false;
+      return null;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return false;
+      return null;
     }
   }
 
-  async removeSeat(email: string): Promise<SeatsResponse | boolean> {
+  async removeSeat(email: string): Promise<SeatsResponse | null> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -138,16 +138,16 @@ export class LicensingService {
             },
           }).toPromise() as SeatsResponse;
         }
-        return false;
+        return null;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return false;
+      return null;
     }
   }
 
-  async getSeats(email: string): Promise<number> {
+  async getSeats(email: string): Promise<SeatsResponse | null> {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -155,21 +155,19 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        const result = await this.http.post(this.licensingApiUrl + '/userseats', {
+        return await this.http.post(this.licensingApiUrl + '/userseats', {
           applicationIdentity: this.licenseContext,
           userEmail: email
         }, {
           headers: headers
-        }).toPromise();
-        console.log('result', result);
-        return 0;
+        }).toPromise() as SeatsResponse;
       }
-      return 0;
+      return null;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return -1;
+      return null;
     }
   }
 
