@@ -133,7 +133,7 @@ export class OpportunityListComponent implements OnInit {
     .subscribe(async (result: any) => {
      
       if (result.success) {
-        this.toastr.success("A opportunity was created successfully", result.data.opportunity.Title);
+        this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
         if (await this.sharepoint.isInternalOpportunity(opp.OpportunityTypeId)) {

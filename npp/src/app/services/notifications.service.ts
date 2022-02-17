@@ -116,6 +116,15 @@ export class NotificationsService {
     );
   }
 
+  async modelNewScenarioNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
+    const currentUser = await this.getCurrentUser();
+    await this.generateModelNotification(
+      `${currentUser.Title} has created a new scenario from '${fileName}'`, 
+      usersGroups,
+      opportunityId
+    );
+  }
+
   private async generateModelNotification(notificationMessage: string, usersGroups: string[], opportunityId: number | null = null) {
     // get unique users involved
     const currentUser = await this.getCurrentUser();
