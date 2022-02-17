@@ -96,6 +96,7 @@ export class LicensingService {
   }
 
   async addSeat(email: string): Promise<SeatsResponse | null> {
+    if (email.trim() == '') return null;
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
@@ -120,6 +121,7 @@ export class LicensingService {
   }
 
   async removeSeat(email: string): Promise<SeatsResponse | null> {
+    if (email.trim() == '') return null;
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
