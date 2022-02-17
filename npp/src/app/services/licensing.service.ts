@@ -96,7 +96,7 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        return await this.http.post(this.licensingApiUrl + '/seats', {
+        return await this.http.post(this.licensingApiUrl + '/userseats', {
           applicationIdentity: this.licenseContext,
           userEmail: email
         }, {
@@ -144,7 +144,7 @@ export class LicensingService {
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET',
+      'Access-Control-Allow-Methods': 'POST',
     });
     try {
       if (this.licenseContext) {
@@ -154,7 +154,7 @@ export class LicensingService {
         }, {
           headers: headers
         }).toPromise();
-        console.log('result', 0);
+        console.log('result', result);
         return 0;
       }
       return 0;

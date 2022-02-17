@@ -46,8 +46,8 @@ export class SummaryComponent implements OnInit {
       this.usersList = await this.sharepoint.getUsers();
       console.log('SEATS: users', this.usersList);
       this.sharepoint.addseattouser('demouser@jdforecasting.com');
-      this.sharepoint.removeseattouser('demouser@jdforecasting.com');
-      // this.sharepoint.getSeats('demouser@jdforecasting.com');
+      // this.sharepoint.removeseattouser('demouser@jdforecasting.com');
+      this.sharepoint.getSeats('demouser@jdforecasting.com');
 
       /*
       for (let index = 0; index < this.usersList.length; index++) {
