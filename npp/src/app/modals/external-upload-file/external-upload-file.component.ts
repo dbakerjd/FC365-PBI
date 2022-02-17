@@ -1,5 +1,4 @@
 import { Inject, Component, OnInit } from '@angular/core';
-import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -92,7 +91,8 @@ export class ExternalUploadFileComponent implements OnInit {
     }
 
     let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-    let scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);
+    let scenarioExists = null;
+    if (containsModels) scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);
     let fileExists = await this.sharepoint.existsFile(scenarioFileName, fileFolder);
     if (fileExists || scenarioExists) {
       let message = '';
@@ -109,7 +109,7 @@ export class ExternalUploadFileComponent implements OnInit {
 
       const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
         maxWidth: "400px",
-        height: "200px",
+        height: "250px",
         data: {
           message,
           confirmButtonText: 'Yes, overwrite',

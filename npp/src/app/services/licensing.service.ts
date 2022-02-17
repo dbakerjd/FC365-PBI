@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { IndividualConfig } from 'ngx-toastr';
 import { ErrorService } from './error.service';
 
 export interface JDLicense {
@@ -20,6 +19,13 @@ interface JDLicenseContext {
   teamSiteDomain: string;
 }
 
+interface SeatsResponse {
+  TotalSeats: number;
+  AssignedSeats: number;
+  AvailableSeats: number;
+  UserGroupsCount: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -32,7 +38,11 @@ export class LicensingService {
   public license: JDLicense | null = null;
   private licenseContext: JDLicenseContext | null = null;
 
-  constructor(private error: ErrorService, private http: HttpClient, private router: Router) { 
+  constructor(
+    private error: ErrorService, 
+    private http: HttpClient, 
+    private router: Router
+  ) { 
     let license = localStorage.getItem("JDLicense");
     if(license) {
       this.license = JSON.parse(license);
@@ -84,49 +94,81 @@ export class LicensingService {
     
   }
 
-  async addSeat(email: string) {
+  async addSeat(email: string): Promise<SeatsResponse | null> {
+    if (email.trim() == '') return null;
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST',
     });
     try {
-      return await this.http.post(this.licensingApiUrl + '/seats', {
-        applicationIdentity: this.licenseContext,
-        userEmail: email
-      }, { 
-        headers: headers
-      }).toPromise();
+      if (this.licenseContext) {
+        return await this.http.post(this.licensingApiUrl + '/seats', {
+          applicationIdentity: this.licenseContext,
+          userEmail: email
+        }, {
+          headers: headers
+        }).toPromise() as SeatsResponse;
+      }
+      return null;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return false;
+      return null;
     }
   }
 
-  async removeSeat(email: string) {
+  async removeSeat(email: string): Promise<SeatsResponse | null> {
+    if (email.trim() == '') return null;
     let headers = new HttpHeaders({
       'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'DELETE',
     });
     try {
-      return await this.http.request(
-        'delete',
-        this.licensingApiUrl + '/seats', 
-        { 
-          headers: headers,
-          body: {
-            applicationIdentity: this.licenseContext,
-            userEmail: email
-          },
-        }).toPromise();
+      if (this.licenseContext) {
+        return await this.http.request(
+          'delete',
+          this.licensingApiUrl + '/seats',
+          {
+            headers: headers,
+            body: {
+              applicationIdentity: this.licenseContext,
+              userEmail: email
+            },
+          }).toPromise() as SeatsResponse;
+        }
+        return null;
     } catch(e: any) {
       if (e.status === 422) {
         throw e;
       }
-      return false;
+      return null;
+    }
+  }
+
+  async getSeats(email: string): Promise<SeatsResponse | null> {
+    let headers = new HttpHeaders({
+      'x-functions-key': 'Gyzm5Htg4Er8UJTzlfAI2a0Vsg3bVubLTRak7xVIeMLTO9HzgW4e1Q==',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST',
+    });
+    try {
+      if (this.licenseContext) {
+        return await this.http.post(this.licensingApiUrl + '/userseats', {
+          applicationIdentity: this.licenseContext,
+          userEmail: email
+        }, {
+          headers: headers
+        }).toPromise() as SeatsResponse;
+      }
+      return null;
+    } catch(e: any) {
+      if (e.status === 422) {
+        throw e;
+      }
+      return null;
     }
   }
 

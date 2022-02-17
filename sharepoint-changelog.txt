@@ -18,4 +18,10 @@
 DevOps 196
    - Add column "Read At" to "Notifications" list, type Date with Time, can be null, default "null"
 
-
+Refactoring (16/02)
+   - Change 'Work In Progress' to 'Work in Progress' in Master Group Types List
+   - In Master Group Types List remove OO groups for Work in Progress, Archived and Approved
+   - In Master Group Types List set for Work in Progress (OO - ListEdit, DU - ListEdit)
+   - In Master Group Types List set for Archived and Approved (OO - ListEdit, DU - ListRead)
+   - Add new Indications field : multi Lookup (with Master Therapy List) to Current Opportunity Library
+   - Change isInternal to IsInternal into Master Opportunity Type List

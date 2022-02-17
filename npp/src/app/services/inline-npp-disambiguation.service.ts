@@ -96,22 +96,14 @@ export class InlineNppDisambiguationService {
   }
 
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
-    if(this.isInline) {
-      return this.sharepoint.uploadInlineFile(fileData, folder, fileName, metadata);
-    } else {
-      return this.sharepoint.uploadNPPFile(fileData, folder, fileName, metadata);
-    }
-  }
-
-  async updateEntityGeographyUsers(entityId: number, geoId: number, currentUsersList: number[], newUsersList: number[]) {
-    return this.sharepoint.updateEntityGeographyUsers(entityId, geoId, currentUsersList, newUsersList);
+    return this.sharepoint.uploadInternalFile(fileData, folder, fileName, metadata);
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
     return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }
 
-  async createForecastCycle(entity: Brand | Opportunity, values: any) {
+  async createForecastCycle(entity: Opportunity, values: any) {
     return this.sharepoint.createEntityForecastCycle(entity, values);    
   }
 

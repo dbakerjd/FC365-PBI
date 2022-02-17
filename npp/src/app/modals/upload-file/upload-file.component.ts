@@ -3,7 +3,7 @@ import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
+import { Indication, NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -30,19 +30,22 @@ export class UploadFileComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
   ) { 
-    this.businessUnitId = this.data.businessUnitId ? this.data.businessUnitId : 0;
-    this.forecastCycleId = this.data.forecastCycleId ? this.data.forecastCycleId : 0;
+    this.businessUnitId = this.data.entity.BusinessUnitId ? this.data.entity.BusinessUnitId : 0;
+    this.forecastCycleId = this.data.entity.ForecastCycleId ? this.data.entity.ForecastCycleId : 0;
   }
 
   ngOnInit(): void {
     this.formConfig = new UploadFileConfig();
     this.fields = this.formConfig.fields(
-      this.data.opportunityId, 
+      this.data.entity.Id, 
       this.data.masterStageId, 
       this.data.folderList,
       this.data.selectedFolder,
       this.data.geographies,
-      this.data.scenarios);
+      this.data.scenarios,
+      this.data.entity.Indication?.map((el: Indication) => {
+        return { label: el.Title, value: el.ID }
+      }));
     this.form = new FormGroup({});
   }
 
@@ -78,7 +81,9 @@ export class UploadFileComponent implements OnInit {
       Object.assign(fileData, {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
+        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
         ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
+        IndicationId: this.model.IndicationId
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
 
