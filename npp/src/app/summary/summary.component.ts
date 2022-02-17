@@ -36,6 +36,11 @@ export class SummaryComponent implements OnInit {
     userId: null,
     list: []
   };
+  generalSeatsCount: {
+    TotalSeats: number,
+    AssignedSeats: number,
+    AvailableSeats: number
+  } | null = null;
   generatingSeatsTable = true;
 
   constructor(
@@ -432,11 +437,18 @@ export class SummaryComponent implements OnInit {
     /** seats */
     this.generatingSeatsTable = true;
     this.usersList = await this.sharepoint.getUsers();
-    this.usersList = this.usersList.filter(el => el.Email).slice(0,4);
+    this.usersList = this.usersList.filter(el => el.Email);
 
     for (let index = 0; index < this.usersList.length; index++) {
       const user: any = this.usersList[index];
       const result = await this.sharepoint.getSeats(user.Email);
+      if (index == 0 && result) {
+        this.generalSeatsCount = {
+          AssignedSeats: result?.AssignedSeats,
+          TotalSeats: result?.TotalSeats,
+          AvailableSeats: result?.AvailableSeats
+        }
+      }
       user['seats'] = result?.UserGroupsCount;
       const groups = await this.sharepoint.getUserGroups(user.Id);
       const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));

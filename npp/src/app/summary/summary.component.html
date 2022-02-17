@@ -33,6 +33,12 @@
         <div class="summary-seats">
             <div class="next-tasks-title section-title">Seats Control</div>
             <app-progress-spinner *ngIf="generatingSeatsTable"></app-progress-spinner>
+
+            <p *ngIf="!generatingSeatsTable && generalSeatsCount" class="general-count">
+                <label>Total Seats:</label> {{ generalSeatsCount.TotalSeats }} -
+                <label>Assigned Seats:</label> {{ generalSeatsCount.AssignedSeats }} -
+                <label>Available Seats:</label> {{ generalSeatsCount.AvailableSeats }}
+            </p>
             <table *ngIf="!generatingSeatsTable" class="seats-table">
                 <tr>
                     <th>User</th>
