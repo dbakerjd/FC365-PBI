@@ -47,11 +47,12 @@ export interface OpportunityInput {
   Title: string;
   MoleculeName: string;
   EntityOwnerId: number;
-  ProjectStartDate: Date;
-  ProjectEndDate: Date;
+  ProjectStartDate?: Date;
+  ProjectEndDate?: Date;
   OpportunityTypeId: number;
   IndicationId: number;
   AppTypeId: number;
+  Year?: number;
 }
 
 export interface StageInput {
@@ -601,14 +602,23 @@ export class SharepointService {
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
     Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
     if(this.app) opp.AppTypeId = this.app.ID;
+    
+    // clean fields according type
+    const isInternal = await this.isInternalOpportunity(opp.OpportunityTypeId);
+    if (isInternal) {
+      opp.ProjectStartDate = opp.ProjectEndDate = undefined;
+    } else {
+      opp.Year = undefined;
+    }
+
     const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
     // get master stage info
-    const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
     let stage = null;
 
-    if(!opportunityType?.IsInternal) {
+    if(!isInternal) {
+      const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
       const stageType = opportunityType?.StageType;
       if(!stageType) throw new Error("Could not determine Opportunity Type");
       const masterStage = await this.getMasterStage(stageType, stageStartNumber);
@@ -618,7 +628,6 @@ export class SharepointService {
       );
       if (!stage) return false; // TODO remove opportunity
     }
-    
 
     return { opportunity, stage };
   }
