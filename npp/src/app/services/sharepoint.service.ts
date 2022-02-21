@@ -6,6 +6,7 @@ import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { GraphService } from './graph.service';
+import { ThrowStmt } from '@angular/compiler';
 
 
 export interface Opportunity {
@@ -626,7 +627,7 @@ export class SharepointService {
       stage = await this.createStage(
         { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
       );
-      if (!stage) return false; // TODO remove opportunity
+      if (!stage) this.deleteOpportunity(opportunity.ID);
     }
 
     return { opportunity, stage };
