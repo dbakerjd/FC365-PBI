@@ -18,6 +18,7 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
@@ -68,7 +69,8 @@ export class ActionsListComponent implements OnInit {
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
-    private breadcrumbService: BreadcrumbsService
+    private breadcrumbService: BreadcrumbsService,
+    public disambiguator: InlineNppDisambiguationService
     ) { }
 
   ngOnInit(): void {
@@ -506,6 +508,7 @@ export class ActionsListComponent implements OnInit {
 
     const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
       maxWidth: "400px",
+      minWidth: "350px",
       height: "200px",
       data: {
         message: `Do you want to complete the opportunity <em>${this.opportunity.Title}</em>?`,
