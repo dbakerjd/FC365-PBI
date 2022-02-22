@@ -33,7 +33,8 @@
             <div class="opportunity-progress" (click)="navigateTo(item)">
                 <p *ngIf="item.progress >= 0"><label>Progress:</label> <span class="opportunity-progress-value">{{item.progress}}%</span> <app-progress-bar [progress]="item.progress"></app-progress-bar></p>
                 <p *ngIf="item.EntityOwner"><label>Opportunity Owner: </label> {{item.EntityOwner.FirstName + ' ' + item.EntityOwner.LastName}}</p>
-                <p><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
+                <p *ngIf="item.ProjectEndDate"><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
+                <p *ngIf="item.Year"><label>Year: </label> {{item.Year }}</p>
                 <p><label>Therapy Area: </label> {{item.TherapyAreaAsString}}</p>
             </div>
             <div class="opportunity-actions">

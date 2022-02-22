@@ -6,6 +6,7 @@ import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { GraphService } from './graph.service';
+import { ThrowStmt } from '@angular/compiler';
 
 
 export interface Opportunity {
@@ -47,11 +48,12 @@ export interface OpportunityInput {
   Title: string;
   MoleculeName: string;
   EntityOwnerId: number;
-  ProjectStartDate: Date;
-  ProjectEndDate: Date;
+  ProjectStartDate?: Date;
+  ProjectEndDate?: Date;
   OpportunityTypeId: number;
   IndicationId: number;
   AppTypeId: number;
+  Year?: number;
 }
 
 export interface StageInput {
@@ -601,14 +603,23 @@ export class SharepointService {
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
     Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
     if(this.app) opp.AppTypeId = this.app.ID;
+    
+    // clean fields according type
+    const isInternal = await this.isInternalOpportunity(opp.OpportunityTypeId);
+    if (isInternal) {
+      opp.ProjectStartDate = opp.ProjectEndDate = undefined;
+    } else {
+      opp.Year = undefined;
+    }
+
     const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
     // get master stage info
-    const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
     let stage = null;
 
-    if(!opportunityType?.IsInternal) {
+    if(!isInternal) {
+      const opportunityType = await this.getOpportunityType(opp.OpportunityTypeId);
       const stageType = opportunityType?.StageType;
       if(!stageType) throw new Error("Could not determine Opportunity Type");
       const masterStage = await this.getMasterStage(stageType, stageStartNumber);
@@ -616,9 +627,8 @@ export class SharepointService {
       stage = await this.createStage(
         { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
       );
-      if (!stage) return false; // TODO remove opportunity
+      if (!stage) this.deleteOpportunity(opportunity.ID);
     }
-    
 
     return { opportunity, stage };
   }
@@ -2666,7 +2676,7 @@ export class SharepointService {
     let select = '';
     switch(rootFolder) {
       case FOLDER_DOCUMENTS:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication,ApprovalStatus';
         break;
       case FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
