@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
@@ -66,6 +66,7 @@ export class FilesListComponent implements OnInit {
     private sharepoint: SharepointService, 
     private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
+    private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
     private teams: TeamsService,
@@ -224,7 +225,11 @@ export class FilesListComponent implements OnInit {
   async openUploadDialog() {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
-      let folders = [...this.documentFolders]
+      let folders = [...this.documentFolders];
+      if (this.geoFolders.length == 0) {
+        // not access to models, remove of the list
+        folders = this.documentFolders.filter(el => !el.containsModels);
+      }
       this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
@@ -582,6 +587,13 @@ export class FilesListComponent implements OnInit {
       this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
+    
+  }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
     
   }
 

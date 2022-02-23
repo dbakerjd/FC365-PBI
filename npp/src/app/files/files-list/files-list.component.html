@@ -75,14 +75,15 @@
 
             <div class="folder-info-icons opportunity-top-actions">
                 <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
-                <div class="info-icons-documents" matTooltip="Documents" (click)="showFolders()" [ngClass]="{ 'top-action-selected': currentSection == 'documents'}">
+                <div class="info-icons-documents" matTooltip="Documents" (click)="showFolders()" [ngClass]="{ 'top-action-selected': currentSection == 'documents'}" *ngIf="documentFolders.length > 1">
                     <div class="info-icons-selected-section"></div>
                 </div>
-                <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'models'}">
+                <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'models'}" *ngIf="geoFolders.length > 0">
                     <div class="info-icons-selected-section"></div>
                 </div>
                 <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
                 <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi" (click)="refreshPowerBi()"></div>
+                <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi"  (click)="navigateTo(opportunity)"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
             </div>
         </div>
