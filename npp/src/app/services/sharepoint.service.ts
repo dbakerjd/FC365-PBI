@@ -679,12 +679,6 @@ export class SharepointService {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
 
-    const OUGroup = groups.find(el => el.type == "OU");
-    const powerBIfolder = await this.getFolderByUrl(FOLDER_POWER_BI_DOCUMENTS);
-    if (OUGroup && powerBIfolder) {
-      this.addRolePermissionToFolder(powerBIfolder.ServerRelativeUrl, OUGroup.data.Id, 'ListEdit');
-    }
-
     if (stage) {
       await this.initializeStage(opportunity, stage, oppGeographies);
     } else {
@@ -2522,7 +2516,7 @@ export class SharepointService {
     };
   }
 
-  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0): Promise<SystemFolder[]> {
+  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/${departmentId}`;
     for (const geo of geographies) {
@@ -2531,7 +2525,7 @@ export class SharepointService {
         geoFolder.GeographyID = geo.ID;
         geoFolder.DepartmentID = departmentId;
         folders.push(geoFolder);
-        await this.createFolder(`${basePath}/${geo.ID}/0`, true);
+        await this.createFolder(`${basePath}/${geo.ID}/${cycleId}`, true);
       }
     }
     
@@ -2726,21 +2720,13 @@ export class SharepointService {
       ForecastCycleDescriptor: entity.ForecastCycleDescriptor
     });
 
-    const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    
     for (const geo of geographies) {
-      let GUGroup = await this.getGroup(`OU-${entity.ID}-${geo.ID}`);
-      if(GUGroup) {
-        let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
-        const cycleFolder = await this.createFolder(geoFolder, true);
-        if(cycleFolder) {
-          await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
-          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
-        }else {
-          throw new Error("Could not create Forecast Cycle folder");
-        }
-      } else {
-        throw new Error("Could not get geography group.");
+      let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+      const cycleFolder = await this.createFolder(geoFolder, true);
+      if(cycleFolder) {
+        await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
+      }else {
+        throw new Error("Could not create Forecast Cycle folder");
       }
     }
 
