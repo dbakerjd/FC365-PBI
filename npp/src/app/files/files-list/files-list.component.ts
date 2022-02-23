@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
@@ -38,6 +38,7 @@ export class FilesListComponent implements OnInit {
   selectedFolder: NPPFolder | undefined = undefined;
   selectedDepartmentId: number = 0;
   documentFolders: NPPFolder[] = [];
+  geoFolders: any[] = [];
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
   entityId = 0;
@@ -65,6 +66,7 @@ export class FilesListComponent implements OnInit {
     private sharepoint: SharepointService, 
     private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
+    private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
     private teams: TeamsService,
@@ -164,9 +166,9 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          const geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
           this.currentFiles = [];
-          for (const geofolder of geoFolders) {
+          for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
               folder = folder + '/' + this.currentCycle;
@@ -223,7 +225,11 @@ export class FilesListComponent implements OnInit {
   async openUploadDialog() {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
-      let folders = [...this.documentFolders]
+      let folders = [...this.documentFolders];
+      if (this.geoFolders.length == 0) {
+        // not access to models, remove of the list
+        folders = this.documentFolders.filter(el => !el.containsModels);
+      }
       this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
@@ -543,7 +549,7 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
@@ -581,6 +587,13 @@ export class FilesListComponent implements OnInit {
       this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
+    
+  }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
     
   }
 
