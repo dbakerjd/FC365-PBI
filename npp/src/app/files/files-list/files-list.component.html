@@ -46,7 +46,7 @@
                 </ng-container>
             </div>
         </div>
-        <div class="folder-item-wrapper">
+        <div class="folder-item-wrapper" *ngIf="geoFolders.length > 0">
             <div class="folder-item models-folder left-top-selection"  [ngClass]="{'selected-item': currentSection == 'models'}" (click)="setSection('models')">
                 <span>Forecast Models</span>
                 <svg>

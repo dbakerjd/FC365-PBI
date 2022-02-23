@@ -38,6 +38,7 @@ export class FilesListComponent implements OnInit {
   selectedFolder: NPPFolder | undefined = undefined;
   selectedDepartmentId: number = 0;
   documentFolders: NPPFolder[] = [];
+  geoFolders: any[] = [];
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
   entityId = 0;
@@ -164,9 +165,9 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          const geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
           this.currentFiles = [];
-          for (const geofolder of geoFolders) {
+          for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
               folder = folder + '/' + this.currentCycle;
