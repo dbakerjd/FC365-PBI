@@ -184,7 +184,7 @@ export class ActionsListComponent implements OnInit {
 
   async updateCurrentFiles() {
     if (this.currentFolder?.containsModels) {
-      const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+      const geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
         this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));

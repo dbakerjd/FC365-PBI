@@ -28,7 +28,7 @@
 </div>
 <div class="folder-and-actions-wrapper opportunity-contents">
     <div class="folder-wrapper left-selection">
-        <div class="folder-item-wrapper" *ngIf="documentFolders.length > 0">
+        <div class="folder-item-wrapper" *ngIf="documentFolders.length > 1">
             <div class="folder-item left-top-selection"  [ngClass]="{'selected-item': currentSection == 'documents'}" (click)="setSection('documents')">
                 <span>Reference Documents</span>
                 <svg>
