@@ -280,6 +280,7 @@ const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 export const FILES_FOLDER = "Current Opportunity Library";
 export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
+const MASTER_AAD_GROUPS = "lists/getbytitle('Master AAD Groups')";
 const POWER_BI_ACCESS_LIST = "lists/getbytitle('Power BI Access')";
 
 export interface BusinessUnit {
@@ -1640,7 +1641,8 @@ export class SharepointService {
         }
         const response = await this.licensing.addSeat(user.Email);
         if (response?.UserGroupsCount == 1) { // assigned seat for first time
-          this.msgraph.addUserToPowerBI_RLSGroup(user.Email);
+          const RLSGroup = await this.getAADGroupName();
+          if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(user.Email, RLSGroup);
         }
       }
       await this.http.post(
@@ -1675,7 +1677,8 @@ export class SharepointService {
         if (user.Email) {
           const response = await this.licensing.removeSeat(user.Email);
           if (response?.UserGroupsCount == 0) { // removed the last seat for user
-            this.msgraph.removeUserToPowerBI_RLSGroup(user.Email);
+            const RLSGroup = await this.getAADGroupName();
+            if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(user.Email, RLSGroup);
           }
         }
       }
@@ -1773,6 +1776,13 @@ export class SharepointService {
         });
       }
     }
+  }
+
+
+  async getAADGroupName(): Promise<string | null> {
+    const AADGroup = await this.getOneItem(MASTER_AAD_GROUPS, `$filter=AppTypeId eq ${this.app?.ID}`);
+    if (AADGroup) return AADGroup.Title;
+    return null;
   }
 
 
