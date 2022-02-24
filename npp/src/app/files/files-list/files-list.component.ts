@@ -22,7 +22,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER } from 'src/app/services/sharepoint.service';
+import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER, EntityGeography } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -43,6 +43,7 @@ export class FilesListComponent implements OnInit {
   refreshingPowerBi = false;
   entityId = 0;
   entity: Brand | Opportunity | undefined = undefined;
+  entityGeographies: EntityGeography[] = []; // geographies not removed
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
@@ -96,6 +97,7 @@ export class FilesListComponent implements OnInit {
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
+        this.entityGeographies = await this.sharepoint.getOpportunityGeographies(this.entity.ID, false);
         this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
@@ -167,6 +169,8 @@ export class FilesListComponent implements OnInit {
         
         if (this.currentStatus != 'none') {
           this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          // only folders of geography not removed
+          this.geoFolders = this.geoFolders.filter(gf => this.entityGeographies.some((eg: EntityGeography) => +eg.ID === +gf.Name));
           this.currentFiles = [];
           for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;

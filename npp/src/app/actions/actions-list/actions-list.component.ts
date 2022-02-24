@@ -22,7 +22,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication, EntityGeography } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -38,6 +38,7 @@ export class ActionsListComponent implements OnInit {
   gates: Stage[] = [];
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
+  opportunityGeographies: EntityGeography[] = []; // geographies (not soft removed)
   currentGate: Stage | undefined = undefined;
   lastStageId: number | undefined = undefined; // next stage button control
   nextStage: Stage | null = null;
@@ -85,6 +86,7 @@ export class ActionsListComponent implements OnInit {
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
         this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
+        this.opportunityGeographies = await this.sharepoint.getOpportunityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
           let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
@@ -184,7 +186,8 @@ export class ActionsListComponent implements OnInit {
 
   async updateCurrentFiles() {
     if (this.currentFolder?.containsModels) {
-      const geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
+      let geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
+      geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
         this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
