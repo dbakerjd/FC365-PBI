@@ -275,7 +275,6 @@ export class FilesListComponent implements OnInit {
           this.updateCurrentFiles();
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.entityId, [
-            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {

@@ -243,7 +243,6 @@ export class ActionsListComponent implements OnInit {
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
