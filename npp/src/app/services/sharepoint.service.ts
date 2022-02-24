@@ -1031,8 +1031,12 @@ export class SharepointService {
 
     if (opportunityId && (businessUnitId !== null)) {
       // only folders user can access
-      const allowedFolders = await this.getSubfolders(`/${businessUnitId}/${opportunityId}/${masterStageId}`);
-      return masterFolders.filter(f => allowedFolders.some((af: any) => +af.Name === f.DepartmentID));
+      const allowedDepartmentFolders = await this.getSubfolders(`/${businessUnitId}/${opportunityId}/${masterStageId}`);
+      const allowedGeoFolders = await this.getSubfolders(`/${businessUnitId}/${opportunityId}/${masterStageId}/0`);
+      return masterFolders.filter(f => {
+        if (f.containsModels) return allowedGeoFolders.length > 0;
+        else return allowedDepartmentFolders.some((af: any) => +af.Name === f.DepartmentID)
+      });
     }
     return masterFolders;
   }
@@ -1084,10 +1088,6 @@ export class SharepointService {
           folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0`);
           if (folder) {
             folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/0/0`);
-            if (folder) {
-              folder.DepartmentID = mf.DepartmentID;
-              folders.push(folder);
-            }
           }
         } else {
           for (let geo of geographies) {
