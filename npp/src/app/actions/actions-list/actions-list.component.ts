@@ -184,7 +184,7 @@ export class ActionsListComponent implements OnInit {
 
   async updateCurrentFiles() {
     if (this.currentFolder?.containsModels) {
-      const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+      const geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
         this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
@@ -778,7 +778,7 @@ export class ActionsListComponent implements OnInit {
           fileInfo.Name = result.filename;
           this.toastr.success(`The file has been renamed`, "File Renamed");
           await this.updateCurrentFiles();
-        } else {
+        } else if (result.success === false) {
           this.toastr.error("Sorry, there was a problem renaming the file");
         }
       });
@@ -803,7 +803,7 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");

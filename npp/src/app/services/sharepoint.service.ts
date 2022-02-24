@@ -280,6 +280,7 @@ const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
 export const FILES_FOLDER = "Current Opportunity Library";
 export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
+const MASTER_AAD_GROUPS = "lists/getbytitle('Master AAD Groups')";
 const POWER_BI_ACCESS_LIST = "lists/getbytitle('Power BI Access')";
 
 export interface BusinessUnit {
@@ -859,7 +860,7 @@ export class SharepointService {
     groups.push({ type: 'OO', data: OOGroup });
 
     // Folders
-    const folders = await this.createInternalFolders(opportunity, geographies);
+    const folders = await this.createInternalFolders(opportunity, groups, geographies);
 
     // add groups to folders
     const RefDocsPermissions = await this.getGroupPermissions(FILES_FOLDER);
@@ -1092,12 +1093,10 @@ export class SharepointService {
           for (let geo of geographies) {
             let folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
             if (folder) {
+              folder.DepartmentID = 0;
+              folder.GeographyID = geo.ID;
+              folders.push(folder);
               folder = await this.createFolder(`/${opportunity.BusinessUnitId}/${stage.EntityNameId}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
-              if (folder) {
-                folder.DepartmentID = 0;
-                folder.GeographyID = geo.ID;
-                folders.push(folder);
-              }
             }
           }
         }
@@ -1450,7 +1449,7 @@ export class SharepointService {
 
   async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
     let subfolders: any[] = [];
-    let basePath = `${this.getBaseFilesFolder()}/`;
+    let basePath = this.getBaseFilesFolder();
     if(isAbsolutePath) basePath = '';
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${basePath}${folder}')/folders`,
@@ -1642,7 +1641,8 @@ export class SharepointService {
         }
         const response = await this.licensing.addSeat(user.Email);
         if (response?.UserGroupsCount == 1) { // assigned seat for first time
-          this.msgraph.addUserToPowerBI_RLSGroup(user.Email);
+          const RLSGroup = await this.getAADGroupName();
+          if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(user.Email, RLSGroup);
         }
       }
       await this.http.post(
@@ -1677,7 +1677,8 @@ export class SharepointService {
         if (user.Email) {
           const response = await this.licensing.removeSeat(user.Email);
           if (response?.UserGroupsCount == 0) { // removed the last seat for user
-            this.msgraph.removeUserToPowerBI_RLSGroup(user.Email);
+            const RLSGroup = await this.getAADGroupName();
+            if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(user.Email, RLSGroup);
           }
         }
       }
@@ -1775,6 +1776,13 @@ export class SharepointService {
         });
       }
     }
+  }
+
+
+  async getAADGroupName(): Promise<string | null> {
+    const AADGroup = await this.getOneItem(MASTER_AAD_GROUPS, `$filter=AppTypeId eq ${this.app?.ID}`);
+    if (AADGroup) return AADGroup.Title;
+    return null;
   }
 
 
@@ -2259,7 +2267,7 @@ export class SharepointService {
         }
       } 
     } else {
-      const folders = await this.createInternalFolders(entity, newGeos);
+      const folders = await this.createInternalFolders(entity, groups, newGeos);
       
       // add groups to folders
       // department folders non needed
@@ -2343,7 +2351,7 @@ export class SharepointService {
       }
     } else {
       // internal
-      const folders = await this.createInternalFolders(entity, restoreGeos);
+      const folders = await this.createInternalFolders(entity, groups, restoreGeos);
 
       const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
       await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
@@ -2400,7 +2408,7 @@ export class SharepointService {
     await this.createGeographies(brand.ID,geographies, countries);
 
     //create models folders
-    let folders = await this.createInternalFolders(brand);
+    let folders = await this.createInternalFolders(brand, []); // TODO pass groups
 
     let permissions = await this.getGroupPermissions(FOLDER_WIP);
     let groups: SPGroupListItem[] = [];
@@ -2454,9 +2462,12 @@ export class SharepointService {
     return brand; 
   }
 
-  private async createInternalFolders(entity: Opportunity, geographies?: EntityGeography[]): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
+  private async createInternalFolders(entity: Opportunity, groups: SPGroupListItem[], geographies?: EntityGeography[]): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
     let ReadWriteNames = [FOLDER_WIP, FOLDER_DOCUMENTS];
     let ReadOnlyNames = [FOLDER_APPROVED, FOLDER_ARCHIVED];
+
+    const OUGroup = groups.find(el => el.type == "OU");
+    if (!OUGroup) throw new Error("Error creating group permissions for internal folders.");
     
     if(!geographies) {
       geographies = await this.getEntityGeographies(entity.ID);
@@ -2470,15 +2481,17 @@ export class SharepointService {
         if(BUFolder) {
           const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`, true);
           if (folder) {
+            await this.addRolePermissionToFolder(folder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
             const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`, true);
             if(emptyStageFolder) {
+              await this.addRolePermissionToFolder(emptyStageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
               if(mf != FOLDER_DOCUMENTS) {
                 const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
                 if(forecastFolder) {
                   rwFolders = rwFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
                 }
               } else {
-                rwFolders = rwFolders.concat(await this.createDepartmentFolders(entity, geographies, mf));
+                rwFolders = rwFolders.concat(await this.createDepartmentFolders(entity, mf));
               } 
             }
           }
@@ -2494,8 +2507,10 @@ export class SharepointService {
         if(BUFolder) {
           const folder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}`, true);
           if (folder) {
+            await this.addRolePermissionToFolder(folder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
             const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`, true);
             if(emptyStageFolder) {
+              await this.addRolePermissionToFolder(emptyStageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
               const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
               if(forecastFolder) {  
                 roFolders = roFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
@@ -2511,38 +2526,34 @@ export class SharepointService {
     };
   }
 
-  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0): Promise<SystemFolder[]> {
+  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/${departmentId}`;
     for (const geo of geographies) {
       let geoFolder = await this.createFolder(`${basePath}/${geo.ID}`, true);
       if (geoFolder) {
-        let geoFolder = await this.createFolder(`${basePath}/${geo.ID}/0`, true);
-        if(geoFolder) {
-          geoFolder.GeographyID = geo.ID;
-          geoFolder.DepartmentID = departmentId;
-          folders.push(geoFolder);
-        }
+        geoFolder.GeographyID = geo.ID;
+        geoFolder.DepartmentID = departmentId;
+        folders.push(geoFolder);
+        await this.createFolder(`${basePath}/${geo.ID}/${cycleId}`, true);
       }
     }
     
     return folders;
   }
   
-  private async createDepartmentFolders(entity: Brand | Opportunity, geographies: EntityGeography[], mf: string): Promise<SystemFolder[]> {
+  private async createDepartmentFolders(entity: Brand | Opportunity, mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0`;
     let departmentFolders = await this.getInternalDepartments();
     for(const dept of departmentFolders) {
       let folder = await this.createFolder(`${basePath}/${dept.DepartmentID}`, true);
       if (folder) {
+        folder.DepartmentID = dept.DepartmentID;
+        folders.push(folder);
         folder = await this.createFolder(`${basePath}/${dept.DepartmentID}/0`, true);
         if(folder) {
           folder = await this.createFolder(`${basePath}/${dept.DepartmentID}/0/0`, true);
-          if(folder) {
-            folder.DepartmentID = dept.DepartmentID;
-            folders.push(folder);
-          }
         }
       }
     }
@@ -2719,21 +2730,13 @@ export class SharepointService {
       ForecastCycleDescriptor: entity.ForecastCycleDescriptor
     });
 
-    const permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    
     for (const geo of geographies) {
-      let GUGroup = await this.getGroup(`OU-${entity.ID}-${geo.ID}`);
-      if(GUGroup) {
-        let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
-        const cycleFolder = await this.createFolder(geoFolder, true);
-        if(cycleFolder) {
-          await this.setPermissions(permissions, [{ type: 'GU', data: GUGroup }], cycleFolder.ServerRelativeUrl);      
-          await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
-        }else {
-          throw new Error("Could not create Forecast Cycle folder");
-        }
-      } else {
-        throw new Error("Could not get geography group.");
+      let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+      const cycleFolder = await this.createFolder(geoFolder, true);
+      if(cycleFolder) {
+        await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
+      }else {
+        throw new Error("Could not create Forecast Cycle folder");
       }
     }
 
