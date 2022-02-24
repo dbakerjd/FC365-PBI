@@ -2239,7 +2239,7 @@ export class SharepointService {
     let stages = await this.getStages(entity.ID);
     if (stages && stages.length) {
       for (const oppGeo of newGeos) {
-        await this.setPermissions(permissions, groups, oppGeo.Id);
+        await this.setPermissions(permissions, groups, oppGeo.Id); // assign permissions to new entity geo items
         for (let index = 0; index < stages.length; index++) {
           let stage = stages[index];
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
@@ -2249,28 +2249,30 @@ export class SharepointService {
   
           let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${oppGeo.Id}`);
           if(folder) {
-            let folder = await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${oppGeo.Id}/0`);
-            if (folder) {
-              // department group name
-              let groupName = `DU-${entity.ID}-${mf.DepartmentID}-${oppGeo.Id}`;
+            // department group and Stage Users Group
+            const DUGroupName = `DU-${entity.ID}-${mf.DepartmentID}-${oppGeo.Id}`;
+            let DUGroup = await this.createGroup(DUGroupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + oppGeo.Id);
+            let SUGroup = await this.getGroup(`SU-${entity.ID}-${stage.StageNameId}`);
+            if (DUGroup && SUGroup) {
               const permissions = await this.getGroupPermissions(FILES_FOLDER);
-              let DUGroup = await this.createGroup(groupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + oppGeo.Id);
-    
-              if (DUGroup) {
-                let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }];
-                await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
-              } else {
-                throw new Error("Error creating geography group permissions.")
-              }
+              let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }, { type: 'SU', data: SUGroup }];
+              await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
+            } else {
+              if (!DUGroup) throw new Error("Error creating geography group permissions.");
+              else throw new Error("Error getting SU group.");
             }
+            await this.createFolder(`/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${oppGeo.Id}/0`);
           }
         }
       } 
     } else {
       const folders = await this.createInternalFolders(entity, groups, newGeos);
       
+      for (const oppGeo of newGeos) {
+        await this.setPermissions(permissions, groups, oppGeo.Id); // assign permissions to new entity geo items
+      }
       // add groups to folders
-      // department folders non needed
+      // (department folders non needed)
       // const departmentPermissions = await this.getGroupPermissions(FILES_FOLDER);
       // await this.createFolderGroups(entity.ID, departmentPermissions, folders.rw.filter(el => el.DepartmentID), groups);
       const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
@@ -2322,7 +2324,6 @@ export class SharepointService {
 
   /** Restore previously soft deleted entity geographies and create DU groups related */
   private async restoreGeographies(entity: Opportunity, restoreGeos: EntityGeography[]) {
-    //removes groups
     let OOGroup = await this.getGroup(`OO-${entity.ID}`);
     let OUGroup = await this.getGroup(`OU-${entity.ID}`);
     if (!OOGroup || !OUGroup) throw new Error("Error obtaining user groups.");
@@ -2340,13 +2341,20 @@ export class SharepointService {
           let modelFolders = stageFolders.filter(el => el.containsModels);
           if (modelFolders.length < 1) continue;
 
-          let systemFolders: SystemFolder[] = [];
-          for (const mf of modelFolders) {
-            const folder = await this.getFolderByUrl(this.getBaseFilesFolder() + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}/0`);
-            if (folder) systemFolders.push(folder);
-          }
+          // not needed because SU group is never removed
+          // let SUGroup = await this.createGroup(`SU-${entity.ID}-${stage.StageNameId}`);
+          // if (!SUGroup) throw new Error('Error obtaining user group (SU)');
+
           const permissions = await this.getGroupPermissions(FILES_FOLDER);
-          await this.createFolderGroups(entity.ID, permissions, systemFolders, groups);
+          for (const mf of modelFolders) {
+            const folder = await this.getFolderByUrl(this.getBaseFilesFolder() + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
+            const DUGroupName = `DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`;
+            let DUGroup = await this.createGroup(DUGroupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + geo.Id);
+            if (folder && DUGroup) {
+              groups.push({ type: 'DU', data: DUGroup });
+              await this.createFolderGroups(entity.ID, permissions, [folder], groups);
+            }
+          }
         }
       }
     } else {
