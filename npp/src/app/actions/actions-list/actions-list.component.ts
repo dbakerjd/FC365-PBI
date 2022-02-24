@@ -58,6 +58,7 @@ export class ActionsListComponent implements OnInit {
   dialogInstance: any; 
   loading = false;
   profilePic: string = '/assets/user.svg';
+  hasAccessToModels = false;
 
   constructor(
     private readonly sharepoint: SharepointService, 
@@ -94,7 +95,6 @@ export class ActionsListComponent implements OnInit {
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
           el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
-          // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
           this.setStatus(el.actions);
 
           //set current gate
@@ -633,6 +633,7 @@ export class ActionsListComponent implements OnInit {
       this.currentFiles = [];
     } else {
       this.currentFolders = this.currentGate.folders;
+      this.hasAccessToModels = this.currentFolders.some((f: NPPFolder) => f.containsModels);
       if (this.currentFolders.length) this.setFolder(this.currentFolders[0].DepartmentID);
     }
   }
