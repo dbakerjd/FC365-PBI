@@ -153,7 +153,7 @@
                             <div class="documents-files-item-uploaded">
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
-                                    <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted'">
+                                    <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
                                         <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> 
                                         <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
                                     </p>
