@@ -41,7 +41,6 @@ export interface MSGraphUser {
 })
 export class GraphService {
 
-  public PowerBI_RLS_Group = 'FC365_RLS';
   private baseGraphUrl = 'https://graph.microsoft.com/v1.0/';
 
   constructor(
@@ -186,18 +185,17 @@ export class GraphService {
     return await this.getRequest(`users/${name}`);
   }
 
-  /** Adds the current user to the Azure Group controling Power BI RLS Access */
-  async addUserToPowerBI_RLSGroup(email: string): Promise<boolean> {
-    const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
+  /** Adds the user to the Azure Group controling Power BI RLS Access */
+  async addUserToPowerBI_RLSGroup(email: string, groupName: string): Promise<boolean> {
+    const group = await this.getAzureGroupByName(groupName);
     const user = await this.getUserByPrincipalName(email);
-
     if (group && user) return this.addUserToAzureGroup(user.id, group.id);
     return false;
   }
 
-  /** Removes the current user of the Azure Group controling Power BI RLS Access */
-  async removeUserToPowerBI_RLSGroup(email: string): Promise<boolean> {
-    const group = await this.getAzureGroupByName(this.PowerBI_RLS_Group);
+  /** Removes the user of the Azure Group controling Power BI RLS Access */
+  async removeUserToPowerBI_RLSGroup(email: string, groupName: string): Promise<boolean> {
+    const group = await this.getAzureGroupByName(groupName);
     const user = await this.getUserByPrincipalName(email);
     if (group && user) return this.removeUserToAzureGroup(user.id, group.id);
     return false;

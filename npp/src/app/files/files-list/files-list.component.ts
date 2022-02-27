@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
@@ -22,7 +22,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER } from 'src/app/services/sharepoint.service';
+import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER, EntityGeography } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -38,10 +38,12 @@ export class FilesListComponent implements OnInit {
   selectedFolder: NPPFolder | undefined = undefined;
   selectedDepartmentId: number = 0;
   documentFolders: NPPFolder[] = [];
+  geoFolders: any[] = [];
   cycles: BrandForecastCycle[] = [];
   refreshingPowerBi = false;
   entityId = 0;
   entity: Brand | Opportunity | undefined = undefined;
+  entityGeographies: EntityGeography[] = []; // geographies not removed
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
@@ -65,6 +67,7 @@ export class FilesListComponent implements OnInit {
     private sharepoint: SharepointService, 
     private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
+    private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
     private teams: TeamsService,
@@ -94,6 +97,7 @@ export class FilesListComponent implements OnInit {
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
         this.entity = await this.disambiguator.getEntity(params.id);
+        this.entityGeographies = await this.sharepoint.getOpportunityGeographies(this.entity.ID, false);
         this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
@@ -164,9 +168,11 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          const geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          // only folders of geography not removed
+          this.geoFolders = this.geoFolders.filter(gf => this.entityGeographies.some((eg: EntityGeography) => +eg.ID === +gf.Name));
           this.currentFiles = [];
-          for (const geofolder of geoFolders) {
+          for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
               folder = folder + '/' + this.currentCycle;
@@ -223,7 +229,11 @@ export class FilesListComponent implements OnInit {
   async openUploadDialog() {
     if(this.entity) {
       let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
-      let folders = [...this.documentFolders]
+      let folders = [...this.documentFolders];
+      if (this.geoFolders.length == 0) {
+        // not access to models, remove of the list
+        folders = this.documentFolders.filter(el => !el.containsModels);
+      }
       this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
         height: '600px',
         width: '405px',
@@ -269,7 +279,6 @@ export class FilesListComponent implements OnInit {
           this.updateCurrentFiles();
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.entityId, [
-            `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
@@ -543,7 +552,7 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
@@ -581,6 +590,13 @@ export class FilesListComponent implements OnInit {
       this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
+    
+  }
+
+  navigateTo(item: Opportunity) {
+   
+    this.router.navigate(['/power-bi',
+      {ID:item.ID}]);
     
   }
 

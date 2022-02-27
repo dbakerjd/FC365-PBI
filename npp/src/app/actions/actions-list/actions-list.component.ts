@@ -18,10 +18,11 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
+import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication } from 'src/app/services/sharepoint.service';
+import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication, EntityGeography } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 
 @Component({
@@ -37,6 +38,7 @@ export class ActionsListComponent implements OnInit {
   gates: Stage[] = [];
   opportunityId = 0;
   opportunity: Opportunity | undefined = undefined;
+  opportunityGeographies: EntityGeography[] = []; // geographies (not soft removed)
   currentGate: Stage | undefined = undefined;
   lastStageId: number | undefined = undefined; // next stage button control
   nextStage: Stage | null = null;
@@ -57,6 +59,7 @@ export class ActionsListComponent implements OnInit {
   dialogInstance: any; 
   loading = false;
   profilePic: string = '/assets/user.svg';
+  hasAccessToModels = false;
 
   constructor(
     private readonly sharepoint: SharepointService, 
@@ -68,7 +71,8 @@ export class ActionsListComponent implements OnInit {
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
-    private breadcrumbService: BreadcrumbsService
+    private breadcrumbService: BreadcrumbsService,
+    public disambiguator: InlineNppDisambiguationService
     ) { }
 
   ngOnInit(): void {
@@ -82,6 +86,7 @@ export class ActionsListComponent implements OnInit {
         this.currentUser = await this.sharepoint.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
         this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
+        this.opportunityGeographies = await this.sharepoint.getOpportunityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
           let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
@@ -92,7 +97,6 @@ export class ActionsListComponent implements OnInit {
         this.gates.forEach(async (el, index) => {
           el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
           el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
-          // el.folders = await this.sharepoint.getSubfolders(`/${this.opportunityId}/${el.StageNameId}`);
           this.setStatus(el.actions);
 
           //set current gate
@@ -182,7 +186,8 @@ export class ActionsListComponent implements OnInit {
 
   async updateCurrentFiles() {
     if (this.currentFolder?.containsModels) {
-      const geoFolders = await this.sharepoint.getSubfolders(this.currentFolderUri);
+      let geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
+      geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
         this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
@@ -241,7 +246,6 @@ export class ActionsListComponent implements OnInit {
           //generate notifications
           this.toastr.success("The model has been sent for approval", "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.opportunityId, [
-            `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
@@ -506,6 +510,7 @@ export class ActionsListComponent implements OnInit {
 
     const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
       maxWidth: "400px",
+      minWidth: "350px",
       height: "200px",
       data: {
         message: `Do you want to complete the opportunity <em>${this.opportunity.Title}</em>?`,
@@ -630,6 +635,7 @@ export class ActionsListComponent implements OnInit {
       this.currentFiles = [];
     } else {
       this.currentFolders = this.currentGate.folders;
+      this.hasAccessToModels = this.currentFolders.some((f: NPPFolder) => f.containsModels);
       if (this.currentFolders.length) this.setFolder(this.currentFolders[0].DepartmentID);
     }
   }
@@ -775,7 +781,7 @@ export class ActionsListComponent implements OnInit {
           fileInfo.Name = result.filename;
           this.toastr.success(`The file has been renamed`, "File Renamed");
           await this.updateCurrentFiles();
-        } else {
+        } else if (result.success === false) {
           this.toastr.error("Sorry, there was a problem renaming the file");
         }
       });
@@ -800,7 +806,7 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl)) {
+          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
