@@ -1,0 +1,21 @@
+:host{
+    position: relative;
+    display: block;
+}
+.dialog-content-wrapper {
+    max-height: calc(75vh - 14rem);
+    padding: 2rem 2rem 0 2rem;
+    position: relative;
+    overflow-y: auto;
+    width: 88%;
+    background-color: #fff;
+    form {
+        overflow-y: auto;
+        overflow-x: visible;
+        max-height: calc(100% - 3rem);
+        padding-bottom: 0.5rem;
+        input {
+            max-width: 98%;
+        }
+    }
+}

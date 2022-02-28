@@ -132,8 +132,8 @@ export class BrandListComponent implements OnInit {
 
   createBrand() {
     this.dialogInstance = this.matDialog.open(CreateBrandComponent, {
-      height: '700px',
-      width: '405px'
+      height: '75vh',
+      width: '500px'
     });
 
     this.dialogInstance.afterClosed().subscribe(async (result:Brand) => {
@@ -145,8 +145,8 @@ export class BrandListComponent implements OnInit {
 
   async editBrand(brand: Brand) {
     this.dialogInstance = this.matDialog.open(CreateBrandComponent, {
-      height: '700px',
-      width: '405px',
+      height: '75vh',
+      width: '500px',
       data: {
         brand
       }
