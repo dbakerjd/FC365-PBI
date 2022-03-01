@@ -22,7 +22,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, Brand, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, BrandForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER, EntityGeography } from 'src/app/services/sharepoint.service';
+import { SharepointService, FileComments, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER, EntityGeography, EntityForecastCycle } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -39,10 +39,10 @@ export class FilesListComponent implements OnInit {
   selectedDepartmentId: number = 0;
   documentFolders: NPPFolder[] = [];
   geoFolders: any[] = [];
-  cycles: BrandForecastCycle[] = [];
+  cycles: EntityForecastCycle[] = [];
   refreshingPowerBi = false;
   entityId = 0;
-  entity: Brand | Opportunity | undefined = undefined;
+  entity: Opportunity | undefined = undefined;
   entityGeographies: EntityGeography[] = []; // geographies not removed
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
@@ -96,7 +96,10 @@ export class FilesListComponent implements OnInit {
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
-        this.entity = await this.disambiguator.getEntity(params.id);
+        this.entity = await this.sharepoint.getOpportunity(params.id);
+        if (!this.entity) {
+          this.router.navigate(['notfound']);
+        }
         this.entityGeographies = await this.sharepoint.getOpportunityGeographies(this.entity.ID, false);
         this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;

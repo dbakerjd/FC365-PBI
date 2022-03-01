@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { Brand, EntityGeography, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { EntityGeography, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -23,7 +23,7 @@ export class CreateBrandComponent implements OnInit {
   indications: any[] = [];
   dialogInstance: any;
   isEdit = false;
-  brand: Brand | null = null;
+  brand: Opportunity | null = null;
   loading = true;
   updating = false;
   geographies: EntityGeography[] = [];
@@ -203,6 +203,9 @@ export class CreateBrandComponent implements OnInit {
           data: this.model.Brand
         });
       } else {
+        // force opportunity type
+        const internalType = (await this.sharepoint.getOpportunityTypes()).find(el => el.IsInternal);
+        this.model.Brand.OpportunityTypeId = internalType?.ID;
         let brand = await this.sharepoint.createBrand(
           this.model.Brand,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),

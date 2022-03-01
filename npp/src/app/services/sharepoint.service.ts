@@ -298,18 +298,7 @@ export interface ForecastCycle {
   SortOrder: number;
 }
 
-export interface BrandForecastCycle {
-  ID: number;
-  Title: string;
-  BrandId: number;
-  Brand?: Brand;
-  ForecastCycleTypeId: number;
-  ForecastCycleType?: ForecastCycle;
-  Year: string;
-  ForecastCycleDescriptor: string;
-}
-
-export interface OpportunityForecastCycle {
+export interface EntityForecastCycle {
   ID: number;
   Title: string;
   EntityId: number;
@@ -318,24 +307,6 @@ export interface OpportunityForecastCycle {
   ForecastCycleType?: ForecastCycle;
   ForecastCycleDescriptor: string;
   Year: string;
-}
-
-export interface Brand {
-  ID: number;
-  Title: string;
-  EntityOwnerId: number;
-  EntityOwner?: User;
-  BusinessUnitId: number;
-  BusinessUnit?: BusinessUnit;
-  ForecastCycleId: number;
-  ForecastCycle?: ForecastCycle;
-  IndicationId: number[];
-  Indication?: Indication[];
-  FCDueDate?: Date;
-  Year: number;
-  ForecastCycleDescriptor: string;
-  AppType?: AppType;
-  AppTypeId: number;
 }
 
 export interface BrandInput {
@@ -2477,7 +2448,7 @@ export class SharepointService {
     };
   }
 
-  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
+  private async createEntityGeographyFolders(entity: Opportunity, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/${departmentId}`;
     for (const geo of geographies) {
@@ -2493,7 +2464,7 @@ export class SharepointService {
     return folders;
   }
   
-  private async createDepartmentFolders(entity: Brand | Opportunity, mf: string): Promise<SystemFolder[]> {
+  private async createDepartmentFolders(entity: Opportunity, mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0`;
     let departmentFolders = await this.getInternalDepartments();
@@ -2523,7 +2494,7 @@ export class SharepointService {
 
   }
 
-  async getBrand(id: number): Promise<Brand> {
+  async getBrand(id: number): Promise<Opportunity> {
     let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
    
     let results = await this.getOneItem(ENTITIES_LIST, "$filter=Id eq "+id+cond);
@@ -2541,15 +2512,15 @@ export class SharepointService {
   }
 
 
-  async getBrandModelsCount(brand: Brand) {
+  async getBrandModelsCount(brand: Opportunity) {
     return await this.getBrandFolderFilesCount(brand, FOLDER_WIP);
   }
 
-  async getBrandApprovedModelsCount(brand: Brand) {
+  async getBrandApprovedModelsCount(brand: Opportunity) {
     return await this.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
   }
 
-  async getBrandFolderFilesCount(brand: Brand, folder: string) {
+  async getBrandFolderFilesCount(brand: Opportunity, folder: string) {
     let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0';
     const geoFolders = await this.getSubfolders(currentFolder);
     let currentFiles = [];
@@ -2569,7 +2540,7 @@ export class SharepointService {
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 */
-  async getEntityAccessibleGeographiesList(entity: Opportunity | Brand): Promise<SelectInputList[]> {
+  async getEntityAccessibleGeographiesList(entity: Opportunity): Promise<SelectInputList[]> {
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
     const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
@@ -2622,7 +2593,7 @@ export class SharepointService {
   }
 
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
-    const oppBeforeChanges: Brand = await this.getOneItemById(brandId, ENTITIES_LIST);
+    const oppBeforeChanges: Opportunity = await this.getOneItemById(brandId, ENTITIES_LIST);
     const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
@@ -2659,7 +2630,7 @@ export class SharepointService {
     return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
   }
 
-  async getEntityForecastCycles(entity: Brand | Opportunity) {
+  async getEntityForecastCycles(entity: Opportunity) {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.getAllItems(
@@ -2706,7 +2677,7 @@ export class SharepointService {
   }
 
 
-  async setAllEntityModelsStatusInFolder(entity: Opportunity | Brand, folder: string, status: string) {
+  async setAllEntityModelsStatusInFolder(entity: Opportunity, folder: string, status: string) {
     
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
     
@@ -2825,7 +2796,7 @@ export class SharepointService {
     return "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path;
   }
 
-  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Brand | null, status: string, comments: string | null = null) {
+  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
       const statusId = await this.getApprovalStatusId(status);
       if (!statusId) return false;
@@ -2949,7 +2920,7 @@ export class SharepointService {
     }
   }
 
-  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
+  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
       const statusId = await this.getApprovalStatusId(status);
       if (!statusId) return false;
@@ -2980,7 +2951,7 @@ export class SharepointService {
     }
   }
 
-  async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
+  async removeOldAcceptedModel(brand: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
       let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
@@ -2993,7 +2964,7 @@ export class SharepointService {
     }
   }
 
-  async removeNPPOldAcceptedModel(entity: Opportunity | Brand, file: NPPFile) {
+  async removeNPPOldAcceptedModel(entity: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
       let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';

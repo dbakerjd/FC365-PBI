@@ -9,7 +9,7 @@ import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Brand, Indication, Opportunity, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { Indication, Opportunity, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -138,7 +138,7 @@ export class BrandListComponent implements OnInit {
       width: '500px'
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result:Brand) => {
+    this.dialogInstance.afterClosed().subscribe(async (result:Opportunity) => {
       this.brands = await this.disambiguator.getEntities() as Opportunity[];
       this.onSubmit();
     });
