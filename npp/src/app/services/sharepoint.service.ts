@@ -2399,72 +2399,15 @@ export class SharepointService {
     return await this.getOneItemById(id,MASTER_POWER_BI);
   }
 
-  /** TODEL ? */
-  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Brand|undefined> {
+  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {
     const owner = await this.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     if(this.app) b.AppTypeId = this.app.ID;
-    let brand = await this.createItem(ENTITIES_LIST, b);
-    const BUGroup = await this.createGroup('OU-'+brand.ID);
-    const BOGroup = await this.createGroup('OO-'+brand.ID);
-    if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
+    let brand: Opportunity = await this.createItem(ENTITIES_LIST, b);
 
-    await this.addUserToGroup(owner, BOGroup.Id);
-    await this.addUserToGroup(owner, BUGroup.Id);
-
-    //create geographies
-    await this.createGeographies(brand.ID,geographies, countries);
-
-    //create models folders
-    let folders = await this.createInternalFolders(brand, []); // TODO pass groups
-
-    let permissions = await this.getGroupPermissions(FOLDER_WIP);
-    let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'OU', data: BUGroup });
-    groups.push({ type: 'OO', data: BOGroup });
-
-    for (const f of folders.rw) {
-      let folderGroups = [...groups]; // copy default groups
-      let GUGroup;
-      if (f.GeographyID) {
-        GUGroup = await this.createGroup(
-          `OU-${brand.ID}-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
-        if (GUGroup) {
-          folderGroups.push( { type: 'GU', data: GUGroup} );
-          await this.addUserToGroup(owner, GUGroup.Id);
-        }
-      } else if(f.DepartmentID) {
-        let DUGroup = await this.createGroup(`DU-${brand.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) {
-          folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.addUserToGroup(owner, DUGroup.Id);
-        }
-      }
-
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-    }
-
-    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    for (const f of folders.ro) {
-      let folderGroups = [...groups]; // copy default groups
-      let GUGroup;
-      if (f.GeographyID) {
-        GUGroup = await this.createGroup(
-          `OU-${brand.ID}-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
-        let DUGroup = await this.createGroup(
-            `DU-${brand.ID}-0-${f.GeographyID}`, 
-            'Geography ID ' + f.GeographyID);
-        if (GUGroup && DUGroup) {
-          folderGroups.push( { type: 'GU', data: GUGroup} );
-          folderGroups.push( { type: 'DU', data: DUGroup} );
-          await this.addUserToGroup(owner, GUGroup.Id);
-          await this.addUserToGroup(owner, DUGroup.Id);
-        }
-      } 
-
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    if (brand) {
+      await this.createGeographies(brand.ID, geographies, countries);
+      await this.initializeOpportunity(brand, null);
     }
     
     return brand; 
