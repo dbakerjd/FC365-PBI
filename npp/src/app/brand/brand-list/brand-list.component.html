@@ -10,6 +10,9 @@
     </div>
 </div>
 <div class="opportunity-list-wrapper">
+    <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
+
+    <ng-template #isLoaded>
     <ng-container *ngIf="filteredBrands && filteredBrands.length">
         <div class="opportunity-list-item" *ngFor="let item of filteredBrands">
             <div class="opportunity-status">
@@ -32,4 +35,5 @@
         </div>
     </ng-container>
     <h3 *ngIf="!filteredBrands || filteredBrands.length == 0" style="text-align: center;">No Results Found</h3>  
+    </ng-template>  
 </div> 

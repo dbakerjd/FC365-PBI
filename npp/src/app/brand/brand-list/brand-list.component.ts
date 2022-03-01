@@ -28,6 +28,7 @@ export class BrandListComponent implements OnInit {
   dialogInstance: any;
   masterCycles: SelectInputList[] = [];
   updateSearchTimeout: any; 
+  loading = true;
 
   constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
 
@@ -125,6 +126,8 @@ export class BrandListComponent implements OnInit {
     ];
 
     this.brands = await this.disambiguator.getEntities() as Opportunity[];
+    this.loading = false;
+
     //console.log(this.brands);
     this.onSubmit();
   }
