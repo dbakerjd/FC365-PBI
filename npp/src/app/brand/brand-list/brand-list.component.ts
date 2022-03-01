@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { ThrottlingUtils } from '@azure/msal-common';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
@@ -10,7 +9,7 @@ import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Brand, Indication, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { Indication, Opportunity, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 
 @Component({
@@ -21,14 +20,15 @@ import { TeamsService } from 'src/app/services/teams.service';
 export class BrandListComponent implements OnInit {
   private readonly _destroying$ = new Subject<void>();
   currentUser: User | undefined = undefined;
-  brands: Brand[] = [];
-  filteredBrands: Brand[] = [];
+  brands: Opportunity[] = [];
+  filteredBrands: Opportunity[] = [];
   form = new FormGroup({});
   model: any = { };
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
   masterCycles: SelectInputList[] = [];
   updateSearchTimeout: any; 
+  loading = true;
 
   constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
 
@@ -125,28 +125,30 @@ export class BrandListComponent implements OnInit {
       }
     ];
 
-    this.brands = await this.disambiguator.getEntities() as Brand[];
+    this.brands = await this.disambiguator.getEntities() as Opportunity[];
+    this.loading = false;
+
     //console.log(this.brands);
     this.onSubmit();
   }
 
   createBrand() {
     this.dialogInstance = this.matDialog.open(CreateBrandComponent, {
-      height: '700px',
-      width: '405px'
+      height: '75vh',
+      width: '500px'
     });
 
-    this.dialogInstance.afterClosed().subscribe(async (result:Brand) => {
-      this.brands = await this.disambiguator.getEntities() as Brand[];
+    this.dialogInstance.afterClosed().subscribe(async (result:Opportunity) => {
+      this.brands = await this.disambiguator.getEntities() as Opportunity[];
       this.onSubmit();
     });
     
   }
 
-  async editBrand(brand: Brand) {
+  async editBrand(brand: Opportunity) {
     this.dialogInstance = this.matDialog.open(CreateBrandComponent, {
-      height: '700px',
-      width: '405px',
+      height: '75vh',
+      width: '500px',
       data: {
         brand
       }
@@ -231,7 +233,7 @@ export class BrandListComponent implements OnInit {
     this.filteredBrands = list;
   }
 
-  createForecast(brand: Brand) {
+  createForecast(brand: Opportunity) {
     this.dialogInstance = this.matDialog.open(CreateForecastCycleComponent, {
       height: '400px',
       width: '405px',
@@ -259,7 +261,7 @@ export class BrandListComponent implements OnInit {
       });
   }
 
-  navigateTo(item: Brand) {
+  navigateTo(item: Opportunity) {
     this.router.navigate(['brands', item.ID, 'files']);
   }
 

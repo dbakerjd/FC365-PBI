@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { Brand, NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-reject-model',
@@ -14,7 +14,7 @@ export class RejectModelComponent implements OnInit {
   fileId: number | null = null;
   file: NPPFile | null = null;
   rootFolder: string = '';
-  entity: Brand | Opportunity | null = null;
+  entity: Opportunity | null = null;
 
   fields: FormlyFieldConfig[] = [{
     fieldGroup: [{

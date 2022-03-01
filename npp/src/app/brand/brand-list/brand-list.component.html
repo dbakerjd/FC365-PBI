@@ -9,27 +9,31 @@
         <div class="npp-btn" (click)="createBrand()">Add Brand</div>
     </div>
 </div>
-<div class="brand-list-wrapper">
+<div class="opportunity-list-wrapper">
+    <app-progress-spinner *ngIf="loading; else isLoaded"></app-progress-spinner>
+
+    <ng-template #isLoaded>
     <ng-container *ngIf="filteredBrands && filteredBrands.length">
-        <div class="brand-list-item" *ngFor="let item of filteredBrands">
-            <div class="brand-status">
+        <div class="opportunity-list-item" *ngFor="let item of filteredBrands">
+            <div class="opportunity-status">
                 <p class="brand-forecast-cyle">{{item.ForecastCycle?.Title}} {{item.Year}}</p>
-                <p class="brand-indication"><label>Business Unit: </label>{{item.BusinessUnit?.Title}}</p>
-                <p class="brand-indication"><label>Indication: </label>{{getIndications(item.Indication)}}</p>
+                <p class="brand-business-unit"><label>Business Unit:</label> {{item.BusinessUnit?.Title}}</p>
+                <p class="brand-indication"><label>Indication:</label> {{getIndications(item.Indication)}}</p>
             </div>
-            <div class="brand-name" (click)="navigateTo(item)">
-                <p class="brand-title">{{item.Title}}</p>
+            <div class="opportunity-name" (click)="navigateTo(item)">
+                <p class="opportunity-title">{{item.Title}}</p>
             </div>
-            <div class="brand-progress" (click)="navigateTo(item)">
-                <p *ngIf="item.BrandOwner"><label>Brand Owner: </label> {{item.BrandOwner?.Title}}</p>
+            <div class="opportunity-progress" (click)="navigateTo(item)">
+                <p *ngIf="item.EntityOwner"><label>Brand Owner: </label> {{item.EntityOwner?.Title}}</p>
                 <!-- <p><label>Forecast Cycle Due Date: </label> {{item.FCDueDate | date : 'dd MMM y'}}</p>-->
                 <p *ngIf="item.Indication && item.Indication.length"><label>Therapy Area: </label> {{item.Indication[0].TherapyArea}}</p>
             </div>
-            <div class="brand-actions">
-                <div class="brand-icon-edit" matTooltip="Edit Brand" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="editBrand(item)"></div>
-                <div class="brand-icon-settings" matTooltip="Create Forecast Cycle" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="createForecast(item)"></div>
+            <div class="opportunity-actions">
+                <div class="opportunity-icon-edit" matTooltip="Edit Brand" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="editBrand(item)"></div>
+                <!-- <div class="opportunity-icon-settings" matTooltip="Create Forecast Cycle" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="createForecast(item)"></div> -->
             </div>
         </div>
     </ng-container>
     <h3 *ngIf="!filteredBrands || filteredBrands.length == 0" style="text-align: center;">No Results Found</h3>  
+    </ng-template>  
 </div> 

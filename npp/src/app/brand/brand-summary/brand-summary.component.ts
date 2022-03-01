@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Brand, NPPNotification, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPNotification, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from 'src/app/services/teams.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
@@ -14,7 +14,7 @@ export class BrandSummaryComponent implements OnInit {
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
   currentTherapyArea: string = '';
-  brands: Brand[] = [];
+  brands: Opportunity[] = [];
   brandData: {
     brandName: string,
     cycle: string,
@@ -51,7 +51,7 @@ export class BrandSummaryComponent implements OnInit {
     this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
     this.therapyAreasData  = { areas: {}, total: 0 };
 
-    this.brands = await this.disambiguator.getEntities() as Brand[];
+    this.brands = await this.disambiguator.getEntities() as Opportunity[];
 
     this.brands.forEach(async (el, index) => {
       

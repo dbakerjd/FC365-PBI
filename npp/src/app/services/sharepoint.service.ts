@@ -298,18 +298,7 @@ export interface ForecastCycle {
   SortOrder: number;
 }
 
-export interface BrandForecastCycle {
-  ID: number;
-  Title: string;
-  BrandId: number;
-  Brand?: Brand;
-  ForecastCycleTypeId: number;
-  ForecastCycleType?: ForecastCycle;
-  Year: string;
-  ForecastCycleDescriptor: string;
-}
-
-export interface OpportunityForecastCycle {
+export interface EntityForecastCycle {
   ID: number;
   Title: string;
   EntityId: number;
@@ -318,24 +307,6 @@ export interface OpportunityForecastCycle {
   ForecastCycleType?: ForecastCycle;
   ForecastCycleDescriptor: string;
   Year: string;
-}
-
-export interface Brand {
-  ID: number;
-  Title: string;
-  EntityOwnerId: number;
-  EntityOwner?: User;
-  BusinessUnitId: number;
-  BusinessUnit?: BusinessUnit;
-  ForecastCycleId: number;
-  ForecastCycle?: ForecastCycle;
-  IndicationId: number[];
-  Indication?: Indication[];
-  FCDueDate?: Date;
-  Year: number;
-  ForecastCycleDescriptor: string;
-  AppType?: AppType;
-  AppTypeId: number;
 }
 
 export interface BrandInput {
@@ -2399,72 +2370,15 @@ export class SharepointService {
     return await this.getOneItemById(id,MASTER_POWER_BI);
   }
 
-  /** TODEL ? */
-  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Brand|undefined> {
+  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {
     const owner = await this.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     if(this.app) b.AppTypeId = this.app.ID;
-    let brand = await this.createItem(ENTITIES_LIST, b);
-    const BUGroup = await this.createGroup('OU-'+brand.ID);
-    const BOGroup = await this.createGroup('OO-'+brand.ID);
-    if (!BUGroup || ! BOGroup) throw new Error("Error creating permission groups. Please contact the domain administrator.");
+    let brand: Opportunity = await this.createItem(ENTITIES_LIST, b);
 
-    await this.addUserToGroup(owner, BOGroup.Id);
-    await this.addUserToGroup(owner, BUGroup.Id);
-
-    //create geographies
-    await this.createGeographies(brand.ID,geographies, countries);
-
-    //create models folders
-    let folders = await this.createInternalFolders(brand, []); // TODO pass groups
-
-    let permissions = await this.getGroupPermissions(FOLDER_WIP);
-    let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'OU', data: BUGroup });
-    groups.push({ type: 'OO', data: BOGroup });
-
-    for (const f of folders.rw) {
-      let folderGroups = [...groups]; // copy default groups
-      let GUGroup;
-      if (f.GeographyID) {
-        GUGroup = await this.createGroup(
-          `OU-${brand.ID}-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
-        if (GUGroup) {
-          folderGroups.push( { type: 'GU', data: GUGroup} );
-          await this.addUserToGroup(owner, GUGroup.Id);
-        }
-      } else if(f.DepartmentID) {
-        let DUGroup = await this.createGroup(`DU-${brand.ID}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) {
-          folderGroups.push({ type: 'DU', data: DUGroup });
-          await this.addUserToGroup(owner, DUGroup.Id);
-        }
-      }
-
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-    }
-
-    permissions = (await this.getGroupPermissions()).filter(el => el.ListFilter === 'List');
-    for (const f of folders.ro) {
-      let folderGroups = [...groups]; // copy default groups
-      let GUGroup;
-      if (f.GeographyID) {
-        GUGroup = await this.createGroup(
-          `OU-${brand.ID}-${f.GeographyID}`, 
-          'Geography ID ' + f.GeographyID);
-        let DUGroup = await this.createGroup(
-            `DU-${brand.ID}-0-${f.GeographyID}`, 
-            'Geography ID ' + f.GeographyID);
-        if (GUGroup && DUGroup) {
-          folderGroups.push( { type: 'GU', data: GUGroup} );
-          folderGroups.push( { type: 'DU', data: DUGroup} );
-          await this.addUserToGroup(owner, GUGroup.Id);
-          await this.addUserToGroup(owner, DUGroup.Id);
-        }
-      } 
-
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    if (brand) {
+      await this.createGeographies(brand.ID, geographies, countries);
+      await this.initializeOpportunity(brand, null);
     }
     
     return brand; 
@@ -2534,7 +2448,7 @@ export class SharepointService {
     };
   }
 
-  private async createEntityGeographyFolders(entity: Opportunity | Brand, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
+  private async createEntityGeographyFolders(entity: Opportunity, geographies: EntityGeography[], mf: string, departmentId: number = 0, cycleId: number = 0): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0/${departmentId}`;
     for (const geo of geographies) {
@@ -2550,7 +2464,7 @@ export class SharepointService {
     return folders;
   }
   
-  private async createDepartmentFolders(entity: Brand | Opportunity, mf: string): Promise<SystemFolder[]> {
+  private async createDepartmentFolders(entity: Opportunity, mf: string): Promise<SystemFolder[]> {
     let folders: SystemFolder[] = [];
     let basePath = `${mf}/${entity.BusinessUnitId}/${entity.ID}/0`;
     let departmentFolders = await this.getInternalDepartments();
@@ -2580,7 +2494,7 @@ export class SharepointService {
 
   }
 
-  async getBrand(id: number): Promise<Brand> {
+  async getBrand(id: number): Promise<Opportunity> {
     let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
    
     let results = await this.getOneItem(ENTITIES_LIST, "$filter=Id eq "+id+cond);
@@ -2598,15 +2512,15 @@ export class SharepointService {
   }
 
 
-  async getBrandModelsCount(brand: Brand) {
+  async getBrandModelsCount(brand: Opportunity) {
     return await this.getBrandFolderFilesCount(brand, FOLDER_WIP);
   }
 
-  async getBrandApprovedModelsCount(brand: Brand) {
+  async getBrandApprovedModelsCount(brand: Opportunity) {
     return await this.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
   }
 
-  async getBrandFolderFilesCount(brand: Brand, folder: string) {
+  async getBrandFolderFilesCount(brand: Opportunity, folder: string) {
     let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0';
     const geoFolders = await this.getSubfolders(currentFolder);
     let currentFiles = [];
@@ -2626,7 +2540,7 @@ export class SharepointService {
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 */
-  async getEntityAccessibleGeographiesList(entity: Opportunity | Brand): Promise<SelectInputList[]> {
+  async getEntityAccessibleGeographiesList(entity: Opportunity): Promise<SelectInputList[]> {
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
     const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
@@ -2679,7 +2593,7 @@ export class SharepointService {
   }
 
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
-    const oppBeforeChanges: Brand = await this.getOneItemById(brandId, ENTITIES_LIST);
+    const oppBeforeChanges: Opportunity = await this.getOneItemById(brandId, ENTITIES_LIST);
     const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
@@ -2716,7 +2630,7 @@ export class SharepointService {
     return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
   }
 
-  async getEntityForecastCycles(entity: Brand | Opportunity) {
+  async getEntityForecastCycles(entity: Opportunity) {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.getAllItems(
@@ -2763,7 +2677,7 @@ export class SharepointService {
   }
 
 
-  async setAllEntityModelsStatusInFolder(entity: Opportunity | Brand, folder: string, status: string) {
+  async setAllEntityModelsStatusInFolder(entity: Opportunity, folder: string, status: string) {
     
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
     
@@ -2882,7 +2796,7 @@ export class SharepointService {
     return "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path;
   }
 
-  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Brand | null, status: string, comments: string | null = null) {
+  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
       const statusId = await this.getApprovalStatusId(status);
       if (!statusId) return false;
@@ -3006,7 +2920,7 @@ export class SharepointService {
     }
   }
 
-  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
+  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
     if(file.ListItemAllFields) {
       const statusId = await this.getApprovalStatusId(status);
       if (!statusId) return false;
@@ -3037,7 +2951,7 @@ export class SharepointService {
     }
   }
 
-  async removeOldAcceptedModel(brand: Brand, file: NPPFile) {
+  async removeOldAcceptedModel(brand: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
       let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
@@ -3050,7 +2964,7 @@ export class SharepointService {
     }
   }
 
-  async removeNPPOldAcceptedModel(entity: Opportunity | Brand, file: NPPFile) {
+  async removeNPPOldAcceptedModel(entity: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
       let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
