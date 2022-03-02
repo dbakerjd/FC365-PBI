@@ -5,7 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import { ErrorService } from 'src/app/services/error.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { Brand, NPPFolder, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFolder, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-folder-permissions',
@@ -23,7 +23,7 @@ export class FolderPermissionsComponent implements OnInit {
   modelKeys: number[] = [];
   loading = true;
   updating = false;
-  entity: Brand | Opportunity | null = null;
+  entity: Opportunity | null = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,

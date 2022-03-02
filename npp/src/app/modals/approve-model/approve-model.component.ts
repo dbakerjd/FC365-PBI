@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { Brand, NPPFile, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-approve-model',
@@ -12,7 +12,7 @@ import { Brand, NPPFile, SharepointService } from 'src/app/services/sharepoint.s
 export class ApproveModelComponent implements OnInit {
 
   file: NPPFile | null = null;
-  brand: Brand | null = null; 
+  brand: Opportunity | null = null; 
   rootFolder: string = "";
   approving = false;
 

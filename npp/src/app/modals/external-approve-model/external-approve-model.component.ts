@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { Brand, NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-external-approve-model',
@@ -14,7 +14,7 @@ import { Brand, NPPFile, Opportunity, SharepointService } from 'src/app/services
 export class ExternalApproveModelComponent implements OnInit {
 
   file: NPPFile | null = null;
-  entity: Brand | Opportunity | null = null; 
+  entity: Opportunity | null = null; 
   rootFolder: string = "";
   approving = false;
   departmentID: number = 0;

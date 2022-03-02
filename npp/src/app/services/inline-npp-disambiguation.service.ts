@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ErrorService } from './error.service';
-import { AppType, Brand, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
+import { AppType, NPPFile, NPPFileMetadata, Opportunity, SharepointService } from './sharepoint.service';
 import { TeamsService } from './teams.service';
 
 @Injectable({
@@ -67,15 +67,15 @@ export class InlineNppDisambiguationService {
     
   }
 
-  getOwnerId(entity: Brand | Opportunity) {
+  getOwnerId(entity: Opportunity) {
     return entity.EntityOwnerId;
   }
 
-  getOwner(entity: Brand | Opportunity) {
+  getOwner(entity: Opportunity) {
     return entity.EntityOwner;
   }
 
-  getForecastCycles(entity: Brand | Opportunity) {
+  getForecastCycles(entity: Opportunity) {
     return this.sharepoint.getEntityForecastCycles(entity);
   }
 
@@ -83,7 +83,7 @@ export class InlineNppDisambiguationService {
     return this.sharepoint.readEntityFolderFiles(folder, expandProperties);
   }
 
-  getAccessibleGeographiesList(entity: Brand | Opportunity) {
+  getAccessibleGeographiesList(entity: Opportunity) {
     return this.sharepoint.getEntityAccessibleGeographiesList(entity as Opportunity);
   }
   
@@ -99,23 +99,12 @@ export class InlineNppDisambiguationService {
     return this.sharepoint.uploadInternalFile(fileData, folder, fileName, metadata);
   }
 
-  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Brand | Opportunity | null, status: string, comments: string | null = null) {
+  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
     return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }
 
   async createForecastCycle(entity: Opportunity, values: any) {
     return this.sharepoint.createEntityForecastCycle(entity, values);    
-  }
-
-  getGroupName(name: string):string {
-    if(this.isInline) {
-      name = name.replace("EU-", "BU-");
-      name = name.replace("EO-", "BO-");
-    } else {
-      name = name.replace("EU-", "OU-");
-      name = name.replace("EO-", "OO-");
-    }
-    return name;
   }
 
 }

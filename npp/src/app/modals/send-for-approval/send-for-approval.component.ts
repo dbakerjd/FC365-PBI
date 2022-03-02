@@ -3,7 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Brand, NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-send-for-approval',
@@ -15,7 +15,7 @@ export class SendForApprovalComponent implements OnInit {
   fileId: number | null = null;
   folder: string | null = null;
   file: NPPFile | null = null;
-  entity: Brand | Opportunity | null = null;
+  entity: Opportunity | null = null;
   fields: FormlyFieldConfig[] = [{
     fieldGroup: [{
       key: 'comments',
