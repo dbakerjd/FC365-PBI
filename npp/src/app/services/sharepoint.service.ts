@@ -1938,13 +1938,15 @@ export class SharepointService {
   }
 
   async getCurrentUserInfo(): Promise<User> {
-    let account = localStorage.getItem('sharepointAccount');
+    let sharepointUrl = this.licensing.getSharepointApiUri();
+    let accountStorageKey = sharepointUrl + '-sharepointAccount';
+    let account = localStorage.getItem(accountStorageKey);
     if (account) {
       return JSON.parse(account);
     } else {
       let account = await this.query('currentuser', '$select=Title,Email,Id,FirstName,LastName,IsSiteAdmin').toPromise();
       account['ID'] = account.Id; // set for User interface
-      localStorage.setItem('sharepointAccount', JSON.stringify(account));
+      localStorage.setItem(accountStorageKey, JSON.stringify(account));
       return account;
     }
   }

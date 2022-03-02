@@ -177,8 +177,10 @@ export class TeamsService {
     if(!this.currentlyLoginIn) {
       this.currentlyLoginIn = true;
       localStorage.removeItem('teamsAccount');
-      localStorage.removeItem("sharepointAccount");
       localStorage.removeItem("teamsAccessToken");
+      let sharepointUrl = this.licensing.getSharepointApiUri();
+      let accountStorageKey = sharepointUrl + '-sharepointAccount';
+      localStorage.removeItem(accountStorageKey);
       microsoftTeams.authentication.authenticate({
         url: window.location.origin + "/auth-start",
         width: 600,
@@ -211,8 +213,10 @@ export class TeamsService {
 
   async logout() {
     localStorage.removeItem('teamsAccount');
-    localStorage.removeItem("sharepointAccount");
     localStorage.removeItem("teamsAccessToken");
+    let sharepointUrl = this.licensing.getSharepointApiUri();
+    let accountStorageKey = sharepointUrl + '-sharepointAccount';
+    localStorage.removeItem(accountStorageKey);
     this.msalInstance.logoutRedirect();
   }
 
