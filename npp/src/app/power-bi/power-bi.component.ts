@@ -173,8 +173,8 @@ export class PowerBiComponent implements OnInit {
       this.filters = {
         $schema: "http://powerbi.com/product/schema#basic",
         target: {
-          table: "Opportunities",
-          column: "OpportunityID"
+          table: "Folders_Levels",
+          column: "Entity_ID"
         },
         operator: "In",
         values: this.oppID,
