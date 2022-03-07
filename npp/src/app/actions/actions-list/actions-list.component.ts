@@ -707,6 +707,7 @@ export class ActionsListComponent implements OnInit {
 
       switch(extension) {
         case "xlsx":
+        case "xlsm":
         case "xls":
         case "csv":
           url = "ms-excel:"+url;
