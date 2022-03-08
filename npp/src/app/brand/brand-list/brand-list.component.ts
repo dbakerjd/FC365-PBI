@@ -46,13 +46,18 @@ export class BrandListComponent implements OnInit {
 
   async init() {
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
-    let indicationsList: SelectInputList[] = [];
-    let forecastCycles = await this.sharepoint.getForecastCycles();
-    let businessUnits = await this.sharepoint.getBusinessUnitsList();
-    let brandFields = await this.sharepoint.getBrandFields();
-    let therapies = await this.sharepoint.getTherapiesList();
+    const indicationsList = await this.sharepoint.getIndicationsList();
+    // const forecastCycles = await this.sharepoint.getForecastCycles();
+    const businessUnits = await this.sharepoint.getBusinessUnitsList();
+    const brandFields = await this.sharepoint.getBrandFields();
+    const therapies = await this.sharepoint.getTherapiesList();
     this.masterCycles = await this.sharepoint.getForecastCycles();
     
+    this.brands = await this.disambiguator.getEntities() as Opportunity[];
+
+    const owners = this.brands.map(el => { return { label: el.EntityOwner?.Title, value: el.EntityOwnerId }});
+    const uniqueOwners = [...new Map(owners.map(o => [o.value, o])).values()];
+
     this.fields = [{
         key: 'search',
         type: 'input',
@@ -76,14 +81,14 @@ export class BrandListComponent implements OnInit {
         key: 'therapy',
         type: 'select',
         templateOptions: {
-          placeholder: 'Therapy Area',
+          placeholder: 'All Therapy Areas',
           options: therapies,
         }
       },{
         key: 'indication',
         type: 'select',
         templateOptions: {
-          placeholder: 'Indication Name',
+          placeholder: 'All Indications',
           options: indicationsList
         },
         hooks: {
@@ -100,21 +105,30 @@ export class BrandListComponent implements OnInit {
               }),
             ).subscribe();
           }
-        }
+        },
+        hideExpression: '!model.therapy'
       },{
         key: 'businessUnit',
         type: 'select',
         templateOptions: {
-          placeholder: 'Business Unit',
+          placeholder: 'All Business Units',
           options: businessUnits
         }
-      },{
+      }/*,{
         key: 'forecastCycle',
         type: 'select',
         templateOptions: {
           placeholder: 'Forecast Cycle',
           options: forecastCycles
         }
+      }*/,{
+        key: 'owner',
+        type: 'select',
+        templateOptions: {
+          placeholder: 'All Owners',
+          options: uniqueOwners
+        },
+        hideExpression: uniqueOwners.length < 2
       },{
         key: 'sort_by',
         type: 'select',
@@ -125,10 +139,8 @@ export class BrandListComponent implements OnInit {
       }
     ];
 
-    this.brands = await this.disambiguator.getEntities() as Opportunity[];
     this.loading = false;
 
-    //console.log(this.brands);
     this.onSubmit();
   }
 
@@ -191,6 +203,10 @@ export class BrandListComponent implements OnInit {
 
     if (this.model.indication) {
       list = list.filter(e => (e.IndicationId.indexOf(this.model.indication) > -1));
+    }
+
+    if (this.model.owner) {
+      list = list.filter(e => (e.EntityOwnerId === this.model.owner));
     }
 
     if(this.model.sort_by) {
