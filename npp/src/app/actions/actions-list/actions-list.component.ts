@@ -707,6 +707,7 @@ export class ActionsListComponent implements OnInit {
 
       switch(extension) {
         case "xlsx":
+        case "xlsm":
         case "xls":
         case "csv":
           url = "ms-excel:"+url;
@@ -826,7 +827,7 @@ export class ActionsListComponent implements OnInit {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
         //const at the moment needs to be dynamic
-        const reportName: string = "Epi+"
+        const reportName: string = "Epi Report"
 
         let response = await this.powerBi.refreshReport(reportName);
         console.log("status is: "+response);
