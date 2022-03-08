@@ -11,6 +11,7 @@ import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cyc
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { Indication, Opportunity, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-brand-list',
@@ -29,6 +30,7 @@ export class BrandListComponent implements OnInit {
   masterCycles: SelectInputList[] = [];
   updateSearchTimeout: any; 
   loading = true;
+  canCreate = false;
 
   constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
 
@@ -45,7 +47,10 @@ export class BrandListComponent implements OnInit {
   }
 
   async init() {
+    
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    this.canCreate = environment.allowClientCreation && !!this.currentUser?.IsSiteAdmin;
+
     const indicationsList = await this.sharepoint.getIndicationsList();
     // const forecastCycles = await this.sharepoint.getForecastCycles();
     const businessUnits = await this.sharepoint.getBusinessUnitsList();
