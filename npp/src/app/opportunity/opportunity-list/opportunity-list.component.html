@@ -6,7 +6,7 @@
         </form>
     </div>
     <div class="opportunity-add">
-        <div class="npp-btn" (click)="createOpportunity()" *ngIf="currentUser?.IsSiteAdmin">Add Opportunity</div>
+        <div class="npp-btn" (click)="createOpportunity()" *ngIf="canCreate">Add Opportunity</div>
     </div>
 </div>
 <div class="opportunity-list-wrapper">
