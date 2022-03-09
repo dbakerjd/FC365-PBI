@@ -339,6 +339,7 @@ export const FOLDER_POWER_BI_ARCHIVED = "Power BI Archived Models";
 export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
 export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
 export const MASTER_APPS = "lists/getbytitle('Master APPs')";
+export const APP_CONFIG_LIST = "lists/getbytitle('App Config Values')";
 export const OPPORTUNITY_FORECAST_CYCLE = 'Archived Forecast Cycles';
 export const OPPORTUNITY_FORECAST_CYCLE_LIST = "lists/getbytitle('" + OPPORTUNITY_FORECAST_CYCLE + "')";
 
@@ -533,6 +534,13 @@ export class SharepointService {
       this.error.handleError(e);
       return false;
     }
+  }
+
+  /** --- CONFIG --- **/
+
+  /** read app config values from sharepoint */
+  public async getAppConfig() {
+    return await this.getAllItems(APP_CONFIG_LIST);
   }
 
   public async getApp(appId: string) {

@@ -27,6 +27,7 @@ export class OpportunityListComponent implements OnInit {
   dialogInstance: any;
   loading = true;
   opportunityTypes: OpportunityType[] = [];
+  canCreate = false;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -51,6 +52,8 @@ export class OpportunityListComponent implements OnInit {
 
   async init() {
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
+
     let indications = await this.sharepoint.getIndicationsList();
     this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
     let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
