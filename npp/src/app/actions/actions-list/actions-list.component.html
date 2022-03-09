@@ -76,7 +76,7 @@
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 
                 <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="refreshPowerBi()"></div>
-                <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="navigateTo(opportunity)"></div>
+                <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="navigateTo(entity)"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">

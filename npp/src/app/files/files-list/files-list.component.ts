@@ -437,6 +437,7 @@ export class FilesListComponent implements OnInit {
 
       switch(extension) {
         case "xlsx":
+        case "xlsm":
         case "xls":
         case "csv":
           url = "ms-excel:"+url;
@@ -570,7 +571,7 @@ export class FilesListComponent implements OnInit {
     try {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
-        const reportName: string = "Epi+";
+        const reportName: string = "Epi Report";
 
         let response = await this.powerBi.refreshReport(reportName);
         this.refreshingPowerBi = false;   

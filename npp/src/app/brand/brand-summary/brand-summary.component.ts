@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { NPPNotification, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPNotification, Opportunity, SharepointService, User } from 'src/app/services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from 'src/app/services/teams.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
@@ -21,6 +21,19 @@ export class BrandSummaryComponent implements OnInit {
     modelsCount: number,
     approvedModelsCount: number
   }[] = [];
+
+  usersList: User[] = [];
+  usersOpportunitiesListItem: { type: string | null, userId: number | null, list: Opportunity[] } = {
+    type: null,
+    userId: null,
+    list: []
+  };
+  generalSeatsCount: {
+    TotalSeats: number,
+    AssignedSeats: number,
+    AvailableSeats: number
+  } | null = null;
+  generatingSeatsTable = true;
 
   constructor(
     private sharepoint: SharepointService, 
@@ -90,6 +103,9 @@ export class BrandSummaryComponent implements OnInit {
       });
       
     });
+
+    // seats
+    this.loadSeatsInfo();
   }
 
   renderTherapyAreasGraph() {
@@ -200,5 +216,51 @@ export class BrandSummaryComponent implements OnInit {
     };
     //@ts-ignore
     if(Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);  
+  }
+
+  private async loadSeatsInfo() {
+    this.generatingSeatsTable = true;
+    this.usersList = await this.sharepoint.getUsers();
+    this.usersList = this.usersList.filter(el => el.Email);
+
+    for (let index = 0; index < this.usersList.length; index++) {
+      const user: any = this.usersList[index];
+      const result = await this.sharepoint.getSeats(user.Email);
+      if (index == 0 && result) {
+        this.generalSeatsCount = {
+          AssignedSeats: result?.AssignedSeats,
+          TotalSeats: result?.TotalSeats,
+          AvailableSeats: result?.AvailableSeats
+        }
+      }
+      user['seats'] = result?.UserGroupsCount;
+      const groups = await this.sharepoint.getUserGroups(user.Id);
+      const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
+      const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
+      user['opportunities'] = OUgroups.length;
+      user['owner'] = OOgroups.length;
+    }
+
+    this.generatingSeatsTable = false;
+  }
+
+  async listOpportunities(userId: number, group: 'OU' | 'OO') {
+    if (this.usersOpportunitiesListItem.type == group && this.usersOpportunitiesListItem.userId == userId) {
+      this.usersOpportunitiesListItem.type = null;
+      this.usersOpportunitiesListItem.userId = null;
+      this.usersOpportunitiesListItem.list = [];
+      return;
+    }
+    const groups = await this.sharepoint.getUserGroups(userId);
+    const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
+    const allOpportunities = await this.sharepoint.getOpportunities(false, false);
+    const oppsList = OUgroups.map(e => {
+      const splittedName = e.Title.split('-');
+      return splittedName[1];
+    });
+    const oppsListRelated = allOpportunities.filter(opp => oppsList.includes(opp.ID.toString()));
+    this.usersOpportunitiesListItem.type = group;
+    this.usersOpportunitiesListItem.userId = userId;
+    this.usersOpportunitiesListItem.list = oppsListRelated;
   }
 }

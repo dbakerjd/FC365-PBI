@@ -5,7 +5,8 @@
 export const environment = {
   ssoRedirectUrl: 'https://localhost:4200/auth-end',
   production: false,
-  isInlineApp: false,
+  isInlineApp: true,
+  allowClientCreation: false,
   version: '0.5.0',
   contact: {
     name: 'Janssen Team',
