@@ -34,21 +34,20 @@ export class BrandListComponent implements OnInit {
   constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
 
   async ngOnInit() {
-    if(this.teams.initialized) this.init();
-    else {
-      this.teams.statusSubject.subscribe(async (msg) => {
-        setTimeout(async () => {
-          this.init();
-        }, 500);
+    if(this.disambiguator.isReady) {
+      this.init();
+    }else {
+      this.disambiguator.readySubscriptions.subscribe(val => {
+        this.init();
       });
     }
-    
   }
 
   async init() {
     
     this.currentUser = await this.sharepoint.getCurrentUserInfo();
     this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
+    console.log('cancreate', this.disambiguator.getConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
 
     const indicationsList = await this.sharepoint.getIndicationsList();
     // const forecastCycles = await this.sharepoint.getForecastCycles();

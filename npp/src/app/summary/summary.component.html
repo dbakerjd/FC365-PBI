@@ -30,7 +30,7 @@
                 <div class="next-tasks-deadline" *ngIf="!t.taskDeadLine"> - </div>
             </div>
         </div>
-        <div class="summary-seats">
+        <div class="summary-seats" *ngIf="currentUser?.IsSiteAdmin">
             <div class="next-tasks-title section-title">Seats Control</div>
             <app-progress-spinner *ngIf="generatingSeatsTable"></app-progress-spinner>
 

@@ -13,6 +13,7 @@ export class BrandSummaryComponent implements OnInit {
 
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
+  currentUser: User | undefined = undefined;
   currentTherapyArea: string = '';
   brands: Opportunity[] = [];
   brandData: {
@@ -105,7 +106,8 @@ export class BrandSummaryComponent implements OnInit {
     });
 
     // seats
-    this.loadSeatsInfo();
+    this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    if (this.currentUser.IsSiteAdmin) this.loadSeatsInfo();
   }
 
   renderTherapyAreasGraph() {
@@ -114,12 +116,18 @@ export class BrandSummaryComponent implements OnInit {
         enabled: false
       },
       chart: {
-          plotShadow: true,
-          backgroundColor: "#ebebeb",
+          plotBorderWidth: null,
+          plotShadow: false,
+          plotBorderColor: "#ff0000",
+          backgroundColor: "#fff",
           type: 'pie'
       },
       title: {
-          text: 'Therapy Areas: '+this.therapyAreasData.total+' brands'
+          text: 'Therapy Areas: '+this.therapyAreasData.total+' brands',
+          style: {
+            "fontSize": "1.2rem",
+            "color": "#000"
+          }
       },
       tooltip: {
           pointFormat: '{series.name}: <b>{point.value} brands</b>'
