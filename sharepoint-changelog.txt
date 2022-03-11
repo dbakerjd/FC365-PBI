@@ -30,3 +30,6 @@ Add list 'App Config Values' with fields
    - Title: string
    - Config Type: choice (Boolean, String, Number)
    - Value: string
+
+22/03/11 Remove item from "Master Group Types List"
+   - removes item related with Master Apps list (OU). Not needed.
