@@ -11,7 +11,7 @@
             <div id="chartIndications"></div>
         </div>
         <div class="next-tasks">
-            <div class="next-tasks-title">Brands</div>
+            <div class="next-tasks-title section-title">Brands</div>
             <div class="next-tasks-header">
                 <div class="next-tasks-brand-name">Brand Name</div>
                 <div class="next-tasks-forecast-cycle">Forecast Cycle</div>
@@ -25,7 +25,7 @@
                 <div class="next-tasks-approved">{{ b.approvedModelsCount }}</div>
             </div>
         </div>
-        <div class="summary-seats">
+        <div class="summary-seats" *ngIf="currentUser?.IsSiteAdmin">
             <div class="next-tasks-title section-title">Seats Control</div>
             <app-progress-spinner *ngIf="generatingSeatsTable"></app-progress-spinner>
 
@@ -76,7 +76,7 @@
             <h4><div class="bell-btn-icon"></div> Notifications</h4>
         </div>
         <div class="notifications-column">
-            <div class="notification-item" *ngFor="let n of notificationsList">
+            <div class="notification-item" *ngFor="let n of notificationsList" [ngClass]="{'isRead': n.ReadAt }">
                 {{n.Title}}
             </div>
         </div>
