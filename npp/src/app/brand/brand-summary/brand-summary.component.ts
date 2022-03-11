@@ -13,6 +13,7 @@ export class BrandSummaryComponent implements OnInit {
 
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
+  currentUser: User | undefined = undefined;
   currentTherapyArea: string = '';
   brands: Opportunity[] = [];
   brandData: {
@@ -105,7 +106,8 @@ export class BrandSummaryComponent implements OnInit {
     });
 
     // seats
-    this.loadSeatsInfo();
+    this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    if (this.currentUser.IsSiteAdmin) this.loadSeatsInfo();
   }
 
   renderTherapyAreasGraph() {
