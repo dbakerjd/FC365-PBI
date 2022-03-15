@@ -3,6 +3,8 @@ import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/com
 import { LicensingService } from './licensing.service';
 import { ErrorService } from './error.service';
 import { TeamsService } from './teams.service';
+import { PBIRefreshComponent, PBIReport, SharepointService } from './sharepoint.service';
+import { environment } from 'src/environments/environment';
 
 export interface PageDetails {
   ReportSection: string;
@@ -27,44 +29,54 @@ export interface PBIObject {
 
 export class PowerBiService {
 
-  
-  constructor(private http: HttpClient, private error: ErrorService, private licensing: LicensingService, private teams: TeamsService) { }
+  report: PBIReport| undefined = undefined;
+  reportComponents: PBIRefreshComponent[] = [];
+
+  constructor(
+    private http: HttpClient, 
+    private error: ErrorService, 
+    private teams: TeamsService, 
+    private sharepoint: SharepointService) { }
 
   async refreshReport(reportName: string): Promise<number> {
     try {
 
+      this.report = await this.sharepoint.getReportByName(encodeURIComponent(reportName));
+      this.reportComponents = await this.sharepoint.getComponents(this.report);
+
       const token = await this.getPBIToken();
       const userObjectId = this.teams.context.userObjectId;
-      
+
       const body = {
         reportType: reportName,
         token: token,
         userObjectId: userObjectId,
         entityId: this.teams.context.entityId,
-        teamSiteDomain: this.teams.context.teamSiteDomain
+        teamSiteDomain: this.teams.context.teamSiteDomain,
+        reportComponents: this.reportComponents
       }
 
-      const url = 'https://fc365.azurewebsites.net/api/PowerBI'
+      const url = environment.functionAppUrl;
       
-      return new Promise((resolve) =>{
-        this.http.post(url,body,{ observe: 'response' }).subscribe(response => {
-            resolve(response.status);
-          },error =>{
-            resolve(error.status);
-          })
+      return new Promise((resolve) => {
+        this.http.post(url, body, { observe: 'response' }).subscribe(response => {
+          resolve(response.status);
+        }, error => {
+          resolve(error.status);
+        })
       })
-      
+
       //this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
 
 
     } catch (e: any) {
-      
+
       this.error.handleError(e);
-      
+
       return 500;
     }
   }
-  
+
   async getObjects(groupId: string, objectType: string): Promise<PBIObject[]> {
 
     const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/${objectType}`

@@ -8,7 +8,6 @@ import { ToastrService } from 'ngx-toastr';
 import { GraphService } from './graph.service';
 import { ThrowStmt } from '@angular/compiler';
 
-
 export interface Opportunity {
   ID: number;
   Title: string;
@@ -256,6 +255,12 @@ export interface PBIReport {
   Title: string;
 }
 
+export interface PBIRefreshComponent{
+  ComponentName: string;
+  GroupId: string;
+  ComponentType: string;
+}
+
 const ENTITIES_LIST_NAME = 'Entities';
 const ENTITY_STAGES_LIST_NAME = 'Entity Stages';
 const ENTITY_ACTIONS_LIST_NAME = 'Entity Action List';
@@ -282,6 +287,7 @@ export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
 const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
 const MASTER_AAD_GROUPS = "lists/getbytitle('Master AAD Groups')";
 const POWER_BI_ACCESS_LIST = "lists/getbytitle('Power BI Access')";
+const MASTER_POWER_BI_COMPONENTS = "lists/getbytitle('Master Power BI Components')";
 
 export interface BusinessUnit {
   ID: number;
@@ -2372,12 +2378,29 @@ export class SharepointService {
     return [];
   }
 
+  
+  /** Power BI */
   async getReports(): Promise<PBIReport[]>{
     return await this.getAllItems(MASTER_POWER_BI,'$orderby=SortOrder');
   }
 
   async getReport(id:number): Promise<PBIReport>{
     return await this.getOneItemById(id,MASTER_POWER_BI);
+  }
+
+  async getReportByName(reportName:string): Promise<PBIReport>{
+    let filter = `$filter=Title eq '${reportName}'`;
+    let select = `$select=ID,name,GroupId,pageName,Title`;
+    return await this.getOneItem(MASTER_POWER_BI,`${select}&${filter}`)
+  }
+
+  async getComponents(report:PBIReport): Promise<PBIRefreshComponent[]>{
+    let select = `$select=Title,ComponentType,GroupId`
+    let filter = `$filter=ReportTypeId eq'${report.ID}'`;
+    let order = '$orderby=ComponentOrder';
+    let reportComponents: PBIRefreshComponent[];
+    return reportComponents =(await this.getAllItems(MASTER_POWER_BI_COMPONENTS,`${select}&${filter}&${order}`)).map(t=> {return {ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title}})
+
   }
 
   async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {

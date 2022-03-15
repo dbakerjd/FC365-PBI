@@ -107,8 +107,7 @@ export class TeamsService {
     }
     protectedResourceMap.set('graph.microsoft.com', ['User.Read', 'GroupMember.ReadWrite.All']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    //protectedResourceMap.set('nppprovisioning20210831.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/NPPProvisioning-API/default']);
-    protectedResourceMap.set('fc365.azurewebsites.net',['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
+    protectedResourceMap.set(environment.functionAppDomain,['https://janddconsulting.onmicrosoft.com/FC365/access_as_user']);
     
     return {
       interactionType: InteractionType.Redirect,

@@ -10,7 +10,9 @@ export const environment = {
   contact: {
     name: 'Janssen Team',
     email: 'clientcontact@example.com'
-  }
+  },
+  functionAppUrl: 'http://localhost:7071/api/PowerBI',
+  functionAppDomain: 'localhost'
 };
 
 /*

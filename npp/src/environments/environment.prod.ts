@@ -6,5 +6,7 @@ export const environment = {
   contact: {
     name: 'Janssen Team',
     email: 'clientcontact@example.com'
-  }
+  },
+  functionAppUrl: 'https://fc365.azurewebsites.net/api/PowerBI',
+  functionAppDomain: 'fc365.azurewebsites.net'
 };
