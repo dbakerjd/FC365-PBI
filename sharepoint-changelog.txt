@@ -25,3 +25,11 @@ Refactoring (16/02)
    - In Master Group Types List set for Archived and Approved (OO - ListEdit, DU - ListRead)
    - Add new Indications field : multi Lookup (with Master Therapy List) to Current Opportunity Library
    - Change isInternal to IsInternal into Master Opportunity Type List
+
+Add list 'App Config Values' with fields
+   - Title: string
+   - Config Type: choice (Boolean, String, Number)
+   - Value: string
+
+22/03/11 Remove item from "Master Group Types List"
+   - removes item related with Master Apps list (OU). Not needed.

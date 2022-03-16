@@ -11,6 +11,7 @@ import { NotificationsService } from '../services/notifications.service';
 })
 export class SummaryComponent implements OnInit {
 
+  currentUser: User | undefined = undefined;
   notificationsList: NPPNotification[] = [];
   gateProjects: Opportunity[] = [];
   phaseProjects: Opportunity[] = [];
@@ -350,7 +351,8 @@ export class SummaryComponent implements OnInit {
       }
 
       // seats
-      this.loadSeatsInfo();
+      this.currentUser = await this.sharepoint.getCurrentUserInfo();
+      if (this.currentUser.IsSiteAdmin) this.loadSeatsInfo();
 
     } catch(e) {
       this.teams.hackyConsole += "********RUNTIME ERROR********    "+JSON.stringify(e);

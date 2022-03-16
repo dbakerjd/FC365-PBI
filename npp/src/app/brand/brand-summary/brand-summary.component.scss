@@ -2,7 +2,7 @@
     box-sizing: border-box;
 }
 .summary-header {
-    background-color: #f5f5f5;
+    background-color: #fff;
     display: flex;
     height: 62px;
     flex-direction: row;
@@ -33,58 +33,53 @@
 }
 
 .summary-content-wrapper {
-    background-color: #ebebeb;
-    border-top: 1px solid #fff;
-    border-left: 1px solid #fff;
-    border-right: 1px solid #fff;
+    background: #fff;
     display: flex;
     min-height: 100%;
     overflow: hidden;
     flex-direction: row;
+
+    div.header {
+        background-color: #ebebeb;
+        border-right: 1px solid #fff;
+        height: 40px;
+        padding: 12px 22px;
+        .doc-btn-icon {
+            background: url('/assets/doc.svg') no-repeat;
+            background-size: cover;
+            position: relative;
+            width: 0.9rem;
+            height: 1.1rem;
+            top: 2px;
+            float: left;
+            margin-right: 0.5em;
+        }
+        .bell-btn-icon {
+            background: url('/assets/bell.png') no-repeat;
+            background-size: cover;
+            position: relative;
+            width: 1rem;
+            height: 1rem;
+            top: 2px;
+            float: left;
+            margin-right: 0.5em;
+        }
+    }
     h4 {
         margin: 0;
         padding: 0;
     }
     .summary-graph {
         flex: 1;
-        div.header {
-            border-right: 1px solid #fff;
-            height: 40px;
-            padding: 12px 22px;
-            .doc-btn-icon {
-                background: url('/assets/doc.svg') no-repeat;
-                background-size: cover;
-                position: relative;
-                width: 0.9rem;
-                height: 1.1rem;
-                top: 2px;
-                float: left;
-                margin-right: 0.5em;
-            }
-        }
+        
         div.graph {
-            background-color: #f5f5f5;
-            width: 45%;
+            width: 40%;
             margin: 2%;
             display: inline-block;
         }
     }
     .summary-notifications {
         flex: 0 0 220px;
-        div.header {
-            height: 40px;
-            padding: 12px 16px;
-            .bell-btn-icon {
-                background: url('/assets/bell.png') no-repeat;
-                background-size: cover;
-                position: relative;
-                width: 1rem;
-                height: 1rem;
-                top: 2px;
-                float: left;
-                margin-right: 0.5em;
-            }
-        }
         div.notifications-column {
             display: flex;
             background-color: #ebebeb;
@@ -94,6 +89,9 @@
                 border-bottom: 1px solid #fff;
                 margin: 1px 0.9px 1px 1.2px;
                 padding: 12px 9px 23px 16px;
+                &.isRead {
+                    background-color: #f5e6d7;
+                }
             }
         }
     }
@@ -145,5 +143,56 @@
         padding-bottom: 50px;
     }
 
-    
+    .summary-seats {
+        p.general-count {
+            margin-top: 1rem;
+            text-align: center;
+            label {
+                font-weight: bold;
+            }
+        }
+        table.seats-table {
+            width: 80%;
+            margin: 2rem auto;
+            th {
+                text-align: left;
+                background-color: #73726d;
+                color: #fff;
+                padding: 3px;
+            }
+            tr {
+                &:nth-child(odd) {
+                    background-color: #eee;
+                }
+                &:hover {
+                    background-color: #ddd;
+                }
+                &.opps-list {
+                    background-color: #f5e6d7;
+                    td {
+                        padding: 0 2rem;
+                    }
+                }
+                td {
+                    padding: 3px;
+                    &.dropdown {
+                        cursor: pointer;
+                    }
+                }
+                border-bottom: 1px solid #ddd
+            }
+            
+            th.centered-value,
+            td.centered-value {
+                text-align: center;
+            }
+        }
+    }
+
+    .section-title {
+        width: 100%;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
 }

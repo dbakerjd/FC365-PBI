@@ -14,6 +14,7 @@ export class InlineNppDisambiguationService {
   isReady: boolean = false;
   readySubscriptions: Subject<boolean> = new Subject<boolean>();
   app: AppType | undefined;
+  config: { Title: string; Value: string, ConfigType: string }[] = [];
 
   constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService) { 
     this.isInline = environment.isInlineApp;
@@ -37,6 +38,8 @@ export class InlineNppDisambiguationService {
       appTitle = 'Inline';
     }
 
+    this.config = await this.sharepoint.getAppConfig();
+    console.log('config', this.config);
     let apps = await this.sharepoint.getApp(appTitle);
     this.app = (apps && apps.length) ? apps[0] : undefined;
 
@@ -47,6 +50,19 @@ export class InlineNppDisambiguationService {
       this.isReady = true;
       this.readySubscriptions.next(true);
     }
+  }
+
+  getConfigValue(name: string): any {
+    const item = this.config.find(el => el.Title === name);
+    if (item) {
+      switch (item.ConfigType) {
+        case 'Boolean': return +item.Value != 0 ? true : false; 
+        case 'String': return item.Value;
+        case 'Number': return +item.Value;
+        default: return item.Value;
+      }
+    }
+    return undefined;
   }
 
   getEntity(id: number) {
