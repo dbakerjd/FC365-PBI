@@ -12,7 +12,13 @@ export const environment = {
     email: 'clientcontact@example.com'
   },
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
-  functionAppDomain: 'localhost'
+  functionAppDomain: 'localhost',
+  hashUserEmails: false,
+  isTeamsApp: true,
+  licensingInfo: {
+    appId : '',
+    teamSiteDomain : ''
+  }
 };
 
 /*

@@ -59,15 +59,24 @@ export class TeamsService {
 
   constructor( private errorService: ErrorService, private licensing: LicensingService) { 
 
-    microsoftTeams.initialize(() => {
-      this.initialized = true;
-      this.statusSubject.next("initialized");
-    });
-    
-    microsoftTeams.getContext((context) => {
-      this.context = context;
+    if(environment.isTeamsApp) {
+      microsoftTeams.initialize(() => {
+        this.initialized = true;
+        this.statusSubject.next("initialized");
+      });
+      
+      microsoftTeams.getContext((context) => {
+        this.context = context;
+        this.validateLicense();
+      });
+    } else {
+      this.context = {
+        appId : environment.licensingInfo.appId,
+        teamSiteDomain : environment.licensingInfo.teamSiteDomain 
+      }
       this.validateLicense();
-    });
+    }
+    
 
     this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
       if(tokenResponse) {
