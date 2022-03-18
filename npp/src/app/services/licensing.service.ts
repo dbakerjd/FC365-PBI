@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { Md5 } from 'ts-md5';
 import { ErrorService } from './error.service';
 
 export interface JDLicense {
@@ -105,7 +106,7 @@ export class LicensingService {
       if (this.licenseContext) {
         return await this.http.post(this.licensingApiUrl + '/seats', {
           applicationIdentity: this.licenseContext,
-          userEmail: email
+          userEmail: Md5.hashStr(email)
         }, {
           headers: headers
         }).toPromise() as SeatsResponse;
@@ -135,7 +136,7 @@ export class LicensingService {
             headers: headers,
             body: {
               applicationIdentity: this.licenseContext,
-              userEmail: email
+              userEmail: Md5.hashStr(email)
             },
           }).toPromise() as SeatsResponse;
         }
@@ -158,7 +159,7 @@ export class LicensingService {
       if (this.licenseContext) {
         return await this.http.post(this.licensingApiUrl + '/userseats', {
           applicationIdentity: this.licenseContext,
-          userEmail: email
+          userEmail: Md5.hashStr(email)
         }, {
           headers: headers
         }).toPromise() as SeatsResponse;
