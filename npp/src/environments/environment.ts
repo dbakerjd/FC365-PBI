@@ -14,10 +14,9 @@ export const environment = {
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost',
   hashUserEmails: false,
-  isTeamsApp: true,
   licensingInfo: {
-    appId : '',
-    teamSiteDomain : ''
+    entityId : 'NPPBetaDev',
+    teamSiteDomain : 'janddconsulting.sharepoint.com'
   }
 };
 

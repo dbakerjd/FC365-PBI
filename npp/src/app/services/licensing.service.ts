@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { ErrorService } from './error.service';
@@ -37,12 +37,14 @@ export class LicensingService {
   
   public license: JDLicense | null = null;
   private licenseContext: JDLicenseContext | null = null;
+  private httpClient: HttpClient;
 
   constructor(
     private error: ErrorService, 
-    private http: HttpClient, 
+    private handler: HttpBackend, 
     private router: Router
   ) { 
+    this.httpClient = new HttpClient(handler);
     let license = localStorage.getItem("JDLicense");
     if(license) {
       this.license = JSON.parse(license);
@@ -56,7 +58,7 @@ export class LicensingService {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST',
       });
-      return await this.http.post(this.licensingApiUrl + '/license', {
+      return await this.httpClient.post(this.licensingApiUrl + '/license', {
         "appId" : context.entityId,
         "teamSiteDomain" : context.teamSiteDomain
       }, { 
@@ -103,7 +105,7 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        return await this.http.post(this.licensingApiUrl + '/seats', {
+        return await this.httpClient.post(this.licensingApiUrl + '/seats', {
           applicationIdentity: this.licenseContext,
           userEmail: email
         }, {
@@ -128,7 +130,7 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        return await this.http.request(
+        return await this.httpClient.request(
           'delete',
           this.licensingApiUrl + '/seats',
           {
@@ -156,7 +158,7 @@ export class LicensingService {
     });
     try {
       if (this.licenseContext) {
-        return await this.http.post(this.licensingApiUrl + '/userseats', {
+        return await this.httpClient.post(this.licensingApiUrl + '/userseats', {
           applicationIdentity: this.licenseContext,
           userEmail: email
         }, {

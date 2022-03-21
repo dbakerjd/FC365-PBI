@@ -12,7 +12,10 @@ export function loggerCallback(logLevel: LogLevel, message: string) {
   console.log(message);
 }
 
-
+export interface LicenseContext {
+  entityId: string;
+  teamSiteDomain: string;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -26,6 +29,7 @@ export class TeamsService {
   public hackyConsole: string = '';
   public statusSubject = new Subject<string>();
   public initialized = false;
+  private inTeams = false;
 
   //David's
   //'e504af88-0105-426f-bd33-9990e49c8122'
@@ -59,26 +63,19 @@ export class TeamsService {
 
   constructor( private errorService: ErrorService, private licensing: LicensingService) { 
 
-    if(environment.isTeamsApp) {
-      microsoftTeams.initialize(() => {
+    this.context = this.getEnvironmentContext();
+    console.log('browser | constructor teams context', this.context);
+    if (this.context) {
+      setTimeout(() => {
+        this.validateLicense();
         this.initialized = true;
         this.statusSubject.next("initialized");
-      });
-      
-      microsoftTeams.getContext((context) => {
-        this.context = context;
-        this.validateLicense();
-      });
-    } else {
-      this.context = {
-        appId : environment.licensingInfo.appId,
-        teamSiteDomain : environment.licensingInfo.teamSiteDomain 
-      }
-      this.validateLicense();
+      }, 1000);
     }
-    
+    this.startTeams();
 
     this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
+      console.log('msalInstance');
       if(tokenResponse) {
         console.log(tokenResponse);
         microsoftTeams.authentication.notifySuccess(JSON.stringify(tokenResponse));
@@ -94,10 +91,46 @@ export class TeamsService {
     });
 
     errorService.subject.subscribe(msg => {
+      console.log('msal error');
       if(msg == 'unauthorized') {
         this.login();
       }
     })
+  }
+
+  getEnvironmentContext(): LicenseContext | null {
+    if (environment.licensingInfo) {
+      if (environment.licensingInfo.entityId && environment.licensingInfo.teamSiteDomain) {
+        return {
+          entityId: environment.licensingInfo.entityId,
+          teamSiteDomain: environment.licensingInfo.teamSiteDomain
+        };
+      } else {
+        this.errorService.handleError({ message: 'Bad licensing info in app environment' });
+      }
+    }
+    return null;
+  }
+
+  startTeams() {
+    try {
+      microsoftTeams.initialize(() => {
+        console.log('teams callback');
+        this.initialized = true;
+        this.inTeams = true;
+        this.statusSubject.next("initialized");
+      });
+      
+      microsoftTeams.getContext((context) => {
+        console.log('context teams callback', context);
+        this.context = context;
+        this.validateLicense();
+      });
+      console.log('started teams');
+    } catch {
+      console.log('no teams');
+    }
+    
   }
 
   getResourceMap() {
@@ -183,6 +216,9 @@ export class TeamsService {
 
   async login() {
     if(!this.currentlyLoginIn) {
+      if (!this.inTeams) {
+        this.msalInstance.loginRedirect();
+      } else {
       this.currentlyLoginIn = true;
       localStorage.removeItem('teamsAccount');
       localStorage.removeItem("teamsAccessToken");
@@ -212,11 +248,13 @@ export class TeamsService {
             this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
         }
       });
+      }
     }
   }
 
   async validateLicense() {
-    this.licensing.validateLicense(this.context);
+    console.log('context - validate license');
+    await this.licensing.validateLicense(this.context);
   }
 
   async logout() {
