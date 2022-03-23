@@ -1,5 +1,5 @@
 export const environment = {
-  ssoRedirectUrl: '',
+  ssoRedirectUrl: 'https://delightful-rock-087b8d803.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: false,
   version: '0.5.1',
@@ -7,6 +7,6 @@ export const environment = {
     name: 'PBI Teams',
     email: 'rheath@jdforecasting.com'
   },
-  functionAppUrl: '',
-  functionAppDomain: ''
+  functionAppUrl: 'https://func-fc365-fc365-enterprise-npp-dev.azurewebsites.net',
+  functionAppDomain: 'func-fc365-fc365-enterprise-npp-dev.azurewebsites.net'
 };
