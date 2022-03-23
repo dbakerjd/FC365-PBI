@@ -8,8 +8,8 @@ export const environment = {
   isInlineApp: false,
   version: '0.5.1',
   contact: {
-    name: 'Janssen Team',
-    email: 'clientcontact@example.com'
+    name: 'PBI Teams',
+    email: 'rheath@jdforecasting.com'
   },
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost'

@@ -1,12 +1,12 @@
 export const environment = {
-  ssoRedirectUrl: 'https://nice-beach-021ec5303.azurestaticapps.net/auth-end',
+  ssoRedirectUrl: '',
   production: true,
   isInlineApp: false,
   version: '0.5.1',
   contact: {
-    name: 'Janssen Team',
-    email: 'clientcontact@example.com'
+    name: 'PBI Teams',
+    email: 'rheath@jdforecasting.com'
   },
-  functionAppUrl: 'https://fc365.azurewebsites.net/api/PowerBI',
-  functionAppDomain: 'fc365.azurewebsites.net'
+  functionAppUrl: '',
+  functionAppDomain: ''
 };
