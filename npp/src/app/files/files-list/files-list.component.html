@@ -16,7 +16,8 @@
     <div class="brand-owner">
         <div class="owner-pic">
             <div class="owner-pic-background"></div>
-            <img [src]="profilePic" *ngIf="profilePic"/>
+            <img [src]="defaultProfilePic" alt="" *ngIf="!ownerProfilePic" />
+            <img [src]="ownerProfilePic" alt="{{entity?.EntityOwner?.Title}}" *ngIf="ownerProfilePic" />
         </div>
         <div class="owner-info">
             <div class="owner-info-title"><label>Owner</label></div>
