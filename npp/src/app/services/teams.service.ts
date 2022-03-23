@@ -12,7 +12,10 @@ export function loggerCallback(logLevel: LogLevel, message: string) {
   console.log(message);
 }
 
-
+export interface LicenseContext {
+  entityId: string;
+  teamSiteDomain: string;
+}
 @Injectable({
   providedIn: 'root'
 })
@@ -26,6 +29,9 @@ export class TeamsService {
   public hackyConsole: string = '';
   public statusSubject = new Subject<string>();
   public initialized = false;
+  private userLoggedIn = false;
+  private isLoadedInsideTeams = false;
+  private _hasAttemptedConnection = false; // control attempted connection to teams
 
   //David's
   //'e504af88-0105-426f-bd33-9990e49c8122'
@@ -59,36 +65,84 @@ export class TeamsService {
 
   constructor( private errorService: ErrorService, private licensing: LicensingService) { 
 
-    microsoftTeams.initialize(() => {
-      this.initialized = true;
-      this.statusSubject.next("initialized");
-    });
-    
-    microsoftTeams.getContext((context) => {
-      this.context = context;
-      this.validateLicense();
-    });
+    this.context = this.getEnvironmentContext();
+    this.startTeams();
 
-    this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
-      if(tokenResponse) {
-        console.log(tokenResponse);
-        microsoftTeams.authentication.notifySuccess(JSON.stringify(tokenResponse));
-      } else {
-        console.log("empty tokenResponse"); 
+    while (!this._hasAttemptedConnection); // wait for start teams attempt
+    setTimeout(() => {
+      if (!this.isLoadedInTeams()) {
+        this.initialized = true;
+        this.statusSubject.next("initialized");
       }
-      // Check if the tokenResponse is null
-      // If the tokenResponse !== null, then you are coming back from a successful authentication redirect. 
-      // If the tokenResponse === null, you are not coming back from an auth redirect.
-    }).catch((error) => {
-        // handle error, either in the library or coming back from the server
-        this.errorService.handleError(error);
-    });
+      this.validateLicense();
+    }, 500);
+
+   this.msalInstance.handleRedirectPromise().then((tokenResponse) => {
+    if(tokenResponse) {
+      if (this.isLoadedInTeams()) {
+        microsoftTeams.authentication.notifySuccess(JSON.stringify(tokenResponse));
+      }
+    } else {
+      console.log("empty tokenResponse"); 
+    }
+    // Check if the tokenResponse is null
+    // If the tokenResponse !== null, then you are coming back from a successful authentication redirect. 
+    // If the tokenResponse === null, you are not coming back from an auth redirect.
+
+    
+
+  }).catch((error) => {
+      // handle error, either in the library or coming back from the server
+      this.errorService.handleError(error);
+  });
 
     errorService.subject.subscribe(msg => {
       if(msg == 'unauthorized') {
         this.login();
       }
     })
+  }
+
+  setLoggedIn(isLoggedIn = true) {
+    if (isLoggedIn) {
+      this.statusSubject.next("loggedIn");
+    }
+    this.userLoggedIn = isLoggedIn;
+  }
+
+  isLoggedIn(): boolean {
+    return this.userLoggedIn;
+  }
+
+  getEnvironmentContext(): LicenseContext | null {
+    if (environment.licensingInfo) {
+      if (environment.licensingInfo.entityId && environment.licensingInfo.teamSiteDomain) {
+        return {
+          entityId: environment.licensingInfo.entityId,
+          teamSiteDomain: environment.licensingInfo.teamSiteDomain
+        };
+      } else {
+        this.errorService.handleError({ message: 'Bad licensing info in app environment' });
+      }
+    }
+    return null;
+  }
+
+  startTeams() {
+    this._hasAttemptedConnection = false;
+    microsoftTeams.initialize(() => {
+      this.initialized = true;
+      microsoftTeams.getContext((context) => {
+        if (context) this.isLoadedInsideTeams = true;
+        this.context = context;
+        this.statusSubject.next("initialized");
+      });
+    });
+    this._hasAttemptedConnection = true;
+  }
+
+  isLoadedInTeams() {
+    return this._hasAttemptedConnection && this.isLoadedInsideTeams;
   }
 
   getResourceMap() {
@@ -123,7 +177,7 @@ export class TeamsService {
 
   getMSALGuardConfig() {
     if(!this.licensing.license) {
-      this.errorService.toastr.error("Trying to get resources without an active license");
+      this.errorService.toastr.error("Trying to get resources without an active license 2");
       return;
     }
     //'api://b431132e-d7ea-4206-a0a9-5403adf64155/.default'
@@ -144,15 +198,18 @@ export class TeamsService {
     };
   }
 
+  /** could be deleted */
   setToken(token: string) {
     this.token = token;
     this.setStorageToken(token);
   }
 
+  /** could be deleted */
   setStorageToken(token: string) {
     localStorage.setItem('teamsAccessToken', token);
   }
 
+  /** unused */
   getStorageToken() {
     this.token = localStorage.getItem('teamsAccessToken');
     return this.token;
@@ -164,9 +221,11 @@ export class TeamsService {
      * To use active account set here, subscribe to inProgress$ first in your component
      */
     let activeAccount = this.msalInstance.getActiveAccount();
-    if (!activeAccount && this.msalInstance.getAllAccounts().length > 0) {
+    if (activeAccount) this.setLoggedIn(true);
+    else if (!activeAccount && this.msalInstance.getAllAccounts().length > 0) {
       let accounts = this.msalInstance.getAllAccounts();
       this.msalInstance.setActiveAccount(accounts[0]);
+      this.setLoggedIn(true);
     } else if(!activeAccount) {
       await this.login();
     } 
@@ -180,6 +239,11 @@ export class TeamsService {
       let sharepointUrl = this.licensing.getSharepointApiUri();
       let accountStorageKey = sharepointUrl + '-sharepointAccount';
       localStorage.removeItem(accountStorageKey);
+      if (!this.isLoadedInTeams()) {
+        this.msalInstance.loginRedirect();
+        this.currentlyLoginIn = false;
+        // this.setToken() // not necessary / token in storage unused
+      } else {
       microsoftTeams.authentication.authenticate({
         url: window.location.origin + "/auth-start",
         width: 600,
@@ -190,6 +254,7 @@ export class TeamsService {
             const payload = JSON.parse(result ? result : '')  as AuthenticationResult;
             this.authObj = JSON.stringify(payload);
             this.setActiveAccount(payload.account);
+            // token in teams service is unused, could be deleted
             this.setToken(payload.accessToken);
           } catch(e: any) {
             this.hackyConsole += "*************ERROR************* -> "+e+"      -      ";
@@ -203,11 +268,13 @@ export class TeamsService {
             this.errorService.handleError(error ? new Error(error) : new Error("Something went wrong trying to log in"));
         }
       });
+      }
     }
   }
 
   async validateLicense() {
-    this.licensing.validateLicense(this.context);
+    await this.licensing.validateLicense(this.context);
+    this.statusSubject.next('license');
   }
 
   async logout() {
@@ -227,6 +294,7 @@ export class TeamsService {
     if (account) {
       this.msalInstance.setActiveAccount(account);
       this.account = account;
+      this.statusSubject.next('loggedIn');
     }
   }
 

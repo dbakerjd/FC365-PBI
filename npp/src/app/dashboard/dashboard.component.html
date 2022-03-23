@@ -4,9 +4,10 @@
         <img src="assets/layout/FC365-logo.svg" alt="FC365" />
         <h1>Welcome</h1>
         <h2>Your journey starts here</h2>
+        <app-progress-spinner *ngIf="!loadedApp"></app-progress-spinner>
     </div>
     
-    <div class="dashboard-items" [@listAnimation]="items.length">
+    <div class="dashboard-items" [@listAnimation]="items.length" *ngIf="loadedApp">
             <div class="dashboard-item" *ngFor="let item of items" (click)="navigateTo(item)" >
                 <img src="{{item.src}}"/>
                 <div class="dashboard-item-text">

@@ -18,7 +18,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public teams: TeamsService, 
     private readonly sharepoint: SharepointService, 
-    public licensing: LicensingService
+    public licensing: LicensingService,
+    private router: Router, 
   ) {
     
   }
@@ -26,11 +27,17 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isIframe = window !== window.parent && !window.opener; // Remove this line to use Angular Universal
     
     this.teams.statusSubject.subscribe(async (msg) => {
-      if(msg == 'initialized') {
+      if(msg == 'license') {
         this.setLoginDisplay();
     
         if(window.location.href.indexOf("auth") == -1) {
           await this.teams.checkAndSetActiveAccount();
+        }
+
+      } else if (msg == 'loggedIn') {
+        // check if we are allowed to connect to the license sharepoint
+        if (!await this.sharepoint.canConnect()) {
+          this.router.navigate(['splash/non-access']);
         }
       }
     })

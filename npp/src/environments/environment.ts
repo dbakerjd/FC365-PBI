@@ -6,13 +6,18 @@ export const environment = {
   ssoRedirectUrl: 'https://localhost:4200/auth-end',
   production: false,
   isInlineApp: false,
-  version: '0.5.1',
+  version: '0.5.2',
   contact: {
     name: 'Janssen Team',
     email: 'clientcontact@example.com'
   },
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
-  functionAppDomain: 'localhost'
+  functionAppDomain: 'localhost',
+  hashUserEmails: false,
+  licensingInfo: {
+    entityId : 'NPPBetaDev',
+    teamSiteDomain : 'janddconsulting.sharepoint.com'
+  }
 };
 
 /*
