@@ -7,6 +7,6 @@ export const environment = {
     name: 'PBI Teams',
     email: 'rheath@jdforecasting.com'
   },
-  functionAppUrl: 'https://func-fc365-enterprise-pbi.azurewebsites.net',
+  functionAppUrl: 'https://func-fc365-enterprise-pbi.azurewebsites.net/api/PowerBI',
   functionAppDomain: 'func-fc365-enterprise-pbi.azurewebsites.net'
 };
