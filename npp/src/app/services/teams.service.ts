@@ -37,9 +37,9 @@ export class TeamsService {
   public msalInstance = new PublicClientApplication({
     auth: {
       //clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // Prod enviroment. Uncomment to use. 
-      clientId: '17cfd1c7-7a92-483d-8c55-cef44c166873',
+      clientId: '21c0de67-18c2-480f-952e-b77fecc25532',
       //clientId: 'e504af88-0105-426f-bd33-9990e49c8122', // PPE testing environment
-      authority: 'https://login.microsoftonline.com/f89eab70-c513-4ca0-990b-853ed9bae931', // Prod environment. Uncomment to use.
+      authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
       redirectUri: environment.ssoRedirectUrl,
       postLogoutRedirectUri: environment.ssoRedirectUrl
@@ -107,7 +107,7 @@ export class TeamsService {
     }
     protectedResourceMap.set('graph.microsoft.com', ['User.Read', 'GroupMember.ReadWrite.All']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    protectedResourceMap.set(environment.functionAppDomain,['api://17cfd1c7-7a92-483d-8c55-cef44c166873/user_impersonation']);
+    protectedResourceMap.set(environment.functionAppDomain,['https://janddconsulting.onmicrosoft.com/FC365-Enterprise-PBI-NPP/user_impersonation']);
     
     return {
       interactionType: InteractionType.Redirect,

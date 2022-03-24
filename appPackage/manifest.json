@@ -28,7 +28,7 @@
         {
             "entityId": "FC365-Enterprise-NPP-Dev",
             "name": "NPP",
-            "contentUrl": "https://purple-rock-0e2f27203.1.azurestaticapps.net",
+            "contentUrl": "https://yellow-island-06ecb8603.1.azurestaticapps.net",
             "scopes": [
                 "personal"
             ]
@@ -41,7 +41,7 @@
         }
     ],
     "validDomains": [
-        "purple-rock-0e2f27203.1.azurestaticapps.net"
+        "yellow-island-06ecb8603.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
         "id": "cee11192-280f-4779-9234-82aab189ec82",
