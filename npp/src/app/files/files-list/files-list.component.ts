@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
@@ -47,7 +48,8 @@ export class FilesListComponent implements OnInit {
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
-  profilePic: string | boolean = '';
+  defaultProfilePic = '/assets/user.svg';
+  ownerProfilePic: SafeUrl | null = null;
   currentSection = 'models';
   currentFiles: NPPFile[] = [];
   uploadDialogInstance: any; 
@@ -74,7 +76,8 @@ export class FilesListComponent implements OnInit {
     public licensing: LicensingService,
     public disambiguator: InlineNppDisambiguationService,
     public notifications: NotificationsService,
-    private breadcrumbService: BreadcrumbsService
+    private breadcrumbService: BreadcrumbsService,
+    private sanitize: DomSanitizer
   ) { }
 
   ngOnInit(): void {
@@ -110,9 +113,8 @@ export class FilesListComponent implements OnInit {
           
           this.cycles = await this.disambiguator.getForecastCycles(this.entity);
 
-          let pic = await this.sharepoint.getUserProfilePic(ownerId);
-          owner.profilePicUrl = pic ? pic : '/assets/user.svg';
-          this.profilePic = owner.profilePicUrl;
+          let profileImgBlob = await this.sharepoint.getUserProfilePic(ownerId);
+          this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
         this.setStatus(this.modelStatus[0]);
       }

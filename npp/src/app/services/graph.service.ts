@@ -200,4 +200,28 @@ export class GraphService {
     if (group && user) return this.removeUserToAzureGroup(user.id, group.id);
     return false;
   }
+
+  /** User profile pic from Microsoft Graph */
+  async getProfilePic(email: string): Promise<Blob | null> {
+    try {
+      const graphToken = await this.getMSGraphToken();
+      const endpoint = this.baseGraphUrl + 'users/' + email + '/photo/$value';
+      const result = await this.http.get(
+        endpoint,
+        {
+          headers: {
+            token: graphToken
+          },
+          responseType: 'arraybuffer',
+        }
+      ).toPromise();
+      if (result) {
+        return new Blob([result]);
+      }
+      return null;
+    } catch (e: any) {
+      this.error.handleError(e);
+      return null;
+    }
+  }
 }

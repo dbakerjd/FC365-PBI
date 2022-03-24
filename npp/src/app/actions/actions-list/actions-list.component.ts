@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
@@ -58,7 +59,8 @@ export class ActionsListComponent implements OnInit {
   displayingModels: boolean = false;
   dialogInstance: any; 
   loading = false;
-  profilePic: string = '/assets/user.svg';
+  defaultProfilePic = '/assets/user.svg';
+  ownerProfilePic: SafeUrl | null = null;
   hasAccessToModels = false;
 
   constructor(
@@ -72,7 +74,8 @@ export class ActionsListComponent implements OnInit {
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
     private breadcrumbService: BreadcrumbsService,
-    public disambiguator: InlineNppDisambiguationService
+    public disambiguator: InlineNppDisambiguationService,
+    public sanitize: DomSanitizer
     ) { }
 
   ngOnInit(): void {
@@ -89,9 +92,8 @@ export class ActionsListComponent implements OnInit {
         this.opportunityGeographies = await this.sharepoint.getOpportunityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
-          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
-          this.opportunity.EntityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
-          this.profilePic = this.opportunity.EntityOwner.profilePicUrl;
+          const profileImgBlob = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
+          this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
         this.gates = await this.sharepoint.getStages(params.id);
         this.gates.forEach(async (el, index) => {
