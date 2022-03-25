@@ -1,7 +1,7 @@
 export const environment = {
   ssoRedirectUrl: 'https://yellow-island-06ecb8603.1.azurestaticapps.net/auth-end',
   production: true,
-  isInlineApp: false,
+  isInlineApp: true,
   version: '0.5.1',
   contact: {
     name: 'PBI Teams',
