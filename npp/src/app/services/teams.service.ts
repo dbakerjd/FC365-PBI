@@ -37,7 +37,7 @@ export class TeamsService {
   public msalInstance = new PublicClientApplication({
     auth: {
       //clientId: '17534ca2-f4f8-43c0-8612-72bdd29a9ee8', // Prod enviroment. Uncomment to use. 
-      clientId: 'cee11192-280f-4779-9234-82aab189ec82',
+      clientId: '21c0de67-18c2-480f-952e-b77fecc25532',
       //clientId: 'e504af88-0105-426f-bd33-9990e49c8122', // PPE testing environment
       authority: 'https://login.microsoftonline.com/common', // Prod environment. Uncomment to use.
       //authority: 'https://login.windows-ppe.net/common', // PPE testing environment.
