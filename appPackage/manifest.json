@@ -28,7 +28,7 @@
         {
             "entityId": "FC365-Enterprise-NPP-Dev",
             "name": "NPP",
-            "contentUrl": "https://yellow-island-06ecb8603.1.azurestaticapps.net",
+            "contentUrl": "https://agreeable-grass-0c93eec03.1.azurestaticapps.net",
             "scopes": [
                 "personal"
             ]
@@ -41,7 +41,7 @@
         }
     ],
     "validDomains": [
-        "yellow-island-06ecb8603.1.azurestaticapps.net"
+        "agreeable-grass-0c93eec03.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
         "id": "21c0de67-18c2-480f-952e-b77fecc25532",

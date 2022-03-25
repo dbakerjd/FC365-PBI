@@ -1,5 +1,5 @@
 export const environment = {
-  ssoRedirectUrl: 'https://yellow-island-06ecb8603.1.azurestaticapps.net/auth-end',
+  ssoRedirectUrl: 'https://agreeable-grass-0c93eec03.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: false,
   version: '0.5.1',
