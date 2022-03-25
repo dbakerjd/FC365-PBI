@@ -1,12 +1,12 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.12/MicrosoftTeams.schema.json",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "manifestVersion": "1.12",
-    "id": "bc9222e5-e994-4022-977d-3a2246d5e4f7",
+    "id": "3a807575-85cc-49ad-8563-0ec5d2465bc0",
     "packageName": "com.microsoft.teams.extension",
     "name": {
-        "short": "FC365 Enterprise NPP Dev",
-        "full": "FC365-Enterprise-NPP-Dev"
+        "short": "FC365 Enterprise Inline Dev",
+        "full": "FC365-Enterprise-Inline-Dev"
     },
     "developer": {
         "name": "J+D Forecasting",
@@ -26,8 +26,8 @@
     "accentColor": "#FFFFFF",
     "staticTabs": [
         {
-            "entityId": "FC365-Enterprise-NPP-Dev",
-            "name": "NPP",
+            "entityId": "FC365-Enterprise-Inline-Dev",
+            "name": "Inline",
             "contentUrl": "https://yellow-island-06ecb8603.1.azurestaticapps.net",
             "scopes": [
                 "personal"
@@ -44,7 +44,7 @@
         "yellow-island-06ecb8603.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
-        "id": "cee11192-280f-4779-9234-82aab189ec82",
+        "id": "b5290fcf-63e8-471c-9104-f383a7958367",
         "resource": "https://janddconsulting.onmicrosoft.com/FC365-Enterprise-PBI-Inline"
     },
     "devicePermissions": [
