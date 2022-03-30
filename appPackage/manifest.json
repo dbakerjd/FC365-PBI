@@ -1,12 +1,12 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.12/MicrosoftTeams.schema.json",
-    "version": "1.0.2",
+    "version": "1.0.1",
     "manifestVersion": "1.12",
-    "id": "e01a5bd5-f2cd-4c2c-846a-0236444cdb61",
+    "id": "0184a29d-2d61-422d-a70c-0fb2672f93c9",
     "packageName": "com.microsoft.teams.extension",
     "name": {
-        "short": "FC365 Test NPP",
-        "full": "FC365 Test NPP"
+        "short": "FC365 Test Inline",
+        "full": "FC365 Test Inline"
     },
     "developer": {
         "name": "J+D Forecasting",
@@ -23,12 +23,12 @@
         "outline": "outline.png",
         "color": "color.png"
     },
-    "accentColor": "#A4D344",
+    "accentColor": "#FF5CA4",
     "staticTabs": [
         {
-            "entityId": "FC365-Test-NPP",
-            "name": "NPP",
-            "contentUrl": "https://nice-cliff-0f19cff03.1.azurestaticapps.net",
+            "entityId": "FC365-Test-Inline",
+            "name": "Inline",
+            "contentUrl": "https://icy-water-0ae577403.1.azurestaticapps.net",
             "scopes": [
                 "personal"
             ]
@@ -41,11 +41,11 @@
         }
     ],
     "validDomains": [
-        "nice-cliff-0f19cff03.1.azurestaticapps.net"
+        "icy-water-0ae577403.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
-        "id": "d194ec95-9a3d-4586-9343-75a39f029e3d",
-        "resource": "https://janddconsulting.onmicrosoft.com/FC365-Demo-Inline"
+        "id": "fa5c558e-784f-4950-af4e-7ab724b54808",
+        "resource": "https://janddconsulting.onmicrosoft.com/FC365-Test-Inline"
     },
     "activities": {
         "activityTypes": [
