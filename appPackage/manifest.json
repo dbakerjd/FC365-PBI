@@ -1,6 +1,6 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.12/MicrosoftTeams.schema.json",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "manifestVersion": "1.12",
     "id": "e01a5bd5-f2cd-4c2c-846a-0236444cdb61",
     "packageName": "com.microsoft.teams.extension",
@@ -44,8 +44,8 @@
         "nice-cliff-0f19cff03.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
-        "id": "d194ec95-9a3d-4586-9343-75a39f029e3d",
-        "resource": "https://janddconsulting.onmicrosoft.com/FC365-Demo-Inline"
+        "id": "6c76f4df-ba13-4aca-8e16-d7c0bb9d9a51",
+        "resource": "https://janddconsulting.onmicrosoft.com/FC365-Test-NPP"
     },
     "activities": {
         "activityTypes": [
