@@ -1,5 +1,5 @@
 export const environment = {
-  ssoRedirectUrl: '/auth-end',
+  ssoRedirectUrl: 'https://icy-water-0ae577403.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: false,
   version: '0.5.2',
