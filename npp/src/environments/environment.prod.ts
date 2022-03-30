@@ -1,5 +1,5 @@
 export const environment = {
-  ssoRedirectUrl: 'https://nice-cliff-0f19cff03.1.azurestaticapps.net/auth-end',
+  ssoRedirectUrl: '/auth-end',
   production: true,
   isInlineApp: false,
   version: '0.5.2',
@@ -11,7 +11,7 @@ export const environment = {
   functionAppDomain: 'func-fc365-test.azurewebsites.net',
   hashUserEmails: false,
   licensingInfo: {
-    entityId : 'FC365-Test-NPP',
+    entityId : 'FC365-Test-Inline',
     teamSiteDomain : 'janddconsulting.sharepoint.com'
   }
 };
