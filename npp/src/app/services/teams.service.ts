@@ -161,7 +161,7 @@ export class TeamsService {
     }
     protectedResourceMap.set('graph.microsoft.com', ['User.Read', 'GroupMember.ReadWrite.All']);
     protectedResourceMap.set('api.powerbi.com', ['https://analysis.windows.net/powerbi/api/.default']);
-    protectedResourceMap.set(environment.functionAppDomain,['https://janddconsulting.onmicrosoft.com/FC365-Test-NPP']);
+    protectedResourceMap.set(environment.functionAppDomain,['https://janddconsulting.onmicrosoft.com/FC365-Test-NPP/user_impersonation']);
     
     return {
       interactionType: InteractionType.Redirect,

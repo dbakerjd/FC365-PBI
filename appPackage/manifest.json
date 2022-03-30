@@ -1,35 +1,34 @@
 {
-    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.11/MicrosoftTeams.schema.json",
-    "manifestVersion": "1.11",
-    "version": "1.0.3",
-    "id": "f09e1948-42d0-4937-8f7c-63b216c73cd9",
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.12/MicrosoftTeams.schema.json",
+    "version": "1.0.2",
+    "manifestVersion": "1.12",
+    "id": "e01a5bd5-f2cd-4c2c-846a-0236444cdb61",
     "packageName": "com.microsoft.teams.extension",
+    "name": {
+        "short": "FC365 Test NPP",
+        "full": "FC365 Test NPP"
+    },
     "developer": {
         "name": "J+D Forecasting",
+        "mpnId": "6384361",
         "websiteUrl": "https://jdforecasting.com/",
         "privacyUrl": "https://jdforecasting.com/privacy-policy/",
-        "termsOfUseUrl": "https://jdforecasting.com/terms-of-service",
-        "mpnId": "684361"
-    },
-    "icons": {
-        "color": "color.png",
-        "outline": "outline.png"
-    },
-    "name": {
-        "short": "FC365 NPP Dev",
-        "full": "FC365 NPP Dev"
+        "termsOfUseUrl": "https://jdforecasting.com/terms-of-service/"
     },
     "description": {
         "short": "All-in-one, pharmaceutical forecasting platform",
-        "full": "FC365 is a powerful, collaborative, pharmaceutical forecasting solution.\n\nBuilt on the functionality you know and trust, our FC365 Teams App empowers better decision making through effective insight generation and visualisation thanks to J+D. We simplify the complex nature of forecasting with a centralised process in one, shared cloud-based interface.\n\nFC365 is an innovative support system for informed decision making about the future."
+        "full": "FC365 is a powerful, collaborative, pharmaceutical forecasting solution.\n\nBuilt on the functionality you know and trust, FC365 empowers better decision making through effective insight generation and visualisation thanks to J+D. We simplify the complex nature of forecasting with a centralised process in one, shared cloud-based interface. n\nNote: This application is currently intended for Sales Team. If you require access, please raise a request with dbaker@jdforecasting.com;  detailing that you don't have access to the FC365 Inline App."
     },
-    "accentColor": "#dedede",
+    "icons": {
+        "outline": "outline.png",
+        "color": "color.png"
+    },
+    "accentColor": "#A4D344",
     "staticTabs": [
         {
-            "entityId": "FC365NPPDev",
+            "entityId": "FC365-Test-NPP",
             "name": "NPP",
-            "contentUrl": "https://nice-beach-021ec5303.azurestaticapps.net",
-            "websiteUrl": "https://nice-beach-021ec5303.azurestaticapps.net",
+            "contentUrl": "https://nice-cliff-0f19cff03.1.azurestaticapps.net",
             "scopes": [
                 "personal"
             ]
@@ -41,18 +40,12 @@
             ]
         }
     ],
-    "permissions": [
-        "identity",
-        "messageTeamMembers"
-    ],
     "validDomains": [
-        "nice-beach-021ec5303.azurestaticapps.net",
-        "*.sharepoint.com",
-        "*.login.microsoftonline.com"
+        "nice-cliff-0f19cff03.1.azurestaticapps.net"
     ],
     "webApplicationInfo": {
-        "id": "9ff5f696-db6b-4373-b076-eab231d4cdcb",
-        "resource": "https://janddconsulting.onmicrosoft.com/FC365_API_TEST"
+        "id": "d194ec95-9a3d-4586-9343-75a39f029e3d",
+        "resource": "https://janddconsulting.onmicrosoft.com/FC365-Demo-Inline"
     },
     "activities": {
         "activityTypes": [
@@ -62,5 +55,16 @@
                 "templateText": "{reportName} report refreshed in {actor}"
             }
         ]
+    },
+    "authorization": {
+        "permissions": {
+            "orgWide": [],
+            "resourceSpecific": [
+                {
+                    "name": "Member.Read.Group",
+                    "type": "Application"
+                }
+            ]
+        }
     }
 }
