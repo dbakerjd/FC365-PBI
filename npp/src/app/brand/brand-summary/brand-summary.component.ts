@@ -6,6 +6,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
+import { EntitiesService } from 'src/app/services/entities.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -40,14 +41,15 @@ export class BrandSummaryComponent implements OnInit {
   generatingSeatsTable = true;
 
   constructor(
-    private sharepoint: SharepointService, 
+    private sharepoint: SharepointService,
     private teams: TeamsService,
-    private disambiguator: InlineNppDisambiguationService
+    private disambiguator: InlineNppDisambiguationService,
+    private readonly entities: EntitiesService
   ) { }
 
   async ngOnInit(): Promise<void> {
     try {
-      if(this.teams.initialized) this.init();
+      if (this.teams.initialized) this.init();
       else {
         this.teams.statusSubject.subscribe(async (msg) => {
           setTimeout(async () => {
@@ -55,10 +57,10 @@ export class BrandSummaryComponent implements OnInit {
           }, 500);
         });
       }
-    } catch(e) {
+    } catch (e) {
       console.log(e);
     }
-  } 
+  }
 
   async init() {
     //@ts-ignore
@@ -66,20 +68,20 @@ export class BrandSummaryComponent implements OnInit {
 
     const user = await this.sharepoint.getCurrentUserInfo();
     this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
-    this.therapyAreasData  = { areas: {}, total: 0 };
+    this.therapyAreasData = { areas: {}, total: 0 };
 
     this.brands = await this.disambiguator.getEntities() as Opportunity[];
 
     this.brands.forEach(async (el, index) => {
-      
+
       //populate therapyAreasData
-      if(el.Indication && el.Indication.length) {
-        for(let i=0; i < el.Indication.length; i++) {
+      if (el.Indication && el.Indication.length) {
+        for (let i = 0; i < el.Indication.length; i++) {
           this.therapyAreasData.total += 1;
           let indication = el.Indication[i];
-          if(this.therapyAreasData.areas[indication.TherapyArea]) {
+          if (this.therapyAreasData.areas[indication.TherapyArea]) {
             this.therapyAreasData.areas[indication.TherapyArea].count += 1;
-            if(this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
+            if (this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
               this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
             } else {
               this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
@@ -98,14 +100,14 @@ export class BrandSummaryComponent implements OnInit {
     this.renderTherapyAreasGraph();
 
     this.brands.forEach(async (el, index) => {
-      
+
       this.brandData.push({
         brandName: el.Title,
         cycle: el.ForecastCycle?.Title + " " + el.Year,
         modelsCount: await this.sharepoint.getBrandModelsCount(el),
         approvedModelsCount: await this.sharepoint.getBrandApprovedModelsCount(el),
       });
-      
+
     });
 
     // seats
@@ -119,64 +121,64 @@ export class BrandSummaryComponent implements OnInit {
         enabled: false
       },
       chart: {
-          plotBorderWidth: null,
-          plotShadow: false,
-          plotBorderColor: "#ff0000",
-          backgroundColor: "#fff",
-          type: 'pie'
+        plotBorderWidth: null,
+        plotShadow: false,
+        plotBorderColor: "#ff0000",
+        backgroundColor: "#fff",
+        type: 'pie'
       },
       title: {
-          text: 'Therapy Areas: '+this.therapyAreasData.total+' brands',
-          style: {
-            "fontSize": "1.2rem",
-            "color": "#000"
-          }
+        text: 'Therapy Areas: ' + this.therapyAreasData.total + ' brands',
+        style: {
+          "fontSize": "1.2rem",
+          "color": "#000"
+        }
       },
       tooltip: {
-          pointFormat: '{series.name}: <b>{point.value} brands</b>'
+        pointFormat: '{series.name}: <b>{point.value} brands</b>'
       },
       accessibility: {
-          point: {
-              valueSuffix: '%'
-          }
+        point: {
+          valueSuffix: '%'
+        }
       },
       plotOptions: {
-          pie: {
-              allowPointSelect: true,
-              cursor: 'pointer',
-              dataLabels: {
-                  enabled: true,
-                  format: '<b>{point.name}</b>: {point.value} brands'
-              }
-          },
-          series: {
-            events: {
-              click: function (event: any) {
-                //@ts-ignore
-                window.SummaryComponent.currentTherapyArea = event.point.name;
-                //@ts-ignore
-                window.SummaryComponent.renderIndicationsGraph();
-              }
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '<b>{point.name}</b>: {point.value} brands'
+          }
+        },
+        series: {
+          events: {
+            click: function (event: any) {
+              //@ts-ignore
+              window.SummaryComponent.currentTherapyArea = event.point.name;
+              //@ts-ignore
+              window.SummaryComponent.renderIndicationsGraph();
             }
           }
+        }
       },
       series: [{
-          name: 'Therapy Areas',
-          colorByPoint: true,
-          data: Object.keys(this.therapyAreasData.areas).map(key => {
-            if(!this.currentTherapyArea) this.currentTherapyArea = key;
-            return {
-              name: key,
-              y: this.therapyAreasData.areas[key].count * 100 / this.therapyAreasData.total,
-              value: this.therapyAreasData.areas[key].count,
-              sliced: false
-            }
-          })
+        name: 'Therapy Areas',
+        colorByPoint: true,
+        data: Object.keys(this.therapyAreasData.areas).map(key => {
+          if (!this.currentTherapyArea) this.currentTherapyArea = key;
+          return {
+            name: key,
+            y: this.therapyAreasData.areas[key].count * 100 / this.therapyAreasData.total,
+            value: this.therapyAreasData.areas[key].count,
+            sliced: false
+          }
+        })
       }]
     };
 
     //@ts-ignore
-    if(Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);  
+    if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);
   }
 
   renderIndicationsGraph() {
@@ -187,46 +189,46 @@ export class BrandSummaryComponent implements OnInit {
         enabled: false
       },
       chart: {
-          plotShadow: true,
-          backgroundColor: "#ebebeb",
-          type: 'pie'
+        plotShadow: true,
+        backgroundColor: "#ebebeb",
+        type: 'pie'
       },
       title: {
-          text: 'Indications for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' brands'
+        text: 'Indications for ' + self.currentTherapyArea + ': ' + self.therapyAreasData.areas[self.currentTherapyArea].count + ' brands'
       },
       tooltip: {
-          pointFormat: '{series.name}: <b>{point.value} brands</b>'
+        pointFormat: '{series.name}: <b>{point.value} brands</b>'
       },
       accessibility: {
-          point: {
-              valueSuffix: '%'
-          }
+        point: {
+          valueSuffix: '%'
+        }
       },
       plotOptions: {
-          pie: {
-              allowPointSelect: true,
-              cursor: 'pointer',
-              dataLabels: {
-                  enabled: true,
-                  format: '<b>{point.name}</b>: {point.value} brands'
-              }
+        pie: {
+          allowPointSelect: true,
+          cursor: 'pointer',
+          dataLabels: {
+            enabled: true,
+            format: '<b>{point.name}</b>: {point.value} brands'
           }
+        }
       },
       series: [{
-          name: 'Indications for '+self.currentTherapyArea,
-          colorByPoint: true,
-          data: Object.keys(self.therapyAreasData.areas[self.currentTherapyArea].indications).map(key => {
-            return {
-              name: key,
-              y: self.therapyAreasData.areas[self.currentTherapyArea].indications[key] * 100 / self.therapyAreasData.areas[self.currentTherapyArea].count,
-              value: self.therapyAreasData.areas[self.currentTherapyArea].indications[key],
-              sliced: false
-            }
-          })
+        name: 'Indications for ' + self.currentTherapyArea,
+        colorByPoint: true,
+        data: Object.keys(self.therapyAreasData.areas[self.currentTherapyArea].indications).map(key => {
+          return {
+            name: key,
+            y: self.therapyAreasData.areas[self.currentTherapyArea].indications[key] * 100 / self.therapyAreasData.areas[self.currentTherapyArea].count,
+            value: self.therapyAreasData.areas[self.currentTherapyArea].indications[key],
+            sliced: false
+          }
+        })
       }]
     };
     //@ts-ignore
-    if(Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);  
+    if (Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);
   }
 
   private async loadSeatsInfo() {
@@ -264,7 +266,7 @@ export class BrandSummaryComponent implements OnInit {
     }
     const groups = await this.sharepoint.getUserGroups(userId);
     const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
-    const allOpportunities = await this.sharepoint.getOpportunities(false, false);
+    const allOpportunities = await this.entities.getAll(false, false);
     const oppsList = OUgroups.map(e => {
       const splittedName = e.Title.split('-');
       return splittedName[1];

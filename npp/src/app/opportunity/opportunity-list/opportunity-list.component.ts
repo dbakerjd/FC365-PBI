@@ -14,6 +14,7 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
+import { EntitiesService } from 'src/app/services/entities.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -39,7 +40,8 @@ export class OpportunityListComponent implements OnInit {
     public matDialog: MatDialog,
     public jobs: WorkInProgressService,
     public teams: TeamsService,
-    public disambiguator: InlineNppDisambiguationService
+    public disambiguator: InlineNppDisambiguationService,
+    private readonly entities: EntitiesService
     ) { }
 
   async ngOnInit() {
@@ -104,7 +106,7 @@ export class OpportunityListComponent implements OnInit {
       }
     ];
 
-    this.opportunities = await this.sharepoint.getOpportunities();
+    this.opportunities = await this.entities.getAll();
     this.opportunities.forEach(el => {
       this.initIndicationString(el);
     })

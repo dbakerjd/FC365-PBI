@@ -23,11 +23,12 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS } from 'src/app/services/sharepoint.service';
+import { SharepointService, SelectInputList } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
+import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/list-names';
 
 @Component({
   selector: 'app-actions-list',

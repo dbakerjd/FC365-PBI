@@ -2,7 +2,7 @@ import { Inject, Component, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { FOLDER_DOCUMENTS, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { take } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { ExternalUploadFileConfig } from '@shared/forms/external-upload-file.con
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
-
+import * as SPLists from '@shared/sharepoint/list-names';
 @Component({
   selector: 'app-external-upload-file',
   templateUrl: './external-upload-file.component.html',
@@ -60,10 +60,10 @@ export class ExternalUploadFileComponent implements OnInit {
       EntityNameId: this.model.entityId
     };
 
-    let fileFolder = FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/0';
+    let fileFolder = SPLists.FOLDER_WIP+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/0';
     let containsModels = true;
     if(this.model.category !== 0) {
-      fileFolder = FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/'+this.model.category;
+      fileFolder = SPLists.FOLDER_DOCUMENTS+'/'+this.data.entity.BusinessUnitId+'/'+this.data.entity.ID+'/0/'+this.model.category;
       containsModels = false;
       fileData = {
         Comments: this.model.description

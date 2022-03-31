@@ -6,6 +6,7 @@ import { NotificationsService } from '../services/notifications.service';
 import { NPPNotification } from '@shared/models/notification';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
+import { EntitiesService } from 'src/app/services/entities.service';
 
 @Component({
   selector: 'app-summary',
@@ -50,13 +51,14 @@ export class SummaryComponent implements OnInit {
   constructor(
     private sharepoint: SharepointService, 
     private notifications: NotificationsService,
-    private teams: TeamsService
+    private teams: TeamsService,
+    private readonly entities: EntitiesService
   ) { }
 
   async ngOnInit(): Promise<void> {
     try {
       this.notificationsList = await this.notifications.getNotifications();
-      this.opportunities = await this.sharepoint.getOpportunities(true, true);
+      this.opportunities = await this.entities.getAll(true, true);
       const gates = await this.sharepoint.getAllStages();
 
       this.therapyAreasData  = { areas: {}, total: 0 };
@@ -475,7 +477,7 @@ export class SummaryComponent implements OnInit {
     }
     const groups = await this.sharepoint.getUserGroups(userId);
     const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
-    const allOpportunities = await this.sharepoint.getOpportunities(false, false);
+    const allOpportunities = await this.entities.getAll(false, false);
     const oppsList = OUgroups.map(e => {
       const splittedName = e.Title.split('-');
       return splittedName[1];

@@ -23,11 +23,12 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, SelectInputList, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER } from 'src/app/services/sharepoint.service';
+import { SharepointService, SelectInputList } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
+import * as SPLists from '@shared/sharepoint/list-names';
 
 @Component({
   selector: 'app-files-list',
@@ -132,13 +133,13 @@ export class FilesListComponent implements OnInit {
   getSharepointFolderNameByModelStatus(status: string) {
     switch(status) {
       case 'Archived':
-        return FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPLists.FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Approved':
-        return FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPLists.FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Work in Progress':
-        return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPLists.FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
+        return SPLists.FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
     }
   }
 
@@ -149,13 +150,13 @@ export class FilesListComponent implements OnInit {
   getRootFolder(status: string) {
     switch(status) {
       case 'Archived':
-        return FOLDER_ARCHIVED;
+        return SPLists.FOLDER_ARCHIVED;
       case 'Approved':
-        return FOLDER_APPROVED;
+        return SPLists.FOLDER_APPROVED;
       case 'Work in Progress':
-        return FOLDER_WIP;
+        return SPLists.FOLDER_WIP;
       default:
-        return FOLDER_DOCUMENTS;
+        return SPLists.FOLDER_DOCUMENTS;
     }
   }
 

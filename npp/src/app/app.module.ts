@@ -66,6 +66,7 @@ import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
+import { EntitiesService } from './services/entities.service';
 
 @NgModule({
   imports: [
@@ -131,7 +132,7 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
     CreateBrandComponent,
     BrandListComponent,
     BrandSummaryComponent,
-    BreadcrumbsComponent
+    BreadcrumbsComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
@@ -142,7 +143,8 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
     LicensingService,
     WorkInProgressService,
     PowerBiService,
-    InlineNppDisambiguationService
+    InlineNppDisambiguationService,
+    EntitiesService
   ],
   bootstrap: [AppComponent]
 })

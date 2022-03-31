@@ -54,6 +54,10 @@ export class InlineNppDisambiguationService {
     }
   }
 
+  getAppType() {
+    return this.app;
+  }
+
   getConfigValue(name: string): any {
     const item = this.config.find(el => el.Title === name);
     if (item) {

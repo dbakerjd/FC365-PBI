@@ -11,9 +11,7 @@ import { Action, Country, EntityGeography, Indication, MasterGeography, Opportun
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
 import { NPPNotification } from '@shared/models/notification';
-
-
-
+import * as SPLists from '@shared/sharepoint/list-names';
 
 interface OpportunityInput {
   Title: string;
@@ -55,10 +53,6 @@ interface MasterAction {
   DueDays: number;
 }
 
-
-
-
-
 export interface SelectInputList {
   label: string;
   value: any;
@@ -92,33 +86,7 @@ interface SPGroupListItem {
 
 
 
-const ENTITIES_LIST_NAME = 'Entities';
-const ENTITY_STAGES_LIST_NAME = 'Entity Stages';
-const ENTITY_ACTIONS_LIST_NAME = 'Entity Action List';
-const GEOGRAPHIES_LIST_NAME = 'Entity Geographies';
-const OPPORTUNITIES_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
-const ENTITY_STAGES_LIST = "lists/getbytitle('" + ENTITY_STAGES_LIST_NAME + "')";
-const ENTITY_ACTIONS_LIST = "lists/getbytitle('" + ENTITY_ACTIONS_LIST_NAME + "')";
-const MASTER_OPPORTUNITY_TYPES_LIST = "lists/getbytitle('Master Opportunity Type List')";
-const MASTER_THERAPY_AREAS_LIST = "lists/getbytitle('Master Therapy Areas')";
-const MASTER_STAGES_LIST = "lists/getbytitle('Master Stage List')";
-const MASTER_ACTION_LIST = "lists/getbytitle('Master Action List')";
-const MASTER_FOLDER_LIST = "lists/getByTitle('Master Folder List')";
-const MASTER_GROUP_TYPES_LIST = "lists/getByTitle('Master Group Types List')";
-const MASTER_APPROVAL_STATUS_LIST = "lists/getByTitle('Master Approval Status')";
-const MASTER_GEOGRAPHIES_LIST = "lists/getByTitle('Master Geographies')";
-const COUNTRIES_LIST = "lists/getByTitle('Master Countries')";
-const GEOGRAPHIES_LIST = "lists/getByTitle('" + GEOGRAPHIES_LIST_NAME + "')";
-const MASTER_SCENARIOS_LIST = "lists/getByTitle('Master Scenarios')";
-export const MASTER_CLINICAL_TRIAL_PHASES_LIST = "lists/getByTitle('Master Clinical Trial Phases')";
-const USER_INFO_LIST = "lists/getByTitle('User Information List')";
-const NOTIFICATIONS_LIST = "lists/getByTitle('Notifications')";
-export const FILES_FOLDER = "Current Opportunity Library";
-export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
-const MASTER_POWER_BI = "lists/getbytitle('Master Power BI')";
-const MASTER_AAD_GROUPS = "lists/getbytitle('Master AAD Groups')";
-const POWER_BI_ACCESS_LIST = "lists/getbytitle('Power BI Access')";
-const MASTER_POWER_BI_COMPONENTS = "lists/getbytitle('Master Power BI Components')";
+
 
 
 
@@ -133,23 +101,6 @@ export interface AppType {
   Title: string;
 }
 
-export const ENTITIES_LIST = "lists/getbytitle('" + ENTITIES_LIST_NAME + "')";
-export const BUSINESS_UNIT_LIST = "lists/getbytitle('Master Business Units')";
-export const FORECAST_CYCLES_LIST = "lists/getbytitle('Master Forecast Cycles')";
-export const FOLDER_APPROVED = 'Approved Models';
-export const FOLDER_ARCHIVED = 'Archived Models';
-export const FOLDER_WIP = 'Work in Progress';
-export const FOLDER_DOCUMENTS = FILES_FOLDER;
-export const FOLDER_POWER_BI_DOCUMENTS = "Power BI Current Opportunity Library";
-export const FOLDER_POWER_BI_WIP = "Power BI Work In Progress";
-export const FOLDER_POWER_BI_APPROVED = "Power BI Approved Models";
-export const FOLDER_POWER_BI_ARCHIVED = "Power BI Archived Models";
-export const BRAND_FORECAST_CYCLE = 'Archived Brand Forecast Cycles';
-export const BRAND_FORECAST_CYCLE_LIST = "lists/getbytitle('" + BRAND_FORECAST_CYCLE + "')";
-export const MASTER_APPS = "lists/getbytitle('Master APPs')";
-export const APP_CONFIG_LIST = "lists/getbytitle('App Config Values')";
-export const OPPORTUNITY_FORECAST_CYCLE = 'Archived Forecast Cycles';
-export const OPPORTUNITY_FORECAST_CYCLE_LIST = "lists/getbytitle('" + OPPORTUNITY_FORECAST_CYCLE + "')";
 
 @Injectable({
   providedIn: 'root'
@@ -236,7 +187,7 @@ export class SharepointService {
     }
   }
 
-  private async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
+  async getAllItems(list: string, conditions: string = ''): Promise<any[]> {
     try {
       let endpoint = this.licensing.getSharepointApiUri() + list + '/items';
       if (conditions) endpoint += '?' + conditions;
@@ -347,44 +298,18 @@ export class SharepointService {
 
   /** read app config values from sharepoint */
   public async getAppConfig() {
-    return await this.getAllItems(APP_CONFIG_LIST);
+    return await this.getAllItems(SPLists.APP_CONFIG_LIST);
   }
 
   public async getApp(appId: string) {
-    return await this.getAllItems(MASTER_APPS, "$select=*&$filter=Title eq '"+appId+"'");
+    return await this.getAllItems(SPLists.MASTER_APPS, "$select=*&$filter=Title eq '"+appId+"'");
   }
   /** --- OPPORTUNITIES --- **/
 
-  async getOpportunities(expand = true, onlyActive = false): Promise<Opportunity[]> {
-    let filter = undefined;
-    if (expand) {
-      //TODO check why OpportunityType/isInternal is failing
-      filter = "$select=*,ClinicalTrialPhase/Title,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner,ClinicalTrialPhase";
-    }
-    if (onlyActive) {
-      if (!filter) filter = "$filter=AppTypeId eq '"+this.app?.ID+"' and OpportunityStatus eq 'Active'";
-      else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"' and OpportunityStatus eq 'Active'";
-    } else {
-      if (!filter) filter = "$filter=AppTypeId eq '"+this.app?.ID+"'";
-      else filter += "&$filter=AppTypeId eq '"+this.app?.ID+"'";
-    }
-
-    /*
-    await this.licensing.removeSeat('aspedding@jdforecasting.com');
-    // await this.licensing.removeSeat('arandall@jdforecasting.com');
-    await this.licensing.removeSeat('BetaNPPDev@janddconsulting.onmicrosoft.com');
-    // await this.licensing.removeSeat('awu@jdforecasting.com');
-    // await this.licensing.removeSeat('cburrows@jdforecasting.com');
-    // await this.licensing.removeSeat('cdavies@jdforecasting.com');
-    */
-    // await this.licensing.removeSeat('awu@jdforecasting.com');
-    // await this.licensing.addSeat('awu@jdforecasting.com');
-
-    return await this.getAllItems(OPPORTUNITIES_LIST, filter);
-  }
+  
 
   async getAllStages(): Promise<Stage[]> {
-    return await this.getAllItems(ENTITY_STAGES_LIST);
+    return await this.getAllItems(SPLists.ENTITY_STAGES_LIST);
   }
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
@@ -399,7 +324,7 @@ export class SharepointService {
       opp.Year = undefined;
     }
 
-    const opportunity = await this.createItem(OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
+    const opportunity = await this.createItem(SPLists.OPPORTUNITIES_LIST, { OpportunityStatus: "Processing", ...opp });
     if (!opportunity) return false;
 
     // get master stage info
@@ -425,7 +350,7 @@ export class SharepointService {
     const countriesList = await this.getCountriesList();
     let res: EntityGeography[] = [];
     for (const g of geographies) {
-      let newGeo: EntityGeography = await this.createItem(GEOGRAPHIES_LIST, {
+      let newGeo: EntityGeography = await this.createItem(SPLists.GEOGRAPHIES_LIST, {
         Title: geographiesList.find(el => el.value == g)?.label,
         EntityNameId: oppId,
         GeographyId: g,
@@ -434,7 +359,7 @@ export class SharepointService {
       res.push(newGeo);
     }
     for (const c of countries) {
-      let newGeo: EntityGeography = await this.createItem(GEOGRAPHIES_LIST, {
+      let newGeo: EntityGeography = await this.createItem(SPLists.GEOGRAPHIES_LIST, {
         Title: countriesList.find(el => el.value == c)?.label,
         EntityNameId: oppId,
         CountryId: c,
@@ -456,12 +381,12 @@ export class SharepointService {
     await this.setPermissions(permissions, groups);
 
     // add groups to the Opportunity
-    permissions = await this.getGroupPermissions(ENTITIES_LIST_NAME);
+    permissions = await this.getGroupPermissions(SPLists.ENTITIES_LIST_NAME);
     await this.setPermissions(permissions, groups, opportunity.ID);
 
     // add groups to the Opp geographies
-    permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
-    const oppGeographies = await this.getAllItems(GEOGRAPHIES_LIST, '$filter=EntityNameId eq ' + opportunity.ID);
+    permissions = await this.getGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
+    const oppGeographies = await this.getAllItems(SPLists.GEOGRAPHIES_LIST, '$filter=EntityNameId eq ' + opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
@@ -476,8 +401,8 @@ export class SharepointService {
   }
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
-    const oppBeforeChanges: Opportunity = await this.getOneItemById(oppId, OPPORTUNITIES_LIST);
-    const success = await this.updateItem(oppId, OPPORTUNITIES_LIST, oppData);
+    const oppBeforeChanges: Opportunity = await this.getOneItemById(oppId, SPLists.OPPORTUNITIES_LIST);
+    const success = await this.updateItem(oppId, SPLists.OPPORTUNITIES_LIST, oppData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== oppData.EntityOwnerId) { // owner changed
       return this.changeEntityOwnerPermissions(oppId, oppBeforeChanges.EntityOwnerId, oppData.EntityOwnerId);
@@ -487,16 +412,16 @@ export class SharepointService {
   }
 
   async deleteOpportunity(oppId: number): Promise<boolean> {
-    return await this.deleteItem(oppId, OPPORTUNITIES_LIST);
+    return await this.deleteItem(oppId, SPLists.OPPORTUNITIES_LIST);
     // TODO Remove all related opportunity info if exists (stages, actions, files...)
   }
 
   async getOpportunity(id: number): Promise<Opportunity> {
-    return await this.getOneItem(OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
+    return await this.getOneItem(SPLists.OPPORTUNITIES_LIST, "$filter=Id eq " + id + "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle");
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
-    return this.updateItem(opportunityId, OPPORTUNITIES_LIST, {
+    return this.updateItem(opportunityId, SPLists.OPPORTUNITIES_LIST, {
       OpportunityStatus: status
     });
   }
@@ -506,12 +431,12 @@ export class SharepointService {
     if (cache) {
       return cache.indications;
     }
-    let max = await this.countItems(MASTER_THERAPY_AREAS_LIST);
+    let max = await this.countItems( SPLists.MASTER_THERAPY_AREAS_LIST);
     let cond = "$skiptoken=Paged=TRUE&$top=" + max;
     if (therapy !== 'all') {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
-    let results = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, cond + '&$orderby=TherapyArea asc,Title asc');
+    let results = await this.getAllItems( SPLists.MASTER_THERAPY_AREAS_LIST, cond + '&$orderby=TherapyArea asc,Title asc');
     this.masterIndications.push({
       therapy: therapy,
       indications: results
@@ -525,7 +450,7 @@ export class SharepointService {
       filter += ' and Removed ne 1';
     }
     return await this.getAllItems(
-      GEOGRAPHIES_LIST, filter,
+       SPLists.GEOGRAPHIES_LIST, filter,
     );
   }
 
@@ -556,7 +481,7 @@ export class SharepointService {
 
   async getOpportunityTypes(type: string | null = null): Promise<OpportunityType[]> {
     if (this.masterOpportunitiesTypes.length < 1) {
-      this.masterOpportunitiesTypes = await this.getAllItems(MASTER_OPPORTUNITY_TYPES_LIST);
+      this.masterOpportunitiesTypes = await this.getAllItems( SPLists.MASTER_OPPORTUNITY_TYPES_LIST);
     }
     if (type) {
       return this.masterOpportunitiesTypes.filter(el => el.StageType === type);
@@ -581,15 +506,15 @@ export class SharepointService {
   async createStage(data: StageInput): Promise<Stage | null> {
     if (!data.Title && data.StageNameId) {
       // get from master list
-      const masterStage = await this.getOneItemById(data.StageNameId, MASTER_STAGES_LIST);
+      const masterStage = await this.getOneItemById(data.StageNameId,  SPLists.MASTER_STAGES_LIST);
       Object.assign(data, { Title: masterStage.Title });
     }
-    return await this.createItem(ENTITY_STAGES_LIST, data);
+    return await this.createItem(SPLists.ENTITY_STAGES_LIST, data);
   }
 
   async updateStage(stageId: number, data: any): Promise<boolean> {
-    const currentStage = await this.getOneItemById(stageId, ENTITY_STAGES_LIST);
-    let success = await this.updateItem(stageId, ENTITY_STAGES_LIST, data);
+    const currentStage = await this.getOneItemById(stageId, SPLists.ENTITY_STAGES_LIST);
+    let success = await this.updateItem(stageId, SPLists.ENTITY_STAGES_LIST, data);
 
     return success && await this.changeStageUsersPermissions(
       currentStage.EntityNameId,
@@ -600,14 +525,14 @@ export class SharepointService {
   }
 
   async getStages(opportunityId: number): Promise<Stage[]> {
-    return await this.getAllItems(ENTITY_STAGES_LIST, "$filter=EntityNameId eq " + opportunityId);
+    return await this.getAllItems(SPLists.ENTITY_STAGES_LIST, "$filter=EntityNameId eq " + opportunityId);
   }
 
   async getFirstStage(opp: Opportunity) {
     const stageType = await this.getStageType(opp.OpportunityTypeId);
     const firstMasterStage = await this.getMasterStage(stageType, 1);
     return await this.getOneItem(
-      ENTITY_STAGES_LIST,
+      SPLists.ENTITY_STAGES_LIST,
       `$filter=EntityNameId eq ${opp.ID} and StageNameId eq ${firstMasterStage.ID}`
     );
   }
@@ -634,14 +559,14 @@ export class SharepointService {
     const folders = await this.createInternalFolders(opportunity, groups, geographies);
 
     // add groups to folders
-    const RefDocsPermissions = await this.getGroupPermissions(FILES_FOLDER);
+    const RefDocsPermissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, RefDocsPermissions, folders.rw.filter(el => el.DepartmentID), groups);
-    const WIPpermissions = await this.getGroupPermissions(FOLDER_WIP);
+    const WIPpermissions = await this.getGroupPermissions(SPLists.FOLDER_WIP);
     await this.createFolderGroups(opportunity.ID, WIPpermissions, folders.rw.filter(el => el.GeographyID), groups);
-    const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
-    await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
-    const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
-    await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);
+    const approvedPermissions = await this.getGroupPermissions(SPLists.FOLDER_APPROVED);
+    await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_APPROVED)), groups);
+    const archivedPermissions = await this.getGroupPermissions(SPLists.FOLDER_ARCHIVED);
+    await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_ARCHIVED)), groups);
       
     return true;
   }
@@ -667,7 +592,7 @@ export class SharepointService {
     groups.push({ type: 'SU', data: SUGroup });
 
     // add groups to the Stage
-    let permissions = await this.getGroupPermissions(ENTITY_STAGES_LIST_NAME);
+    let permissions = await this.getGroupPermissions(SPLists.ENTITY_STAGES_LIST_NAME);
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU and SU
@@ -682,17 +607,17 @@ export class SharepointService {
       // add owner as stage user to don't leave the field blank
       // owner has seat assigned in this point
       await this.addUserToGroup(owner, SUGroup.Id);
-      await this.updateItem(stage.ID, ENTITY_STAGES_LIST, { StageUsersId: [owner.Id]});
+      await this.updateItem(stage.ID, SPLists.ENTITY_STAGES_LIST, { StageUsersId: [owner.Id]});
     } else if (addedSU.length < stage.StageUsersId.length) {
       // update with only the stage users with seat
-      await this.updateItem(stage.ID, ENTITY_STAGES_LIST, { StageUsersId: addedSU});
+      await this.updateItem(stage.ID, SPLists.ENTITY_STAGES_LIST, { StageUsersId: addedSU});
     }
 
     // Actions
     const stageActions = await this.createStageActions(opportunity, stage);
 
     // add groups into Actions
-    permissions = await this.getGroupPermissions(ENTITY_ACTIONS_LIST_NAME);
+    permissions = await this.getGroupPermissions(SPLists.ENTITY_ACTIONS_LIST_NAME);
     for (const action of stageActions) {
       await this.setPermissions(permissions, groups, action.Id);
     }
@@ -701,7 +626,7 @@ export class SharepointService {
     const folders = await this.createStageFolders(opportunity, stage, geographies, groups);
 
     // add groups to folders
-    permissions = await this.getGroupPermissions(FILES_FOLDER);
+    permissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
     return true;
   }
@@ -732,7 +657,7 @@ export class SharepointService {
     if (this.masterOpportunitiesTypes.length > 0) {
       result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
     } else {
-      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
+      result = await this.getOneItem( SPLists.MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
     }
     if (result == null) {
       return '';
@@ -753,7 +678,7 @@ export class SharepointService {
     if (this.masterOpportunitiesTypes.length > 0) {
       result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
     } else {
-      result = await this.getOneItem(MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId);
+      result = await this.getOneItem( SPLists.MASTER_OPPORTUNITY_TYPES_LIST, "$filter=Id eq " + OpportunityTypeId);
     }
     if (result == null) {
       return null;
@@ -762,13 +687,13 @@ export class SharepointService {
   }
 
   async getNextStage(stageId: number): Promise<Stage | null> {
-    let current = await this.getOneItemById(stageId, MASTER_STAGES_LIST);
+    let current = await this.getOneItemById(stageId, SPLists.MASTER_STAGES_LIST);
     return await this.getMasterStage(current.StageType, current.StageNumber + 1);
   }
 
   public async getInternalDepartments(entityId: number | null = null, businessUnitId: number | null = null): Promise<NPPFolder[]> {
-    let internalStageId = await this.getOneItem(MASTER_STAGES_LIST, "$filter=Title eq 'Internal'");
-    let folders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId.ID);
+    let internalStageId = await this.getOneItem( SPLists.MASTER_STAGES_LIST, "$filter=Title eq 'Internal'");
+    let folders = await this.getAllItems(SPLists.MASTER_FOLDER_LIST, "$filter=StageNameId eq " + internalStageId.ID);
     for (let index = 0; index < folders.length; index++) {
       folders[index].containsModels = folders[index].DepartmentID ? false : true;
     }
@@ -790,9 +715,9 @@ export class SharepointService {
     if (cache) {
       masterFolders = cache.folders;
     } else {
-      masterFolders = await this.getAllItems(MASTER_FOLDER_LIST, "$filter=StageNameId eq " + masterStageId);
+      masterFolders = await this.getAllItems(SPLists.MASTER_FOLDER_LIST, "$filter=StageNameId eq " + masterStageId);
       for (let index = 0; index < masterFolders.length; index++) {
-        masterFolders[index].containsModels = masterFolders[index].Title === FORECAST_MODELS_FOLDER_NAME;
+        masterFolders[index].containsModels = masterFolders[index].Title === SPLists.FORECAST_MODELS_FOLDER_NAME;
       }
       this.masterFolders.push({
         stage: masterStageId,
@@ -814,14 +739,14 @@ export class SharepointService {
 
   private async getMasterStage(stageType: string, stageNumber: number = 1): Promise<any> {
     return await this.getOneItem(
-      MASTER_STAGES_LIST,
+       SPLists.MASTER_STAGES_LIST,
       `$select=ID,Title&$filter=(StageType eq '${stageType}') and (StageNumber eq ${stageNumber})`
     );
   }
 
   private async createStageActions(opportunity: Opportunity, stage: Stage): Promise<Action[]> {
     const masterActions: MasterAction[] = await this.getAllItems(
-      MASTER_ACTION_LIST,
+      SPLists.MASTER_ACTION_LIST,
       `$filter=StageNameId eq ${stage.StageNameId} and OpportunityTypeId eq ${opportunity.OpportunityTypeId}&$orderby=ActionNumber asc`
     );
 
@@ -878,7 +803,7 @@ export class SharepointService {
   }
 
   async getNPPFolderByDepartment(departmentID: number): Promise<NPPFolder> {
-    return await this.getOneItem(MASTER_FOLDER_LIST, "$filter=Id eq " + departmentID);
+    return await this.getOneItem(SPLists.MASTER_FOLDER_LIST, "$filter=Id eq " + departmentID);
   }
 
   /** --- OPPORTUNITY ACTIONS --- **/
@@ -887,7 +812,7 @@ export class SharepointService {
     let dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + ma.DueDays);
     return await this.createItem(
-      ENTITY_ACTIONS_LIST,
+      SPLists.ENTITY_ACTIONS_LIST,
       {
         Title: ma.Title,
         StageNameId: ma.StageNameId,
@@ -902,7 +827,7 @@ export class SharepointService {
     let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      ENTITY_ACTIONS_LIST,
+      SPLists.ENTITY_ACTIONS_LIST,
       `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`
     );
   }
@@ -911,7 +836,7 @@ export class SharepointService {
     let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.getAllItems(
-      ENTITY_ACTIONS_LIST,
+      SPLists.ENTITY_ACTIONS_LIST,
       `$filter=${filterConditions}&$orderby=Timestamp%20asc`
     );
   }
@@ -922,7 +847,7 @@ export class SharepointService {
       Timestamp: new Date(),
       Complete: true
     };
-    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, data);
+    return await this.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST, data);
   }
 
   async uncompleteAction(actionId: number): Promise<boolean> {
@@ -931,22 +856,22 @@ export class SharepointService {
       Timestamp: null,
       Complete: false
     };
-    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, data);
+    return await this.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST, data);
   }
 
   async setActionDueDate(actionId: number, newDate: string) {
-    return await this.updateItem(actionId, ENTITY_ACTIONS_LIST, { ActionDueDate: newDate });
+    return await this.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST, { ActionDueDate: newDate });
   }
 
   /** --- FILES --- **/
 
   getBaseFilesFolder(): string {
-    return FILES_FOLDER;
+    return  SPLists.FILES_FOLDER;
   }
 
   async createFolder(newFolderUrl: string, isAbsolutePath: boolean = false): Promise<SystemFolder | null> {
     try {
-      let basePath = FILES_FOLDER;
+      let basePath =  SPLists.FILES_FOLDER;
       if(isAbsolutePath) basePath = '';
 
       return await this.http.post(
@@ -1038,7 +963,7 @@ export class SharepointService {
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
 
-      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, metadata);
+      await this.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${ SPLists.FILES_FOLDER}')`, metadata);
     }
     return uploaded;
   }
@@ -1098,7 +1023,7 @@ export class SharepointService {
         Comments: comments ? comments : null,
         ApprovalStatusId: await this.getApprovalStatusId("In Progress")
       }
-      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
+      success = await this.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${ SPLists.FILES_FOLDER}')`, newData);
     }
 
     return success;
@@ -1235,7 +1160,7 @@ export class SharepointService {
   /** TODEL */
   async getFileInfo(fileId: number): Promise<NPPFile> {
     return await this.query(
-      `lists/getbytitle('${FILES_FOLDER}')` + `/items(${fileId})`,
+      `lists/getbytitle('${ SPLists.FILES_FOLDER}')` + `/items(${fileId})`,
       '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title, \
         EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
         &$expand=StageName,Author,EntityGeography,ModelScenario,ApprovalStatus',
@@ -1243,7 +1168,7 @@ export class SharepointService {
     ).toPromise();
   }
 
-  async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string = FILES_FOLDER): Promise<boolean> {
+  async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string =  SPLists.FILES_FOLDER): Promise<boolean> {
     const statusId = await this.getApprovalStatusId(status);
     if (!statusId) return false;
 
@@ -1255,7 +1180,7 @@ export class SharepointService {
 
   async getApprovalStatusId(status: string): Promise<number | null> {
     if (this.masterApprovalStatusList.length < 1) {
-      this.masterApprovalStatusList = await this.getAllItems(MASTER_APPROVAL_STATUS_LIST);
+      this.masterApprovalStatusList = await this.getAllItems(SPLists.MASTER_APPROVAL_STATUS_LIST);
     }
 
     const approvalStatus = this.masterApprovalStatusList.find(el => el.Title == status);
@@ -1508,15 +1433,15 @@ export class SharepointService {
 
   /** Add Power BI Row Level Security Access for the user to the entity */
   async addPowerBI_RLS(user: User, entityId: number, countries: Country[]) {
-    const rlsList = await this.getAllItems(POWER_BI_ACCESS_LIST, `$filter=TargetUserId eq ${user.Id} and EntityNameId eq ${entityId}`);
+    const rlsList = await this.getAllItems(SPLists.POWER_BI_ACCESS_LIST, `$filter=TargetUserId eq ${user.Id} and EntityNameId eq ${entityId}`);
     for (const country of countries) {
       const rlsItem = rlsList.find(e => e.CountryId == country.ID);
       if (rlsItem) {
-        await this.updateItem(rlsItem.Id, POWER_BI_ACCESS_LIST, {
+        await this.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST, {
           Removed: "false"
         });
       } else {
-        await this.createItem(POWER_BI_ACCESS_LIST, {
+        await this.createItem(SPLists.POWER_BI_ACCESS_LIST, {
           Title: user.Title,
           CountryId: country.ID,
           EntityNameId: entityId,
@@ -1538,11 +1463,11 @@ export class SharepointService {
     if (userId) {
       conditions += ` and TargetUserId eq ${userId}`;
     }
-    const rlsList = await this.getAllItems(POWER_BI_ACCESS_LIST, conditions);
+    const rlsList = await this.getAllItems(SPLists.POWER_BI_ACCESS_LIST, conditions);
     for (const country of countries) {
       const rlsItems = rlsList.filter(e => e.CountryId == country.ID);
       for (const rlsItem of rlsItems) {
-        await this.updateItem(rlsItem.Id, POWER_BI_ACCESS_LIST, {
+        await this.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST, {
           Removed: "true"
         });
       }
@@ -1551,7 +1476,7 @@ export class SharepointService {
 
 
   async getAADGroupName(): Promise<string | null> {
-    const AADGroup = await this.getOneItem(MASTER_AAD_GROUPS, `$filter=AppTypeId eq ${this.app?.ID}`);
+    const AADGroup = await this.getOneItem(SPLists.MASTER_AAD_GROUPS, `$filter=AppTypeId eq ${this.app?.ID}`);
     if (AADGroup) return AADGroup.Title;
     return null;
   }
@@ -1588,7 +1513,7 @@ export class SharepointService {
 
   async getGroupPermissions(list: string = ''): Promise<GroupPermission[]> {
     if (this.masterGroupTypes.length < 1) {
-      this.masterGroupTypes = await this.getAllItems(MASTER_GROUP_TYPES_LIST);
+      this.masterGroupTypes = await this.getAllItems(SPLists.MASTER_GROUP_TYPES_LIST);
     }
     if (list) {
       return this.masterGroupTypes.filter(el => el.ListName === list);
@@ -1598,7 +1523,7 @@ export class SharepointService {
 
   /* set permissions related to working groups a list or item */
   private async setPermissions(permissions: GroupPermission[], workingGroups: SPGroupListItem[], itemOrFolder: number | string | null = null) {
-    let folders = [FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP];
+    let folders = [ SPLists.FILES_FOLDER, SPLists.FOLDER_APPROVED, SPLists.FOLDER_ARCHIVED, SPLists.FOLDER_WIP];
     for (const gp of permissions) {
       const group = workingGroups.find(gr => gr.type === gp.Title); // get created group involved on the permission
       if (group) {
@@ -1800,23 +1725,23 @@ export class SharepointService {
     if (limit) conditions += '&$top=' + limit;
 
     return await this.getAllItems(
-      NOTIFICATIONS_LIST,
+      SPLists.NOTIFICATIONS_LIST,
       conditions + '&$orderby=Created desc'
     );
   }
 
   async updateNotification(notificationId: number, data: any): Promise<boolean> {
-    return await this.updateItem(notificationId, NOTIFICATIONS_LIST, data);
+    return await this.updateItem(notificationId, SPLists.NOTIFICATIONS_LIST, data);
   }
 
   async notificationsCount(userId: number, conditions = ''): Promise<number> {
     conditions = `$filter=TargetUserId eq '${userId}'` + ( conditions ? ' and ' + conditions : '');
     // item count ho retorna tot sense condicions => getAllItems + length
-    return (await this.getAllItems(NOTIFICATIONS_LIST, '$select=Id&' + conditions)).length;
+    return (await this.getAllItems(SPLists.NOTIFICATIONS_LIST, '$select=Id&' + conditions)).length;
   }
 
   async createNotification(userId: number, text: string): Promise<NPPNotification> {
-    return await this.createItem(NOTIFICATIONS_LIST, {
+    return await this.createItem(SPLists.NOTIFICATIONS_LIST, {
       Title: text,
       TargetUserId: userId
     });
@@ -1851,15 +1776,15 @@ export class SharepointService {
 
   async getCountriesList(): Promise<SelectInputList[]> {
     if (this.masterCountriesList.length < 1) {
-      let count = await this.countItems(COUNTRIES_LIST);
-      this.masterCountriesList = (await this.getAllItems(COUNTRIES_LIST, `$orderby=Title asc&$top=${count}`)).map(t => { return { value: t.ID, label: t.Title } });
+      let count = await this.countItems(SPLists.COUNTRIES_LIST);
+      this.masterCountriesList = (await this.getAllItems(SPLists.COUNTRIES_LIST, `$orderby=Title asc&$top=${count}`)).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterCountriesList;
   }
 
   async getGeographiesList(): Promise<SelectInputList[]> {
     if (this.masterGeographiesList.length < 1) {
-      this.masterGeographiesList = (await this.getAllItems(MASTER_GEOGRAPHIES_LIST, "$orderby=Title asc")).map(t => { return { value: t.ID, label: t.Title } });
+      this.masterGeographiesList = (await this.getAllItems( SPLists.MASTER_GEOGRAPHIES_LIST, "$orderby=Title asc")).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterGeographiesList;
   }
@@ -1869,20 +1794,20 @@ export class SharepointService {
 
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`, true);
+    const geoFoldersWithAccess = await this.getSubfolders(`${ SPLists.FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 
   async getScenariosList(): Promise<SelectInputList[]> {
     if (this.masterScenariosList.length < 1) {
-      this.masterScenariosList = (await this.getAllItems(MASTER_SCENARIOS_LIST)).map(t => { return { value: t.ID, label: t.Title } });
+      this.masterScenariosList = (await this.getAllItems(SPLists.MASTER_SCENARIOS_LIST)).map(t => { return { value: t.ID, label: t.Title } });
     }
     return this.masterScenariosList;
   }
 
   async getClinicalTrialPhases(): Promise<SelectInputList[]> {
-    return (await this.getAllItems(MASTER_CLINICAL_TRIAL_PHASES_LIST)).map(t => { return { value: t.ID, label: t.Title } });
+    return (await this.getAllItems(SPLists.MASTER_CLINICAL_TRIAL_PHASES_LIST)).map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {
@@ -1896,8 +1821,8 @@ export class SharepointService {
 
   async getTherapiesList(): Promise<SelectInputList[]> {
     if (this.masterTherapiesList.length < 1) {
-      let count = await this.countItems(MASTER_THERAPY_AREAS_LIST);
-      let indications: Indication[] = await this.getAllItems(MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top=" + count);
+      let count = await this.countItems(SPLists.MASTER_THERAPY_AREAS_LIST);
+      let indications: Indication[] = await this.getAllItems( SPLists.MASTER_THERAPY_AREAS_LIST, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top=" + count);
 
       return indications
         .map(v => v.TherapyArea)
@@ -1913,7 +1838,7 @@ export class SharepointService {
   }
 
   async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
-    const stages = await this.getAllItems(MASTER_STAGES_LIST, `$filter=StageType eq '${stageType}'`);
+    const stages = await this.getAllItems(SPLists.MASTER_STAGES_LIST, `$filter=StageType eq '${stageType}'`);
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
@@ -2007,7 +1932,7 @@ export class SharepointService {
     groups.push({ type: 'OO', data: OOGroup });
     groups.push({ type: 'OU', data: OUGroup });
 
-    let permissions = await this.getGroupPermissions(GEOGRAPHIES_LIST_NAME);
+    let permissions = await this.getGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
     let stages = await this.getStages(entity.ID);
     if (stages && stages.length) {
       for (const oppGeo of newGeos) {
@@ -2015,7 +1940,7 @@ export class SharepointService {
         for (let index = 0; index < stages.length; index++) {
           let stage = stages[index];
           let stageFolders = await this.getStageFolders(stage.StageNameId, entity.ID, entity.BusinessUnitId);
-          let mf = stageFolders.find(el => el.Title == FORECAST_MODELS_FOLDER_NAME);
+          let mf = stageFolders.find(el => el.Title == SPLists.FORECAST_MODELS_FOLDER_NAME);
   
           if (!mf) throw new Error("Could not find Models folder");
   
@@ -2026,7 +1951,7 @@ export class SharepointService {
             let DUGroup = await this.createGroup(DUGroupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + oppGeo.Id);
             let SUGroup = await this.getGroup(`SU-${entity.ID}-${stage.StageNameId}`);
             if (DUGroup && SUGroup) {
-              const permissions = await this.getGroupPermissions(FILES_FOLDER);
+              const permissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
               let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }, { type: 'SU', data: SUGroup }];
               await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
             } else {
@@ -2045,14 +1970,14 @@ export class SharepointService {
       }
       // add groups to folders
       // (department folders non needed)
-      // const departmentPermissions = await this.getGroupPermissions(FILES_FOLDER);
+      // const departmentPermissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
       // await this.createFolderGroups(entity.ID, departmentPermissions, folders.rw.filter(el => el.DepartmentID), groups);
-      const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
+      const WIPPermissions = await this.getGroupPermissions(SPLists.FOLDER_WIP);
       await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
-      const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
-      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
-      const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
-      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);
+      const approvedPermissions = await this.getGroupPermissions(SPLists.FOLDER_APPROVED);
+      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_APPROVED)), groups);
+      const archivedPermissions = await this.getGroupPermissions(SPLists.FOLDER_ARCHIVED);
+      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_ARCHIVED)), groups);
     }
   }
 
@@ -2084,7 +2009,7 @@ export class SharepointService {
 
     // soft delete entity geographies
     for (let i = 0; i < removeGeos.length; i++) {
-      await this.updateItem(removeGeos[i].ID, GEOGRAPHIES_LIST, {
+      await this.updateItem(removeGeos[i].ID,  SPLists.GEOGRAPHIES_LIST, {
         Removed: "true"
       });
 
@@ -2117,7 +2042,7 @@ export class SharepointService {
           // let SUGroup = await this.createGroup(`SU-${entity.ID}-${stage.StageNameId}`);
           // if (!SUGroup) throw new Error('Error obtaining user group (SU)');
 
-          const permissions = await this.getGroupPermissions(FILES_FOLDER);
+          const permissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
           for (const mf of modelFolders) {
             const folder = await this.getFolderByUrl(this.getBaseFilesFolder() + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
             const DUGroupName = `DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`;
@@ -2133,17 +2058,17 @@ export class SharepointService {
       // internal
       const folders = await this.createInternalFolders(entity, groups, restoreGeos);
 
-      const WIPPermissions = await this.getGroupPermissions(FOLDER_WIP);
+      const WIPPermissions = await this.getGroupPermissions(SPLists.FOLDER_WIP);
       await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
-      const approvedPermissions = await this.getGroupPermissions(FOLDER_APPROVED);
-      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_APPROVED)), groups);
-      const archivedPermissions = await this.getGroupPermissions(FOLDER_ARCHIVED);
-      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(FOLDER_ARCHIVED)), groups);   
+      const approvedPermissions = await this.getGroupPermissions(SPLists.FOLDER_APPROVED);
+      await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_APPROVED)), groups);
+      const archivedPermissions = await this.getGroupPermissions(SPLists.FOLDER_ARCHIVED);
+      await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPLists.FOLDER_ARCHIVED)), groups);   
     }
 
     // restore entity geographies
     for (let i = 0; i < restoreGeos.length; i++) {
-      await this.updateItem(restoreGeos[i].ID, GEOGRAPHIES_LIST, {
+      await this.updateItem(restoreGeos[i].ID,  SPLists.GEOGRAPHIES_LIST, {
         Removed: "false"
       });
     }
@@ -2152,12 +2077,12 @@ export class SharepointService {
   /** Returns the entire list of countries related to Entity Geography */
   async getCountriesOfEntityGeography(geoId: number): Promise<Country[]> {
     const countryExpandOptions = '$select=*,Country/ID,Country/Title&$expand=Country';
-    const entityGeography: EntityGeography = await this.getOneItemById(geoId, GEOGRAPHIES_LIST, countryExpandOptions);
+    const entityGeography: EntityGeography = await this.getOneItemById(geoId,  SPLists.GEOGRAPHIES_LIST, countryExpandOptions);
     if (entityGeography.CountryId && entityGeography.Country) {
       return [entityGeography.Country];
     }
     else if (entityGeography.GeographyId) {
-      const masterGeography = await this.getOneItemById(entityGeography.GeographyId, MASTER_GEOGRAPHIES_LIST, countryExpandOptions);
+      const masterGeography = await this.getOneItemById(entityGeography.GeographyId,  SPLists.MASTER_GEOGRAPHIES_LIST, countryExpandOptions);
       return masterGeography.Country;
     }
     return [];
@@ -2166,17 +2091,17 @@ export class SharepointService {
   
   /** Power BI */
   async getReports(): Promise<PBIReport[]>{
-    return await this.getAllItems(MASTER_POWER_BI,'$orderby=SortOrder');
+    return await this.getAllItems(SPLists.MASTER_POWER_BI,'$orderby=SortOrder');
   }
 
   async getReport(id:number): Promise<PBIReport>{
-    return await this.getOneItemById(id,MASTER_POWER_BI);
+    return await this.getOneItemById(id, SPLists.MASTER_POWER_BI);
   }
 
   async getReportByName(reportName:string): Promise<PBIReport>{
     let filter = `$filter=Title eq '${reportName}'`;
     let select = `$select=ID,name,GroupId,pageName,Title`;
-    return await this.getOneItem(MASTER_POWER_BI,`${select}&${filter}`)
+    return await this.getOneItem(SPLists.MASTER_POWER_BI,`${select}&${filter}`)
   }
 
   async getComponents(report:PBIReport): Promise<PBIRefreshComponent[]>{
@@ -2184,7 +2109,7 @@ export class SharepointService {
     let filter = `$filter=ReportTypeId eq'${report.ID}'`;
     let order = '$orderby=ComponentOrder';
     let reportComponents: PBIRefreshComponent[];
-    return reportComponents =(await this.getAllItems(MASTER_POWER_BI_COMPONENTS,`${select}&${filter}&${order}`)).map(t=> {return {ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title}})
+    return reportComponents =(await this.getAllItems(SPLists.MASTER_POWER_BI_COMPONENTS,`${select}&${filter}&${order}`)).map(t=> {return {ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title}})
 
   }
 
@@ -2192,7 +2117,7 @@ export class SharepointService {
     const owner = await this.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     if(this.app) b.AppTypeId = this.app.ID;
-    let brand: Opportunity = await this.createItem(ENTITIES_LIST, b);
+    let brand: Opportunity = await this.createItem(SPLists.ENTITIES_LIST, b);
 
     if (brand) {
       await this.createGeographies(brand.ID, geographies, countries);
@@ -2203,8 +2128,8 @@ export class SharepointService {
   }
 
   private async createInternalFolders(entity: Opportunity, groups: SPGroupListItem[], geographies?: EntityGeography[]): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
-    let ReadWriteNames = [FOLDER_WIP, FOLDER_DOCUMENTS];
-    let ReadOnlyNames = [FOLDER_APPROVED, FOLDER_ARCHIVED];
+    let ReadWriteNames = [SPLists.FOLDER_WIP, SPLists.FOLDER_DOCUMENTS];
+    let ReadOnlyNames = [SPLists.FOLDER_APPROVED, SPLists.FOLDER_ARCHIVED];
 
     const OUGroup = groups.find(el => el.type == "OU");
     if (!OUGroup) throw new Error("Error creating group permissions for internal folders.");
@@ -2225,7 +2150,7 @@ export class SharepointService {
             const emptyStageFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0`, true);
             if(emptyStageFolder) {
               await this.addRolePermissionToFolder(emptyStageFolder.ServerRelativeUrl, OUGroup.data.Id, 'ListRead');
-              if(mf != FOLDER_DOCUMENTS) {
+              if(mf != SPLists.FOLDER_DOCUMENTS) {
                 const forecastFolder = await this.createFolder(`${mf}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
                 if(forecastFolder) {
                   rwFolders = rwFolders.concat(await this.createEntityGeographyFolders(entity, geographies, mf));
@@ -2302,11 +2227,11 @@ export class SharepointService {
 
   async getAllEntities(appId: number) {
     let countCond = `$filter=AppTypeId eq ${appId}`;
-    let max = await this.countItems(ENTITIES_LIST, countCond);
+    let max = await this.countItems(SPLists.ENTITIES_LIST, countCond);
 
     let cond = countCond+"&$select=*,Indication/Title,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication&$skiptoken=Paged=TRUE&$top="+max;
     
-    let results = await this.getAllItems(ENTITIES_LIST, cond);
+    let results = await this.getAllItems(SPLists.ENTITIES_LIST, cond);
     
     return results;
 
@@ -2315,7 +2240,7 @@ export class SharepointService {
   async getBrand(id: number): Promise<Opportunity> {
     let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
    
-    let results = await this.getOneItem(ENTITIES_LIST, "$filter=Id eq "+id+cond);
+    let results = await this.getOneItem(SPLists.ENTITIES_LIST, "$filter=Id eq "+id+cond);
     
     return results;
   }
@@ -2331,11 +2256,11 @@ export class SharepointService {
 
 
   async getBrandModelsCount(brand: Opportunity) {
-    return await this.getBrandFolderFilesCount(brand, FOLDER_WIP);
+    return await this.getBrandFolderFilesCount(brand, SPLists.FOLDER_WIP);
   }
 
   async getBrandApprovedModelsCount(brand: Opportunity) {
-    return await this.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
+    return await this.getBrandFolderFilesCount(brand, SPLists.FOLDER_APPROVED);
   }
 
   async getBrandFolderFilesCount(brand: Opportunity, folder: string) {
@@ -2353,7 +2278,7 @@ export class SharepointService {
   async getBrandAccessibleGeographiesList(brand: Brand): Promise<SelectInputList[]> {
     const geographiesList = await this.getBrandGeographies(brand.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${FORECAST_MODELS_FOLDER_NAME}`);
+    const geoFoldersWithAccess = await this.getSubfolders(`${SPLists.FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${SPLists.FORECAST_MODELS_FOLDER_NAME}`);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
@@ -2361,7 +2286,7 @@ export class SharepointService {
   async getEntityAccessibleGeographiesList(entity: Opportunity): Promise<SelectInputList[]> {
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
+    const geoFoldersWithAccess = await this.getSubfolders(`${SPLists.FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
@@ -2371,9 +2296,9 @@ export class SharepointService {
     if (cache && cache.length) {
       return cache;
     }
-    let max = await this.countItems(BUSINESS_UNIT_LIST);
+    let max = await this.countItems(SPLists.BUSINESS_UNIT_LIST);
     let cond = "$skiptoken=Paged=TRUE&$top="+max;
-    let results = await this.getAllItems(BUSINESS_UNIT_LIST, cond);
+    let results = await this.getAllItems(SPLists.BUSINESS_UNIT_LIST, cond);
     this.masterBusinessUnits = results.map(el => { return {value: el.ID, label: el.Title }});
     return this.masterBusinessUnits;
   }
@@ -2383,9 +2308,9 @@ export class SharepointService {
     if (cache && cache.length) {
       return cache;
     }
-    let max = await this.countItems(FORECAST_CYCLES_LIST);
+    let max = await this.countItems(SPLists.FORECAST_CYCLES_LIST);
     let cond = "$skiptoken=Paged=TRUE&$top="+max;
-    let results = await this.getAllItems(FORECAST_CYCLES_LIST, cond);
+    let results = await this.getAllItems(SPLists.FORECAST_CYCLES_LIST, cond);
     this.masterForecastCycles = results.map(el => { return {value: el.ID, label: el.Title }});
     return this.masterForecastCycles;
   }
@@ -2396,7 +2321,7 @@ export class SharepointService {
       filter += ' and Removed ne 1';
     }
     return await this.getAllItems(
-      GEOGRAPHIES_LIST, filter,
+       SPLists.GEOGRAPHIES_LIST, filter,
     );
   }*/
 
@@ -2406,13 +2331,13 @@ export class SharepointService {
       filter += ' and Removed ne 1';
     }
     return await this.getAllItems(
-      GEOGRAPHIES_LIST, filter,
+       SPLists.GEOGRAPHIES_LIST, filter,
     );
   }
 
   async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
-    const oppBeforeChanges: Opportunity = await this.getOneItemById(brandId, ENTITIES_LIST);
-    const success = await this.updateItem(brandId, ENTITIES_LIST, brandData);
+    const oppBeforeChanges: Opportunity = await this.getOneItemById(brandId, SPLists.ENTITIES_LIST);
+    const success = await this.updateItem(brandId, SPLists.ENTITIES_LIST, brandData);
 
     if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
       return this.changeEntityOwnerPermissions(brandId, oppBeforeChanges.EntityOwnerId, brandData.EntityOwnerId);
@@ -2426,10 +2351,10 @@ export class SharepointService {
     let rootFolder = arrFolder[0];
     let select = '';
     switch(rootFolder) {
-      case FOLDER_DOCUMENTS:
+      case SPLists.FOLDER_DOCUMENTS:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication,ApprovalStatus';
         break;
-      case FOLDER_ARCHIVED:
+      case SPLists.FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
         break;
       default:
@@ -2452,17 +2377,17 @@ export class SharepointService {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.getAllItems(
-      OPPORTUNITY_FORECAST_CYCLE_LIST, filter,
+      SPLists.OPPORTUNITY_FORECAST_CYCLE_LIST, filter,
     ); 
   }
 
   async createEntityForecastCycle(entity: Opportunity, values: any) {
     const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
-    let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
-    let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
-    let workInProgressBasePath = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let archivedBasePath = `${SPLists.FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let approvedBasePath = `${SPLists.FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let workInProgressBasePath = `${SPLists.FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
 
-    let cycle = await this.createItem(OPPORTUNITY_FORECAST_CYCLE_LIST, {
+    let cycle = await this.createItem(SPLists.OPPORTUNITY_FORECAST_CYCLE_LIST, {
       EntityNameId: entity.ID,
       ForecastCycleTypeId: entity.ForecastCycleId,
       Year: entity.Year+"",
@@ -2486,7 +2411,7 @@ export class SharepointService {
       Year: values.Year
     };
 
-    await this.updateItem(entity.ID, OPPORTUNITIES_LIST, changes);
+    await this.updateItem(entity.ID, SPLists.OPPORTUNITIES_LIST, changes);
 
     await this.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
 
@@ -2630,7 +2555,7 @@ export class SharepointService {
       if(status === "Approved" && brand) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeOldAcceptedModel(brand, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+SPLists.FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
         return res;
       };
       
@@ -2656,10 +2581,10 @@ export class SharepointService {
 
   getPowerBICSVRootPathFromModelPath(path: string) {
     let mappings: any = {}
-    mappings[FOLDER_DOCUMENTS] =  FOLDER_POWER_BI_DOCUMENTS,
-    mappings[FOLDER_WIP] =  FOLDER_POWER_BI_WIP,
-    mappings[FOLDER_APPROVED] =  FOLDER_POWER_BI_APPROVED,
-    mappings[FOLDER_ARCHIVED] =  FOLDER_POWER_BI_ARCHIVED
+    mappings[SPLists.FOLDER_DOCUMENTS] =  SPLists.FOLDER_POWER_BI_DOCUMENTS,
+    mappings[SPLists.FOLDER_WIP] =  SPLists.FOLDER_POWER_BI_WIP,
+    mappings[SPLists.FOLDER_APPROVED] =  SPLists.FOLDER_POWER_BI_APPROVED,
+    mappings[SPLists.FOLDER_ARCHIVED] =  SPLists.FOLDER_POWER_BI_ARCHIVED
     
 
     for (const [key, value] of Object.entries(mappings)) {
@@ -2751,10 +2676,10 @@ export class SharepointService {
   
       await this.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
       let res;
-      if(status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
+      if(status === "Approved" && entity && file.ServerRelativeUrl.indexOf( SPLists.FILES_FOLDER) == -1) {
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeNPPOldAcceptedModel(entity, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
+        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+SPLists.FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
 
         if (res) {
           await this.updateFileFields(res, {OriginalModelId: file.ListItemAllFields.ID});
@@ -2772,7 +2697,7 @@ export class SharepointService {
   async removeOldAcceptedModel(brand: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+SPLists.FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getFileByScenarios(path, scenarios);
@@ -2785,7 +2710,7 @@ export class SharepointService {
   async removeNPPOldAcceptedModel(entity: Opportunity, file: NPPFile) {
     if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
+      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+SPLists.FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
       let scenarios = file.ListItemAllFields.ModelScenarioId;
 
       let model = await this.getFileByScenarios(path, scenarios);
@@ -2829,8 +2754,8 @@ export class SharepointService {
 
     // copy models
     // [TODO] search for last stage number (now 3, but could change?)
-    const externalModelsFolder = FILES_FOLDER + `/${externalEntity.BusinessUnitId}/${externalEntity.ID}/3/0`;
-    const internalModelsFolder = FOLDER_WIP + `/${internalEntity.BusinessUnitId}/${internalEntity.ID}/0/0`;
+    const externalModelsFolder =  SPLists.FILES_FOLDER + `/${externalEntity.BusinessUnitId}/${externalEntity.ID}/3/0`;
+    const internalModelsFolder = SPLists.FOLDER_WIP + `/${internalEntity.BusinessUnitId}/${internalEntity.ID}/0/0`;
     const externalGeographies = await this.getEntityGeographies(externalEntity.ID);
     const internalGeographies = await this.getEntityGeographies(internalEntity.ID);
     for (const extGeo of externalGeographies) {
