@@ -2,12 +2,14 @@ import { Inject, Component, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { FOLDER_DOCUMENTS, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME, Indication, NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
+import { FOLDER_DOCUMENTS, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { take } from 'rxjs/operators';
-import { ExternalUploadFileConfig } from 'src/app/shared/forms/external-upload-file.config';
+import { ExternalUploadFileConfig } from '@shared/forms/external-upload-file.config';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
+import { NPPFolder } from '@shared/models/file-system';
+import { Indication } from '@shared/models/entity';
 
 @Component({
   selector: 'app-external-upload-file',

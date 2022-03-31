@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Opportunity } from './services/sharepoint.service';
+import { Opportunity } from './shared/models/entity';
 
 @Pipe({
   name: 'sort'

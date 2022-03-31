@@ -6,42 +6,13 @@ import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { GraphService } from './graph.service';
-import { ThrowStmt } from '@angular/compiler';
+import { GroupPermission, User } from '../shared/models/user';
+import { Action, EntityGeography, Indication, Opportunity, OpportunityType, Stage } from '../shared/models/entity';
+import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '../shared/models/file-system';
+import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
 
-export interface Opportunity {
-  ID: number;
-  Title: string;
-  MoleculeName: string;
-  EntityOwnerId: number;
-  EntityOwner?: User;
-  ProjectStartDate: Date;
-  ProjectEndDate: Date;
-  OpportunityTypeId: number;
-  OpportunityType?: OpportunityType;
-  OpportunityStatus: "Processing" | "Archive" | "Active" | "Approved";
-  ForecastCycle?:ForecastCycle;
-  ForecastCycleId?: number;
-  IndicationId: number[];
-  Indication: Indication[];
-  Modified: Date;
-  AuthorId: number;
-  Author?: User;
-  progress?: number;
-  gates?: Stage[];
-  isGateType?: boolean;
-  BusinessUnitId: number;
-  Year: number;
-  ClinicalTrialPhaseId: number;
-  ClinicalTrialPhase?: ClinicalTrialPhase[];
-  ForecastCycleDescriptor: string;
-  AppType?: AppType;
-  AppTypeId: number;
-}
 
-export interface ClinicalTrialPhase {
-  ID: number;
-  Title: string;
-}
+
 
 export interface OpportunityInput {
   Title: string;
@@ -63,18 +34,15 @@ export interface StageInput {
   StageNameId?: number;
 }
 
-export interface Action {
-  Id: number,
-  StageNameId: number;
-  EntityNameId: number;
+export interface BrandInput {
   Title: string;
-  ActionNameId: string;
-  ActionDueDate: Date;
-  Complete: boolean;
-  Timestamp: Date;
-  TargetUserId: Number;
-  TargetUser: User;
-  status?: string;
+  EntityOwnerId: number;
+  IndicationId: number;
+  BusinessUnitId: number;
+  ForecastCycleId: number;
+  FCDueDate?: Date;
+  Year: number;
+  AppTypeId: number;
 }
 
 export interface MasterAction {
@@ -86,115 +54,21 @@ export interface MasterAction {
   DueDays: number;
 }
 
-export interface OpportunityType {
-  ID: number;
-  Title: string;
-  StageType: string;
-  IsInternal: boolean;
-}
 
-export interface Indication {
-  ID: number;
-  Title: string;
-  TherapyArea: string;
-}
 
-export interface User {
-  Id: number;
-  LoginName?: string;
-  FirstName?: string;
-  LastName?: string;
-  Title?: string;
-  Email?: string;
-  profilePicUrl?: string;
-  IsSiteAdmin?: boolean;
-}
 
-export interface Stage {
-  ID: number;
-  Title: string;
-  EntityNameId: number;
-  StageNameId: number;
-  StageReview: Date;
-  StageUsersId: number[];
-  Created: Date;
-  actions?: Action[];
-  folders?: NPPFolder[];
-}
 
-export interface NPPFile {
-  Name: string;
-  ServerRelativeUrl: string;
-  LinkingUri: string;
-  TimeLastModified: Date;
-  ListItemAllFields?: NPPFileMetadata;
-  lastComments: FileComments[];
-}
 
-export interface FileComments {
-  text: string;
-  email: string;
-  name: string;
-  createdAt: string;
-}
 
-export interface NPPFileMetadata {
-  ID: number;
-  EntityNameId?: number;
-  StageNameId?: number;
-  ApprovalStatusId?: number;
-  ApprovalStatus?: any;
-  EntityGeographyId?: number;
-  EntityGeography?: EntityGeography;
-  ModelScenarioId?: number[];
-  AuthorId: number;
-  Author: User;
-  Comments: string;
-  IndicationId: number[];
-  Indication?: Indication[];
-}
 
-export interface NPPFolder {
-  ID: number;
-  Title: string;
-  StageNameId: number;
-  DepartmentID?: number;
-  containsModels?: boolean;
-}
 
-export interface SystemFolder {
-  Name: string;
-  ServerRelativeUrl: string;
-  ItemCount: number;
-  DepartmentID?: number;
-  GeographyID?: number;
-}
 
 export interface Country {
   ID: number;
   Title: string;
 }
 
-export interface EntityGeography {
-  Attachments: boolean;
-  AuthorId: number;
-  ContentTypeId: number;
-  CountryId: number;
-  Country?: Country;
-  Created: Date;
-  EditorId: number;
-  GeographyId: number;
-  Geography?: MasterGeography;
-  ID: number;
-  Id: number;
-  Modified: Date;
-  EntityId: number;
-  EntityGeographyType: string;
-  ServerRedirectedEmbedUri: string;
-  ServerRedirectedEmbedUrl: string;
-  Title: string;
-  Removed: "true" | "false";
-}
+
 
 export interface MasterGeography {
   Id: number;
@@ -239,27 +113,8 @@ export interface SPGroupListItem {
   data: SPGroup;
 }
 
-export interface GroupPermission {
-  Id: number;
-  Title: string;
-  ListName: string;
-  Permission: string;
-  ListFilter: 'List' | 'Item';
-}
 
-export interface PBIReport {
-  ID: number;
-  name: string;
-  GroupId: string;
-  pageName: string;
-  Title: string;
-}
 
-export interface PBIRefreshComponent{
-  ComponentName: string;
-  GroupId: string;
-  ComponentType: string;
-}
 
 const ENTITIES_LIST_NAME = 'Entities';
 const ENTITY_STAGES_LIST_NAME = 'Entity Stages';
@@ -289,42 +144,13 @@ const MASTER_AAD_GROUPS = "lists/getbytitle('Master AAD Groups')";
 const POWER_BI_ACCESS_LIST = "lists/getbytitle('Power BI Access')";
 const MASTER_POWER_BI_COMPONENTS = "lists/getbytitle('Master Power BI Components')";
 
-export interface BusinessUnit {
-  ID: number;
-  Title: string;
-  BUOwnerID: number;
-  BUOwner?: User;
-  SortOrder: number;
-}
 
-export interface ForecastCycle {
-  ID: number;
-  Title: string;
-  ForecastCycleDescriptor: string;
-  SortOrder: number;
-}
 
-export interface EntityForecastCycle {
-  ID: number;
-  Title: string;
-  EntityId: number;
-  Entity?: Opportunity;
-  ForecastCycleTypeId: number;
-  ForecastCycleType?: ForecastCycle;
-  ForecastCycleDescriptor: string;
-  Year: string;
-}
 
-export interface BrandInput {
-  Title: string;
-  EntityOwnerId: number;
-  IndicationId: number;
-  BusinessUnitId: number;
-  ForecastCycleId: number;
-  FCDueDate?: Date;
-  Year: number;
-  AppTypeId: number;
-}
+
+
+
+
 
 export interface AppType {
   ID: number;

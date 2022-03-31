@@ -8,8 +8,9 @@ import { LicensingService } from '../services/licensing.service';
 import * as microsoftTeams from "@microsoft/teams-js";
 import { ErrorService } from '../services/error.service';
 import { ToastrService } from 'ngx-toastr';
-import { PBIReport, SharepointService } from '../services/sharepoint.service';
+import { SharepointService } from '../services/sharepoint.service';
 import { PageDetails, PowerBiService } from '../services/power-bi.service';
+import { PBIReport } from '../shared/models/pbi';
 
 @Component({
   selector: 'app-power-bi',

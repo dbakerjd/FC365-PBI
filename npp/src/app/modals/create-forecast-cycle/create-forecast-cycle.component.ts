@@ -4,8 +4,9 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ErrorService } from 'src/app/services/error.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { Opportunity } from '@shared/models/entity';
 
 
 @Component({

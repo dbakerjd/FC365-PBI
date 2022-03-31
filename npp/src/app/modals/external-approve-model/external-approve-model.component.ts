@@ -4,7 +4,9 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity } from '@shared/models/entity';
+import { NPPFile } from '@shared/models/file-system';
 
 @Component({
   selector: 'app-external-approve-model',

@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-stage-settings',

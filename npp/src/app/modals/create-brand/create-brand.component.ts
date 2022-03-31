@@ -1,12 +1,13 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { EntityGeography, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { ToastrService } from 'ngx-toastr';
+import { EntityGeography, Opportunity } from '@shared/models/entity';
 
 @Component({
   selector: 'app-create-brand',

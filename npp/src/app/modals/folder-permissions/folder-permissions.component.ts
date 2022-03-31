@@ -5,7 +5,9 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
 import { ErrorService } from 'src/app/services/error.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { NPPFolder, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity } from '@shared/models/entity';
+import { NPPFolder } from '@shared/models/file-system';
 
 @Component({
   selector: 'app-folder-permissions',

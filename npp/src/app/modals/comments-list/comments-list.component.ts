@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { FileComments } from 'src/app/services/sharepoint.service';
+import { FileComments } from '@shared/models/file-system';
 
 @Component({
   selector: 'app-comments-list',

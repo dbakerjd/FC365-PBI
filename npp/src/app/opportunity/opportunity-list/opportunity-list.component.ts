@@ -7,11 +7,13 @@ import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Opportunity, OpportunityType, SharepointService, User } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
+import { User } from '@shared/models/user';
+import { Opportunity, OpportunityType } from '@shared/models/entity';
 
 @Component({
   selector: 'app-opportunity-list',

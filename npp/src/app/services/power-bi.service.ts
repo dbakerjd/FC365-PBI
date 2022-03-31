@@ -3,8 +3,9 @@ import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/com
 import { LicensingService } from './licensing.service';
 import { ErrorService } from './error.service';
 import { TeamsService } from './teams.service';
-import { PBIRefreshComponent, PBIReport, SharepointService } from './sharepoint.service';
+import { SharepointService } from './sharepoint.service';
 import { environment } from 'src/environments/environment';
+import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
 
 export interface PageDetails {
   ReportSection: string;

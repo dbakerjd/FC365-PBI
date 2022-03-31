@@ -1,12 +1,14 @@
 import { Inject, Component, OnInit } from '@angular/core';
-import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
+import { UploadFileConfig } from '@shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { Indication, NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { NPPFolder } from '@shared/models/file-system';
+import { Indication } from '@shared/models/entity';
 
 @Component({
   selector: 'app-upload-file',
