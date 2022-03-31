@@ -6,15 +6,16 @@ import { LicensingService } from './licensing.service';
 import { map } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { GraphService } from './graph.service';
-import { GroupPermission, User } from '../shared/models/user';
-import { Action, EntityGeography, Indication, Opportunity, OpportunityType, Stage } from '../shared/models/entity';
-import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '../shared/models/file-system';
-import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
+import { GroupPermission, User } from '@shared/models/user';
+import { Action, Country, EntityGeography, Indication, MasterGeography, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
+import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
+import { NPPNotification } from '@shared/models/notification';
 
 
 
 
-export interface OpportunityInput {
+interface OpportunityInput {
   Title: string;
   MoleculeName: string;
   EntityOwnerId: number;
@@ -26,7 +27,7 @@ export interface OpportunityInput {
   Year?: number;
 }
 
-export interface StageInput {
+interface StageInput {
   StageUsersId: number[];
   StageReview: Date;
   Title?: string;
@@ -34,7 +35,7 @@ export interface StageInput {
   StageNameId?: number;
 }
 
-export interface BrandInput {
+interface BrandInput {
   Title: string;
   EntityOwnerId: number;
   IndicationId: number;
@@ -45,7 +46,7 @@ export interface BrandInput {
   AppTypeId: number;
 }
 
-export interface MasterAction {
+interface MasterAction {
   Id: number,
   Title: string;
   ActionNumber: number;
@@ -58,49 +59,24 @@ export interface MasterAction {
 
 
 
-
-
-
-
-
-export interface Country {
-  ID: number;
-  Title: string;
-}
-
-
-
-export interface MasterGeography {
-  Id: number;
-  Title: string;
-  CountryId: number[];
-}
-
-export interface NPPNotification {
-  Id: number;
-  Title: string;
-  TargetUserId: number;
-  TargetUser?: User;
-}
-
 export interface SelectInputList {
   label: string;
   value: any;
   group?: string;
 }
 
-export interface SharepointResult {
+interface SharepointResult {
   'odata.metadata': string;
   value: any;
 }
 
-export interface FilterTerm {
+interface FilterTerm {
   term: string;
   field?: string;
   matchCase?: boolean;
 }
 
-export interface SPGroup {
+interface SPGroup {
   Id: number;
   Title: string;
   Description: string;
@@ -108,7 +84,7 @@ export interface SPGroup {
   OnlyAllowMembersViewMembership: boolean;
 }
 
-export interface SPGroupListItem {
+interface SPGroupListItem {
   type: string;
   data: SPGroup;
 }
@@ -203,7 +179,6 @@ export class SharepointService {
     name: string;
     id: number;
   }[] = [];
-  provisioningAPI = "https://nppprovisioning20210831.azurewebsites.net/api/";
   public app: AppType | undefined;
 
   constructor(
@@ -499,21 +474,6 @@ export class SharepointService {
     
     return true;
   }
-
-  /** TODEL ? */
-  /*
-  async initializeOpportunityAPI(opportunity: Opportunity, stage: Stage) {
-    //NewOpportunity?StageID=2&OppID=1&siteUrl=https://janddconsulting.sharepoint.com/sites/NPPDemoV15
-    let sharepoint = this.licensing.getSharepointUri();
-    return await this.http.get(this.provisioningAPI, {
-      params: {
-        StageID: stage.ID,
-        OppID: opportunity.ID,
-        siteUrl: sharepoint ? sharepoint : ''
-      }
-    }).toPromise();
-  }
-  */
 
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
     const oppBeforeChanges: Opportunity = await this.getOneItemById(oppId, OPPORTUNITIES_LIST);

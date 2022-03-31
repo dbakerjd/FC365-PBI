@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { NPPNotification, SharepointService } from '../services/sharepoint.service';
+import { SharepointService } from '../services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from '../services/teams.service';
 import { NotificationsService } from '../services/notifications.service';
-import { User } from '../shared/models/user';
-import { Opportunity } from '../shared/models/entity';
+import { NPPNotification } from '@shared/models/notification';
+import { User } from '@shared/models/user';
+import { Opportunity } from '@shared/models/entity';
 
 @Component({
   selector: 'app-summary',

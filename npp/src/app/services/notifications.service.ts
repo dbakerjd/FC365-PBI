@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { Opportunity } from '../shared/models/entity';
-import { User } from '../shared/models/user';
-import { NPPNotification, SharepointService } from './sharepoint.service';
+import { NPPNotification } from '@shared/models/notification';
+import { Opportunity } from '@shared/models/entity';
+import { User } from '@shared/models/user';
+import { SharepointService } from './sharepoint.service';
 
 @Injectable({
   providedIn: 'root',

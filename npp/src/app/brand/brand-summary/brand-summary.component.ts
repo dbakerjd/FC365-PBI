@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { NPPNotification, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from 'src/app/services/teams.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
+import { NPPNotification } from '@shared/models/notification';
 
 @Component({
   selector: 'app-brand-summary',

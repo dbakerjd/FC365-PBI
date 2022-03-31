@@ -1,4 +1,4 @@
-import { AppType, Country, MasterGeography } from "src/app/services/sharepoint.service";
+import { AppType } from "src/app/services/sharepoint.service";
 import { NPPFolder } from "./file-system";
 import { User } from "./user";
 
@@ -122,3 +122,17 @@ export interface ClinicalTrialPhase {
     Title: string;
     Removed: "true" | "false";
   }
+
+  
+export interface Country {
+  ID: number;
+  Title: string;
+}
+
+
+export interface MasterGeography {
+  Id: number;
+  Title: string;
+  CountryId: number[];
+}
+
