@@ -28,7 +28,7 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
 import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
-import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/list-names';
+import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
 
 @Component({
   selector: 'app-actions-list',

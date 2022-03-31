@@ -28,7 +28,7 @@ import { TeamsService } from 'src/app/services/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
-import * as SPLists from '@shared/sharepoint/list-names';
+import * as SPFolders from '@shared/sharepoint/folders';
 
 @Component({
   selector: 'app-files-list',
@@ -133,13 +133,13 @@ export class FilesListComponent implements OnInit {
   getSharepointFolderNameByModelStatus(status: string) {
     switch(status) {
       case 'Archived':
-        return SPLists.FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Approved':
-        return SPLists.FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Work in Progress':
-        return SPLists.FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return SPLists.FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
+        return SPFolders.FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
     }
   }
 
@@ -150,13 +150,13 @@ export class FilesListComponent implements OnInit {
   getRootFolder(status: string) {
     switch(status) {
       case 'Archived':
-        return SPLists.FOLDER_ARCHIVED;
+        return SPFolders.FOLDER_ARCHIVED;
       case 'Approved':
-        return SPLists.FOLDER_APPROVED;
+        return SPFolders.FOLDER_APPROVED;
       case 'Work in Progress':
-        return SPLists.FOLDER_WIP;
+        return SPFolders.FOLDER_WIP;
       default:
-        return SPLists.FOLDER_DOCUMENTS;
+        return SPFolders.FOLDER_DOCUMENTS;
     }
   }
 

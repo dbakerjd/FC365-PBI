@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { OPPORTUNITIES_LIST } from '@shared/sharepoint/list-names';
 import { Opportunity } from '@shared/models/entity';
 import { SharepointService } from './sharepoint.service';
 import { InlineNppDisambiguationService } from './inline-npp-disambiguation.service';
+import { ENTITIES_LIST_NAME } from '@shared/sharepoint/list-names';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +25,6 @@ export class EntitiesService {
       else filter += "&$filter=AppTypeId eq '"+this.appService.getAppType()?.ID+"'";
     }
 
-    return await this.sharepoint.getAllItems(OPPORTUNITIES_LIST, filter);
+    return await this.sharepoint.getAllItems(ENTITIES_LIST_NAME, filter);
   }
 }
