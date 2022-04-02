@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-approve-model',
@@ -37,6 +38,7 @@ export class ApproveModelComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ApproveModelComponent>,
     private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService
   ) { }
 
   ngOnInit(): void {
@@ -51,9 +53,9 @@ export class ApproveModelComponent implements OnInit {
         let commentsStr = '';
         this.approving = true;
         if(this.model.comments) {
-          commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+          commentsStr = await this.appData.addComment(this.file, this.model.comments);
         }
-        const result = await this.sharepoint.setBrandApprovalStatus(this.rootFolder, this.file, this.brand, "Approved", commentsStr);
+        const result = await this.appData.setBrandApprovalStatus(this.rootFolder, this.file, this.brand, "Approved", commentsStr);
         this.approving = false;
         this.dialogRef.close({
           success: result,

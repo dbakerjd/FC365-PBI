@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { AppDataService } from 'src/app/services/app-data.service';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -25,12 +26,13 @@ export class StageSettingsComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
     private sharepoint: SharepointService, 
+    private readonly appData: AppDataService
   ) { }
 
   async ngOnInit() {
     let defaultUsersList: SelectInputList[] = [];
     if (this.data?.stage) {
-      defaultUsersList = await this.sharepoint.getUsersList(this.data?.stage.StageUsersId);
+      defaultUsersList = await this.appData.getUsersList(this.data?.stage.StageUsersId);
     }
     this.canSetUsers = this.data?.canSetUsers ? this.data.canSetUsers : false;
 
@@ -102,7 +104,7 @@ export class StageSettingsComponent implements OnInit {
     let success;
     if (this.model.ID) { // update
       this.updating = this.dialogRef.disableClose = true;
-      success = await this.sharepoint.updateStage(this.model.ID, {
+      success = await this.appData.updateStage(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
       });
@@ -114,7 +116,7 @@ export class StageSettingsComponent implements OnInit {
       });
 
     } else {
-      const newStage = await this.sharepoint.createStage({
+      const newStage = await this.appData.createStage({
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId,
         EntityNameId: this.model.opportunityId,

@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { SharepointService } from '../services/sharepoint.service';
 import { PageDetails, PowerBiService } from '../services/power-bi.service';
 import { PBIReport } from '../shared/models/pbi';
+import { AppDataService } from '../services/app-data.service';
 
 @Component({
   selector: 'app-power-bi',
@@ -77,6 +78,7 @@ export class PowerBiComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private route: ActivatedRoute,
+    private readonly appData: AppDataService
 
   ) {
 
@@ -94,7 +96,7 @@ export class PowerBiComponent implements OnInit {
   }
 
   async getReportNames() {
-    return this.pbireports = await this.sharepoint.getReports();
+    return this.pbireports = await this.appData.getReports();
   }
 
   async setEmbed(ID: number) {
@@ -158,7 +160,7 @@ export class PowerBiComponent implements OnInit {
   async embedReport(highContrastMode: models.ContrastMode, ID: number): Promise<void> {
     //set pbi report
 
-    this.pbireport = await this.sharepoint.getReport(ID);
+    this.pbireport = await this.appData.getReport(ID);
     //get token
     const token = await this.powerBi.getPBIToken();
 

@@ -29,6 +29,7 @@ import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opport
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import * as SPFolders from '@shared/sharepoint/folders';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-files-list',
@@ -81,7 +82,8 @@ export class FilesListComponent implements OnInit {
     public disambiguator: InlineNppDisambiguationService,
     public notifications: NotificationsService,
     private breadcrumbService: BreadcrumbsService,
-    private sanitize: DomSanitizer
+    private sanitize: DomSanitizer,
+    private readonly appData: AppDataService
   ) { }
 
   ngOnInit(): void {
@@ -98,17 +100,17 @@ export class FilesListComponent implements OnInit {
   init() {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
-      this.currentUser = await this.sharepoint.getCurrentUserInfo();
-      this.masterCycles = await this.sharepoint.getForecastCycles();
+      this.currentUser = await this.appData.getCurrentUserInfo();
+      this.masterCycles = await this.appData.getForecastCycles();
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
-        this.entity = await this.sharepoint.getOpportunity(params.id);
+        this.entity = await this.appData.getOpportunity(params.id);
         if (!this.entity) {
           this.router.navigate(['notfound']);
         }
-        this.entityGeographies = await this.sharepoint.getOpportunityGeographies(this.entity.ID, false);
-        this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
+        this.entityGeographies = await this.appData.getOpportunityGeographies(this.entity.ID, false);
+        this.documentFolders = await this.appData.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
@@ -117,7 +119,7 @@ export class FilesListComponent implements OnInit {
           
           this.cycles = await this.disambiguator.getForecastCycles(this.entity);
 
-          let profileImgBlob = await this.sharepoint.getUserProfilePic(ownerId);
+          let profileImgBlob = await this.appData.getUserProfilePic(ownerId);
           this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
         this.setStatus(this.modelStatus[0]);
@@ -177,7 +179,7 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          this.geoFolders = await this.appData.getSubfolders(currentFolder, true);
           // only folders of geography not removed
           this.geoFolders = this.geoFolders.filter(gf => this.entityGeographies.some((eg: EntityGeography) => +eg.ID === +gf.Name));
           this.currentFiles = [];
@@ -248,7 +250,7 @@ export class FilesListComponent implements OnInit {
         width: '405px',
         data: {
           geographies: geographiesList,
-          scenarios: await this.sharepoint.getScenariosList(),
+          scenarios: await this.appData.getScenariosList(),
           folderList: folders,
           selectedFolder: this.currentSection == 'documents' && this.selectedFolder ?  this.selectedFolder.DepartmentID : 0,
           entity: this.entity
@@ -403,7 +405,7 @@ export class FilesListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
+    const response = await this.appData.readFile(fileInfo.ServerRelativeUrl);
     var newBlob = new Blob([response]);
 
     if (forceDownload) {
@@ -477,15 +479,15 @@ export class FilesListComponent implements OnInit {
     }
 
     // users with access
-    let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    let folderUsersList = await this.appData.getGroupMembers(folderGroup);
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('OO-' + this.entityId)
+      await this.appData.getGroupMembers('OO-' + this.entityId)
     );
 
     // clean users list
     let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
-    const currentUser = await this.sharepoint.getCurrentUserInfo();
+    const currentUser = await this.appData.getCurrentUserInfo();
     uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
@@ -562,7 +564,7 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
+          if (await this.appData.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");

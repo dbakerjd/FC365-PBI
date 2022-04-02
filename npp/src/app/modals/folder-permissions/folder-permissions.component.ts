@@ -8,6 +8,7 @@ import { NotificationsService } from 'src/app/services/notifications.service';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFolder } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-folder-permissions',
@@ -33,7 +34,8 @@ export class FolderPermissionsComponent implements OnInit {
     private sharepoint: SharepointService, 
     private readonly notifications: NotificationsService,
     private readonly toastr: ToastrService,
-    private readonly error: ErrorService
+    private readonly error: ErrorService,
+    private readonly appData: AppDataService
   ) {
     this.entity = this.data.entity;
   }
@@ -41,7 +43,7 @@ export class FolderPermissionsComponent implements OnInit {
   async ngOnInit() {
     if (!this.entity) return;
   
-    const geographiesList = (await this.sharepoint.getEntityGeographies(this.entity.ID))
+    const geographiesList = (await this.appData.getEntityGeographies(this.entity.ID))
       .map(el => { return { label: el.Title, value: el.Id } });
 
     this.entityId = this.entity.ID;
@@ -100,7 +102,7 @@ export class FolderPermissionsComponent implements OnInit {
     }
 
     for (const sg of stageGroups) {
-      const defaultUsersList: SelectInputList[] = (await this.sharepoint.getGroupMembers(sg.group))
+      const defaultUsersList: SelectInputList[] = (await this.appData.getGroupMembers(sg.group))
         .map(el => { return { value: el.Id, label: el.Title ? el.Title : '' } });
 
       // save current users list for department
@@ -162,7 +164,7 @@ export class FolderPermissionsComponent implements OnInit {
           // is a department with geographies
           for (const geoKey in this.model.DepartmentUsersId[key]) {
             const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
-            success = success && await this.sharepoint.updateDepartmentUsers(
+            success = success && await this.appData.updateDepartmentUsers(
               this.entityId,
               this.stageId,
               +key,
@@ -182,7 +184,7 @@ export class FolderPermissionsComponent implements OnInit {
           }
         } else {
           const currentList = this.currentUsersList.find(el => el.departmentID == key);
-          success = success && await this.sharepoint.updateDepartmentUsers(
+          success = success && await this.appData.updateDepartmentUsers(
             this.entityId,
             this.stageId,
             +key,

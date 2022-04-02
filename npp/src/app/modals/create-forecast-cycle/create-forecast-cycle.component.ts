@@ -7,6 +7,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Opportunity } from '@shared/models/entity';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 
 @Component({
@@ -32,13 +33,14 @@ export class CreateForecastCycleComponent implements OnInit {
     private readonly sharepoint: SharepointService,
     private error: ErrorService,
     public jobs: WorkInProgressService,
-    private readonly disambiguation: InlineNppDisambiguationService
+    private readonly disambiguation: InlineNppDisambiguationService,
+    private readonly appData: AppDataService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.entity = this.data.entity;
-    this.cycles = await this.sharepoint.getForecastCycles();
+    this.cycles = await this.appData.getForecastCycles();
     const currentYear = new Date().getFullYear();
     
     let year = currentYear;

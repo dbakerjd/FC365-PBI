@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { AppDataService } from './services/app-data.service';
 import { LicensingService } from './services/licensing.service';
 import { SharepointService } from './services/sharepoint.service';
 import { TeamsService } from './services/teams.service';
@@ -17,7 +18,7 @@ export class AppComponent implements OnInit, OnDestroy {
   
   constructor(
     public teams: TeamsService, 
-    private readonly sharepoint: SharepointService, 
+    private readonly appData: AppDataService, 
     public licensing: LicensingService,
     private router: Router, 
   ) {
@@ -36,7 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
       } else if (msg == 'loggedIn') {
         // check if we are allowed to connect to the license sharepoint
-        if (!await this.sharepoint.canConnect()) {
+        if (!await this.appData.canConnectAndAccessData()) {
           this.router.navigate(['splash/non-access']);
         }
       }
@@ -50,7 +51,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    this.sharepoint.removeCurrentUserInfo(); // clean local storage
+    this.appData.removeCurrentUserInfo(); // clean local storage
     this.teams.logout();
   }
 

@@ -1,4 +1,4 @@
-import { AppType } from "src/app/services/sharepoint.service";
+import { AppType } from "./app-config";
 import { NPPFolder } from "./file-system";
 import { User } from "./user";
 
@@ -134,5 +134,6 @@ export interface MasterGeography {
   Id: number;
   Title: string;
   CountryId: number[];
+  Country: Country[];
 }
 

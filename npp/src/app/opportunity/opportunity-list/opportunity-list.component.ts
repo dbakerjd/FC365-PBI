@@ -15,6 +15,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
 import { EntitiesService } from 'src/app/services/entities.service';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -41,7 +42,8 @@ export class OpportunityListComponent implements OnInit {
     public jobs: WorkInProgressService,
     public teams: TeamsService,
     public disambiguator: InlineNppDisambiguationService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly appData: AppDataService
     ) { }
 
   async ngOnInit() {
@@ -55,13 +57,13 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async init() {
-    this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    this.currentUser = await this.appData.getCurrentUserInfo();
     this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
-    let indications = await this.sharepoint.getIndicationsList();
-    this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
+    let indications = await this.appData.getIndicationsList();
+    this.opportunityTypes = await this.appData.getOpportunityTypes();
     let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
-    let opportunityFields = await this.sharepoint.getOpportunityFields();
+    let opportunityFields = await this.appData.getOpportunityFields();
     
     this.fields = [{
         key: 'search',
@@ -106,7 +108,7 @@ export class OpportunityListComponent implements OnInit {
       }
     ];
 
-    this.opportunities = await this.entities.getAll();
+    this.opportunities = await this.appData.getAllOpportunities();
     this.opportunities.forEach(el => {
       this.initIndicationString(el);
     })
@@ -141,18 +143,18 @@ export class OpportunityListComponent implements OnInit {
      
       if (result.success) {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
-        let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+        let opp = await this.appData.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
-        if (await this.sharepoint.isInternalOpportunity(opp.OpportunityTypeId)) {
+        if (await this.appData.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
         }
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );
-        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+        this.appData.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           if (r) {
             // set active
-            await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+            await this.appData.setOpportunityStatus(opp.ID, 'Active');
             opp.OpportunityStatus = 'Active';
             this.initIndicationString(opp);
             this.opportunities = [...this.opportunities, opp];
@@ -161,7 +163,7 @@ export class OpportunityListComponent implements OnInit {
             await this.notifications.opportunityOwnerNotification(result.data.opportunity);
             if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
           } else {
-            this.sharepoint.deleteOpportunity(opp.ID);
+            this.appData.deleteOpportunity(opp.ID);
             this.jobs.finishJob(job.id);
             this.toastr.error("The opportunity couldn't be created", "Try again");
           }
@@ -194,7 +196,7 @@ export class OpportunityListComponent implements OnInit {
         if (opp.EntityOwnerId !== result.data.EntityOwnerId) {
           await this.notifications.opportunityOwnerNotification(result.data);
         }
-        Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
+        Object.assign(opp, await this.appData.getOpportunity(opp.ID));
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");
       }
@@ -221,7 +223,7 @@ export class OpportunityListComponent implements OnInit {
     if(opType?.IsInternal) {
       return -1; // progress no applies
     }
-    let actions = await this.sharepoint.getActions(opportunity.ID);
+    let actions = await this.appData.getActions(opportunity.ID);
     if (actions.length) {
       let gates: {'total': number; 'completed': number}[] = [];
       let currentGate = 0;
@@ -245,7 +247,7 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async archiveOpportunity(opp: Opportunity) {
-    const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Archive");
+    const success = await this.appData.setOpportunityStatus(opp.ID, "Archive");
     if (success) {
       opp.OpportunityStatus = 'Archive';
       this.toastr.success("The opportunity has been archived");
@@ -272,7 +274,7 @@ export class OpportunityListComponent implements OnInit {
           // create new
           this.createOpportunity(opp);
         } else if (response === false) {
-          const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
+          const success = await this.appData.setOpportunityStatus(opp.ID, "Active");
           if (success) {
             opp.OpportunityStatus = 'Active';
             this.toastr.success("The opportunity has been restored");

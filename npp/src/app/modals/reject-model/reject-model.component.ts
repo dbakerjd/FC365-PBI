@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-reject-model',
@@ -37,6 +38,7 @@ export class RejectModelComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<RejectModelComponent>,
     private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService
   ) { }
 
   ngOnInit(): void {
@@ -50,9 +52,9 @@ export class RejectModelComponent implements OnInit {
     if (this.file) {
       let commentsStr = '';
       if(this.model.comments) {
-        commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        commentsStr = await this.appData.addComment(this.file, this.model.comments);
       }
-      const  result = await this.sharepoint.setEntityApprovalStatus(this.rootFolder, this.file, this.entity, "In Progress", commentsStr);
+      const  result = await this.appData.setEntityApprovalStatus(this.rootFolder, this.file, this.entity, "In Progress", commentsStr);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments

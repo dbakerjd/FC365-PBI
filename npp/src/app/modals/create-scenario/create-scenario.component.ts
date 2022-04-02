@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-create-scenario',
@@ -28,13 +29,14 @@ export class CreateScenarioComponent implements OnInit {
     public dialogRef: MatDialogRef<CreateScenarioComponent>,
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService,
     private readonly disambiguator: InlineNppDisambiguationService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.file = this.data.file;
-    this.scenarios = await this.sharepoint.getScenariosList();
+    this.scenarios = await this.appData.getScenariosList();
 
     this.fields = [{
       fieldGroup: [{
@@ -84,7 +86,7 @@ export class CreateScenarioComponent implements OnInit {
     if (this.model.multipleFiles) {
       success = true;
       for (const scenId of this.model.scenario) {
-        const newFileName = await this.sharepoint.addScenarioSufixToFilename(this.file.Name, scenId);
+        const newFileName = await this.appData.addScenarioSufixToFilename(this.file.Name, scenId);
         if (newFileName) {
           success = success && await this.createScenario(newFileName, destinationFolder, [scenId]);
         }
@@ -93,7 +95,7 @@ export class CreateScenarioComponent implements OnInit {
       // clone in one file
       let newFileName = this.file.Name;
       for (const scenId of this.model.scenario) {
-        const filenameSuffixed = await this.sharepoint.addScenarioSufixToFilename(newFileName, scenId);
+        const filenameSuffixed = await this.appData.addScenarioSufixToFilename(newFileName, scenId);
         if (filenameSuffixed) newFileName = filenameSuffixed;
       }
       success = await this.createScenario(newFileName, destinationFolder, this.model.scenario);
@@ -109,7 +111,7 @@ export class CreateScenarioComponent implements OnInit {
     if (!extension) return false;
     const baseFileName = fileName.substring(0, fileName.length - (extension.length + 1));
 
-    while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
+    while (await this.appData.existsFile(fileName, destinationFolder) && ++attemps < 11) {
       fileName = baseFileName + '-copy-' + attemps + '.' + extension;
     }
 
@@ -119,11 +121,11 @@ export class CreateScenarioComponent implements OnInit {
       if (this.file) {
         let commentsStr = '';
         if(this.model.comments) {
-          commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+          commentsStr = await this.appData.addComment(this.file, this.model.comments);
         } else {
           commentsStr = this.file.ListItemAllFields?.Comments ? this.file.ListItemAllFields?.Comments : '';
         }
-        success = await this.sharepoint.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.sharepoint.getCurrentUserInfo()).Id, commentsStr);
+        success = await this.appData.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.appData.getCurrentUserInfo()).Id, commentsStr);
       }
     }
     return success;

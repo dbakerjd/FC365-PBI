@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
+import { AppType } from '@shared/models/app-config';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Opportunity } from '../shared/models/entity';
 import { NPPFile, NPPFileMetadata } from '../shared/models/file-system';
+import { AppDataService } from './app-data.service';
 import { ErrorService } from './error.service';
-import { AppType, SharepointService } from './sharepoint.service';
+import { SharepointService } from './sharepoint.service';
 import { TeamsService } from './teams.service';
 
 @Injectable({
@@ -18,7 +20,8 @@ export class InlineNppDisambiguationService {
   app: AppType | undefined;
   config: { Title: string; Value: string, ConfigType: string }[] = [];
 
-  constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService) { 
+  constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService,
+    private readonly appData: AppDataService) { 
     this.isInline = environment.isInlineApp;
     this.isReady = false;
 
@@ -40,15 +43,15 @@ export class InlineNppDisambiguationService {
       appTitle = 'Inline';
     }
 
-    this.config = await this.sharepoint.getAppConfig();
+    this.config = await this.appData.getAppConfig();
     console.log('config', this.config);
-    let apps = await this.sharepoint.getApp(appTitle);
+    let apps = await this.appData.getApp(appTitle);
     this.app = (apps && apps.length) ? apps[0] : undefined;
 
     if(!this.app) {
       this.error.handleError(new Error("Could not find ID for app: "+appTitle));
     } else {
-      this.sharepoint.app = this.app;
+      this.appData.app = this.app;
       this.isReady = true;
       this.readySubscriptions.next(true);
     }
@@ -73,15 +76,15 @@ export class InlineNppDisambiguationService {
 
   getEntity(id: number) {
     if(this.isInline) {
-      return this.sharepoint.getBrand(id);
+      return this.appData.getBrand(id);
     } else {
-      return this.sharepoint.getOpportunity(id);
+      return this.appData.getOpportunity(id);
     }
   }
 
   async getEntities() {
     if(this.app) {
-      return this.sharepoint.getAllEntities(this.app.ID);
+      return this.appData.getAllEntities(this.app.ID);
     } else {
       this.error.toastr.error("Tried to get Entities but the app was not ready yet.")
       return [];
@@ -98,35 +101,35 @@ export class InlineNppDisambiguationService {
   }
 
   getForecastCycles(entity: Opportunity) {
-    return this.sharepoint.getEntityForecastCycles(entity);
+    return this.appData.getEntityForecastCycles(entity);
   }
 
   readFolderFiles(folder: string, expandProperties: boolean) {
-    return this.sharepoint.readEntityFolderFiles(folder, expandProperties);
+    return this.appData.readEntityFolderFiles(folder, expandProperties);
   }
 
   getAccessibleGeographiesList(entity: Opportunity) {
-    return this.sharepoint.getEntityAccessibleGeographiesList(entity as Opportunity);
+    return this.appData.getEntityAccessibleGeographiesList(entity as Opportunity);
   }
   
   getEntityGeographies(entityId: number) {
-    return this.sharepoint.getEntityGeographies(entityId);
+    return this.appData.getEntityGeographies(entityId);
   }
 
   getFileByScenarios(fileFolder: string, scenario: number[]) {
-    return this.sharepoint.getFileByScenarios(fileFolder, scenario);
+    return this.appData.getFileByScenarios(fileFolder, scenario);
   }
 
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
-    return this.sharepoint.uploadInternalFile(fileData, folder, fileName, metadata);
+    return this.appData.uploadInternalFile(fileData, folder, fileName, metadata);
   }
 
   async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
-    return this.sharepoint.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
+    return this.appData.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
   }
 
   async createForecastCycle(entity: Opportunity, values: any) {
-    return this.sharepoint.createEntityForecastCycle(entity, values);    
+    return this.appData.createEntityForecastCycle(entity, values);    
   }
 
 }

@@ -13,6 +13,7 @@ import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.
 import { TeamsService } from 'src/app/services/teams.service';
 import { Indication, Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -33,7 +34,8 @@ export class BrandListComponent implements OnInit {
   loading = true;
   canCreate = false;
 
-  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
+  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService,
+    private readonly appData: AppDataService) { }
 
   async ngOnInit() {
     if(this.disambiguator.isReady) {
@@ -47,16 +49,16 @@ export class BrandListComponent implements OnInit {
 
   async init() {
     
-    this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    this.currentUser = await this.appData.getCurrentUserInfo();
     this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
     console.log('cancreate', this.disambiguator.getConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
 
-    const indicationsList = await this.sharepoint.getIndicationsList();
-    // const forecastCycles = await this.sharepoint.getForecastCycles();
-    const businessUnits = await this.sharepoint.getBusinessUnitsList();
-    const brandFields = await this.sharepoint.getBrandFields();
-    const therapies = await this.sharepoint.getTherapiesList();
-    this.masterCycles = await this.sharepoint.getForecastCycles();
+    const indicationsList = await this.appData.getIndicationsList();
+    // const forecastCycles = await this.appData.getForecastCycles();
+    const businessUnits = await this.appData.getBusinessUnitsList();
+    const brandFields = await this.appData.getBrandFields();
+    const therapies = await this.appData.getTherapiesList();
+    this.masterCycles = await this.appData.getForecastCycles();
     
     this.brands = await this.disambiguator.getEntities() as Opportunity[];
 
@@ -104,7 +106,7 @@ export class BrandListComponent implements OnInit {
             therapySelect.formControl.valueChanges.pipe(
               takeUntil(this._destroying$),
               tap(th => {
-                this.sharepoint.getIndicationsList(th).then(r => {
+                this.appData.getIndicationsList(th).then(r => {
                   if (field.templateOptions) field.templateOptions.options = r;
                 });
               }),
@@ -175,7 +177,7 @@ export class BrandListComponent implements OnInit {
     .pipe(take(1))
     .subscribe(async (result: any) => {
       if (result.success) {
-        Object.assign(brand, await this.sharepoint.getBrand(brand.ID));
+        Object.assign(brand, await this.appData.getBrand(brand.ID));
       } else if (result.success === false) {
         this.toastr.error("The brand couldn't be updated", "Try again");
       }

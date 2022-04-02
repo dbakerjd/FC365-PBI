@@ -6,6 +6,7 @@ import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { EntityGeography, Opportunity, Stage } from '@shared/models/entity';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -38,6 +39,7 @@ export class CreateOpportunityComponent implements OnInit {
 
   constructor(
     private sharepoint: SharepointService, 
+    private readonly appData: AppDataService,
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateOpportunityComponent>
@@ -49,19 +51,19 @@ export class CreateOpportunityComponent implements OnInit {
     this.opportunity = this.data?.opportunity;
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
-    const therapies = await this.sharepoint.getTherapiesList();
-    let forecastCycles = await this.sharepoint.getForecastCycles();
-    this.oppTypes = await this.sharepoint.getOpportunityTypesList();
-    const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
-    const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    const therapies = await this.appData.getTherapiesList();
+    let forecastCycles = await this.appData.getForecastCycles();
+    this.oppTypes = await this.appData.getOpportunityTypesList();
+    const geo = (await this.appData.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.appData.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
-    let businessUnits = await this.sharepoint.getBusinessUnitsList();
+    let businessUnits = await this.appData.getBusinessUnitsList();
     // let stageNumbersList: SelectInputList[] = [];
-    let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
+    let defaultUsersList: SelectInputList[] = await this.appData.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
-    const trialPhases = await this.sharepoint.getClinicalTrialPhases();
+    const trialPhases = await this.appData.getClinicalTrialPhases();
     const currentYear = new Date().getFullYear();
     let year = currentYear;
     let elegibleYears = [currentYear];
@@ -72,7 +74,7 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.opportunity) {
       let type = this.oppTypes.find(el => el.value == this.opportunity?.OpportunityTypeId);
       this.isInternal = type.extra?.IsInternal;
-      this.geographies = await this.sharepoint.getEntityGeographies(this.opportunity?.ID);
+      this.geographies = await this.appData.getEntityGeographies(this.opportunity?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       if (this.data?.forceInternal) { // force Phase opportunity (complete opportunity option)
@@ -82,19 +84,19 @@ export class CreateOpportunityComponent implements OnInit {
         if (this.oppTypes.length > 0) {
           this.opportunity.OpportunityTypeId = this.oppTypes[0].value;
           // this.model.stageType = 'Phase';
-          // stageNumbersList = await this.sharepoint.getMasterStageNumbers('Phase');
+          // stageNumbersList = await this.appData.getMasterStageNumbers('Phase');
         }
       }
 
       // default indications for the therapy selected
       if (this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length) {
-        indicationsList = await this.sharepoint.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
+        indicationsList = await this.appData.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
       }
       // if we are cloning opportunity, get first stage info
       if (this.data?.createFrom && !this.data?.forceInternal) {
-        this.stage = await this.sharepoint.getFirstStage(this.opportunity);
+        this.stage = await this.appData.getFirstStage(this.opportunity);
         if (this.stage) {
-          defaultStageUsersList = await this.sharepoint.getUsersList(this.stage.StageUsersId);
+          defaultStageUsersList = await this.appData.getUsersList(this.stage.StageUsersId);
         }
       }
 
@@ -173,7 +175,7 @@ export class CreateOpportunityComponent implements OnInit {
               therapySelect.formControl.valueChanges.pipe(
                 takeUntil(this._destroying$),
                 tap(th => {
-                  this.sharepoint.getIndicationsList(th).then(r => {
+                  this.appData.getIndicationsList(th).then(r => {
                     if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });
@@ -213,7 +215,7 @@ export class CreateOpportunityComponent implements OnInit {
                   (selectedValue) => {
                     let t = this.oppTypes.find(el => el.value == selectedValue);
                     this.isInternal = t ? t.extra.IsInternal : false;
-                    this.sharepoint.getStageType(selectedValue).then(r => {
+                    this.appData.getStageType(selectedValue).then(r => {
                       if (r) this.model.stageType = r;
                     });
                   }
@@ -375,17 +377,17 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.isEdit) {
 
       this.updating = this.dialogRef.disableClose = true;
-      await this.sharepoint.updateEntityGeographies(this.data.opportunity, this.model.geographies);
-      const success = await this.sharepoint.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
+      await this.appData.updateEntityGeographies(this.data.opportunity, this.model.geographies);
+      const success = await this.appData.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
         success: success,
         data: this.model.Opportunity
       });
     } else {
-      const newOpp = await this.sharepoint.createOpportunity(this.model.Opportunity, this.model.Stage);
+      const newOpp = await this.appData.createOpportunity(this.model.Opportunity, this.model.Stage);
       if (newOpp) {
-        await this.sharepoint.createGeographies(
+        await this.appData.createGeographies(
           newOpp.opportunity.ID,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))

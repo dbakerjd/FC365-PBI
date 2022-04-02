@@ -11,6 +11,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { FOLDER_DOCUMENTS, FOLDER_WIP } from '@shared/sharepoint/folders';
+import { AppDataService } from 'src/app/services/app-data.service';
 @Component({
   selector: 'app-external-upload-file',
   templateUrl: './external-upload-file.component.html',
@@ -29,7 +30,8 @@ export class ExternalUploadFileComponent implements OnInit {
     public dialogRef: MatDialogRef<ExternalUploadFileComponent>,
     private readonly sharepoint: SharepointService,
     private matDialog: MatDialog,
-    private readonly disambiguator: InlineNppDisambiguationService
+    private readonly disambiguator: InlineNppDisambiguationService,
+    private readonly appData: AppDataService
   ) { 
     
   }
@@ -75,7 +77,7 @@ export class ExternalUploadFileComponent implements OnInit {
 
       const oppGeographies = await this.disambiguator.getEntityGeographies(this.data.entity.ID);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
-      const user = await this.sharepoint.getCurrentUserInfo();
+      const user = await this.appData.getCurrentUserInfo();
       let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
 
       Object.assign(fileData, {
@@ -83,7 +85,7 @@ export class ExternalUploadFileComponent implements OnInit {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
-        ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
+        ApprovalStatusId: await this.appData.getApprovalStatusId("In Progress"),
         IndicationId: this.model.IndicationId
       });
 
@@ -95,7 +97,7 @@ export class ExternalUploadFileComponent implements OnInit {
     let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
     let scenarioExists = null;
     if (containsModels) scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);
-    let fileExists = await this.sharepoint.existsFile(scenarioFileName, fileFolder);
+    let fileExists = await this.appData.existsFile(scenarioFileName, fileFolder);
     if (fileExists || scenarioExists) {
       let message = '';
       if(fileExists) {

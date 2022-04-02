@@ -1,30 +1,69 @@
 import { Injectable } from '@angular/core';
-import { Opportunity } from '@shared/models/entity';
+import { EntityGeography, Indication, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { SharepointService } from './sharepoint.service';
 import { InlineNppDisambiguationService } from './inline-npp-disambiguation.service';
-import { ENTITIES_LIST_NAME } from '@shared/sharepoint/list-names';
+import { ENTITIES_LIST_NAME, ENTITY_STAGES_LIST_NAME, GEOGRAPHIES_LIST_NAME, MASTER_STAGES_LIST_NAME } from '@shared/sharepoint/list-names';
+import { AppDataService } from './app-data.service';
+import { SystemFolder } from '@shared/models/file-system';
 
+interface OpportunityInput {
+  Title: string;
+  MoleculeName: string;
+  EntityOwnerId: number;
+  ProjectStartDate?: Date;
+  ProjectEndDate?: Date;
+  OpportunityTypeId: number;
+  IndicationId: number;
+  AppTypeId?: number;
+  Year?: number;
+}
+
+interface StageInput {
+  StageUsersId: number[];
+  StageReview: Date;
+  Title?: string;
+  EntityNameId?: number;
+  StageNameId?: number;
+}
+
+interface BrandInput {
+  Title: string;
+  EntityOwnerId: number;
+  IndicationId: number;
+  BusinessUnitId: number;
+  ForecastCycleId: number;
+  FCDueDate?: Date;
+  Year: number;
+  AppTypeId: number;
+}
+
+interface SPGroup {
+  Id: number;
+  Title: string;
+  Description: string;
+  LoginName: string;
+  OnlyAllowMembersViewMembership: boolean;
+}
+
+interface SPGroupListItem {
+  type: string;
+  data: SPGroup;
+}
 @Injectable({
   providedIn: 'root'
 })
 export class EntitiesService {
 
-  constructor(private readonly sharepoint: SharepointService, private readonly appService: InlineNppDisambiguationService) { }
+  constructor(
+    private readonly appService: InlineNppDisambiguationService,
+    private readonly appData: AppDataService
+  ) { }
 
-  async getAll(expand = true, onlyActive = false): Promise<Opportunity[]> {
-    let filter = undefined;
-    if (expand) {
-      //TODO check why OpportunityType/isInternal is failing
-      filter = "$select=*,ClinicalTrialPhase/Title,OpportunityType/Title,Indication/TherapyArea,Indication/Title,EntityOwner/FirstName,EntityOwner/LastName,EntityOwner/ID,EntityOwner/EMail&$expand=OpportunityType,Indication,EntityOwner,ClinicalTrialPhase";
-    }
-    if (onlyActive) {
-      if (!filter) filter = "$filter=AppTypeId eq '"+this.appService.getAppType()?.ID+"' and OpportunityStatus eq 'Active'";
-      else filter += "&$filter=AppTypeId eq '"+this.appService.getAppType()?.ID+"' and OpportunityStatus eq 'Active'";
-    } else {
-      if (!filter) filter = "$filter=AppTypeId eq '"+this.appService.getAppType()?.ID+"'";
-      else filter += "&$filter=AppTypeId eq '"+this.appService.getAppType()?.ID+"'";
-    }
+  
 
-    return await this.sharepoint.getAllItems(ENTITIES_LIST_NAME, filter);
-  }
+
+
+  
+
+  
 }

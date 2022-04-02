@@ -7,6 +7,7 @@ import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from 'src/app/services/entities.service';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -44,7 +45,8 @@ export class BrandSummaryComponent implements OnInit {
     private sharepoint: SharepointService,
     private teams: TeamsService,
     private disambiguator: InlineNppDisambiguationService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly appData: AppDataService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -66,8 +68,8 @@ export class BrandSummaryComponent implements OnInit {
     //@ts-ignore
     window.SummaryComponent = this;
 
-    const user = await this.sharepoint.getCurrentUserInfo();
-    this.notificationsList = await this.sharepoint.getUserNotifications(user.Id);
+    const user = await this.appData.getCurrentUserInfo();
+    this.notificationsList = await this.appData.getUserNotifications(user.Id);
     this.therapyAreasData = { areas: {}, total: 0 };
 
     this.brands = await this.disambiguator.getEntities() as Opportunity[];
@@ -104,14 +106,14 @@ export class BrandSummaryComponent implements OnInit {
       this.brandData.push({
         brandName: el.Title,
         cycle: el.ForecastCycle?.Title + " " + el.Year,
-        modelsCount: await this.sharepoint.getBrandModelsCount(el),
-        approvedModelsCount: await this.sharepoint.getBrandApprovedModelsCount(el),
+        modelsCount: await this.appData.getBrandModelsCount(el),
+        approvedModelsCount: await this.appData.getBrandApprovedModelsCount(el),
       });
 
     });
 
     // seats
-    this.currentUser = await this.sharepoint.getCurrentUserInfo();
+    this.currentUser = await this.appData.getCurrentUserInfo();
     if (this.currentUser.IsSiteAdmin) this.loadSeatsInfo();
   }
 
@@ -233,12 +235,12 @@ export class BrandSummaryComponent implements OnInit {
 
   private async loadSeatsInfo() {
     this.generatingSeatsTable = true;
-    this.usersList = await this.sharepoint.getUsers();
+    this.usersList = await this.appData.getUsers();
     this.usersList = this.usersList.filter(el => el.Email);
 
     for (let index = 0; index < this.usersList.length; index++) {
       const user: any = this.usersList[index];
-      const result = await this.sharepoint.getSeats(user.Email);
+      const result = await this.appData.getSeats(user.Email);
       if (index == 0 && result) {
         this.generalSeatsCount = {
           AssignedSeats: result?.AssignedSeats,
@@ -247,7 +249,7 @@ export class BrandSummaryComponent implements OnInit {
         }
       }
       user['seats'] = result?.UserGroupsCount;
-      const groups = await this.sharepoint.getUserGroups(user.Id);
+      const groups = await this.appData.getUserGroups(user.Id);
       const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
       const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
       user['opportunities'] = OUgroups.length;
@@ -264,9 +266,9 @@ export class BrandSummaryComponent implements OnInit {
       this.usersOpportunitiesListItem.list = [];
       return;
     }
-    const groups = await this.sharepoint.getUserGroups(userId);
+    const groups = await this.appData.getUserGroups(userId);
     const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
-    const allOpportunities = await this.entities.getAll(false, false);
+    const allOpportunities = await this.appData.getAllOpportunities(false, false);
     const oppsList = OUgroups.map(e => {
       const splittedName = e.Title.split('-');
       return splittedName[1];

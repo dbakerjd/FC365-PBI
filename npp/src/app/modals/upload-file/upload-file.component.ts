@@ -9,6 +9,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-upload-file',
@@ -31,6 +32,7 @@ export class UploadFileComponent implements OnInit {
     public dialogRef: MatDialogRef<UploadFileComponent>,
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService
   ) { 
     this.businessUnitId = this.data.entity.BusinessUnitId ? this.data.entity.BusinessUnitId : 0;
     this.forecastCycleId = this.data.entity.ForecastCycleId ? this.data.entity.ForecastCycleId : 0;
@@ -57,7 +59,7 @@ export class UploadFileComponent implements OnInit {
       return;
     }
 
-    const user = await this.sharepoint.getCurrentUserInfo();
+    const user = await this.appData.getCurrentUserInfo();
     let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
 
     let fileData = {
@@ -75,21 +77,21 @@ export class UploadFileComponent implements OnInit {
       fileFolder += '/' + this.model.geography + '/0';
 
       // read opp geography to get master ID of country / geography
-      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
+      const oppGeographies = await this.appData.getOpportunityGeographies(this.model.EntityNameId);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
-      const user = await this.sharepoint.getCurrentUserInfo();
+      const user = await this.appData.getCurrentUserInfo();
       let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
 
       Object.assign(fileData, {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
-        ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
+        ApprovalStatusId: await this.appData.getApprovalStatusId("In Progress"),
         IndicationId: this.model.IndicationId
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
 
-      if (await this.sharepoint.existsFile(scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
+      if (await this.appData.existsFile(scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
         const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
           maxWidth: "400px",
           height: "200px",
@@ -124,7 +126,7 @@ export class UploadFileComponent implements OnInit {
         Comments: this.model.description
       });
       const cleanFilename = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-      if (await this.sharepoint.existsFile(cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
+      if (await this.appData.existsFile(cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
         const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
           maxWidth: "400px",
           height: "200px",
@@ -157,7 +159,7 @@ export class UploadFileComponent implements OnInit {
   private async uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.sharepoint.uploadFile(data, folder, fileName, fileData).then(
+        this.appData.uploadFile(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished

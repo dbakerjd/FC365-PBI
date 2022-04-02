@@ -8,6 +8,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { ToastrService } from 'ngx-toastr';
 import { EntityGeography, Opportunity } from '@shared/models/entity';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-create-brand',
@@ -34,6 +35,7 @@ export class CreateBrandComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateBrandComponent>, 
     public jobs: WorkInProgressService, 
+    private readonly appData: AppDataService,
     public toastr: ToastrService) { }
 
   async ngOnInit() {
@@ -41,25 +43,25 @@ export class CreateBrandComponent implements OnInit {
     this.brand = this.data?.brand;
     //this.model.Brand = this.brand;
 
-    let therapies = await this.sharepoint.getTherapiesList();
-    let forecastCycles = await this.sharepoint.getForecastCycles();
-    let businessUnits = await this.sharepoint.getBusinessUnitsList();
-    const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
-    const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    let therapies = await this.appData.getTherapiesList();
+    let forecastCycles = await this.appData.getForecastCycles();
+    let businessUnits = await this.appData.getBusinessUnitsList();
+    const geo = (await this.appData.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.appData.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
-    let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
+    let defaultUsersList: SelectInputList[] = await this.appData.getSiteOwnersList();
 
     if (this.brand) {
       //this.brand.FCDueDate = new Date(this.brand.FCDueDate);
       this.isEdit = true;
-      this.geographies = await this.sharepoint.getEntityGeographies(this.brand?.ID);
+      this.geographies = await this.appData.getEntityGeographies(this.brand?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       
       // default indications for the therapy selected
       if (this.brand && this.brand.Indication && this.brand.Indication.length) {
-        indicationsList = await this.sharepoint.getIndicationsList(this.brand.Indication[0].TherapyArea);
+        indicationsList = await this.appData.getIndicationsList(this.brand.Indication[0].TherapyArea);
       }
     }
 
@@ -121,7 +123,7 @@ export class CreateBrandComponent implements OnInit {
               therapySelect.formControl.valueChanges.pipe(
                 takeUntil(this._destroying$),
                 tap(th => {
-                  this.sharepoint.getIndicationsList(th).then(r => {
+                  this.appData.getIndicationsList(th).then(r => {
                     if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });
@@ -194,8 +196,8 @@ export class CreateBrandComponent implements OnInit {
     try {
       if (this.isEdit) {
         this.updating = this.dialogRef.disableClose = true;
-        await this.sharepoint.updateEntityGeographies(this.data.brand, this.model.geographies);
-        const success = await this.sharepoint.updateBrand(this.data.brand.ID, this.model.Brand);
+        await this.appData.updateEntityGeographies(this.data.brand, this.model.geographies);
+        const success = await this.appData.updateBrand(this.data.brand.ID, this.model.Brand);
         this.updating = this.dialogRef.disableClose = false;
         this.jobs.finishJob(job.id);
         this.toastr.success("The brand has been updated", this.model.Brand.Title);
@@ -205,9 +207,9 @@ export class CreateBrandComponent implements OnInit {
         });
       } else {
         // force opportunity type
-        const internalType = (await this.sharepoint.getOpportunityTypes()).find(el => el.IsInternal);
+        const internalType = (await this.appData.getOpportunityTypes()).find(el => el.IsInternal);
         this.model.Brand.OpportunityTypeId = internalType?.ID;
-        let brand = await this.sharepoint.createBrand(
+        let brand = await this.appData.createBrand(
           this.model.Brand,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2)));

@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Indication } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-entity-edit-file',
@@ -35,6 +36,7 @@ export class EntityEditFileComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<EntityEditFileComponent>,
     private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService
   ) { }
 
   ngOnInit(): void {
@@ -76,7 +78,7 @@ export class EntityEditFileComponent implements OnInit {
       let needsIndicationsUpdate = this.fileInfo?.ListItemAllFields?.IndicationId ? !this.compareArr(this.fileInfo.ListItemAllFields.IndicationId, this.model.IndicationId) : this.model.IndicationId;
 
       if (newFilename.length > 0 && needsRename) {
-        result = await this.sharepoint.renameFile(this.fileInfo.ServerRelativeUrl, newFilename);
+        result = await this.appData.renameFile(this.fileInfo.ServerRelativeUrl, newFilename);
       }
 
       if(needsIndicationsUpdate && this.fileInfo.ListItemAllFields) {

@@ -6,6 +6,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from 'src/app/services/app-data.service';
 
 @Component({
   selector: 'app-send-for-approval',
@@ -37,7 +38,8 @@ export class SendForApprovalComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<SendForApprovalComponent>,
     private readonly sharepoint: SharepointService,
-    private readonly disambiguator: InlineNppDisambiguationService
+    private readonly disambiguator: InlineNppDisambiguationService,
+    private readonly appData: AppDataService
   ) { }
 
   ngOnInit(): void {
@@ -51,7 +53,7 @@ export class SendForApprovalComponent implements OnInit {
     if (this.fileId && this.file) {
       let commentsStr = '';
       if(this.model.comments) {
-        commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        commentsStr = await this.appData.addComment(this.file, this.model.comments);
       }
       const result = await this.disambiguator.setEntityApprovalStatus(this.data.rootFolder, this.file, this.entity, "Submitted", commentsStr);
       this.dialogRef.close({
