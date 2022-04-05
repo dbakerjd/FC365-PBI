@@ -16,6 +16,7 @@ import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -34,7 +35,7 @@ export class OpportunityListComponent implements OnInit {
   canCreate = false;
 
   constructor(
-    private sharepoint: SharepointService, 
+    private permissions: PermissionsService, 
     private notifications: NotificationsService,
     private toastr: ToastrService,
     private router: Router, 
@@ -63,7 +64,7 @@ export class OpportunityListComponent implements OnInit {
     let indications = await this.appData.getIndicationsList();
     this.opportunityTypes = await this.appData.getOpportunityTypes();
     let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
-    let opportunityFields = await this.appData.getOpportunityFields();
+    let opportunityFields = await this.appData.getOpportunityFilterFields();
     
     this.fields = [{
         key: 'search',
@@ -145,13 +146,13 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.appData.getOpportunity(result.data.opportunity.ID);
         opp.progress = 0;
-        if (await this.appData.isInternalOpportunity(opp.OpportunityTypeId)) {
+        if (await this.entities.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
         }
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );
-        this.appData.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           if (r) {
             // set active
             await this.appData.setOpportunityStatus(opp.ID, 'Active');

@@ -31,6 +31,7 @@ import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -71,6 +72,7 @@ export class ActionsListComponent implements OnInit {
 
   constructor(
     private readonly sharepoint: SharepointService, 
+    private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
     private route: ActivatedRoute, 
     private router: Router,
@@ -97,7 +99,7 @@ export class ActionsListComponent implements OnInit {
         this.currentUser = await this.appData.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
         this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
-        this.opportunityGeographies = await this.appData.getOpportunityGeographies(this.opportunity.ID, false);
+        this.opportunityGeographies = await this.appData.getEntityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
           const profileImgBlob = await this.appData.getUserProfilePic(this.opportunity.EntityOwnerId);
@@ -494,9 +496,9 @@ export class ActionsListComponent implements OnInit {
               'initialize stage ' + result.data.ID
             );
             let opp = await this.appData.getOpportunity(result.data.EntityNameId);
-            const oppGeographies = await this.appData.getOpportunityGeographies(opp.ID);
+            const oppGeographies = await this.appData.getEntityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
-            this.appData.initializeStage(opp, result.data,oppGeographies).then(async r => {
+            this.permissions.initializeStage(opp, result.data,oppGeographies).then(async r => {
               await this.jobs.finishJob(job.id);
               this.toastr.success("Next stage has been created successfully", result.data.Title);
               this.alreadyGoingNextStage = false;
@@ -535,7 +537,7 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
-          if (!await this.appData.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
+          if (!await this.entities.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
@@ -578,7 +580,7 @@ export class ActionsListComponent implements OnInit {
                         let job = this.jobs.startJob(
                           "initialize opportunity " + result.data.opportunity.id
                         );
-                        this.appData.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+                        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           if (!this.opportunity) return;
                           this.appData.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active

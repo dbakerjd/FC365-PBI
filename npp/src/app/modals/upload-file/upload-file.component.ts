@@ -77,7 +77,7 @@ export class UploadFileComponent implements OnInit {
       fileFolder += '/' + this.model.geography + '/0';
 
       // read opp geography to get master ID of country / geography
-      const oppGeographies = await this.appData.getOpportunityGeographies(this.model.EntityNameId);
+      const oppGeographies = await this.appData.getEntityGeographies(this.model.EntityNameId);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
       const user = await this.appData.getCurrentUserInfo();
       let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
@@ -86,7 +86,7 @@ export class UploadFileComponent implements OnInit {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,
         Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
-        ApprovalStatusId: await this.appData.getApprovalStatusId("In Progress"),
+        ApprovalStatusId: await this.appData.getMasterApprovalStatusId("In Progress"),
         IndicationId: this.model.IndicationId
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");

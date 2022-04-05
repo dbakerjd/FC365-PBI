@@ -3,6 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
@@ -26,7 +27,8 @@ export class StageSettingsComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
     private sharepoint: SharepointService, 
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService
   ) { }
 
   async ngOnInit() {
@@ -104,7 +106,7 @@ export class StageSettingsComponent implements OnInit {
     let success;
     if (this.model.ID) { // update
       this.updating = this.dialogRef.disableClose = true;
-      success = await this.appData.updateStage(this.model.ID, {
+      success = await this.entities.updateStageSettings(this.model.ID, {
         StageReview: this.model.StageReview,
         StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
       });

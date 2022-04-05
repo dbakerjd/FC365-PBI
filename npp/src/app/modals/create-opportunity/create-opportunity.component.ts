@@ -7,6 +7,8 @@ import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { EntityGeography, Opportunity, Stage } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
+import { EntitiesService } from 'src/app/services/entities.service';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -38,7 +40,8 @@ export class CreateOpportunityComponent implements OnInit {
   isInternal: boolean = false;
 
   constructor(
-    private sharepoint: SharepointService, 
+    private permissions: PermissionsService, 
+    private readonly entities: EntitiesService,
     private readonly appData: AppDataService,
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
@@ -377,17 +380,17 @@ export class CreateOpportunityComponent implements OnInit {
     if (this.isEdit) {
 
       this.updating = this.dialogRef.disableClose = true;
-      await this.appData.updateEntityGeographies(this.data.opportunity, this.model.geographies);
-      const success = await this.appData.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
+      await this.permissions.updateEntityGeographies(this.data.opportunity, this.model.geographies);
+      const success = await this.entities.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
         success: success,
         data: this.model.Opportunity
       });
     } else {
-      const newOpp = await this.appData.createOpportunity(this.model.Opportunity, this.model.Stage);
+      const newOpp = await this.entities.createOpportunity(this.model.Opportunity, this.model.Stage);
       if (newOpp) {
-        await this.appData.createGeographies(
+        await this.permissions.createGeographies(
           newOpp.opportunity.ID,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2))

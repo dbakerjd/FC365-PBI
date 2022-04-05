@@ -9,6 +9,8 @@ import { WorkInProgressService } from 'src/app/services/work-in-progress.service
 import { ToastrService } from 'ngx-toastr';
 import { EntityGeography, Opportunity } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { EntitiesService } from 'src/app/services/entities.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
 
 @Component({
   selector: 'app-create-brand',
@@ -31,7 +33,8 @@ export class CreateBrandComponent implements OnInit {
   geographies: EntityGeography[] = [];
 
   constructor(
-    private sharepoint: SharepointService, 
+    private readonly entities: EntitiesService, 
+    private readonly permissions: PermissionsService, 
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateBrandComponent>, 
     public jobs: WorkInProgressService, 
@@ -196,8 +199,8 @@ export class CreateBrandComponent implements OnInit {
     try {
       if (this.isEdit) {
         this.updating = this.dialogRef.disableClose = true;
-        await this.appData.updateEntityGeographies(this.data.brand, this.model.geographies);
-        const success = await this.appData.updateBrand(this.data.brand.ID, this.model.Brand);
+        await this.permissions.updateEntityGeographies(this.data.brand, this.model.geographies);
+        const success = await this.entities.updateOpportunity(this.data.brand.ID, this.model.Brand);
         this.updating = this.dialogRef.disableClose = false;
         this.jobs.finishJob(job.id);
         this.toastr.success("The brand has been updated", this.model.Brand.Title);
@@ -209,7 +212,7 @@ export class CreateBrandComponent implements OnInit {
         // force opportunity type
         const internalType = (await this.appData.getOpportunityTypes()).find(el => el.IsInternal);
         this.model.Brand.OpportunityTypeId = internalType?.ID;
-        let brand = await this.appData.createBrand(
+        let brand = await this.entities.createBrand(
           this.model.Brand,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2)));

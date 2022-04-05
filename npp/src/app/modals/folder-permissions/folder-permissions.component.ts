@@ -9,6 +9,7 @@ import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.
 import { Opportunity } from '@shared/models/entity';
 import { NPPFolder } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
 
 @Component({
   selector: 'app-folder-permissions',
@@ -31,7 +32,7 @@ export class FolderPermissionsComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<FolderPermissionsComponent>,
-    private sharepoint: SharepointService, 
+    private permissions: PermissionsService, 
     private readonly notifications: NotificationsService,
     private readonly toastr: ToastrService,
     private readonly error: ErrorService,
@@ -164,7 +165,7 @@ export class FolderPermissionsComponent implements OnInit {
           // is a department with geographies
           for (const geoKey in this.model.DepartmentUsersId[key]) {
             const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
-            success = success && await this.appData.updateDepartmentUsers(
+            success = success && await this.permissions.updateDepartmentUsers(
               this.entityId,
               this.stageId,
               +key,
@@ -184,7 +185,7 @@ export class FolderPermissionsComponent implements OnInit {
           }
         } else {
           const currentList = this.currentUsersList.find(el => el.departmentID == key);
-          success = success && await this.appData.updateDepartmentUsers(
+          success = success && await this.permissions.updateDepartmentUsers(
             this.entityId,
             this.stageId,
             +key,

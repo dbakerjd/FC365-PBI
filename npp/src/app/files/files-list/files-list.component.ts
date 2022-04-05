@@ -109,7 +109,7 @@ export class FilesListComponent implements OnInit {
         if (!this.entity) {
           this.router.navigate(['notfound']);
         }
-        this.entityGeographies = await this.appData.getOpportunityGeographies(this.entity.ID, false);
+        this.entityGeographies = await this.appData.getEntityGeographies(this.entity.ID, false);
         this.documentFolders = await this.appData.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
