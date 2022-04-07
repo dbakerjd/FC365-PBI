@@ -3,18 +3,11 @@ import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { ErrorService } from './error.service';
 import { LicensingService } from './licensing.service';
-import { map } from 'rxjs/operators';
-import { NPPFile, NPPFileMetadata, SystemFolder } from '@shared/models/file-system';
+import { NPPFileMetadata, SystemFolder } from '@shared/models/file-system';
 import * as SPFolders from '@shared/sharepoint/folders';
 
 export const ReadPermission = 'ListRead';
 export const WritePermission = 'ListRead';
-
-export interface SelectInputList {
-  label: string;
-  value: any;
-  group?: string;
-}
 
 interface SharepointResult {
   'odata.metadata': string;
@@ -36,12 +29,6 @@ interface SPGroup {
 }
 
 
-// export interface AppType {
-//   ID: number;
-//   Title: string;
-// }
-
-
 @Injectable({
   providedIn: 'root'
 })
@@ -51,15 +38,12 @@ export class SharepointService {
     name: string;
     id: number;
   }[] = [];
-  // public app: AppType | undefined;
 
   constructor(
     private http: HttpClient, 
     private error: ErrorService, 
     private licensing: LicensingService, 
   ) { }
-
-  
 
   query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
@@ -206,7 +190,6 @@ export class SharepointService {
     return  SPFolders.FILES_FOLDER;
   }
 
-  /** ok */
   async createFolder(folderPath: string): Promise<SystemFolder | null> {
     try {
       return await this.http.post(
@@ -222,7 +205,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async getFolderByUrl(folderUrl: string): Promise<SystemFolder | null> {
     try {
       let folder = await this.query(
@@ -234,7 +216,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async getPathSubfolders(path: string) {
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${path}')/folders`,
@@ -243,7 +224,6 @@ export class SharepointService {
     return result.value ? result.value : [];
   }
 
-  /** ok */
   async getPathFiles(path: string, filter = '') {
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${path}')/Files`,
@@ -252,7 +232,6 @@ export class SharepointService {
     return result.value ? result.value : [];
   }
 
-  /** ok */
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
@@ -265,7 +244,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async deleteFile(fileUri: string): Promise<boolean> {
     try {
       await this.http.post(
@@ -285,7 +263,6 @@ export class SharepointService {
     return true;
   }
 
-  /** ok */
   async renameFile(fileUri: string, newName: string): Promise<boolean> {
     try {
       await this.http.post(
@@ -307,7 +284,6 @@ export class SharepointService {
     return true;
   }
   
-  /** ok */
   async existsFile(filename: string, folder: string): Promise<boolean> {
     try {
       /** tocheck use getFileByName */
@@ -321,7 +297,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
     const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
     let destinationUrl = `copyTo('${destinationFolder + newFileName}')`;
@@ -337,24 +312,22 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async readFileMetadata(url: string): Promise<NPPFileMetadata> {
     return (await this.http.get(
       this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${url}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
   }
 
   /** TODEL */
-  async getFileInfo(fileId: number): Promise<NPPFile> {
-    return await this.query(
-      `lists/getbytitle('${SPFolders.FILES_FOLDER}')` + `/items(${fileId})`,
-      '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title, \
-        EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
-        &$expand=StageName,Author,EntityGeography,ModelScenario,ApprovalStatus',
-      'all'
-    ).toPromise();
-  }
+  // async getFileInfo(fileId: number): Promise<NPPFile> {
+  //   return await this.query(
+  //     `lists/getbytitle('${SPFolders.FILES_FOLDER}')` + `/items(${fileId})`,
+  //     '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title, \
+  //       EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
+  //       &$expand=StageName,Author,EntityGeography,ModelScenario,ApprovalStatus',
+  //     'all'
+  //   ).toPromise();
+  // }
   
-  /** ok */
   async uploadFileQuery(fileData: string, folder: string, filename: string) {
     try {
       let url = `GetFolderByServerRelativeUrl('${folder}')/Files/add(url='${filename}',overwrite=true)?$expand=ListItemAllFields`;
@@ -409,23 +382,20 @@ export class SharepointService {
     }
   }
   
-  /** ok */
   async addRolePermissionToList(list: string, groupId: number, roleName: string, id: number = 0): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointApiUri() + list + (id === 0 ? '' : `/items(${id})`);
     return await this.setRolePermission(baseUrl, groupId, roleName);
   }
 
-  /** ok */
   async addRolePermissionToFolder(folderUrl: string, groupId: number, roleName: string): Promise<boolean> {
     const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
     // permissions to folders without inherit
     let success = await this.setRolePermission(baseUrl, groupId, roleName, false);
-    // TOCHECK move remove to appData
+    // TOCHECK !! move remove to appData
     // return success && await this.removeRolePermission(baseUrl, (await this.getCurrentUserInfo()).Id);
     return success;
   }
 
-  /** ok */
   private async setRolePermission(baseUrl: string, groupId: number, roleName: string, inherit = true) {
     // const roleId = 1073741826; // READ
     const roleId = await this.getRoleDefinitionId(roleName);
@@ -443,7 +413,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   private async removeRolePermission(baseUrl: string, groupId: number) {
     try {
       await this.http.post(
@@ -456,42 +425,6 @@ export class SharepointService {
     }
   }
 
-  /** TOCHECK no ha d'anar aquí, però on? */
-  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
-    return this.query(query, '', 'all', { term, field, matchCase })
-      .pipe(
-        map((res: any) => {
-          return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
-          );
-        })
-      );
-  }
-  
-/*
-  //return all geographies for now
-  async getBrandAccessibleGeographiesList(brand: Brand): Promise<SelectInputList[]> {
-    const geographiesList = await this.getBrandGeographies(brand.ID);
-
-    const geoFoldersWithAccess = await this.getSubfolders(`${SPLists.FOLDER_WIP}/${brand.BusinessUnitId}/${brand.ID}/${SPLists.FORECAST_MODELS_FOLDER_NAME}`);
-    return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
-      .map(t => { return { value: t.Id, label: t.Title } });
-  }
-*/
-  
-  
-/*
-  async getBrandGeographies(brandId: number, all?: boolean) {
-    let filter = `$filter=BrandId eq ${brandId}`;
-    if (!all) {
-      filter += ' and Removed ne 1';
-    }
-    return await this.getAllItems(
-       SPLists.GEOGRAPHIES_LIST, filter,
-    );
-  }*/
-
-  /** ok */
   /** Updates a read only field fieldname of the list's element with the value */
   async updateReadOnlyField(list: string, elementId: number, fieldname: string, value: string) {
 
@@ -515,7 +448,6 @@ export class SharepointService {
       }).toPromise();
   }
   
-  /** ok */
   async copyFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<any> {
     const originUrl = `getfilebyserverrelativeurl('${originServerRelativeUrl}')/`;
     let path = destinationFolder + newFileName;
@@ -532,7 +464,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   async moveFile(originServerRelativeUrl: string, destinationFolder: string, newFilename: string = ''): Promise<any> {
     let arrUrl = originServerRelativeUrl.split("/");
     let fileName = arrUrl[arrUrl.length - 1];
@@ -547,7 +478,6 @@ export class SharepointService {
     return "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path;
   }
 
-  /** ok */
   async updateFileFields(path: string, fields: any) {
     this.http.post(
       this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${path}')/ListItemAllFields`,
@@ -561,7 +491,6 @@ export class SharepointService {
     ).toPromise();
   }
 
-  /** ok */
   /** Adds the user to the Sharepoint Group */
   async addUserToSharepointGroup(userLoginName: string, groupId: number) {
     try {
@@ -575,7 +504,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   /** Remove the user from the Sharepoint Group (id or name) */
   async removeUserFromSharepointGroup(userId: number, group: number | string): Promise<boolean> {
     let url = '';
@@ -601,7 +529,6 @@ export class SharepointService {
     }
   }
 
-  /** ok */
   private async getRoleDefinitionId(name: string): Promise<number | null> {
     const cache = this.SPRoleDefinitions.find(g => g.name === name);
     if (cache) {

@@ -177,7 +177,7 @@ export class BrandListComponent implements OnInit {
     .pipe(take(1))
     .subscribe(async (result: any) => {
       if (result.success) {
-        Object.assign(brand, await this.appData.getBrand(brand.ID));
+        Object.assign(brand, await this.appData.getEntity(brand.ID));
       } else if (result.success === false) {
         this.toastr.error("The brand couldn't be updated", "Try again");
       }

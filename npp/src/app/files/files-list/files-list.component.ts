@@ -107,7 +107,7 @@ export class FilesListComponent implements OnInit {
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
-        this.entity = await this.appData.getOpportunity(params.id);
+        this.entity = await this.appData.getEntity(params.id);
         if (!this.entity) {
           this.router.navigate(['notfound']);
         }

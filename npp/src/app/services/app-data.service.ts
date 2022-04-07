@@ -8,8 +8,9 @@ import { GroupPermission, User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME } from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { GraphService } from './graph.service';
-import { InlineNppDisambiguationService } from './inline-npp-disambiguation.service';
 import { LicensingService } from './licensing.service';
 import { ReadPermission, SelectInputList, SharepointService } from './sharepoint.service';
 
@@ -120,9 +121,12 @@ export class AppDataService {
 
   public app!: AppType;
 
-  constructor(private readonly sharepoint: SharepointService, private readonly msgraph: GraphService,
+  constructor(
+    private readonly sharepoint: SharepointService, 
+    private readonly msgraph: GraphService,
     private readonly licensing: LicensingService,
-    private readonly toastr: ToastrService) { }
+    private readonly toastr: ToastrService
+  ) { }
 
   async canConnectAndAccessData(): Promise<boolean> {
     try {
@@ -134,13 +138,36 @@ export class AppDataService {
     }
   }
 
-  async getOpportunity(id: number, expand = true): Promise<Opportunity> {
+  getAppType(): AppType {
+    return this.app;
+  }
+
+  /** read app config values from sharepoint */
+  public async getAppConfig() {
+    return await this.sharepoint.getAllItems(SPLists.APP_CONFIG_LIST_NAME);
+  }
+
+  public async getApp(appId: string) {
+    return await this.sharepoint.getAllItems(SPLists.MASTER_APPS_LIST_NAME, "$select=*&$filter=Title eq '" + appId + "'");
+  }
+
+  async getEntity(id: number, expand = true): Promise<Opportunity> {
     let options = "$filter=Id eq " + id;
     if (expand) {
       options += "&$select=*,ClinicalTrialPhase/Title,ForecastCycle/Title,BusinessUnit/Title,OpportunityType/Title,Indication/TherapyArea,Indication/ID,Indication/Title,Author/FirstName,Author/LastName,Author/ID,Author/EMail,EntityOwner/ID,EntityOwner/Title,EntityOwner/FirstName,EntityOwner/EMail,EntityOwner/LastName&$expand=OpportunityType,Indication,Author,EntityOwner,BusinessUnit,ClinicalTrialPhase,ForecastCycle";
     }
     return await this.sharepoint.getOneItem(SPLists.ENTITIES_LIST_NAME, options);
   }
+
+    // /** TOCHECK getbrand o get Entity? */
+    /* TODEL */
+    // async getBrand(id: number): Promise<Opportunity> {
+    //   let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
+     
+    //   let results = await this.sharepoint.getOneItem(SPLists.ENTITIES_LIST_NAME, "$filter=Id eq "+id+cond);
+      
+    //   return results;
+    // }
 
   async getAllEntities(appId: number) {
     let countCond = `$filter=AppTypeId eq ${appId}`;
@@ -151,7 +178,6 @@ export class AppDataService {
     let results = await this.sharepoint.getAllItems(SPLists.ENTITIES_LIST_NAME, cond);
     
     return results;
-
   }
 
   async getAllOpportunities(expand = true, onlyActive = false): Promise<Opportunity[]> {
@@ -212,7 +238,6 @@ export class AppDataService {
 
   /** --- STAGES --- **/
 
-  /** ok */
   async createStage(data: StageInput): Promise<Stage | null> {
     if (!data.Title && data.StageNameId) {
       // get from master list
@@ -222,27 +247,22 @@ export class AppDataService {
     return await this.sharepoint.createItem(SPLists.ENTITY_STAGES_LIST_NAME, data);
   }
 
-  /** ok */
   async updateStage(id: number, data: StageInput): Promise<boolean> {
     return await this.sharepoint.updateItem(id, SPLists.ENTITY_STAGES_LIST_NAME, data);
   }
 
-  /** ok */
   async getAllStages(): Promise<Stage[]> {
     return await this.sharepoint.getAllItems(SPLists.ENTITY_STAGES_LIST_NAME);
   }
 
-  /** ok */
   async getEntityStages(entityId: number): Promise<Stage[]> {
     return await this.sharepoint.getAllItems(SPLists.ENTITY_STAGES_LIST_NAME, "$filter=EntityNameId eq " + entityId);
   }
 
-  /** ok */
   async getEntityStage(id: number): Promise<Stage> {
     return await this.sharepoint.getOneItemById(id, SPLists.ENTITY_STAGES_LIST_NAME);
   }
 
-  /** ok */
   async getFirstStage(entity: Opportunity) {
     const stageType = await this.getStageType(entity.OpportunityTypeId);
     const firstMasterStage = await this.getMasterStage(stageType, 1);
@@ -252,26 +272,10 @@ export class AppDataService {
     );
   }
 
-  
-
-  
-
-  /** read app config values from sharepoint */ /* TOCHECK unused ? */
-  public async getAppConfig() {
-    return await this.sharepoint.getAllItems(SPLists.APP_CONFIG_LIST_NAME);
-  }
-
-  /** TOCHECK unused? */
-  public async getApp(appId: string) {
-    return await this.sharepoint.getAllItems(SPLists.MASTER_APPS_LIST_NAME, "$select=*&$filter=Title eq '"+appId+"'");
-  }
-
-  /** ok */
   async getUserInfo(userId: number): Promise<User> {
     return await this.sharepoint.query(`siteusers/getbyid('${userId}')`).toPromise();
   }
 
-  /** ok */
   async getUsers(): Promise<User[]> {
     const result = await this.sharepoint.query('siteusers').toPromise();
     if (result.value) {
@@ -280,7 +284,6 @@ export class AppDataService {
     return [];
   }
 
-  /** ok */
   async getUserGroups(userId: number): Promise<SPGroup[]> {
     const user = await this.sharepoint.query(`siteusers/getbyid('${userId}')?$expand=groups`).toPromise();
     if (user.Groups.length > 0) {
@@ -289,28 +292,60 @@ export class AppDataService {
     return [];
   }
 
-  /** ok */
   /** Adds a user to a group */
   async addUserToGroup(user: User, groupId: number): Promise<boolean> {
     return user.LoginName ? await this.sharepoint.addUserToSharepointGroup(user.LoginName, groupId) : false;
   }
 
-  /** ok */
   async removeUserFromGroupId(userId: number, groupId: number): Promise<boolean> {
     return await this.sharepoint.removeUserFromSharepointGroup(userId, groupId);
   }
 
-  /** ok */
   async removeUserFromGroupName(userId: number, groupName: string): Promise<boolean> {
     return await this.sharepoint.removeUserFromSharepointGroup(userId, groupName);
   }
 
-  
+  /** Create group with name. If group previously exists, get the group */
+  async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
+    const group = await this.getGroup(name);
+    if (group) return group;
 
+    return this.sharepoint.createGroup(name, description);
+  }
 
+  /** Delete group with id */
+  async deleteGroup(id: number): Promise<boolean> {
+    return this.sharepoint.deleteGroup(id);
+  }
+
+  async getGroups(): Promise<SPGroup[]> {
+    const groups = await this.sharepoint.query('sitegroups').toPromise();
+    if (groups.value) {
+      return groups.value;
+    }
+    return [];
+  }
+
+  async userIsInGroup(userId: number, groupId: number): Promise<boolean> {
+    try {
+      const groupUsers = await this.getGroupMembers(groupId);
+      return groupUsers.some(user => user.Id === userId);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /** todel */
+  async deleteAllGroups() {
+    const groups = await this.getGroups();
+    for (const g of groups) {
+      if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SU')) {
+        this.deleteGroup(g.Id);
+      }
+    }
+  }
 
   /** ---- MASTER INFO ---- */
-  /** ok */
   async getMasterApprovalStatuses(): Promise<MasterApprovalStatus[]> {
     if (this.masterApprovalStatusList.length < 1) {
       this.masterApprovalStatusList = await this.sharepoint.getAllItems(SPLists.MASTER_APPROVAL_STATUS_LIST_NAME);
@@ -318,7 +353,6 @@ export class AppDataService {
     return this.masterApprovalStatusList;
   }
 
-  /** ok */
   async getMasterActions(stageNameId: number, oppType: number): Promise<MasterAction[]> {
     return await this.sharepoint.getAllItems(
       SPLists.MASTER_ACTION_LIST_NAME,
@@ -326,7 +360,6 @@ export class AppDataService {
     );
   }
 
-  /** ok */
   async getMasterApprovalStatusId(status: string): Promise<number | null> {
     const approvalStatus = (await this.getMasterApprovalStatuses()).find(el => el.Title == status);
     if (approvalStatus) {
@@ -335,13 +368,11 @@ export class AppDataService {
     return null;
   }
 
-  /** ok */
   async getMasterGeography(id: number): Promise<MasterGeography> {
     const countryExpandOptions = '$select=*,Country/ID,Country/Title&$expand=Country';
     return await this.sharepoint.getOneItemById(id, SPLists.MASTER_GEOGRAPHIES_LIST_NAME, countryExpandOptions);
   }
 
-  /** ok */
   async getMasterStageFolders(masterStageId: number): Promise<NPPFolder[]> {
     return await this.sharepoint.getAllItems(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=StageNameId eq " + masterStageId);
   }
@@ -354,59 +385,25 @@ export class AppDataService {
     );
   }
 
-  /** ok */
   async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
     const stages = await this.sharepoint.getAllItems(SPLists.MASTER_STAGES_LIST_NAME, `$filter=StageType eq '${stageType}'`);
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
+  /** TODEL unused ? */
+  // async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string = FILES_FOLDER): Promise<boolean> {
+  //   const statusId = await this.getMasterApprovalStatusId(status);
+  //   if (!statusId) return false;
 
+  //   let data = { ApprovalStatusId: statusId };
+  //   if (comments) Object.assign(data, { Comments: comments });
 
+  //   return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
+  // }
 
-
-  /** unused ? */
-  async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string = FILES_FOLDER): Promise<boolean> {
-    const statusId = await this.getMasterApprovalStatusId(status);
-    if (!statusId) return false;
-
-    let data = { ApprovalStatusId: statusId };
-    if (comments) Object.assign(data, { Comments: comments });
-
-    return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
-  }
-
-
-  /** TOCHECK getbrand o get Entity? */
-  async getBrand(id: number): Promise<Opportunity> {
-    let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
-   
-    let results = await this.sharepoint.getOneItem(SPLists.ENTITIES_LIST_NAME, "$filter=Id eq "+id+cond);
-    
-    return results;
-  }
-
-  
-  
   /** TOCHECK on ha d'anar? */
   async setActionDueDate(actionId: number, newDate: string) {
     return await this.sharepoint.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST_NAME, { ActionDueDate: newDate });
-  }
-
-  async getGroupMembers(groupNameOrId: string | number): Promise<User[]> {
-    try {
-      let users = [];
-      if (typeof groupNameOrId == 'number') {
-        users = await this.sharepoint.query(`sitegroups/getbyid('${groupNameOrId}')/users`).toPromise();
-      } else {
-        users = await this.sharepoint.query(`sitegroups/getbyname('${groupNameOrId}')/users`).toPromise();
-      }
-      if (users && users.value.length > 0) {
-        return users.value;
-      }
-      return [];
-    } catch (e) {
-      return [];
-    }
   }
 
   async getOpportunityTypes(type: string | null = null): Promise<OpportunityType[]> {
@@ -476,11 +473,22 @@ export class AppDataService {
     return [];
   }
 
-
-
-  
-
-  
+  async getGroupMembers(groupNameOrId: string | number): Promise<User[]> {
+    try {
+      let users = [];
+      if (typeof groupNameOrId == 'number') {
+        users = await this.sharepoint.query(`sitegroups/getbyid('${groupNameOrId}')/users`).toPromise();
+      } else {
+        users = await this.sharepoint.query(`sitegroups/getbyname('${groupNameOrId}')/users`).toPromise();
+      }
+      if (users && users.value.length > 0) {
+        return users.value;
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 
   /** Returns the Sharepoint Group named as 'name' */
   async getGroup(name: string): Promise<SPGroup | null> {
@@ -556,9 +564,6 @@ export class AppDataService {
     return folders;
   }
   
-
-  
-
   async getAADGroupName(): Promise<string | null> {
     const AADGroup = await this.sharepoint.getOneItem(SPLists.MASTER_AAD_GROUPS_LIST_NAME, `$filter=AppTypeId eq ${this.getAppType().ID}`);
     if (AADGroup) return AADGroup.Title;
@@ -567,7 +572,16 @@ export class AppDataService {
 
   /** --- SELECT LISTS --- */
 
-  
+  searchByTermInputList(query: string, field: string, term: string, matchCase = false): Observable<SelectInputList[]> {
+    return this.sharepoint.query(query, '', 'all', { term, field, matchCase })
+      .pipe(
+        map((res: any) => {
+          return res.value.map(
+            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+          );
+        })
+      );
+  }
 
   async getOpportunityTypesList(type: string | null = null): Promise<SelectInputList[]> {
     let res = await this.getOpportunityTypes(type);
@@ -641,14 +655,10 @@ export class AppDataService {
     return this.masterTherapiesList;
   }
 
-  
-
   async getSiteOwnersList(): Promise<SelectInputList[]> {
     const owners = await this.getSiteOwners();
     return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id } })
   }
-
-  
 
   async getBusinessUnitsList(): Promise<SelectInputList[]> {
     let cache = this.masterBusinessUnits;
@@ -683,30 +693,25 @@ export class AppDataService {
   }
 
   /** Gets the profile pic of the user in Microsoft (uses MS Graph) */
-  /** ok */
   async getUserProfilePic(userId: number): Promise<Blob | null> {
     const user = await this.getUserInfo(userId);
     if (!user.Email) return null;
     return await this.msgraph.getProfilePic(user.Email);
   }
 
-  /** ok */
   async createEntityGeography(data: EntityGeographyInput): Promise<EntityGeography> {
     return await this.sharepoint.createItem(SPLists.GEOGRAPHIES_LIST_NAME, data);
   }
 
-  /** ok */
   async updateEntityGeography(id: number, data: any): Promise<boolean> {
     return await this.sharepoint.updateItem(id,  SPLists.GEOGRAPHIES_LIST_NAME, data);
   }
 
-  /** ok */
   async getEntityGeography(id: number): Promise<EntityGeography> {
     const countryExpandOptions = '$select=*,Country/ID,Country/Title&$expand=Country';
     return await this.sharepoint.getOneItemById(id, SPLists.GEOGRAPHIES_LIST_NAME, countryExpandOptions);
   }
 
-  /** ok */
   async getEntityGeographies(entityId: number, all?: boolean) {
     let filter = `$filter=EntityNameId eq ${entityId}`;
     if (!all) {
@@ -717,7 +722,6 @@ export class AppDataService {
     );
   }
   
-  /** ok */
   async createStageActionFromMaster(ma: MasterAction, entityId: number): Promise<Action> {
     let dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + ma.DueDays);
@@ -733,7 +737,6 @@ export class AppDataService {
     );
   }
 
-  /** ok */
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
     let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
@@ -770,31 +773,6 @@ export class AppDataService {
     };
     return await this.sharepoint.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST_NAME, data);
   }
-
-  
-
-
-  /** Create group with name. If group previously exists, get the group */
-  async createGroup(name: string, description: string = ''): Promise<SPGroup | null> {
-    const group = await this.getGroup(name);
-    if (group) return group;
-
-    return this.sharepoint.createGroup(name, description);
-  }
-
-  /** Delete group with id */
-  async deleteGroup(id: number): Promise<boolean> {
-    return this.sharepoint.deleteGroup(id);
-  }
-
-  async getGroups(): Promise<SPGroup[]> {
-    const groups = await this.sharepoint.query('sitegroups').toPromise();
-    if (groups.value) {
-      return groups.value;
-    }
-    return [];
-  }
-
 
   /** Add Power BI Row Level Security Access for the user to the entity */
   async addPowerBI_RLS(user: User, entityId: number, countries: Country[]) {
@@ -883,20 +861,8 @@ export class AppDataService {
     });    
   }
 
-  
-
-  
-
-  
-
-
-
-
-  
-
   /** ----- USERS ----- **/
 
-  /** ok */
   async getCurrentUserInfo(): Promise<User> {
     let sharepointUrl = this.licensing.getSharepointApiUri();
     let accountStorageKey = sharepointUrl + '-sharepointAccount';
@@ -911,29 +877,26 @@ export class AppDataService {
     }
   }
 
-  /** ok */
   removeCurrentUserInfo() {
     localStorage.removeItem('sharepointAccount');
   }
 
-  /** ok */
   async getSeats(email: string) {
     return await this.licensing.getSeats(email);
   }
 
-  /** ok */
+  /** TODEL ? */
   async addseattouser(email: string) {
     await this.licensing.addSeat(email);
   }
 
-  /** ok */
+  /** TODEL ? */
   async removeseattouser(email: string) {
     await this.licensing.removeSeat(email);
   }
 
   /** --- NOTIFICATIONS --- */
 
-  /** ok */
   async getUserNotifications(userId: number, from: Date | false | null = null, limit: number | null = null): Promise<NPPNotification[]> {
     let conditions = `$filter=TargetUserId eq '${userId}'`;
     if (from) {
@@ -950,19 +913,16 @@ export class AppDataService {
     );
   }
 
-  /** ok */
   async updateNotification(notificationId: number, data: any): Promise<boolean> {
     return await this.sharepoint.updateItem(notificationId, SPLists.NOTIFICATIONS_LIST_NAME, data);
   }
 
-  /** ok */
   async notificationsCount(userId: number, conditions = ''): Promise<number> {
     conditions = `$filter=TargetUserId eq '${userId}'` + ( conditions ? ' and ' + conditions : '');
     // item count de sharepoint ho retorna tot sense condicions => getAllItems + length
     return (await this.sharepoint.getAllItems(SPLists.NOTIFICATIONS_LIST_NAME, '$select=Id&' + conditions)).length;
   }
 
-  /** ok */
   async createNotification(userId: number, text: string): Promise<NPPNotification> {
     return await this.sharepoint.createItem(SPLists.NOTIFICATIONS_LIST_NAME, {
       Title: text,
@@ -972,24 +932,20 @@ export class AppDataService {
 
   /** ---- Power BI ---- **/
 
-  /** ok */
   async getReports(): Promise<PBIReport[]>{
     return await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_LIST_NAME,'$orderby=SortOrder');
   }
 
-  /** ok */
   async getReport(id:number): Promise<PBIReport>{
     return await this.sharepoint.getOneItemById(id, SPLists.MASTER_POWER_BI_LIST_NAME);
   }
 
-  /** ok */
   async getReportByName(reportName:string): Promise<PBIReport>{
     let filter = `$filter=Title eq '${reportName}'`;
     let select = `$select=ID,name,GroupId,pageName,Title`;
     return await this.sharepoint.getOneItem(SPLists.MASTER_POWER_BI_LIST_NAME,`${select}&${filter}`)
   }
 
-  /** ok */
   async getComponents(report: PBIReport): Promise<PBIRefreshComponent[]> {
     let select = `$select=Title,ComponentType,GroupId`
     let filter = `$filter=ReportTypeId eq'${report.ID}'`;
@@ -1000,7 +956,6 @@ export class AppDataService {
 
   /** ---- Files ----- **/
 
-  /** ok */
   async readFile(fileUri: string): Promise<any> {
     return await this.sharepoint.readFile(fileUri);
   }
@@ -1027,7 +982,6 @@ export class AppDataService {
     return files;
   }
 
-  /** ok */
   async getFileProperties(fileUrl: string): Promise<NPPFileMetadata> {
     return await this.sharepoint.readFileMetadata(fileUrl);
   }
@@ -1040,47 +994,38 @@ export class AppDataService {
     return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${rootFolder}')`, properties);
   }
 
-  /** ok */
   async getFileByName(path: string, filename: string) {
     return await this.sharepoint.getPathFiles(path, `$filter=Name eq '${this.clearFileName(filename)}'`);
   }
 
-  /** ok */
   async getFileByForecast(path: string, forecastId: number) {
     return await this.sharepoint.getPathFiles(path, `$filter=ListItemAllFields/ForecastId eq ${forecastId}`);
   }
 
-  /** ok */
   async deleteFile(fileUri: string): Promise<boolean> {
     return await this.sharepoint.deleteFile(fileUri);
   }
 
-  /** ok */
   async renameFile(fileUri: string, newName: string): Promise<boolean> {
     return await this.sharepoint.renameFile(fileUri, this.clearFileName(newName));
   }
 
-  /** ok */
   async copyFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<any> {
     return await this.sharepoint.copyFile(originServerRelativeUrl, destinationFolder, this.clearFileName(newFileName));
   }
 
-  /** ok */
   async moveFile(originServerRelativeUrl: string, destinationFolder: string, newFilename: string = ''): Promise<any> {
     return await this.sharepoint.moveFile(originServerRelativeUrl, destinationFolder, this.clearFileName(newFilename));
   }
 
-  /** ok */
   async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
     return await this.sharepoint.cloneFile(originServerRelativeUrl, destinationFolder, this.clearFileName(newFileName));
   }
 
-  /** ok */
   async existsFile(filename: string, folder: string): Promise<boolean> {
     return await this.sharepoint.existsFile(filename, folder);
   }
 
-  /** ok */
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
     let uploaded: any = await this.sharepoint.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
 
@@ -1094,20 +1039,6 @@ export class AppDataService {
     return uploaded;
   }
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
   /** TOCHECK set type */
   async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
     let basePath = FILES_FOLDER;
@@ -1115,144 +1046,54 @@ export class AppDataService {
     return await this.sharepoint.getPathSubfolders(basePath + folder);
   }
 
-  
-
   async getNPPFolderByDepartment(departmentID: number): Promise<NPPFolder> {
     return await this.sharepoint.getOneItem(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=Id eq " + departmentID);
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-  
-    /** Adds a user to a Sharepoint group. If ask for seat, also try to assign a seat for the user */
-    async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false): Promise<boolean> {
-      try {
-        if (askForSeat) {
-          //check if is previously in the group, to avoid ask again for the same seat
-          if (await this.userIsInGroup(user.Id, groupId)) {
-            return true;
-          }
-          await this.askSeatForUser(user);
-        }
-        return await this.addUserToGroup(user, groupId);
-      } catch (e: any) {
-        if (e.status === 422) {
-          this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
-          user could not be assigned.`, "No Seats Available!", {
-            disableTimeOut: true,
-            closeButton: true
-          });
-          return false;
-        }
-        return false;
-      }
-    }
-  
-    /** Remove a user from a Sharepoint group. If removeSeat, also free his seat */
-    async removeUserFromGroup(group: string | number, userId: number, removeSeat = false): Promise<boolean> {
-      try {
-        if (removeSeat) {
-          const user = await this.getUserInfo(userId);
-          await this.removeUserSeat(user);
-        }
-        if (typeof group == 'string') {
-          return await this.removeUserFromGroupName(userId, group);
-        } else {
-          return await this.removeUserFromGroupId(userId, group);
-        }
-      } catch (e: any) {
-        if (e.status == 400) {
+  /** Adds a user to a Sharepoint group. If ask for seat, also try to assign a seat for the user */
+  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false): Promise<boolean> {
+    try {
+      if (askForSeat) {
+        //check if is previously in the group, to avoid ask again for the same seat
+        if (await this.userIsInGroup(user.Id, groupId)) {
           return true;
         }
+        await this.askSeatForUser(user);
+      }
+      return await this.addUserToGroup(user, groupId);
+    } catch (e: any) {
+      if (e.status === 422) {
+        this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
+          user could not be assigned.`, "No Seats Available!", {
+          disableTimeOut: true,
+          closeButton: true
+        });
         return false;
       }
+      return false;
     }
+  }
   
-    async userIsInGroup(userId: number, groupId: number): Promise<boolean> {
-      try {
-        const groupUsers = await this.getGroupMembers(groupId);
-        return groupUsers.some(user => user.Id === userId);
-      } catch (e) {
-        return false;
+  /** Remove a user from a Sharepoint group. If removeSeat, also free his seat */
+  async removeUserFromGroup(group: string | number, userId: number, removeSeat = false): Promise<boolean> {
+    try {
+      if (removeSeat) {
+        const user = await this.getUserInfo(userId);
+        await this.removeUserSeat(user);
       }
-    }
-  
-    
-  
-    
-  
-    /** todel */
-    async deleteAllGroups() {
-      const groups = await this.getGroups();
-      for (const g of groups) {
-        if (g.Title.startsWith('DU') || g.Title.startsWith('OO') || g.Title.startsWith('OU') || g.Title.startsWith('SU')) {
-          this.deleteGroup(g.Id);
-        }
+      if (typeof group == 'string') {
+        return await this.removeUserFromGroupName(userId, group);
+      } else {
+        return await this.removeUserFromGroupId(userId, group);
       }
+    } catch (e: any) {
+      if (e.status == 400) {
+        return true;
+      }
+      return false;
     }
+  }
   
-    
-  
-    
-  
-    
-    
-  
-    
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-  
-    
-
-    getAppType(): AppType {
-      return this.app;
-    }
-
-
   private async askSeatForUser(user: User) {
     if (!user.Email) return false;
     try {

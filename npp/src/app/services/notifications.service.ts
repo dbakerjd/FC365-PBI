@@ -72,7 +72,7 @@ export class NotificationsService {
   async modelFolderAccessNotification(userIds: number[], opportunityId: number) {
     const currentUser = await this.getCurrentUser();
     let notificationMessage = `${currentUser.Title} has given you access to Forecast Models`;
-    const opportunity = await this.appData.getOpportunity(opportunityId);
+    const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
       if (user == currentUser.Id) continue;
@@ -85,7 +85,7 @@ export class NotificationsService {
     const folder = await this.appData.getNPPFolderByDepartment(departmentId);
     if (!folder) return;
     let notificationMessage = `${currentUser.Title} has given you access to ${folder.Title}`;
-    const opportunity = await this.appData.getOpportunity(opportunityId);
+    const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     for (const user of userIds) {
       if (user == currentUser.Id) continue;
@@ -141,7 +141,7 @@ export class NotificationsService {
     if (users.length < 1) return;
 
     if (opportunityId) {
-      const opportunity = await this.appData.getOpportunity(opportunityId);
+      const opportunity = await this.appData.getEntity(opportunityId);
       if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     }
     

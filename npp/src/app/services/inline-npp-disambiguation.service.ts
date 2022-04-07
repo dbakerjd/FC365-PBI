@@ -74,13 +74,13 @@ export class InlineNppDisambiguationService {
     return undefined;
   }
 
-  getEntity(id: number) {
-    if(this.isInline) {
-      return this.appData.getBrand(id);
-    } else {
-      return this.appData.getOpportunity(id);
-    }
-  }
+  // getEntity(id: number) {
+  //   if(this.isInline) {
+  //     return this.appData.getBrand(id);
+  //   } else {
+  //     return this.appData.getOpportunity(id);
+  //   }
+  // }
 
   async getEntities() {
     if(this.app) {

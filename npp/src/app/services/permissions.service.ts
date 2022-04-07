@@ -5,7 +5,6 @@ import { AppDataService } from './app-data.service';
 import * as SPFolders from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { SystemFolder } from '@shared/models/file-system';
-import { ToastrService } from 'ngx-toastr';
 
 interface SPGroup {
   Id: number;
@@ -25,11 +24,7 @@ interface SPGroupListItem {
 })
 export class PermissionsService {
 
-  constructor(
-    // private readonly sharepoint: SharepointService,
-    private readonly appData: AppDataService,
-    private readonly toastr: ToastrService
-  ) { }
+  constructor(private readonly appData: AppDataService) { }
 
   /* set permissions related to working groups a list or item */
   async setPermissions(permissions: GroupPermission[], workingGroups: SPGroupListItem[], itemOrFolder: number | string | null = null) {
@@ -136,61 +131,6 @@ export class PermissionsService {
     permissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
     return true;
-  }
-
-  async initializeInternalEntityFolders(opportunity: Opportunity, geographies: EntityGeography[]) {
-    const OUGroup = await this.appData.createGroup('OU-' + opportunity.ID);
-    const OOGroup = await this.appData.createGroup('OO-' + opportunity.ID);
-
-    if (!OUGroup || !OOGroup) return false; // something happened with groups
-
-    const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
-    if (!owner.LoginName) return false;
-
-    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
-      return false;
-    }
-    await this.appData.addUserToGroup(owner, OOGroup.Id);
-    
-    let groups: SPGroupListItem[] = [];
-    groups.push({ type: 'OU', data: OUGroup });
-    groups.push({ type: 'OO', data: OOGroup });
-
-    // Folders
-    const folders = await this.createInternalFolders(opportunity, groups, geographies);
-
-    // add groups to folders
-    const RefDocsPermissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
-    await this.createFolderGroups(opportunity.ID, RefDocsPermissions, folders.rw.filter(el => el.DepartmentID), groups);
-    const WIPpermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_WIP);
-    await this.createFolderGroups(opportunity.ID, WIPpermissions, folders.rw.filter(el => el.GeographyID), groups);
-    const approvedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_APPROVED);
-    await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
-    const archivedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_ARCHIVED);
-    await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
-      
-    return true;
-  }
-
-  /** Creates the DU folder groups and sets permissions for a list of folders 
-   * 
-   * @param oppId The opportunity ID containing the folders
-   * @param permissions List of group permissions to set
-   * @param folders List of folders to create the groups
-   * @param baseGroups Base of groups to include in the permissions
-  */
-  private async createFolderGroups(oppId: number, permissions: GroupPermission[], folders: SystemFolder[], baseGroups: SPGroupListItem[]) {
-    for (const f of folders) {
-      let folderGroups = [...baseGroups]; // copy default groups
-      if (f.DepartmentID) {
-        let DUGroup = await this.appData.createGroup(`DU-${oppId}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
-        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-      } else if (f.GeographyID) {
-        let DUGroup = await this.appData.createGroup(`DU-${oppId}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
-        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
-      }
-      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
-    }
   }
 
   /** Sets the access for the entity departments groups updating their members */
@@ -550,6 +490,40 @@ export class PermissionsService {
     }
   }
 
+  private async initializeInternalEntityFolders(opportunity: Opportunity, geographies: EntityGeography[]) {
+    const OUGroup = await this.appData.createGroup('OU-' + opportunity.ID);
+    const OOGroup = await this.appData.createGroup('OO-' + opportunity.ID);
+
+    if (!OUGroup || !OOGroup) return false; // something happened with groups
+
+    const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
+    if (!owner.LoginName) return false;
+
+    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
+      return false;
+    }
+    await this.appData.addUserToGroup(owner, OOGroup.Id);
+    
+    let groups: SPGroupListItem[] = [];
+    groups.push({ type: 'OU', data: OUGroup });
+    groups.push({ type: 'OO', data: OOGroup });
+
+    // Folders
+    const folders = await this.createInternalFolders(opportunity, groups, geographies);
+
+    // add groups to folders
+    const RefDocsPermissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
+    await this.createFolderGroups(opportunity.ID, RefDocsPermissions, folders.rw.filter(el => el.DepartmentID), groups);
+    const WIPpermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_WIP);
+    await this.createFolderGroups(opportunity.ID, WIPpermissions, folders.rw.filter(el => el.GeographyID), groups);
+    const approvedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_APPROVED);
+    await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
+    const archivedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_ARCHIVED);
+    await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
+      
+    return true;
+  }
+
   private async createInternalFolders(entity: Opportunity, groups: SPGroupListItem[], geographies?: EntityGeography[]): Promise<{rw: SystemFolder[], ro: SystemFolder[]}> {
     let ReadWriteNames = [SPFolders.FOLDER_WIP, SPFolders.FOLDER_DOCUMENTS];
     let ReadOnlyNames = [SPFolders.FOLDER_APPROVED, SPFolders.FOLDER_ARCHIVED];
@@ -766,5 +740,26 @@ export class PermissionsService {
       return masterGeography.Country;
     }
     return [];
+  }
+
+  /** Creates the DU folder groups and sets permissions for a list of folders 
+   * 
+   * @param oppId The opportunity ID containing the folders
+   * @param permissions List of group permissions to set
+   * @param folders List of folders to create the groups
+   * @param baseGroups Base of groups to include in the permissions
+  */
+  private async createFolderGroups(oppId: number, permissions: GroupPermission[], folders: SystemFolder[], baseGroups: SPGroupListItem[]) {
+    for (const f of folders) {
+      let folderGroups = [...baseGroups]; // copy default groups
+      if (f.DepartmentID) {
+        let DUGroup = await this.appData.createGroup(`DU-${oppId}-${f.DepartmentID}`, 'Department ID ' + f.DepartmentID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+      } else if (f.GeographyID) {
+        let DUGroup = await this.appData.createGroup(`DU-${oppId}-0-${f.GeographyID}`, 'Geography ID ' + f.GeographyID);
+        if (DUGroup) folderGroups.push({ type: 'DU', data: DUGroup });
+      }
+      await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
+    }
   }
 }

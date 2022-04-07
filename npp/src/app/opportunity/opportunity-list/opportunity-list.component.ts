@@ -144,7 +144,7 @@ export class OpportunityListComponent implements OnInit {
      
       if (result.success) {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
-        let opp = await this.appData.getOpportunity(result.data.opportunity.ID);
+        let opp = await this.appData.getEntity(result.data.opportunity.ID);
         opp.progress = 0;
         if (await this.entities.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
@@ -197,7 +197,7 @@ export class OpportunityListComponent implements OnInit {
         if (opp.EntityOwnerId !== result.data.EntityOwnerId) {
           await this.notifications.opportunityOwnerNotification(result.data);
         }
-        Object.assign(opp, await this.appData.getOpportunity(opp.ID));
+        Object.assign(opp, await this.appData.getEntity(opp.ID));
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");
       }

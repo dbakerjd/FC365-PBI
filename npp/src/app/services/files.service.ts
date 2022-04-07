@@ -208,8 +208,8 @@ export class FilesService {
 
   /** Copy files of one external opportunity to an internal one */
   async copyFilesExternalToInternal(extOppId: number, intOppId: number) {
-    const externalEntity = await this.appData.getOpportunity(extOppId);
-    const internalEntity = await this.appData.getOpportunity(intOppId);
+    const externalEntity = await this.appData.getEntity(extOppId);
+    const internalEntity = await this.appData.getEntity(intOppId);
 
     // copy models
     // [TODO] search for last stage number (now 3, but could change?)

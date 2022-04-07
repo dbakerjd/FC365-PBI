@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
-import { EntityGeography, Indication, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
-import { SharepointService } from './sharepoint.service';
-import { InlineNppDisambiguationService } from './inline-npp-disambiguation.service';
-import { ENTITIES_LIST_NAME, ENTITY_STAGES_LIST_NAME, GEOGRAPHIES_LIST_NAME, MASTER_STAGES_LIST_NAME } from '@shared/sharepoint/list-names';
+import { Opportunity, Stage } from '@shared/models/entity';
 import { AppDataService } from './app-data.service';
-import { SystemFolder } from '@shared/models/file-system';
 import { PermissionsService } from './permissions.service';
 import { FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { FilesService } from './files.service';
@@ -40,25 +36,12 @@ interface BrandInput {
   AppTypeId: number;
 }
 
-interface SPGroup {
-  Id: number;
-  Title: string;
-  Description: string;
-  LoginName: string;
-  OnlyAllowMembersViewMembership: boolean;
-}
-
-interface SPGroupListItem {
-  type: string;
-  data: SPGroup;
-}
 @Injectable({
   providedIn: 'root'
 })
 export class EntitiesService {
 
   constructor(
-    private readonly appService: InlineNppDisambiguationService,
     private readonly appData: AppDataService,
     private readonly permissions: PermissionsService,
     private readonly files: FilesService
@@ -129,7 +112,7 @@ export class EntitiesService {
   /** TOCHECK igual que update brand ? */
   async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
     // const oppBeforeChanges: Opportunity = await this.sharepoint.getOneItemById(oppId, SPLists.ENTITIES_LIST_NAME);
-    const oppBeforeChanges = await this.appData.getOpportunity(oppId, false);
+    const oppBeforeChanges = await this.appData.getEntity(oppId, false);
     // const success = await this.sharepoint.updateItem(oppId, SPLists.ENTITIES_LIST_NAME, oppData);
     const success = await this.appData.updateEntity(oppId, oppData);
 
@@ -191,10 +174,7 @@ export class EntitiesService {
     await this.files.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
 
     return changes;
-
   }
-
-
 
   async getBrandModelsCount(brand: Opportunity) {
     return await this.files.getBrandFolderFilesCount(brand, FOLDER_WIP);
@@ -204,11 +184,4 @@ export class EntitiesService {
     return await this.files.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
   }
 
-  
-
-  
-
-
-  
-  
 }

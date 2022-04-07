@@ -94,7 +94,7 @@ export class ActionsListComponent implements OnInit {
     this.route.params.subscribe(async (params) => {
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
-        this.opportunity = await this.appData.getOpportunity(params.id);
+        this.opportunity = await this.appData.getEntity(params.id);
         if (!this.opportunity) {
           this.router.navigate(['notfound']);
         }
@@ -497,7 +497,7 @@ export class ActionsListComponent implements OnInit {
             let job = this.jobs.startJob(
               'initialize stage ' + result.data.ID
             );
-            let opp = await this.appData.getOpportunity(result.data.EntityNameId);
+            let opp = await this.appData.getEntity(result.data.EntityNameId);
             const oppGeographies = await this.appData.getEntityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
             this.permissions.initializeStage(opp, result.data,oppGeographies).then(async r => {
@@ -577,7 +577,7 @@ export class ActionsListComponent implements OnInit {
                         await this.appData.setOpportunityStatus(this.opportunity.ID, "Approved");
 
                         this.toastr.success("A new opportunity was created successfully", result.data.opportunity.Title);
-                        let opp = await this.appData.getOpportunity(result.data.opportunity.ID);
+                        let opp = await this.appData.getEntity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
                           "initialize opportunity " + result.data.opportunity.id
