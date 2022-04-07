@@ -235,6 +235,24 @@ export class SharepointService {
   }
 
   /** ok */
+  async getPathSubfolders(path: string) {
+    const result = await this.query(
+      `GetFolderByServerRelativeUrl('${path}')/folders`,
+      '$expand=ListItemAllFields',
+    ).toPromise();
+    return result.value ? result.value : [];
+  }
+
+  /** ok */
+  async getPathFiles(path: string, filter = '') {
+    const result = await this.query(
+      `GetFolderByServerRelativeUrl('${path}')/Files`,
+      '$expand=ListItemAllFields' + filter ? ('&' + filter) : '',
+    ).toPromise();
+    return result.value ? result.value : [];
+  }
+
+  /** ok */
   async readFile(fileUri: string): Promise<any> {
     try {
       return this.http.get(
@@ -292,6 +310,7 @@ export class SharepointService {
   /** ok */
   async existsFile(filename: string, folder: string): Promise<boolean> {
     try {
+      /** tocheck use getFileByName */
       let file = await this.query(
         `GetFolderByServerRelativeUrl('${folder}')/Files`,
         `$expand=ListItemAllFields&$filter=Name eq '${filename}'`,
@@ -318,35 +337,7 @@ export class SharepointService {
     }
   }
 
-  /** TODEL ? */
-  async readFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
-    let files: NPPFile[] = []
-    const result = await this.query(
-      `GetFolderByServerRelativeUrl('${this.getBaseFilesFolder()}/${folder}')/Files`,
-      '$expand=ListItemAllFields',
-    ).toPromise();
-
-    if (result.value) {
-      files = result.value;
-    }
-    if (expandProperties && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        let fileItems = files[i].ListItemAllFields;
-        if (fileItems) {
-          fileItems = Object.assign(fileItems, await this.getFileInfo(fileItems.ID));
-        }
-      }
-    }
-    return files;
-  }
-
-  async getEntityFileFromURL(url: string)  {
-    return await this.query(
-      `GetFileByServerRelativeUrl('${url}')/listItemAllFields`
-    ).toPromise();
-  }
-
-  /** TOCHECK creada nova per treure crida de AppData, fa el mateix que getEntityFileFromURL()? */
+  /** ok */
   async readFileMetadata(url: string): Promise<NPPFileMetadata> {
     return (await this.http.get(
       this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${url}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
@@ -608,15 +599,6 @@ export class SharepointService {
     } catch (e: any) {
       return false;
     }
-  }
-
-  /** ok */
-  async getPathSubfolders(path: string) {
-    const result = await this.query(
-      `GetFolderByServerRelativeUrl('${path}')/folders`,
-      '$expand=ListItemAllFields',
-    ).toPromise();
-    return result.value ? result.value : [];
   }
 
   /** ok */

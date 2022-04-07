@@ -6,6 +6,8 @@ import { ENTITIES_LIST_NAME, ENTITY_STAGES_LIST_NAME, GEOGRAPHIES_LIST_NAME, MAS
 import { AppDataService } from './app-data.service';
 import { SystemFolder } from '@shared/models/file-system';
 import { PermissionsService } from './permissions.service';
+import { FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
+import { FilesService } from './files.service';
 
 interface OpportunityInput {
   Title: string;
@@ -58,7 +60,8 @@ export class EntitiesService {
   constructor(
     private readonly appService: InlineNppDisambiguationService,
     private readonly appData: AppDataService,
-    private readonly permissions: PermissionsService
+    private readonly permissions: PermissionsService,
+    private readonly files: FilesService
   ) { }
 
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
@@ -159,5 +162,53 @@ export class EntitiesService {
     );
   }
 
+  async createEntityForecastCycle(entity: Opportunity, values: any) {
+    const geographies = await this.appData.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
+    let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let workInProgressBasePath = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+
+    let cycle = await this.appData.createEntityForecastCycle(entity);
+
+    for (const geo of geographies) {
+      let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+      const cycleFolder = await this.appData.createFolder(geoFolder, true);
+      if(cycleFolder) {
+        await this.files.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
+      }else {
+        throw new Error("Could not create Forecast Cycle folder");
+      }
+    }
+
+    let changes = {
+      ForecastCycleId: values.ForecastCycle,
+      ForecastCycleDescriptor: values.ForecastCycleDescriptor,
+      Year: values.Year
+    };
+
+    await this.appData.updateEntity(entity.ID, changes);
+
+    await this.files.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
+
+    return changes;
+
+  }
+
+
+
+  async getBrandModelsCount(brand: Opportunity) {
+    return await this.files.getBrandFolderFilesCount(brand, FOLDER_WIP);
+  }
+
+  async getBrandApprovedModelsCount(brand: Opportunity) {
+    return await this.files.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
+  }
+
+  
+
+  
+
+
+  
   
 }

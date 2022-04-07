@@ -12,6 +12,7 @@ import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { FOLDER_DOCUMENTS, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
 @Component({
   selector: 'app-external-upload-file',
   templateUrl: './external-upload-file.component.html',
@@ -30,8 +31,8 @@ export class ExternalUploadFileComponent implements OnInit {
     public dialogRef: MatDialogRef<ExternalUploadFileComponent>,
     private readonly sharepoint: SharepointService,
     private matDialog: MatDialog,
-    private readonly disambiguator: InlineNppDisambiguationService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
   ) { 
     
   }
@@ -75,7 +76,7 @@ export class ExternalUploadFileComponent implements OnInit {
     if (containsModels) {
       // forecast model file
 
-      const oppGeographies = await this.disambiguator.getEntityGeographies(this.data.entity.ID);
+      const oppGeographies = await this.appData.getEntityGeographies(this.data.entity.ID);
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
       const user = await this.appData.getCurrentUserInfo();
       let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
@@ -96,7 +97,7 @@ export class ExternalUploadFileComponent implements OnInit {
 
     let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
     let scenarioExists = null;
-    if (containsModels) scenarioExists = await this.disambiguator.getFileByScenarios(fileFolder, this.model.scenario);
+    if (containsModels) scenarioExists = await this.files.getFileByScenarios(fileFolder, this.model.scenario);
     let fileExists = await this.appData.existsFile(scenarioFileName, fileFolder);
     if (fileExists || scenarioExists) {
       let message = '';
@@ -142,7 +143,7 @@ export class ExternalUploadFileComponent implements OnInit {
   private async uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.disambiguator.uploadFile(data, folder, fileName, fileData).then(
+        this.files.uploadFileToFolder(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished

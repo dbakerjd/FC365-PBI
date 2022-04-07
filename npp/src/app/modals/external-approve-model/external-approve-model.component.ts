@@ -8,6 +8,7 @@ import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-external-approve-model',
@@ -44,7 +45,8 @@ export class ExternalApproveModelComponent implements OnInit {
     private readonly disambiguator: InlineNppDisambiguationService,
     private readonly sharepoint: SharepointService,
     private readonly notifications: NotificationsService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
   ) { }
 
   ngOnInit(): void {
@@ -61,9 +63,9 @@ export class ExternalApproveModelComponent implements OnInit {
         let commentsStr = '';
         this.approving = true;
         if(this.model.comments) {
-          commentsStr = await this.appData.addComment(this.file, this.model.comments);
+          commentsStr = await this.files.addFileComment(this.file, this.model.comments);
         }
-        const result = await this.disambiguator.setEntityApprovalStatus(this.rootFolder, this.file, this.entity, "Approved", commentsStr);
+        const result = await this.files.setFileApprovalStatus(this.rootFolder, this.file, this.entity, "Approved", commentsStr);
         let groups = [
           `DU-${this.entity.ID}-${this.departmentID}-${this.file.ListItemAllFields?.EntityGeographyId}`,
           `OO-${this.entity.ID}`

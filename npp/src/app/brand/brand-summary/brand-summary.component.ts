@@ -106,8 +106,8 @@ export class BrandSummaryComponent implements OnInit {
       this.brandData.push({
         brandName: el.Title,
         cycle: el.ForecastCycle?.Title + " " + el.Year,
-        modelsCount: await this.appData.getBrandModelsCount(el),
-        approvedModelsCount: await this.appData.getBrandApprovedModelsCount(el),
+        modelsCount: await this.entities.getBrandModelsCount(el),
+        approvedModelsCount: await this.entities.getBrandApprovedModelsCount(el),
       });
 
     });

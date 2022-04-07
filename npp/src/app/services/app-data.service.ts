@@ -57,6 +57,7 @@ interface OpportunityInput {
   IndicationId: number;
   AppTypeId?: number;
   Year?: number;
+  
 }
 
 interface StageInput {
@@ -68,14 +69,15 @@ interface StageInput {
 }
 
 interface BrandInput {
-  Title: string;
-  EntityOwnerId: number;
-  IndicationId: number;
-  BusinessUnitId: number;
-  ForecastCycleId: number;
+  Title?: string;
+  EntityOwnerId?: number;
+  IndicationId?: number;
+  BusinessUnitId?: number;
+  ForecastCycleId?: number;
   FCDueDate?: Date;
-  Year: number;
+  Year?: number;
   AppTypeId?: number;
+  ForecastCycleDescriptor?: string;
 }
 
 interface SPGroup {
@@ -199,6 +201,15 @@ export class AppDataService {
     ];
   }
 
+  async getBrandFilterFields() {
+    return [
+      { value: 'Title', label: 'Brand Name' },
+      //{ value: 'FCDueDate', label: 'Forecast Cycle Due Date' },
+      { value: 'BusinessUnit.Title', label: 'Business Unit' },
+      { value: 'Indication.Title', label: 'Indication Name' },
+    ];
+  }
+
   /** --- STAGES --- **/
 
   /** ok */
@@ -294,44 +305,9 @@ export class AppDataService {
     return await this.sharepoint.removeUserFromSharepointGroup(userId, groupName);
   }
 
-  private async askSeatForUser(user: User) {
-    if (!user.Email) return false;
-    try {
-      const response = await this.licensing.addSeat(user.Email);
-      if (response?.UserGroupsCount == 1) { // assigned seat for first time
-        const RLSGroup = await this.getAADGroupName();
-        if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(user.Email, RLSGroup);
-      }
-      return true;
-    } catch (e: any) {
-      if (e.status === 422) {
-        this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
-      user could not be assigned.`, "No Seats Available!", {
-          disableTimeOut: true,
-          closeButton: true
-        });
-        return false;
-      }
-      return false;
-    }
-  }
+  
 
-  async removeUserSeat(user: User) {
-    if (!user.Email) return false;
-    try {
-      const response = await this.licensing.removeSeat(user.Email);
-      if (response?.UserGroupsCount == 0) { // removed the last seat for user
-        const RLSGroup = await this.getAADGroupName();
-        if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(user.Email, RLSGroup);
-      }
-      return true;
-    } catch (e: any) {
-      if (e.status == 400) {
-        return true;
-      }
-      return false;
-    }
-  }
+
 
   /** ---- MASTER INFO ---- */
   /** ok */
@@ -350,15 +326,7 @@ export class AppDataService {
     );
   }
 
-
-
-
-
-
-
-
-  
-
+  /** ok */
   async getMasterApprovalStatusId(status: string): Promise<number | null> {
     const approvalStatus = (await this.getMasterApprovalStatuses()).find(el => el.Title == status);
     if (approvalStatus) {
@@ -367,11 +335,13 @@ export class AppDataService {
     return null;
   }
 
+  /** ok */
   async getMasterGeography(id: number): Promise<MasterGeography> {
     const countryExpandOptions = '$select=*,Country/ID,Country/Title&$expand=Country';
     return await this.sharepoint.getOneItemById(id, SPLists.MASTER_GEOGRAPHIES_LIST_NAME, countryExpandOptions);
   }
 
+  /** ok */
   async getMasterStageFolders(masterStageId: number): Promise<NPPFolder[]> {
     return await this.sharepoint.getAllItems(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=StageNameId eq " + masterStageId);
   }
@@ -384,6 +354,7 @@ export class AppDataService {
     );
   }
 
+  /** ok */
   async getMasterStageNumbers(stageType: string): Promise<SelectInputList[]> {
     const stages = await this.sharepoint.getAllItems(SPLists.MASTER_STAGES_LIST_NAME, `$filter=StageType eq '${stageType}'`);
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
@@ -414,144 +385,8 @@ export class AppDataService {
     return results;
   }
 
-  /** TOCHECK on ha d'anar? */
-  async getBrandFields() {
-    return [
-      { value: 'Title', label: 'Brand Name' },
-      //{ value: 'FCDueDate', label: 'Forecast Cycle Due Date' },
-      { value: 'BusinessUnit.Title', label: 'Business Unit' },
-      { value: 'Indication.Title', label: 'Indication Name' },
-    ];
-  }
-
-  async getBrandModelsCount(brand: Opportunity) {
-    return await this.getBrandFolderFilesCount(brand, FOLDER_WIP);
-  }
-
-  async getBrandApprovedModelsCount(brand: Opportunity) {
-    return await this.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
-  }
-
-  async removeOldAcceptedModel(brand: Opportunity, file: NPPFile) {
-    if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
-      let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
-      let scenarios = file.ListItemAllFields.ModelScenarioId;
-
-      let model = await this.getFileByScenarios(path, scenarios);
-      if(model) {
-        await this.deleteFile(model.ServerRelativeUrl);
-      }
-    }
-  }
-
-  async removeNPPOldAcceptedModel(entity: Opportunity, file: NPPFile) {
-    if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
-      let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
-      let scenarios = file.ListItemAllFields.ModelScenarioId;
-
-      let model = await this.getFileByScenarios(path, scenarios);
-      if(model) {
-        await this.deleteFile(model.ServerRelativeUrl);
-      }
-    }
-  }
-
-  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
-    if(file.ListItemAllFields) {
-      const statusId = await this.getMasterApprovalStatusId(status);
-      if (!statusId) return false;
-      /*TODO use something like this to ensure unique name
-      while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
-        fileName = baseFileName + '-copy-' + attemps + '.' + extension;
-      }*/
-      let data = { ApprovalStatusId: statusId };
-      if (comments) Object.assign(data, { Comments: comments });
   
-      await this.sharepoint.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
-      let res;
-      if(status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
-        let arrFolder = file.ServerRelativeUrl.split("/");
-        await this.removeNPPOldAcceptedModel(entity, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+entity.BusinessUnitId+'/'+entity.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
-
-        if (res) {
-          await this.sharepoint.updateFileFields(res, {OriginalModelId: file.ListItemAllFields.ID});
-          await this.copyCSV(file, res);
-        }
-        return res;
-      };
-      
-      return true;
-    } else {
-      throw new Error("Missing file metadata.");
-    }
-  }
-
-  /** TOCHECK similud amb setentityapprovalstatus */
-  async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Opportunity | null, status: string, comments: string | null = null) {
-    if(file.ListItemAllFields) {
-      const statusId = await this.getMasterApprovalStatusId(status);
-      if (!statusId) return false;
-      /*TODO use something like this to ensure unique name
-      while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
-        fileName = baseFileName + '-copy-' + attemps + '.' + extension;
-      }*/
-      let data = { ApprovalStatusId: statusId };
-      if (comments) Object.assign(data, { Comments: comments });
   
-      await this.sharepoint.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
-      let res;
-      if(status === "Approved" && brand) {
-        let arrFolder = file.ServerRelativeUrl.split("/");
-        await this.removeOldAcceptedModel(brand, file);
-        res = await this.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
-        return res;
-      };
-      
-      return true;
-    } else {
-      throw new Error("Missing file metadata.");
-    }
-  }
-
-  async copyCSV(file: NPPFile, path: string) {
-    if (file.ListItemAllFields) {
-      let arrFolder = file.ServerRelativeUrl.split("/");
-      let destLibrary = this.getPowerBICSVRootPathFromModelPath(path);
-  
-      let csvFiles = await this.getModelCSVFiles(file);
-      let destModel = await this.sharepoint.readFileMetadata(path);
-  
-      for(let i = 0; i < csvFiles.length; i++) {
-        let tmpFile = csvFiles[i];
-        let newFileName = tmpFile.Name.replace('_'+file.ListItemAllFields.ID+'.', '_'+destModel.ID+'.');
-        let newPath = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+destLibrary+'/';
-        await this.copyFile(tmpFile.ServerRelativeUrl, newPath, newFileName);
-        await this.sharepoint.updateFileFields(newPath+newFileName, {ForecastId: destModel.ID});
-      } 
-    }
-  }
-
-  async moveCSV(file: NPPFile, path: string) {
-    if (file.ListItemAllFields) {
-      let arrFolder = file.ServerRelativeUrl.split("/");
-      let destLibrary = this.getPowerBICSVRootPathFromModelPath(path);
-  
-      let csvFiles = await this.getModelCSVFiles(file);
-      let destModel = await this.sharepoint.readFileMetadata(path);
-  
-      for(let i = 0; i < csvFiles.length; i++) {
-        let tmpFile = csvFiles[i];
-        let newFileName = tmpFile.Name.replace('_'+file.ListItemAllFields.ID+'.', '_'+destModel.ID+'.');
-        let newPath = destLibrary+'';
-        await this.moveFile(tmpFile.ServerRelativeUrl, newPath, newFileName);
-        await this.sharepoint.updateFileFields("/"+arrFolder[1]+"/"+arrFolder[2]+"/"+newPath+"/"+newFileName, {ForecastId: destModel.ID});
-      } 
-    }
-  }
-
   /** TOCHECK on ha d'anar? */
   async setActionDueDate(actionId: number, newDate: string) {
     return await this.sharepoint.updateItem(actionId, SPLists.ENTITY_ACTIONS_LIST_NAME, { ActionDueDate: newDate });
@@ -641,28 +476,7 @@ export class AppDataService {
     return [];
   }
 
-  async getEntityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
-    let arrFolder = folder.split("/");
-    let rootFolder = arrFolder[0];
-    let select = '';
-    switch(rootFolder) {
-      case FOLDER_DOCUMENTS:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication,ApprovalStatus';
-        break;
-      case FOLDER_ARCHIVED:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
-        break;
-      default:
-        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
-        break;
-    }
-    
-    return await this.sharepoint.query(
-      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
-      select,
-      'all'
-    ).toPromise();
-  }
+
 
   
 
@@ -868,23 +682,25 @@ export class AppDataService {
       .map(t => { return { value: t.Id, label: t.Title } });
   }
 
-  /***************************** OK **********************************/
-
   /** Gets the profile pic of the user in Microsoft (uses MS Graph) */
+  /** ok */
   async getUserProfilePic(userId: number): Promise<Blob | null> {
     const user = await this.getUserInfo(userId);
     if (!user.Email) return null;
     return await this.msgraph.getProfilePic(user.Email);
   }
 
+  /** ok */
   async createEntityGeography(data: EntityGeographyInput): Promise<EntityGeography> {
     return await this.sharepoint.createItem(SPLists.GEOGRAPHIES_LIST_NAME, data);
   }
 
+  /** ok */
   async updateEntityGeography(id: number, data: any): Promise<boolean> {
     return await this.sharepoint.updateItem(id,  SPLists.GEOGRAPHIES_LIST_NAME, data);
   }
 
+  /** ok */
   async getEntityGeography(id: number): Promise<EntityGeography> {
     const countryExpandOptions = '$select=*,Country/ID,Country/Title&$expand=Country';
     return await this.sharepoint.getOneItemById(id, SPLists.GEOGRAPHIES_LIST_NAME, countryExpandOptions);
@@ -917,6 +733,7 @@ export class AppDataService {
     );
   }
 
+  /** ok */
   async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
     let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
@@ -1048,10 +865,6 @@ export class AppDataService {
     return await this.sharepoint.addRolePermissionToList(`lists/getbytitle('${listName}')`, groupId, permission, id);
   }
 
-  private clearFileName(name: string): string {
-    return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
-  }
-
   async getEntityForecastCycles(entity: Opportunity) {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
@@ -1060,144 +873,26 @@ export class AppDataService {
     ); 
   }
 
-  async createEntityForecastCycle(entity: Opportunity, values: any) {
-    const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
-    let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
-    let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
-    let workInProgressBasePath = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
-
-    let cycle = await this.sharepoint.createItem(SPLists.OPPORTUNITY_FORECAST_CYCLE_LIST_NAME, {
+  async createEntityForecastCycle(entity: Opportunity) {
+    return await this.sharepoint.createItem(SPLists.OPPORTUNITY_FORECAST_CYCLE_LIST_NAME, {
       EntityNameId: entity.ID,
       ForecastCycleTypeId: entity.ForecastCycleId,
       Year: entity.Year+"",
       Title: entity.ForecastCycle?.Title + ' ' + entity.Year,
       ForecastCycleDescriptor: entity.ForecastCycleDescriptor
-    });
-
-    for (const geo of geographies) {
-      let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
-      const cycleFolder = await this.createFolder(geoFolder, true);
-      if(cycleFolder) {
-        await this.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
-      }else {
-        throw new Error("Could not create Forecast Cycle folder");
-      }
-    }
-
-    let changes = {
-      ForecastCycleId: values.ForecastCycle,
-      ForecastCycleDescriptor: values.ForecastCycleDescriptor,
-      Year: values.Year
-    };
-
-    await this.sharepoint.updateItem(entity.ID, SPLists.ENTITIES_LIST_NAME, changes);
-
-    await this.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
-
-    return changes;
-
+    });    
   }
 
-  async cloneEntityForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], authorId: number, comments = ''): Promise<boolean> {
+  
 
-    const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
+  
 
-    let success = await this.sharepoint.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
-    if (!success) return false;
-
-    let newFileInfo = await this.sharepoint.query(
-      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
-      `$expand=ListItemAllFields&$filter=Name eq '${this.clearFileName(newFilename)}'`,
-    ).toPromise();
-
-    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
-      const newData:any = {
-        ModelScenarioId: newScenarios,
-        Comments: comments ? comments : null,
-        ApprovalStatusId: await this.getMasterApprovalStatusId("In Progress")
-      }
-      
-      let arrFolder = destinationFolder.split("/");
-      let rootFolder = arrFolder[3];
-      
-      success = await this.sharepoint.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, newData);
-      if(success && authorId) {
-        const user = await this.getUserInfo(authorId);
-        if (user.LoginName)
-          await this.sharepoint.updateReadOnlyField(rootFolder, newFileInfo.value[0].ListItemAllFields.ID, 'Editor', user.LoginName);
-      }
-    }
-
-    return success;
-  }
-
-  async cloneForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], comments = ''): Promise<boolean> {
-
-    const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
-
-    let success = await this.sharepoint.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
-    if (!success) return false;
-
-    let newFileInfo = await this.sharepoint.query(
-      `GetFolderByServerRelativeUrl('${destinationFolder}')/Files`,
-      `$expand=ListItemAllFields&$filter=Name eq '${newFilename}'`,
-    ).toPromise();
-
-    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
-      const newData = {
-        ModelScenarioId: newScenarios,
-        Comments: comments ? comments : null,
-        ApprovalStatusId: await this.getMasterApprovalStatusId("In Progress")
-      }
-      success = await this.sharepoint.updateItem(newFileInfo.value[0].ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, newData);
-    }
-
-    return success;
-  }
+  
 
 
-  async setAllEntityModelsStatusInFolder(entity: Opportunity, folder: string, status: string) {
-    
-    const geographies = await this.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
-    
-    let arrFolder = folder.split("/");
-    let rootFolder = arrFolder[0];
 
-    for(let i=0; i<geographies.length; i++) {
-      let geo = geographies[i];
-      let files = await this.readEntityFolderFiles(folder+"/"+geo.ID+"/0", true);
-      for(let j=0; files && j<files.length; j++) {
-        let model = files[j];
-        await this.setEntityApprovalStatus(rootFolder, model, entity, "In Progress");
-      }
-    }
-    
-  }
 
-  async addComment(file: NPPFile, str: string) {
-    let comments = file.ListItemAllFields?.Comments?.replace(/""/g, '"');
-    let parsedComments = [];
-    let commentsStr = "";
-    if(comments) {
-      try {
-        parsedComments = JSON.parse(comments);
-      } catch(e) {
-
-      }
-      let currentUser = await this.getCurrentUserInfo();
-      let newComment = {
-        text: str,
-        email: currentUser.Email,
-        name: currentUser.Title?.indexOf("@") == -1 ? currentUser.Title : currentUser.Email,
-        userId: currentUser.Id,
-        createdAt: new Date().toISOString()
-      }
-      parsedComments.push(newComment);
-      commentsStr = JSON.stringify(parsedComments)
-      if(file.ListItemAllFields) file.ListItemAllFields.Comments = commentsStr;
-    }
-    return commentsStr;   
-  }
+  
 
   /** ----- USERS ----- **/
 
@@ -1310,19 +1005,59 @@ export class AppDataService {
     return await this.sharepoint.readFile(fileUri);
   }
 
-  /** ok */
-  async deleteFile(fileUri: string, checkCSV: boolean = true): Promise<boolean> {
-    //First check if it has related CSV files to remove
-    if (checkCSV) {
-      await this.deleteRelatedCSV(fileUri);
+  /** Get all the folder files with properties, if needed */
+  async getFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
+    let files: NPPFile[] = []
+    const result = await this.sharepoint.getPathFiles(folder);
+
+    if (result.value) {
+      files = result.value;
     }
-    //then remove
+
+    /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
+    if (expandProperties && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        let fileItems = files[i];
+        if (fileItems) {
+          const info = await this.getEntityFileInfo(folder, fileItems);
+          fileItems = Object.assign(fileItems.ListItemAllFields, info);
+        }
+      }
+    }
+    return files;
+  }
+
+  /** ok */
+  async getFileProperties(fileUrl: string): Promise<NPPFileMetadata> {
+    return await this.sharepoint.readFileMetadata(fileUrl);
+  }
+
+  async updateFilePropertiesByPath(filePath: string, properties: any) {
+    await this.sharepoint.updateFileFields(filePath, properties);
+  }
+
+  async updateFilePropertiesById(fileId: number, rootFolder: string, properties: any) {
+    return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${rootFolder}')`, properties);
+  }
+
+  /** ok */
+  async getFileByName(path: string, filename: string) {
+    return await this.sharepoint.getPathFiles(path, `$filter=Name eq '${this.clearFileName(filename)}'`);
+  }
+
+  /** ok */
+  async getFileByForecast(path: string, forecastId: number) {
+    return await this.sharepoint.getPathFiles(path, `$filter=ListItemAllFields/ForecastId eq ${forecastId}`);
+  }
+
+  /** ok */
+  async deleteFile(fileUri: string): Promise<boolean> {
     return await this.sharepoint.deleteFile(fileUri);
   }
 
   /** ok */
   async renameFile(fileUri: string, newName: string): Promise<boolean> {
-    return await this.sharepoint.renameFile(fileUri, newName);
+    return await this.sharepoint.renameFile(fileUri, this.clearFileName(newName));
   }
 
   /** ok */
@@ -1332,7 +1067,12 @@ export class AppDataService {
 
   /** ok */
   async moveFile(originServerRelativeUrl: string, destinationFolder: string, newFilename: string = ''): Promise<any> {
-    return await this.sharepoint.moveFile(originServerRelativeUrl, destinationFolder, newFilename);
+    return await this.sharepoint.moveFile(originServerRelativeUrl, destinationFolder, this.clearFileName(newFilename));
+  }
+
+  /** ok */
+  async cloneFile(originServerRelativeUrl: string, destinationFolder: string, newFileName: string): Promise<boolean> {
+    return await this.sharepoint.cloneFile(originServerRelativeUrl, destinationFolder, this.clearFileName(newFileName));
   }
 
   /** ok */
@@ -1340,7 +1080,7 @@ export class AppDataService {
     return await this.sharepoint.existsFile(filename, folder);
   }
 
-  /** TOCHECK move ? */
+  /** ok */
   async uploadFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
     let uploaded: any = await this.sharepoint.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
 
@@ -1354,173 +1094,19 @@ export class AppDataService {
     return uploaded;
   }
 
-  /** TOCHECK move ? */
-  async uploadInternalFile(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
-    if(metadata) {
-      let scenarios = metadata.ModelScenarioId;
-      if(scenarios) {
-        let file = await this.getFileByScenarios(folder, scenarios);
-        if(file) this.deleteFile(file?.ServerRelativeUrl);
-      }
-    }
-    
-    let uploaded: any = await this.sharepoint.uploadFileQuery(fileData, folder, this.clearFileName(fileName));
-
-    if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
-
-      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
-      // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
-      let arrFolder = folder.split("/");
-      let rootFolder = arrFolder[0];
-      if(!metadata.Comments) {
-        metadata.Comments = " ";
-      }
-      await this.sharepoint.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, metadata);
-    }
-    return uploaded;
-  }
-
-  async getFileByScenarios(path: string, scenarios: number[]) {
-    let files = await this.readEntityFolderFiles(path,false);
-    for(let i=0;i<files.length; i++){
-      let model = files[i];
-      let sameScenario = this.sameScenarios(model, scenarios);
-      if(sameScenario) {
-        return model;
-      }
-    }
-    return null;
-  }
-
-  sameScenarios(model: NPPFile, scenarios: number[]) {
-    if(model.ListItemAllFields && model.ListItemAllFields.ModelScenarioId) {
-      
-      let sameScenario = model.ListItemAllFields.ModelScenarioId.length === scenarios.length;
-      
-      for(let j=0; sameScenario && j < model.ListItemAllFields.ModelScenarioId.length ; j++) {
-        let scenarioId = model.ListItemAllFields.ModelScenarioId[j];
-        sameScenario = sameScenario && (scenarios.indexOf(scenarioId) != -1);
-      }
-      
-      return sameScenario;
-
-    } else return false;
-  }
-
-  async deleteRelatedCSV(url: string) {
-    let metadata = await this.sharepoint.readFileMetadata(url);
-    let csvFiles = await this.getModelCSVFiles({ ServerRelativeUrl: url, ListItemAllFields: metadata } as NPPFile);
-    for(let i = 0; i < csvFiles.length; i++) {
-      this.deleteFile(csvFiles[i].ServerRelativeUrl, false);
-    } 
-  }
-
-  async getModelCSVFiles(file: NPPFile) {
-    let powerBiLibrary = this.getPowerBICSVRootPathFromModelPath(file.ServerRelativeUrl);
-    let files: NPPFile[] = []
-
-    if (powerBiLibrary && file.ListItemAllFields) {
-      
-      const result = await this.sharepoint.query(
-        `GetFolderByServerRelativeUrl('${powerBiLibrary}')/Files`,
-        '$expand=ListItemAllFields&$filter=ListItemAllFields/ForecastId eq '+file.ListItemAllFields.ID,
-      ).toPromise();
   
-      if (result.value) {
-        files = result.value;
-      }   
-    }
 
-    return files;
-  }
+  
 
-  getPowerBICSVRootPathFromModelPath(path: string) {
-    let mappings: any = {}
-    mappings[FOLDER_DOCUMENTS] =  FOLDER_POWER_BI_DOCUMENTS,
-    mappings[FOLDER_WIP] =  FOLDER_POWER_BI_WIP,
-    mappings[FOLDER_APPROVED] =  FOLDER_POWER_BI_APPROVED,
-    mappings[FOLDER_ARCHIVED] =  FOLDER_POWER_BI_ARCHIVED
-    
+  
 
-    for (const [key, value] of Object.entries(mappings)) {
-      if(path.indexOf(key) !== -1) {
-        return value;
-      }
-    }
+  
 
-    return false;
+  
 
-  }
+  
 
-  async copyAllFolderFiles(origin: string, dest: string, copyCSVs: boolean = true) {
-    let files = await this.readEntityFolderFiles(origin);
-    for(let i=0;i<files.length; i++){
-      let model = files[i];
-      let path = await this.copyFile(model.ServerRelativeUrl, dest, model.Name);
-      if(copyCSVs) {
-        let arrUrl = model.ServerRelativeUrl.split("/"); // server relative url base for path
-        await this.copyCSV(model, "/"+arrUrl[1]+"/"+arrUrl[2]+"/"+path);
-      }
-    }
-  }
-
-  /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
-
-  async readEntityFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
-    let files: NPPFile[] = []
-    const result = await this.sharepoint.query(
-      `GetFolderByServerRelativeUrl('${folder}')/Files`,
-      '$expand=ListItemAllFields',
-    ).toPromise();
-
-    if (result.value) {
-      files = result.value;
-    }
-
-    if (expandProperties && files.length > 0) {
-      for (let i = 0; i < files.length; i++) {
-        let fileItems = files[i];
-        if (fileItems) {
-          const info = await this.getEntityFileInfo(folder, fileItems);
-          fileItems = Object.assign(fileItems.ListItemAllFields, info);
-        }
-      }
-    }
-    return files;
-  }
-
-  async addScenarioSufixToFilename(originFilename: string, scenarioId: number): Promise<string | false> {
-    const scenarios = await this.getScenariosList();
-    const extension = originFilename.split('.').pop();
-    if (!extension) return false;
-
-    const baseFileName = originFilename.substring(0, originFilename.length - (extension.length + 1));
-    return baseFileName
-      + '-' + scenarios.find(el => el.value === scenarioId)?.label.replace(/ /g, '').toLocaleLowerCase()
-      + '.' + extension;
-  }
-
-  async moveAllFolderFiles(origin: string, dest: string, moveCSVs: boolean = true) {
-    let files = await this.readEntityFolderFiles(origin);
-    for(let i=0;i<files.length; i++){
-      let model = files[i];
-      let path = await this.moveFile(model.ServerRelativeUrl, dest);
-      if(moveCSVs) {
-        await this.moveCSV(model, path);
-      }
-    }
-  }
-
-  async getBrandFolderFilesCount(brand: Opportunity, folder: string) {
-    let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0';
-    const geoFolders = await this.getSubfolders(currentFolder);
-    let currentFiles = [];
-    for (const geofolder of geoFolders) {
-      let folder = currentFolder + '/' + geofolder.Name+'/0';
-      currentFiles.push(...await this.readEntityFolderFiles(folder, true));
-    }
-    return currentFiles.length;
-  }
+  
 
   /** TOCHECK set type */
   async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
@@ -1529,29 +1115,7 @@ export class AppDataService {
     return await this.sharepoint.getPathSubfolders(basePath + folder);
   }
 
-  /** Copy files of one external opportunity to an internal one */
-  async copyFilesExternalToInternal(extOppId: number, intOppId: number) {
-    const externalEntity = await this.getOpportunity(extOppId);
-    const internalEntity = await this.getOpportunity(intOppId);
-
-    // copy models
-    // [TODO] search for last stage number (now 3, but could change?)
-    const externalModelsFolder =  FILES_FOLDER + `/${externalEntity.BusinessUnitId}/${externalEntity.ID}/3/0`;
-    const internalModelsFolder = FOLDER_WIP + `/${internalEntity.BusinessUnitId}/${internalEntity.ID}/0/0`;
-    const externalGeographies = await this.getEntityGeographies(externalEntity.ID);
-    const internalGeographies = await this.getEntityGeographies(internalEntity.ID);
-    for (const extGeo of externalGeographies) {
-      const intGeo = internalGeographies.find((g: EntityGeography) => {
-        if (g.EntityGeographyType == 'Geography') return extGeo.GeographyId === g.GeographyId;
-        else if (g.EntityGeographyType == 'Country') return extGeo.CountryId === g.CountryId;
-        else return false;
-      });
-
-      if (intGeo) {
-        await this.copyAllFolderFiles(`${externalModelsFolder}/${extGeo.Id}/0/`, `${internalModelsFolder}/${intGeo.Id}/0/`);
-      }
-    }
-  }
+  
 
   async getNPPFolderByDepartment(departmentID: number): Promise<NPPFolder> {
     return await this.sharepoint.getOneItem(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=Id eq " + departmentID);
@@ -1687,5 +1251,72 @@ export class AppDataService {
     getAppType(): AppType {
       return this.app;
     }
+
+
+  private async askSeatForUser(user: User) {
+    if (!user.Email) return false;
+    try {
+      const response = await this.licensing.addSeat(user.Email);
+      if (response?.UserGroupsCount == 1) { // assigned seat for first time
+        const RLSGroup = await this.getAADGroupName();
+        if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(user.Email, RLSGroup);
+      }
+      return true;
+    } catch (e: any) {
+      if (e.status === 422) {
+        this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
+        user could not be assigned.`, "No Seats Available!", {
+          disableTimeOut: true,
+          closeButton: true
+        });
+        return false;
+      }
+      return false;
+    }
+  }
+
+  private async removeUserSeat(user: User) {
+    if (!user.Email) return false;
+    try {
+      const response = await this.licensing.removeSeat(user.Email);
+      if (response?.UserGroupsCount == 0) { // removed the last seat for user
+        const RLSGroup = await this.getAADGroupName();
+        if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(user.Email, RLSGroup);
+      }
+      return true;
+    } catch (e: any) {
+      if (e.status == 400) {
+        return true;
+      }
+      return false;
+    }
+  }
+
+  private clearFileName(name: string): string {
+    return name.replace(/[~#%&*{}:<>?+|"'/\\]/g, "");
+  }
+
+  private async getEntityFileInfo(folder: string, file: NPPFile): Promise<NPPFile> {
+    let arrFolder = folder.split("/");
+    let rootFolder = arrFolder[0];
+    let select = '';
+    switch(rootFolder) {
+      case FOLDER_DOCUMENTS:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication,ApprovalStatus';
+        break;
+      case FOLDER_ARCHIVED:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
+        break;
+      default:
+        select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
+        break;
+    }
+    
+    return await this.sharepoint.query(
+      `lists/getbytitle('${rootFolder}')` + `/items(${file.ListItemAllFields?.ID})`,
+      select,
+      'all'
+    ).toPromise();
+  }
   
 }

@@ -10,6 +10,7 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-upload-file',
@@ -32,7 +33,8 @@ export class UploadFileComponent implements OnInit {
     public dialogRef: MatDialogRef<UploadFileComponent>,
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
   ) { 
     this.businessUnitId = this.data.entity.BusinessUnitId ? this.data.entity.BusinessUnitId : 0;
     this.forecastCycleId = this.data.entity.ForecastCycleId ? this.data.entity.ForecastCycleId : 0;
@@ -159,7 +161,7 @@ export class UploadFileComponent implements OnInit {
   private async uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.appData.uploadFile(data, folder, fileName, fileData).then(
+        this.files.uploadFileToFolder(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished

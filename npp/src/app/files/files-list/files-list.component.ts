@@ -30,6 +30,7 @@ import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import * as SPFolders from '@shared/sharepoint/folders';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-files-list',
@@ -83,7 +84,8 @@ export class FilesListComponent implements OnInit {
     public notifications: NotificationsService,
     private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
   ) { }
 
   ngOnInit(): void {
@@ -564,7 +566,7 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.appData.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
+          if (await this.files.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");

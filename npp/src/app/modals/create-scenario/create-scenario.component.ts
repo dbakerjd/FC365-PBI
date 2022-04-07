@@ -6,6 +6,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-create-scenario',
@@ -30,6 +31,7 @@ export class CreateScenarioComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly sharepoint: SharepointService,
     private readonly appData: AppDataService,
+    private readonly files: FilesService,
     private readonly disambiguator: InlineNppDisambiguationService
   ) { }
 
@@ -86,7 +88,7 @@ export class CreateScenarioComponent implements OnInit {
     if (this.model.multipleFiles) {
       success = true;
       for (const scenId of this.model.scenario) {
-        const newFileName = await this.appData.addScenarioSufixToFilename(this.file.Name, scenId);
+        const newFileName = await this.files.addScenarioSufixToFilename(this.file.Name, scenId);
         if (newFileName) {
           success = success && await this.createScenario(newFileName, destinationFolder, [scenId]);
         }
@@ -95,7 +97,7 @@ export class CreateScenarioComponent implements OnInit {
       // clone in one file
       let newFileName = this.file.Name;
       for (const scenId of this.model.scenario) {
-        const filenameSuffixed = await this.appData.addScenarioSufixToFilename(newFileName, scenId);
+        const filenameSuffixed = await this.files.addScenarioSufixToFilename(newFileName, scenId);
         if (filenameSuffixed) newFileName = filenameSuffixed;
       }
       success = await this.createScenario(newFileName, destinationFolder, this.model.scenario);
@@ -121,11 +123,11 @@ export class CreateScenarioComponent implements OnInit {
       if (this.file) {
         let commentsStr = '';
         if(this.model.comments) {
-          commentsStr = await this.appData.addComment(this.file, this.model.comments);
+          commentsStr = await this.files.addFileComment(this.file, this.model.comments);
         } else {
           commentsStr = this.file.ListItemAllFields?.Comments ? this.file.ListItemAllFields?.Comments : '';
         }
-        success = await this.appData.cloneEntityForecastModel(this.file, fileName, scenarios, (await this.appData.getCurrentUserInfo()).Id, commentsStr);
+        success = await this.files.cloneForecastModel(this.file, fileName, scenarios, (await this.appData.getCurrentUserInfo()).Id, commentsStr);
       }
     }
     return success;

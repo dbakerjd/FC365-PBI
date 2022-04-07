@@ -105,7 +105,7 @@ export class InlineNppDisambiguationService {
   }
 
   readFolderFiles(folder: string, expandProperties: boolean) {
-    return this.appData.readEntityFolderFiles(folder, expandProperties);
+    return this.appData.getFolderFiles(folder, expandProperties);
   }
 
   getAccessibleGeographiesList(entity: Opportunity) {
@@ -116,20 +116,20 @@ export class InlineNppDisambiguationService {
     return this.appData.getEntityGeographies(entityId);
   }
 
-  getFileByScenarios(fileFolder: string, scenario: number[]) {
-    return this.appData.getFileByScenarios(fileFolder, scenario);
-  }
+  // getFileByScenarios(fileFolder: string, scenario: number[]) {
+  //   return this.appData.getFileByScenarios(fileFolder, scenario);
+  // }
 
-  async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
-    return this.appData.uploadInternalFile(fileData, folder, fileName, metadata);
-  }
+  // async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
+  //   return this.appData.uploadInternalFile(fileData, folder, fileName, metadata);
+  // }
 
-  async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
-    return this.appData.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
-  }
+  // async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
+  //   return this.appData.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
+  // }
 
-  async createForecastCycle(entity: Opportunity, values: any) {
-    return this.appData.createEntityForecastCycle(entity, values);    
-  }
+  // async createForecastCycle(entity: Opportunity, values: any) {
+  //   return this.appData.createEntityForecastCycle(entity, values);    
+  // }
 
 }

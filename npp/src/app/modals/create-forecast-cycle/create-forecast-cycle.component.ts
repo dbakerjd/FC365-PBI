@@ -8,6 +8,7 @@ import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Opportunity } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { EntitiesService } from 'src/app/services/entities.service';
 
 
 @Component({
@@ -33,8 +34,8 @@ export class CreateForecastCycleComponent implements OnInit {
     private readonly sharepoint: SharepointService,
     private error: ErrorService,
     public jobs: WorkInProgressService,
-    private readonly disambiguation: InlineNppDisambiguationService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -97,7 +98,7 @@ export class CreateForecastCycleComponent implements OnInit {
       }
       
       this.updating = this.dialogRef.disableClose = true;
-      let success = await this.disambiguation.createForecastCycle(this.entity, this.form.value);
+      let success = await this.entities.createEntityForecastCycle(this.entity, this.form.value);
       this.jobs.finishJob(job.id);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close(success);

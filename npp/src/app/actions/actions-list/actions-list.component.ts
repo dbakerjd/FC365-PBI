@@ -32,6 +32,7 @@ import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -85,7 +86,8 @@ export class ActionsListComponent implements OnInit {
     public disambiguator: InlineNppDisambiguationService,
     public sanitize: DomSanitizer,
     private readonly entities: EntitiesService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
     ) { }
 
   ngOnInit(): void {
@@ -202,10 +204,10 @@ export class ActionsListComponent implements OnInit {
       geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.appData.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.appData.getFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.appData.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.appData.getFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
     }
     this.initLastComments();
   }
@@ -582,7 +584,7 @@ export class ActionsListComponent implements OnInit {
                         );
                         this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           if (!this.opportunity) return;
-                          this.appData.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
+                          this.files.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active
                           await this.appData.setOpportunityStatus(opp.ID, 'Active');
                           this.jobs.finishJob(job.id);
@@ -819,7 +821,7 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.appData.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
+          if (await this.files.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
