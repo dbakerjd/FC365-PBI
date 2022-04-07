@@ -3,10 +3,11 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-create-scenario',

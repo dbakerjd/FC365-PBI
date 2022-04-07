@@ -92,25 +92,25 @@ export class InlineNppDisambiguationService {
     
   }
 
-  getOwnerId(entity: Opportunity) {
-    return entity.EntityOwnerId;
-  }
+  // getOwnerId(entity: Opportunity) {
+  //   return entity.EntityOwnerId;
+  // }
 
-  getOwner(entity: Opportunity) {
-    return entity.EntityOwner;
-  }
+  // getOwner(entity: Opportunity) {
+  //   return entity.EntityOwner;
+  // }
 
-  getForecastCycles(entity: Opportunity) {
-    return this.appData.getEntityForecastCycles(entity);
-  }
+  // getForecastCycles(entity: Opportunity) {
+  //   return this.appData.getEntityForecastCycles(entity);
+  // }
 
-  readFolderFiles(folder: string, expandProperties: boolean) {
-    return this.appData.getFolderFiles(folder, expandProperties);
-  }
+  // readFolderFiles(folder: string, expandProperties: boolean) {
+  //   return this.appData.getFolderFiles(folder, expandProperties);
+  // }
 
-  getAccessibleGeographiesList(entity: Opportunity) {
-    return this.appData.getEntityAccessibleGeographiesList(entity as Opportunity);
-  }
+  // getAccessibleGeographiesList(entity: Opportunity) {
+  //   return this.appData.getEntityAccessibleGeographiesList(entity as Opportunity);
+  // }
   
   getEntityGeographies(entityId: number) {
     return this.appData.getEntityGeographies(entityId);

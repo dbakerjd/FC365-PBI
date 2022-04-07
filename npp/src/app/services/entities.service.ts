@@ -53,7 +53,7 @@ export class EntitiesService {
     if(!opp.AppTypeId) throw new Error("Could not create an Entity (no AppType assigned)");
     
     // clean fields according type
-    const isInternal = await this.isInternalOpportunity(opp.OpportunityTypeId);
+    const isInternal = await this.appData.isInternalOpportunity(opp.OpportunityTypeId);
     if (isInternal) {
       opp.ProjectStartDate = opp.ProjectEndDate = undefined;
     } else {
@@ -121,14 +121,6 @@ export class EntitiesService {
     }
 
     return success;
-  }
-
-  async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
-    const oppType = await this.appData.getOpportunityType(oppTypeId);
-    if (oppType?.IsInternal) {
-      return oppType.IsInternal;
-    }
-    return false;
   }
   
   /** TOCHECK move to upper service? */

@@ -1,6 +1,6 @@
 import {FormlyFieldConfig} from '@ngx-formly/core';
-import { SelectInputList } from 'src/app/services/sharepoint.service';
-import { NPPFolder } from '../models/file-system';
+import { SelectInputList } from '@shared/models/app-config';
+import { NPPFolder } from '@shared/models/file-system';
 
 export class ExternalUploadFileConfig {
   

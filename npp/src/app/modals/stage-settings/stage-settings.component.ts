@@ -2,9 +2,9 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { SelectInputList } from '@shared/models/app-config';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 
 @Component({
   selector: 'app-stage-settings',
@@ -26,7 +26,6 @@ export class StageSettingsComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
-    private sharepoint: SharepointService, 
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService
   ) { }

@@ -9,11 +9,12 @@ import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { Indication, Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
 import { AppDataService } from 'src/app/services/app-data.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-brand-list',

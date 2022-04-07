@@ -3,12 +3,11 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ErrorService } from 'src/app/services/error.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Opportunity } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 
 @Component({
@@ -31,7 +30,6 @@ export class CreateForecastCycleComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateForecastCycleComponent>,
     public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService,
     private error: ErrorService,
     public jobs: WorkInProgressService,
     private readonly appData: AppDataService,

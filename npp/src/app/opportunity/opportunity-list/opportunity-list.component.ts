@@ -146,7 +146,7 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.appData.getEntity(result.data.opportunity.ID);
         opp.progress = 0;
-        if (await this.entities.isInternalOpportunity(opp.OpportunityTypeId)) {
+        if (await this.appData.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
         }
         let job = this.jobs.startJob(

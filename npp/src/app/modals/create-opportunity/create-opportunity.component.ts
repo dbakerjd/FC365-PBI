@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { FormlyFieldConfig, FormlyFormOptions } from '@ngx-formly/core';
-import { SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { take, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -9,6 +8,7 @@ import { EntityGeography, Opportunity, Stage } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { EntitiesService } from 'src/app/services/entities.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-create-opportunity',

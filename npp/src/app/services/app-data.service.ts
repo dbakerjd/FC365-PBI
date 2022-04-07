@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AppType } from '@shared/models/app-config';
+import { AppType, SelectInputList } from '@shared/models/app-config';
 import { Action, Country, EntityGeography, Indication, MasterGeography, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
@@ -12,17 +12,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { GraphService } from './graph.service';
 import { LicensingService } from './licensing.service';
-import { ReadPermission, SelectInputList, SharepointService } from './sharepoint.service';
+import { ReadPermission, SharepointService } from './sharepoint.service';
 
-
-
-interface SPGroup {
-  Id: number;
-  Title: string;
-  Description: string;
-  LoginName: string;
-  OnlyAllowMembersViewMembership: boolean;
-}
 
 interface MasterAction {
   Id: number,
@@ -87,11 +78,6 @@ interface SPGroup {
   Description: string;
   LoginName: string;
   OnlyAllowMembersViewMembership: boolean;
-}
-
-interface SPGroupListItem {
-  type: string;
-  data: SPGroup;
 }
 
 @Injectable({
@@ -208,6 +194,14 @@ export class AppDataService {
   async deleteOpportunity(oppId: number): Promise<boolean> {
     return await this.sharepoint.deleteItem(oppId, SPLists.ENTITIES_LIST_NAME);
     // TODO Remove all related opportunity info if exists (stages, actions, files...)
+  }
+
+  async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
+    const oppType = await this.getOpportunityType(oppTypeId);
+    if (oppType?.IsInternal) {
+      return oppType.IsInternal;
+    }
+    return false;
   }
 
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
@@ -613,11 +607,17 @@ export class AppDataService {
   }
 
   /** Accessible Geographies for the user (subfolders with read/write permission) */
-  async getAccessibleGeographiesList(entity: Opportunity, stageId: number): Promise<SelectInputList[]> {
-
+  async getEntityAccessibleGeographiesList(entity: Opportunity, stageId?: number): Promise<SelectInputList[]> {
     const geographiesList = await this.getEntityGeographies(entity.ID);
 
-    const geoFoldersWithAccess = await this.getSubfolders(`${FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`, true);
+    let folder;
+    if (stageId) {
+      folder = `${FILES_FOLDER}/${entity.BusinessUnitId}/${entity.ID}/${stageId}/0`;
+    } else {
+      folder = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    }
+
+    const geoFoldersWithAccess = await this.getSubfolders(folder, true);
     return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
       .map(t => { return { value: t.Id, label: t.Title } });
   }
@@ -682,14 +682,6 @@ export class AppDataService {
     let results = await this.sharepoint.getAllItems(SPLists.MASTER_FORECAST_CYCLES_LIST_NAME, cond);
     this.masterForecastCycles = results.map(el => { return {value: el.ID, label: el.Title }});
     return this.masterForecastCycles;
-  }
-
-  async getEntityAccessibleGeographiesList(entity: Opportunity): Promise<SelectInputList[]> {
-    const geographiesList = await this.getEntityGeographies(entity.ID);
-
-    const geoFoldersWithAccess = await this.getSubfolders(`${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`, true);
-    return geographiesList.filter(mf => geoFoldersWithAccess.some((gf: any) => +gf.Name === mf.Id))
-      .map(t => { return { value: t.Id, label: t.Title } });
   }
 
   /** Gets the profile pic of the user in Microsoft (uses MS Graph) */

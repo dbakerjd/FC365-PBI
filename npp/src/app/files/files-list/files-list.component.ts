@@ -23,7 +23,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, SelectInputList } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
@@ -31,6 +31,7 @@ import { User } from '@shared/models/user';
 import * as SPFolders from '@shared/sharepoint/folders';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-files-list',
@@ -119,7 +120,7 @@ export class FilesListComponent implements OnInit {
         if (this.entity && owner) {
           this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
           
-          this.cycles = await this.disambiguator.getForecastCycles(this.entity);
+          this.cycles = await this.appData.getEntityForecastCycles(this.entity);
 
           let profileImgBlob = await this.appData.getUserProfilePic(ownerId);
           this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
@@ -192,10 +193,10 @@ export class FilesListComponent implements OnInit {
             } else {
               folder = folder + '/0';
             }
-            this.currentFiles.push(...await this.disambiguator.readFolderFiles(folder, true));
+            this.currentFiles.push(...await this.appData.getFolderFiles(folder, true));
           }
         } else {
-          this.currentFiles = await this.disambiguator.readFolderFiles(currentFolder, true);
+          this.currentFiles = await this.appData.getFolderFiles(currentFolder, true);
         }
 
         this.initLastComments();
@@ -241,7 +242,7 @@ export class FilesListComponent implements OnInit {
 
   async openUploadDialog() {
     if(this.entity) {
-      let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
+      let geographiesList = await this.appData.getEntityAccessibleGeographiesList(this.entity);
       let folders = [...this.documentFolders];
       if (this.geoFolders.length == 0) {
         // not access to models, remove of the list
@@ -628,7 +629,7 @@ export class FilesListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success) {
           this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.entity) this.cycles = await this.disambiguator.getForecastCycles(this.entity);
+          if(this.entity) this.cycles = await this.appData.getEntityForecastCycles(this.entity);
           this.entity = Object.assign(this.entity, {
             ForecastCycleId: success.ForecastCycleId,
             ForecastCycle: { 

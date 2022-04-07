@@ -23,7 +23,7 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, SelectInputList } from 'src/app/services/sharepoint.service';
+import { SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
@@ -33,6 +33,7 @@ import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { FilesService } from 'src/app/services/files.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-actions-list',
@@ -147,7 +148,7 @@ export class ActionsListComponent implements OnInit {
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
     if (this.opportunity) {
-      geographiesList = await this.appData.getAccessibleGeographiesList(
+      geographiesList = await this.appData.getEntityAccessibleGeographiesList(
         this.opportunity,
         this.currentGate.StageNameId
       );
@@ -539,7 +540,7 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
-          if (!await this.entities.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
+          if (!await this.appData.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
