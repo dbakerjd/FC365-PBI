@@ -6,7 +6,6 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 import { ErrorService } from './services/app/error.service';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
-import { OpportunityDetailComponent } from './opportunity/opportunity-detail/opportunity-detail.component';
 import { ActionsListComponent } from './actions/actions-list/actions-list.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { NotificationsListComponent } from './shared/notifications-list/notifications-list.component';
@@ -66,7 +65,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
+import { AppControlService } from '@services/app/app-control.service';
 
 @NgModule({
   imports: [
@@ -95,7 +94,6 @@ import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambi
     DashboardComponent,
     OpportunityListComponent,
     FilesListComponent,
-    OpportunityDetailComponent,
     ActionsListComponent,
     HeaderComponent,
     NotificationsListComponent,
@@ -143,7 +141,7 @@ import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambi
     LicensingService,
     WorkInProgressService,
     PowerBiService,
-    InlineNppDisambiguationService,
+    AppControlService,
     EntitiesService
   ],
   bootstrap: [AppComponent]

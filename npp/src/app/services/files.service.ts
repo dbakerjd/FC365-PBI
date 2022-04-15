@@ -20,6 +20,7 @@ export class FilesService {
       }
     }
 
+    console.log('upload file folder', folder);
     let uploaded: any = await this.appData.uploadFile(fileData, folder, fileName);
 
     if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
@@ -31,6 +32,8 @@ export class FilesService {
       if (!metadata.Comments) {
         metadata.Comments = " ";
       }
+      console.log('upload file metadata folder', metadata, rootFolder);
+
       await this.appData.updateFilePropertiesById(uploaded.ListItemAllFields.ID, rootFolder, metadata);
     }
     return uploaded;

@@ -19,7 +19,6 @@ import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.c
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
@@ -77,9 +76,8 @@ export class FilesListComponent implements OnInit {
     private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
-    private teams: TeamsService,
+    // private teams: TeamsService,
     public licensing: LicensingService,
-    public disambiguator: InlineNppDisambiguationService,
     public notifications: NotificationsService,
     private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
@@ -88,17 +86,19 @@ export class FilesListComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    if(this.teams.initialized) this.init();
-    else {
-      this.teams.statusSubject.subscribe(async (msg) => {
-        setTimeout(async () => {
-          this.init();
-        }, 500);
-      });
-    }
+    // if(this.teams.initialized) this.init();
+    // else {
+    //   this.teams.statusSubject.subscribe(async (msg) => {
+    //     setTimeout(async () => {
+    //       this.init();
+    //     }, 500);
+    //   });
+    // }
+    this.init();
   }
 
   init() {
+    console.log('files inside');
     this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.appData.getCurrentUserInfo();

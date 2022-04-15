@@ -47,8 +47,7 @@ export class SharepointService {
 
   query(partial: string, conditions: string = '', count: number | 'all' = 'all', filter?: FilterTerm): Observable<any> {
     //TODO implement usage of count
-
-    let filterUri = '';
+    let filterUri = undefined;
     if (filter && filter.term) {
       filter.field = filter.field ? filter.field : 'Title';
       filter.matchCase = filter.matchCase ? filter.matchCase : false;
@@ -224,10 +223,10 @@ export class SharepointService {
     return result.value ? result.value : [];
   }
 
-  async getPathFiles(path: string, filter = '') {
+  async getPathFiles(path: string, filter?: string) {
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${path}')/Files`,
-      '$expand=ListItemAllFields' + filter ? ('&' + filter) : '',
+      '$expand=ListItemAllFields' + (filter ? ('&' + filter) : ''),
     ).toPromise();
     return result.value ? result.value : [];
   }

@@ -6,7 +6,6 @@ import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from '@services/app/app-data.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -41,25 +40,24 @@ export class BrandSummaryComponent implements OnInit {
   generatingSeatsTable = true;
 
   constructor(
-    private teams: TeamsService,
-    private disambiguator: InlineNppDisambiguationService,
+    // private teams: TeamsService,
     private readonly entities: EntitiesService,
     private readonly appData: AppDataService
   ) { }
 
   async ngOnInit(): Promise<void> {
-    try {
-      if (this.teams.initialized) this.init();
-      else {
-        this.teams.statusSubject.subscribe(async (msg) => {
-          setTimeout(async () => {
-            this.init();
-          }, 500);
-        });
-      }
-    } catch (e) {
-      console.log(e);
-    }
+    // try {
+    //   if (this.teams.initialized) this.init();
+    //   else {
+    //     this.teams.statusSubject.subscribe(async (msg) => {
+    //       setTimeout(async () => {
+    //         this.init();
+    //       }, 500);
+    //     });
+    //   }
+    // } catch (e) {
+    //   console.log(e);
+    // }
   }
 
   async init() {
@@ -70,7 +68,7 @@ export class BrandSummaryComponent implements OnInit {
     this.notificationsList = await this.appData.getUserNotifications(user.Id);
     this.therapyAreasData = { areas: {}, total: 0 };
 
-    this.brands = await this.disambiguator.getEntities() as Opportunity[];
+    this.brands = await this.entities.getAll();
 
     this.brands.forEach(async (el, index) => {
 

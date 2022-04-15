@@ -47,6 +47,10 @@ export class EntitiesService {
     private readonly files: FilesService
   ) { }
 
+  async getAll(expand = true, onlyActive = false): Promise<Opportunity[]> {
+    return await this.appData.getAllOpportunities(expand, onlyActive);
+  }
+
   async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
     Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
     opp.AppTypeId = this.appData.getAppType().ID;

@@ -30,7 +30,6 @@ import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -78,7 +77,6 @@ export class ActionsListComponent implements OnInit {
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
     private breadcrumbService: BreadcrumbsService,
-    public disambiguator: InlineNppDisambiguationService,
     public sanitize: DomSanitizer,
     private readonly appData: AppDataService,
     private readonly files: FilesService,

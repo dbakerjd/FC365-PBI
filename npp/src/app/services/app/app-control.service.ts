@@ -4,13 +4,12 @@ import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AppDataService } from '@services/app/app-data.service';
 import { ErrorService } from './error.service';
-import { SharepointService } from '@services/microsoft-data/sharepoint.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class InlineNppDisambiguationService {
+export class AppControlService {
   
   isInline: boolean = false;
   isReady: boolean = false;
@@ -18,8 +17,11 @@ export class InlineNppDisambiguationService {
   app: AppType | undefined;
   config: { Title: string; Value: string, ConfigType: string }[] = [];
 
-  constructor(private readonly sharepoint: SharepointService, private readonly teams: TeamsService, private readonly error: ErrorService,
-    private readonly appData: AppDataService) { 
+  constructor(
+    private readonly teams: TeamsService, 
+    private readonly error: ErrorService,
+    private readonly appData: AppDataService
+  ) { 
     this.isInline = environment.isInlineApp;
     this.isReady = false;
 
@@ -27,7 +29,7 @@ export class InlineNppDisambiguationService {
       this.setApp();
     } else {
       this.teams.statusSubject.subscribe(async (msg) => {
-        if(msg == 'initialized') {
+        if(msg == 'loggedIn') {
           this.setApp();
         }
       })
@@ -59,7 +61,8 @@ export class InlineNppDisambiguationService {
     return this.app;
   }
 
-  getConfigValue(name: string): any {
+  /** Check for the value of an app config value by name */
+  getAppConfigValue(name: string): any {
     const item = this.config.find(el => el.Title === name);
     if (item) {
       switch (item.ConfigType) {
@@ -72,14 +75,6 @@ export class InlineNppDisambiguationService {
     return undefined;
   }
 
-  // getEntity(id: number) {
-  //   if(this.isInline) {
-  //     return this.appData.getBrand(id);
-  //   } else {
-  //     return this.appData.getOpportunity(id);
-  //   }
-  // }
-
   async getEntities() {
     if(this.app) {
       return this.appData.getAllEntities(this.app.ID);
@@ -89,45 +84,5 @@ export class InlineNppDisambiguationService {
     }
     
   }
-
-  // getOwnerId(entity: Opportunity) {
-  //   return entity.EntityOwnerId;
-  // }
-
-  // getOwner(entity: Opportunity) {
-  //   return entity.EntityOwner;
-  // }
-
-  // getForecastCycles(entity: Opportunity) {
-  //   return this.appData.getEntityForecastCycles(entity);
-  // }
-
-  // readFolderFiles(folder: string, expandProperties: boolean) {
-  //   return this.appData.getFolderFiles(folder, expandProperties);
-  // }
-
-  // getAccessibleGeographiesList(entity: Opportunity) {
-  //   return this.appData.getEntityAccessibleGeographiesList(entity as Opportunity);
-  // }
-  
-  getEntityGeographies(entityId: number) {
-    return this.appData.getEntityGeographies(entityId);
-  }
-
-  // getFileByScenarios(fileFolder: string, scenario: number[]) {
-  //   return this.appData.getFileByScenarios(fileFolder, scenario);
-  // }
-
-  // async uploadFile(fileData: string, folder: string, fileName: string, metadata?: NPPFileMetadata) {
-  //   return this.appData.uploadInternalFile(fileData, folder, fileName, metadata);
-  // }
-
-  // async setEntityApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
-  //   return this.appData.setEntityApprovalStatus(rootFolder, file, entity, status, comments);
-  // }
-
-  // async createForecastCycle(entity: Opportunity, values: any) {
-  //   return this.appData.createEntityForecastCycle(entity, values);    
-  // }
 
 }

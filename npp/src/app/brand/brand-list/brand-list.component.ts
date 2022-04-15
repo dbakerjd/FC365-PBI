@@ -8,11 +8,12 @@ import { Subject } from 'rxjs';
 import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
+import { AppControlService } from '@services/app/app-control.service';
 import { Indication, Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
 import { AppDataService } from '@services/app/app-data.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { EntitiesService } from '@services/entities.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -37,15 +38,16 @@ export class BrandListComponent implements OnInit {
     private router: Router, 
     public matDialog: MatDialog, 
     private toastr: ToastrService, 
-    public disambiguator: InlineNppDisambiguationService,
-    private readonly appData: AppDataService
+    private readonly appControl: AppControlService,
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService
   ) { }
 
   async ngOnInit() {
-    if(this.disambiguator.isReady) {
+    if(this.appControl.isReady) {
       this.init();
     }else {
-      this.disambiguator.readySubscriptions.subscribe(val => {
+      this.appControl.readySubscriptions.subscribe(val => {
         this.init();
       });
     }
@@ -54,8 +56,8 @@ export class BrandListComponent implements OnInit {
   async init() {
     
     this.currentUser = await this.appData.getCurrentUserInfo();
-    this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
-    console.log('cancreate', this.disambiguator.getConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
+    this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
+    console.log('cancreate', this.appControl.getAppConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
 
     const indicationsList = await this.appData.getIndicationsList();
     // const forecastCycles = await this.appData.getForecastCycles();
@@ -64,7 +66,7 @@ export class BrandListComponent implements OnInit {
     const therapies = await this.appData.getTherapiesList();
     this.masterCycles = await this.appData.getForecastCycles();
     
-    this.brands = await this.disambiguator.getEntities() as Opportunity[];
+    this.brands = await this.entities.getAll();
 
     const owners = this.brands.map(el => { return { label: el.EntityOwner?.Title, value: el.EntityOwnerId }});
     const uniqueOwners = [...new Map(owners.map(o => [o.value, o])).values()];
@@ -162,7 +164,7 @@ export class BrandListComponent implements OnInit {
     });
 
     this.dialogInstance.afterClosed().subscribe(async (result:Opportunity) => {
-      this.brands = await this.disambiguator.getEntities() as Opportunity[];
+      this.brands = await this.entities.getAll();
       this.onSubmit();
     });
     

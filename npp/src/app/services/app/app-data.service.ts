@@ -955,14 +955,11 @@ export class AppDataService {
   /** Get all the folder files with properties, if needed */
   async getFolderFiles(folder: string, expandProperties = false): Promise<NPPFile[]> {
     let files: NPPFile[] = []
-    const result = await this.sharepoint.getPathFiles(folder);
-
-    if (result.value) {
-      files = result.value;
-    }
+    files = await this.sharepoint.getPathFiles(folder);
 
     /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
     if (expandProperties && files.length > 0) {
+      console.log('expanding');
       for (let i = 0; i < files.length; i++) {
         let fileItems = files[i];
         if (fileItems) {
@@ -983,7 +980,7 @@ export class AppDataService {
   }
 
   async updateFilePropertiesById(fileId: number, rootFolder: string, properties: any) {
-    return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${rootFolder}')`, properties);
+    return await this.sharepoint.updateItem(fileId, rootFolder, properties);
   }
 
   async getFileByName(path: string, filename: string) {
@@ -1026,7 +1023,7 @@ export class AppDataService {
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckOut()
       // GetFileByServerRelativeUrl('/Folder Name/{file_name}')/CheckIn(comment='Comment',checkintype=0)
 
-      await this.sharepoint.updateItem(uploaded.ListItemAllFields.ID, `lists/getbytitle('${FILES_FOLDER}')`, metadata);
+      await this.sharepoint.updateItem(uploaded.ListItemAllFields.ID, folder, metadata);
     }
     return uploaded;
   }

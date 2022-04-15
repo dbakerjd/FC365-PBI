@@ -10,11 +10,12 @@ import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/cr
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
-import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
+import { AppControlService } from '@services/app/app-control.service';
 import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
 import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
+import { EntitiesService } from '@services/entities.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -40,15 +41,16 @@ export class OpportunityListComponent implements OnInit {
     public matDialog: MatDialog,
     public jobs: WorkInProgressService,
     public teams: TeamsService,
-    public disambiguator: InlineNppDisambiguationService,
-    private readonly appData: AppDataService
+    private readonly appControl: AppControlService,
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService
     ) { }
 
   async ngOnInit() {
-    if(this.disambiguator.isReady) {
+    if(this.appControl.isReady) {
       this.init();
     }else {
-      this.disambiguator.readySubscriptions.subscribe(val => {
+      this.appControl.readySubscriptions.subscribe(val => {
         this.init();
       });
     }
@@ -56,7 +58,7 @@ export class OpportunityListComponent implements OnInit {
 
   async init() {
     this.currentUser = await this.appData.getCurrentUserInfo();
-    this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
+    this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
     let indications = await this.appData.getIndicationsList();
     this.opportunityTypes = await this.appData.getOpportunityTypes();
@@ -106,7 +108,7 @@ export class OpportunityListComponent implements OnInit {
       }
     ];
 
-    this.opportunities = await this.appData.getAllOpportunities();
+    this.opportunities = await this.entities.getAll();
     this.opportunities.forEach(el => {
       this.initIndicationString(el);
     })
