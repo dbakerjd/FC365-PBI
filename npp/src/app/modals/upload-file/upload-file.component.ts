@@ -3,7 +3,6 @@ import { UploadFileConfig } from '@shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -11,6 +10,7 @@ import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
+import { FILES_FOLDER } from '@shared/sharepoint/folders';
 
 @Component({
   selector: 'app-upload-file',
@@ -32,7 +32,6 @@ export class UploadFileComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<UploadFileComponent>,
     public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService,
     private readonly appData: AppDataService,
     private readonly files: FilesService
   ) { 
@@ -93,7 +92,7 @@ export class UploadFileComponent implements OnInit {
       });
       let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
 
-      if (await this.appData.existsFile(scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
+      if (await this.appData.existsFile(scenarioFileName, FILES_FOLDER + fileFolder)) {
         const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
           maxWidth: "400px",
           height: "200px",
@@ -108,7 +107,7 @@ export class UploadFileComponent implements OnInit {
           .pipe(take(1))
           .subscribe(async uploadConfirmed => {
             if (uploadConfirmed) {
-              this.uploadFileToFolder(fileData, scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder);
+              this.uploadFileToFolder(fileData, scenarioFileName, FILES_FOLDER + fileFolder);
             } else {
               // do nothing and close
               this.dialogRef.close({
@@ -118,7 +117,7 @@ export class UploadFileComponent implements OnInit {
             }
           });
       } else {
-        this.uploadFileToFolder(fileData, scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder);
+        this.uploadFileToFolder(fileData, scenarioFileName, FILES_FOLDER + fileFolder);
       }
       
     } else {
@@ -128,7 +127,7 @@ export class UploadFileComponent implements OnInit {
         Comments: this.model.description
       });
       const cleanFilename = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-      if (await this.appData.existsFile(cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
+      if (await this.appData.existsFile(cleanFilename, FILES_FOLDER + fileFolder)) {
         const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
           maxWidth: "400px",
           height: "200px",
@@ -143,7 +142,7 @@ export class UploadFileComponent implements OnInit {
           .pipe(take(1))
           .subscribe(async uploadConfirmed => {
             if (uploadConfirmed) {
-              this.uploadFileToFolder(fileData, cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder);
+              this.uploadFileToFolder(fileData, cleanFilename, FILES_FOLDER + fileFolder);
             } else {
               this.dialogRef.close({
                 success: true, 
@@ -152,7 +151,7 @@ export class UploadFileComponent implements OnInit {
             }
           });
       } else {
-        this.uploadFileToFolder(fileData, cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder);
+        this.uploadFileToFolder(fileData, cleanFilename, FILES_FOLDER + fileFolder);
       }
       
     }

@@ -23,7 +23,6 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
@@ -73,7 +72,6 @@ export class FilesListComponent implements OnInit {
   loading = false;
 
   constructor(
-    private sharepoint: SharepointService, 
     private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
     private router: Router,

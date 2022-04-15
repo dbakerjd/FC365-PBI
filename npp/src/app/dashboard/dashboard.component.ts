@@ -3,7 +3,7 @@ import { TeamsService } from '../services/teams.service';
 import { Router } from '@angular/router';
 import { LicensingService } from '../services/licensing.service';
 import { environment } from 'src/environments/environment';
-import { animate, query, stagger, state, style, transition, trigger } from '@angular/animations';
+import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 

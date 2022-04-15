@@ -9,8 +9,6 @@ import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { SharepointService } from 'src/app/services/sharepoint.service';
-import { TeamsService } from 'src/app/services/teams.service';
 import { Indication, Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
 import { AppDataService } from 'src/app/services/app-data.service';
@@ -35,8 +33,13 @@ export class BrandListComponent implements OnInit {
   loading = true;
   canCreate = false;
 
-  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService,
-    private readonly appData: AppDataService) { }
+  constructor(
+    private router: Router, 
+    public matDialog: MatDialog, 
+    private toastr: ToastrService, 
+    public disambiguator: InlineNppDisambiguationService,
+    private readonly appData: AppDataService
+  ) { }
 
   async ngOnInit() {
     if(this.disambiguator.isReady) {

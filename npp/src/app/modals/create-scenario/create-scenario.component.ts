@@ -2,8 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
@@ -30,10 +28,8 @@ export class CreateScenarioComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateScenarioComponent>,
     public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService,
     private readonly appData: AppDataService,
     private readonly files: FilesService,
-    private readonly disambiguator: InlineNppDisambiguationService
   ) { }
 
   async ngOnInit(): Promise<void> {

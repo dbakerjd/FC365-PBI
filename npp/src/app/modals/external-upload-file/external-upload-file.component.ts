@@ -2,12 +2,10 @@ import { Inject, Component, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { take } from 'rxjs/operators';
 import { ExternalUploadFileConfig } from '@shared/forms/external-upload-file.config';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { FOLDER_DOCUMENTS, FOLDER_WIP } from '@shared/sharepoint/folders';
@@ -29,7 +27,6 @@ export class ExternalUploadFileComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ExternalUploadFileComponent>,
-    private readonly sharepoint: SharepointService,
     private matDialog: MatDialog,
     private readonly appData: AppDataService,
     private readonly files: FilesService

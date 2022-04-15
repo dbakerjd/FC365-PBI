@@ -3,7 +3,6 @@ import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
 
@@ -21,7 +20,6 @@ export class ShareDocumentComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private readonly sharepoint: SharepointService,
     private readonly appData: AppDataService,
     private readonly toastr: ToastrService,
     public dialogRef: MatDialogRef<ShareDocumentComponent>

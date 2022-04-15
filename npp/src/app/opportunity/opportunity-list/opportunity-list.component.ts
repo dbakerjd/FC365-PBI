@@ -7,14 +7,12 @@ import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { TeamsService } from 'src/app/services/teams.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
-import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 
@@ -43,7 +41,6 @@ export class OpportunityListComponent implements OnInit {
     public jobs: WorkInProgressService,
     public teams: TeamsService,
     public disambiguator: InlineNppDisambiguationService,
-    private readonly entities: EntitiesService,
     private readonly appData: AppDataService
     ) { }
 

@@ -2,7 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Indication } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from 'src/app/services/app-data.service';
@@ -35,7 +34,6 @@ export class EntityEditFileComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<EntityEditFileComponent>,
-    private readonly sharepoint: SharepointService,
     private readonly appData: AppDataService
   ) { }
 
@@ -85,7 +83,7 @@ export class EntityEditFileComponent implements OnInit {
         let arrFolder = this.fileInfo.ServerRelativeUrl.split("/");
         let rootFolder = arrFolder[3];  
       
-        result2 = await this.sharepoint.updateItem(this.fileInfo.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, {
+        result2 = await this.appData.updateFilePropertiesById(this.fileInfo.ListItemAllFields.ID, rootFolder, {
           IndicationId: this.model.IndicationId
         });
       }

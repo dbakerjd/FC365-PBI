@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { SharepointService } from '../services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from '../services/teams.service';
 import { NotificationsService } from '../services/notifications.service';
 import { NPPNotification } from '@shared/models/notification';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
-import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from '../services/app-data.service';
 
 @Component({
@@ -50,10 +48,8 @@ export class SummaryComponent implements OnInit {
   generatingSeatsTable = true;
 
   constructor(
-    private sharepoint: SharepointService, 
     private notifications: NotificationsService,
     private teams: TeamsService,
-    private readonly entities: EntitiesService,
     private readonly appData: AppDataService
   ) { }
 

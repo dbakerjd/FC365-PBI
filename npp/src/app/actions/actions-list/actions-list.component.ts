@@ -23,13 +23,11 @@ import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disa
 import { LicensingService } from 'src/app/services/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
 import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
-import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from 'src/app/services/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { FilesService } from 'src/app/services/files.service';
@@ -73,9 +71,6 @@ export class ActionsListComponent implements OnInit {
   hasAccessToModels = false;
 
   constructor(
-    private readonly sharepoint: SharepointService, 
-    private readonly permissions: PermissionsService,
-    private readonly notifications: NotificationsService,
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
@@ -86,9 +81,10 @@ export class ActionsListComponent implements OnInit {
     private breadcrumbService: BreadcrumbsService,
     public disambiguator: InlineNppDisambiguationService,
     public sanitize: DomSanitizer,
-    private readonly entities: EntitiesService,
     private readonly appData: AppDataService,
-    private readonly files: FilesService
+    private readonly files: FilesService,
+    private readonly permissions: PermissionsService,
+    private readonly notifications: NotificationsService
     ) { }
 
   ngOnInit(): void {
@@ -205,10 +201,10 @@ export class ActionsListComponent implements OnInit {
       geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.appData.getFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.appData.getFolderFiles(FILES_FOLDER + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.appData.getFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.appData.getFolderFiles(FILES_FOLDER + '/' + this.currentFolderUri+'/0/0', true);
     }
     this.initLastComments();
   }

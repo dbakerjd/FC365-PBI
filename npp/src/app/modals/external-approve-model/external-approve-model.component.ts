@@ -2,12 +2,9 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
-import { AppDataService } from 'src/app/services/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 
 @Component({
@@ -42,10 +39,7 @@ export class ExternalApproveModelComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ExternalApproveModelComponent>,
-    private readonly disambiguator: InlineNppDisambiguationService,
-    private readonly sharepoint: SharepointService,
     private readonly notifications: NotificationsService,
-    private readonly appData: AppDataService,
     private readonly files: FilesService
   ) { }
 

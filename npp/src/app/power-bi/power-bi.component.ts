@@ -1,14 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { TeamsService } from '../services/teams.service';
-import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IReportEmbedConfiguration, models, Report } from 'powerbi-client';
 import { PowerBIReportEmbedComponent } from 'powerbi-client-angular';
-import { LicensingService } from '../services/licensing.service';
-import * as microsoftTeams from "@microsoft/teams-js";
-import { ErrorService } from '../services/error.service';
 import { ToastrService } from 'ngx-toastr';
-import { SharepointService } from '../services/sharepoint.service';
 import { PageDetails, PowerBiService } from '../services/power-bi.service';
 import { PBIReport } from '../shared/models/pbi';
 import { AppDataService } from '../services/app-data.service';
@@ -70,16 +65,11 @@ export class PowerBiComponent implements OnInit {
   };
 
   constructor(
-    public licensing: LicensingService,
-    private sharepoint: SharepointService,
     private powerBi: PowerBiService,
     public teams: TeamsService,
-    private error: ErrorService,
     private toastr: ToastrService,
-    private router: Router,
     private route: ActivatedRoute,
     private readonly appData: AppDataService
-
   ) {
 
     this.route.params.subscribe(params => {

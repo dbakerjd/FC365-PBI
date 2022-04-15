@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -34,13 +33,14 @@ export class CreateBrandComponent implements OnInit {
   geographies: EntityGeography[] = [];
 
   constructor(
-    private readonly entities: EntitiesService, 
-    private readonly permissions: PermissionsService, 
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateBrandComponent>, 
     public jobs: WorkInProgressService, 
+    public toastr: ToastrService,
     private readonly appData: AppDataService,
-    public toastr: ToastrService) { }
+    private readonly entities: EntitiesService, 
+    private readonly permissions: PermissionsService, 
+  ) { }
 
   async ngOnInit() {
     this.loading = true;

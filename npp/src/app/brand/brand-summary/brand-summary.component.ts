@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { SharepointService } from 'src/app/services/sharepoint.service';
 import * as Highcharts from 'highcharts';
 import { TeamsService } from 'src/app/services/teams.service';
 import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
@@ -42,7 +41,6 @@ export class BrandSummaryComponent implements OnInit {
   generatingSeatsTable = true;
 
   constructor(
-    private sharepoint: SharepointService,
     private teams: TeamsService,
     private disambiguator: InlineNppDisambiguationService,
     private readonly entities: EntitiesService,
