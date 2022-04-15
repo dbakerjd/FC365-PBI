@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { TeamsService } from '../services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { Router } from '@angular/router';
-import { LicensingService } from '../services/licensing.service';
+import { LicensingService } from '../services/jd-data/licensing.service';
 import { environment } from 'src/environments/environment';
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { Subject } from 'rxjs';

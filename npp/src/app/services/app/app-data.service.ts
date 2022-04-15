@@ -10,9 +10,9 @@ import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { GraphService } from './graph.service';
-import { LicensingService } from './licensing.service';
-import { ReadPermission, SharepointService } from './sharepoint.service';
+import { LicensingService } from '../jd-data/licensing.service';
+import { GraphService } from '../microsoft-data/graph.service';
+import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
 
 
 interface MasterAction {

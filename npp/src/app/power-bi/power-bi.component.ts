@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { TeamsService } from '../services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IReportEmbedConfiguration, models, Report } from 'powerbi-client';
 import { PowerBIReportEmbedComponent } from 'powerbi-client-angular';
 import { ToastrService } from 'ngx-toastr';
 import { PageDetails, PowerBiService } from '../services/power-bi.service';
 import { PBIReport } from '../shared/models/pbi';
-import { AppDataService } from '../services/app-data.service';
+import { AppDataService } from '../services/app/app-data.service';
 
 @Component({
   selector: 'app-power-bi',

@@ -3,7 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SelectInputList } from '@shared/models/app-config';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 
 @Component({

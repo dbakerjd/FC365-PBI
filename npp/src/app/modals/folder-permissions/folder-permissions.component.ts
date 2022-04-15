@@ -3,11 +3,11 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { ErrorService } from 'src/app/services/error.service';
+import { ErrorService } from '@services/app/error.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFolder } from '@shared/models/file-system';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { SelectInputList } from '@shared/models/app-config';
 

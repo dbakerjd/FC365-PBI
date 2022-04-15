@@ -8,12 +8,12 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { TeamsService } from 'src/app/services/teams.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
+import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 import { User } from '@shared/models/user';
 import { Opportunity, OpportunityType } from '@shared/models/entity';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 
 @Component({

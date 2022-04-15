@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ErrorService } from './error.service';
-import { TeamsService } from './teams.service';
+import { ErrorService } from '@services/app/error.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
 export interface MSGraphQueryParams {
   count?: boolean;

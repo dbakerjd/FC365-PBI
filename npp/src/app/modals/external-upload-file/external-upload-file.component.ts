@@ -9,7 +9,7 @@ import { ExternalUploadFileConfig } from '@shared/forms/external-upload-file.con
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
 import { FOLDER_DOCUMENTS, FOLDER_WIP } from '@shared/sharepoint/folders';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 @Component({
   selector: 'app-external-upload-file',

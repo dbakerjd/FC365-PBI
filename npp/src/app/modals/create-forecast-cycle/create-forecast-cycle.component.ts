@@ -2,10 +2,10 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { ErrorService } from 'src/app/services/error.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { ErrorService } from '@services/app/error.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { Opportunity } from '@shared/models/entity';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList } from '@shared/models/app-config';
 

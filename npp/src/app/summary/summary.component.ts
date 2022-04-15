@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import * as Highcharts from 'highcharts';
-import { TeamsService } from '../services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { NotificationsService } from '../services/notifications.service';
 import { NPPNotification } from '@shared/models/notification';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
-import { AppDataService } from '../services/app-data.service';
+import { AppDataService } from '../services/app/app-data.service';
 
 @Component({
   selector: 'app-summary',

@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import * as Highcharts from 'highcharts';
-import { TeamsService } from 'src/app/services/teams.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from 'src/app/services/entities.service';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
+import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-brand-summary',

@@ -3,8 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
-import { ErrorService } from './services/error.service';
-import { TeamsService } from './services/teams.service';
+import { ErrorService } from './services/app/error.service';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
 import { OpportunityDetailComponent } from './opportunity/opportunity-detail/opportunity-detail.component';
@@ -14,12 +13,12 @@ import { NotificationsListComponent } from './shared/notifications-list/notifica
 import { UserProfilePicComponent } from './shared/user-profile-pic/user-profile-pic.component';
 import { SummaryComponent } from './summary/summary.component';
 import { PowerBiComponent } from './power-bi/power-bi.component';
-import { SharepointService } from './services/sharepoint.service';
+import { SharepointService } from './services/microsoft-data/sharepoint.service';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormlyModule } from '@ngx-formly/core';
 import { FormlyBootstrapModule } from '@ngx-formly/bootstrap';
 import { ProgressBarComponent } from './shared/progress-bar/progress-bar.component';
-import { LicensingService } from './services/licensing.service';
+import { LicensingService } from './services/jd-data/licensing.service';
 import { DatepickerModule } from 'ng2-datepicker';
 import { UploadFileComponent } from './modals/upload-file/upload-file.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,7 +42,7 @@ import { ChartModule, HIGHCHARTS_MODULES } from 'angular-highcharts';
 import * as xrange from 'highcharts/modules/xrange.src';
 import { SplashScreenComponent } from './splash-screen/splash-screen.component';
 import { SafePipe } from './shared/safe.pipe';
-import { WorkInProgressService } from './services/work-in-progress.service';
+import { WorkInProgressService } from './services/app/work-in-progress.service';
 import { FolderPermissionsComponent } from './modals/folder-permissions/folder-permissions.component';
 import { AuthStartComponent } from './auth/auth-start/auth-start.component';
 import { AuthEndComponent } from './auth/auth-end/auth-end.component';
@@ -57,7 +56,6 @@ import { FilesListComponent } from './files/files-list/files-list.component';
 import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CommentsListComponent } from './modals/comments-list/comments-list.component';
 import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
-import { InlineNppDisambiguationService } from './services/inline-npp-disambiguation.service';
 import { ExternalUploadFileComponent } from './modals/external-upload-file/external-upload-file.component';
 import { ExternalApproveModelComponent } from './modals/external-approve-model/external-approve-model.component';
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
@@ -67,6 +65,8 @@ import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.compo
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
+import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 
 @NgModule({
   imports: [

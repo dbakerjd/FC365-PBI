@@ -1,8 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { ErrorService } from './error.service';
-import { LicensingService } from './licensing.service';
+import { ErrorService } from '../app/error.service';
+import { LicensingService } from '../jd-data/licensing.service';
 import { NPPFileMetadata, SystemFolder } from '@shared/models/file-system';
 import * as SPFolders from '@shared/sharepoint/folders';
 

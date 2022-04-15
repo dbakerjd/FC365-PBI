@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Opportunity, Stage } from '@shared/models/entity';
-import { AppDataService } from './app-data.service';
+import { AppDataService } from './app/app-data.service';
 import { PermissionsService } from './permissions.service';
 import { FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { FilesService } from './files.service';

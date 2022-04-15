@@ -8,7 +8,7 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { NPPFolder } from '@shared/models/file-system';
 import { Indication } from '@shared/models/entity';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { FILES_FOLDER } from '@shared/sharepoint/folders';
 

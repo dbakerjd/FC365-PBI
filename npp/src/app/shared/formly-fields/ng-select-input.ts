@@ -4,8 +4,8 @@ import {concat, Observable, of, ReplaySubject, Subject} from "rxjs";
 import {FormControl} from "@angular/forms";
 import { HttpParams } from "@angular/common/http";
 import { FieldType } from "@ngx-formly/core";
-import { ErrorService } from "src/app/services/error.service";
-import { AppDataService } from "src/app/services/app-data.service";
+import { ErrorService } from "@services/app/error.service";
+import { AppDataService } from "@services/app/app-data.service";
 
 /*
   templateOptions: {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { EntityGeography, Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP } from '@shared/sharepoint/folders';
-import { AppDataService } from './app-data.service';
+import { AppDataService } from './app/app-data.service';
 
 @Injectable({
   providedIn: 'root'

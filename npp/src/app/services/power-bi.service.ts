@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { LicensingService } from './licensing.service';
-import { ErrorService } from './error.service';
-import { TeamsService } from './teams.service';
-import { SharepointService } from './sharepoint.service';
+import { ErrorService } from './app/error.service';
 import { environment } from 'src/environments/environment';
 import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
-import { AppDataService } from './app-data.service';
+import { AppDataService } from './app/app-data.service';
+import { TeamsService } from './microsoft-data/teams.service';
 
 export interface PageDetails {
   ReportSection: string;

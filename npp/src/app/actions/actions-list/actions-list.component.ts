@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -19,19 +18,19 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { LicensingService } from 'src/app/services/licensing.service';
+import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
 
 @Component({
   selector: 'app-actions-list',

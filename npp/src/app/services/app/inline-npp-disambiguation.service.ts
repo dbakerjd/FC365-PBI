@@ -2,12 +2,10 @@ import { Injectable } from '@angular/core';
 import { AppType } from '@shared/models/app-config';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { Opportunity } from '../shared/models/entity';
-import { NPPFile, NPPFileMetadata } from '../shared/models/file-system';
-import { AppDataService } from './app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { ErrorService } from './error.service';
-import { SharepointService } from './sharepoint.service';
-import { TeamsService } from './teams.service';
+import { SharepointService } from '@services/microsoft-data/sharepoint.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
 @Injectable({
   providedIn: 'root'

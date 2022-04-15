@@ -19,16 +19,16 @@ import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.c
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { LicensingService } from 'src/app/services/licensing.service';
+import { InlineNppDisambiguationService } from '@services/app/inline-npp-disambiguation.service';
+import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { TeamsService } from 'src/app/services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import * as SPFolders from '@shared/sharepoint/folders';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 

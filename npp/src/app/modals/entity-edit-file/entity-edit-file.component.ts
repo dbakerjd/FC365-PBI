@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Indication } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
-import { AppDataService } from 'src/app/services/app-data.service';
+import { AppDataService } from '@services/app/app-data.service';
 
 @Component({
   selector: 'app-entity-edit-file',

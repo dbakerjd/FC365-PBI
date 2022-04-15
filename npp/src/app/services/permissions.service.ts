@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Action, Country, EntityGeography, Opportunity, Stage } from '@shared/models/entity';
 import { GroupPermission, User } from '@shared/models/user';
-import { AppDataService } from './app-data.service';
+import { AppDataService } from './app/app-data.service';
 import * as SPFolders from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { SystemFolder } from '@shared/models/file-system';

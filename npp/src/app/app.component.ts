@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { AppDataService } from './services/app-data.service';
-import { LicensingService } from './services/licensing.service';
-import { SharepointService } from './services/sharepoint.service';
-import { TeamsService } from './services/teams.service';
+import { AppDataService } from './services/app/app-data.service';
+import { LicensingService } from './services/jd-data/licensing.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
 @Component({
   selector: 'app-root',
