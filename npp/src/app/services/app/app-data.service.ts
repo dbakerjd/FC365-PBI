@@ -959,7 +959,6 @@ export class AppDataService {
 
     /** Impossible to expand ListItemAllFields/Author in one query using Sharepoint REST API */
     if (expandProperties && files.length > 0) {
-      console.log('expanding');
       for (let i = 0; i < files.length; i++) {
         let fileItems = files[i];
         if (fileItems) {
