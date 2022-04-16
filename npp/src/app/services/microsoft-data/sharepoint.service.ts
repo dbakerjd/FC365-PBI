@@ -184,11 +184,7 @@ export class SharepointService {
 
   /** --- FILES --- **/
 
-  /** TOCHECK pillar a les crides la folder directament */
-  getBaseFilesFolder(): string {
-    return  SPFolders.FILES_FOLDER;
-  }
-
+  /** creates a sharepoint folder in the path */
   async createFolder(folderPath: string): Promise<SystemFolder | null> {
     try {
       return await this.http.post(
@@ -315,17 +311,6 @@ export class SharepointService {
     return (await this.http.get(
       this.licensing.getSharepointApiUri() + `GetFileByServerRelativeUrl('${url}')/ListItemAllFields`).toPromise()) as NPPFileMetadata;
   }
-
-  /** TODEL */
-  // async getFileInfo(fileId: number): Promise<NPPFile> {
-  //   return await this.query(
-  //     `lists/getbytitle('${SPFolders.FILES_FOLDER}')` + `/items(${fileId})`,
-  //     '$select=*,Author/Id,Author/FirstName,Author/LastName,StageName/Id,StageName/Title, \
-  //       EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title \
-  //       &$expand=StageName,Author,EntityGeography,ModelScenario,ApprovalStatus',
-  //     'all'
-  //   ).toPromise();
-  // }
   
   async uploadFileQuery(fileData: string, folder: string, filename: string) {
     try {

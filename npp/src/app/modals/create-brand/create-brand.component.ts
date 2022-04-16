@@ -201,7 +201,7 @@ export class CreateBrandComponent implements OnInit {
       if (this.isEdit) {
         this.updating = this.dialogRef.disableClose = true;
         await this.permissions.updateEntityGeographies(this.data.brand, this.model.geographies);
-        const success = await this.entities.updateOpportunity(this.data.brand.ID, this.model.Brand);
+        const success = await this.entities.updateEntity(this.data.brand.ID, this.model.Brand);
         this.updating = this.dialogRef.disableClose = false;
         this.jobs.finishJob(job.id);
         this.toastr.success("The brand has been updated", this.model.Brand.Title);

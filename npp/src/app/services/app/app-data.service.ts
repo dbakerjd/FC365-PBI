@@ -145,16 +145,6 @@ export class AppDataService {
     return await this.sharepoint.getOneItem(SPLists.ENTITIES_LIST_NAME, options);
   }
 
-    // /** TOCHECK getbrand o get Entity? */
-    /* TODEL */
-    // async getBrand(id: number): Promise<Opportunity> {
-    //   let cond = "&$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,EntityOwner/Title,ForecastCycle/Title,BusinessUnit/Title&$expand=EntityOwner,ForecastCycle,BusinessUnit,Indication";
-     
-    //   let results = await this.sharepoint.getOneItem(SPLists.ENTITIES_LIST_NAME, "$filter=Id eq "+id+cond);
-      
-    //   return results;
-    // }
-
   async getAllEntities(appId: number) {
     let countCond = `$filter=AppTypeId eq ${appId}`;
     let max = await this.sharepoint.countItems(SPLists.ENTITIES_LIST_NAME, countCond);
@@ -329,7 +319,8 @@ export class AppDataService {
     }
   }
 
-  /** todel */
+  /** only for development purposes */
+  /*
   async deleteAllGroups() {
     const groups = await this.getGroups();
     for (const g of groups) {
@@ -338,6 +329,7 @@ export class AppDataService {
       }
     }
   }
+  */
 
   /** ---- MASTER INFO ---- */
   async getMasterApprovalStatuses(): Promise<MasterApprovalStatus[]> {
@@ -383,17 +375,6 @@ export class AppDataService {
     const stages = await this.sharepoint.getAllItems(SPLists.MASTER_STAGES_LIST_NAME, `$filter=StageType eq '${stageType}'`);
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
-
-  /** TODEL unused ? */
-  // async setApprovalStatus(fileId: number, status: string, comments: string | null = null, folder: string = FILES_FOLDER): Promise<boolean> {
-  //   const statusId = await this.getMasterApprovalStatusId(status);
-  //   if (!statusId) return false;
-
-  //   let data = { ApprovalStatusId: statusId };
-  //   if (comments) Object.assign(data, { Comments: comments });
-
-  //   return await this.sharepoint.updateItem(fileId, `lists/getbytitle('${folder}')`, data);
-  // }
 
   /** TOCHECK on ha d'anar? */
   async setActionDueDate(actionId: number, newDate: string) {

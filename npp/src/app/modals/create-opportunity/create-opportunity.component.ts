@@ -381,7 +381,7 @@ export class CreateOpportunityComponent implements OnInit {
 
       this.updating = this.dialogRef.disableClose = true;
       await this.permissions.updateEntityGeographies(this.data.opportunity, this.model.geographies);
-      const success = await this.entities.updateOpportunity(this.data.opportunity.ID, this.model.Opportunity);
+      const success = await this.entities.updateEntity(this.data.opportunity.ID, this.model.Opportunity);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close({
         success: success,

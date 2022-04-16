@@ -107,6 +107,7 @@ export class FilesService {
 
   }
 
+  /** Set the approval status for a file */
   async setFileApprovalStatus(rootFolder: string, file: NPPFile, entity: Opportunity | null, status: string, comments: string | null = null) {
     if (file.ListItemAllFields) {
       const statusId = await this.appData.getMasterApprovalStatusId(status);
@@ -124,7 +125,7 @@ export class FilesService {
       let res;
       if (status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
         let arrFolder = file.ServerRelativeUrl.split("/");
-        await this.removeNPPOldApprovedModel(entity, file);
+        await this.removeOldApprovedModel(entity, file);
         res = await this.appData.copyFile(file.ServerRelativeUrl, '/' + arrFolder[1] + '/' + arrFolder[2] + '/' + FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0/' + arrFolder[arrFolder.length - 3] + '/0/', file.Name);
 
         if (res) {
@@ -139,34 +140,6 @@ export class FilesService {
       throw new Error("Missing file metadata.");
     }
   }
-
-  /** TOCHECK similud amb setentityapprovalstatus */
-  /** TODEL */
-  // async setBrandApprovalStatus(rootFolder: string, file: NPPFile, brand: Opportunity | null, status: string, comments: string | null = null) {
-  //   if(file.ListItemAllFields) {
-  //     const statusId = await this.getMasterApprovalStatusId(status);
-  //     if (!statusId) return false;
-  //     /*TODO use something like this to ensure unique name
-  //     while (await this.sharepoint.existsFile(fileName, destinationFolder) && ++attemps < 11) {
-  //       fileName = baseFileName + '-copy-' + attemps + '.' + extension;
-  //     }*/
-  //     let data = { ApprovalStatusId: statusId };
-  //     if (comments) Object.assign(data, { Comments: comments });
-  
-  //     await this.sharepoint.updateItem(file.ListItemAllFields.ID, `lists/getbytitle('${rootFolder}')`, data);
-  //     let res;
-  //     if(status === "Approved" && brand) {
-  //       let arrFolder = file.ServerRelativeUrl.split("/");
-  //       await this.removeOldAcceptedModel(brand, file);
-  //       res = await this.appData.copyFile(file.ServerRelativeUrl, '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/', file.Name);
-  //       return res;
-  //     };
-      
-  //     return true;
-  //   } else {
-  //     throw new Error("Missing file metadata.");
-  //   }
-  // }
 
   async addScenarioSufixToFilename(originFilename: string, scenarioId: number): Promise<string | false> {
     const scenarios = await this.appData.getScenariosList();
@@ -245,20 +218,7 @@ export class FilesService {
     }
   }
 
-  private async removeOldAcceptedModel(brand: Opportunity, file: NPPFile) {
-    if(file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
-      let arrFolder = file.ServerRelativeUrl.split("/");
-      let path = '/'+arrFolder[1]+'/'+arrFolder[2]+'/'+FOLDER_APPROVED+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0/'+arrFolder[arrFolder.length - 3]+'/0/';
-      let scenarios = file.ListItemAllFields.ModelScenarioId;
-
-      let model = await this.getFileByScenarios(path, scenarios);
-      if(model) {
-        await this.deleteFile(model.ServerRelativeUrl);
-      }
-    }
-  }
-
-  private async removeNPPOldApprovedModel(entity: Opportunity, file: NPPFile) {
+  private async removeOldApprovedModel(entity: Opportunity, file: NPPFile) {
     if (file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
       const arrFolder = file.ServerRelativeUrl.split("/");
       const path = '/' + arrFolder[1] + '/' + arrFolder[2] + '/' + FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0/' + arrFolder[arrFolder.length - 3] + '/0/';
@@ -369,28 +329,6 @@ export class FilesService {
 
     return success;
   }
-
-  /** TODEL */
-  // async cloneForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], comments = ''): Promise<boolean> {
-
-  //   const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
-
-  //   let success = await this.appData.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
-  //   if (!success) return false;
-
-  //   let newFileInfo = await this.appData.getFileByName(destinationFolder, newFilename);
-
-  //   if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
-  //     const newData = {
-  //       ModelScenarioId: newScenarios,
-  //       Comments: comments ? comments : null,
-  //       ApprovalStatusId: await this.appData.getMasterApprovalStatusId("In Progress")
-  //     }
-  //     success = await this.appData.updateFilePropertiesById(newFileInfo.value[0].ListItemAllFields.ID, FILES_FOLDER, newData);
-  //   }
-
-  //   return success;
-  // }
 
   /** Get the equivalent folder for Power BI files */
   private getPowerBICSVRootPathFromModelPath(path: string): string | undefined {

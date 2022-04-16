@@ -100,38 +100,22 @@ export class EntitiesService {
     return brand; 
   }
 
-  /*
-  async updateBrand(brandId: number, brandData: BrandInput): Promise<boolean> {
-    const oppBeforeChanges: Opportunity = await this.sharepoint.getOneItemById(brandId, SPLists.ENTITIES_LIST_NAME);
-    const success = await this.sharepoint.updateItem(brandId, SPLists.ENTITIES_LIST_NAME, brandData);
+  /** Update the entity with new entity data. Returns true in success */
+  async updateEntity(entityId: number, entityData: OpportunityInput): Promise<boolean> {
+    const oppBeforeChanges = await this.appData.getEntity(entityId, false);
+    const success = await this.appData.updateEntity(entityId, entityData);
 
-    if (success && oppBeforeChanges.EntityOwnerId !== brandData.EntityOwnerId) { // owner changed
-      return this.permissions.changeEntityOwnerPermissions(brandId, oppBeforeChanges.EntityOwnerId, brandData.EntityOwnerId);
-    }
-
-    return success;
-  }
-  */
-
-  /** TOCHECK igual que update brand ? */
-  async updateOpportunity(oppId: number, oppData: OpportunityInput): Promise<boolean> {
-    // const oppBeforeChanges: Opportunity = await this.sharepoint.getOneItemById(oppId, SPLists.ENTITIES_LIST_NAME);
-    const oppBeforeChanges = await this.appData.getEntity(oppId, false);
-    // const success = await this.sharepoint.updateItem(oppId, SPLists.ENTITIES_LIST_NAME, oppData);
-    const success = await this.appData.updateEntity(oppId, oppData);
-
-    if (success && oppBeforeChanges.EntityOwnerId !== oppData.EntityOwnerId) { // owner changed
-      return this.permissions.changeEntityOwnerPermissions(oppId, oppBeforeChanges.EntityOwnerId, oppData.EntityOwnerId);
+    if (success && oppBeforeChanges.EntityOwnerId !== entityData.EntityOwnerId) { // owner changed
+      return this.permissions.changeEntityOwnerPermissions(entityId, oppBeforeChanges.EntityOwnerId, entityData.EntityOwnerId);
     }
 
     return success;
   }
   
-  /** TOCHECK move to upper service? */
+  /** Update the entity stage with new data. Returns true in success */
   async updateStageSettings(stageId: number, data: any): Promise<boolean> {
     const currentStage = await this.appData.getEntityStage(stageId);
     let success = await this.appData.updateStage(stageId, data);
-    // let success = await this.sharepoint.updateItem(stageId, SPLists.ENTITY_STAGES_LIST_NAME, data);
 
     return success && await this.permissions.changeStageUsersPermissions(
       currentStage.EntityNameId,
