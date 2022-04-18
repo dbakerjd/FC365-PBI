@@ -153,17 +153,24 @@ export interface MasterClinicalTrialPhase {
 }
 
 export interface MasterApprovalStatus {
-  Id: number;
+  ID: number;
   Title: string;
 }
 
 export interface MasterBusinessUnit {
-  Id: number;
+  ID: number;
   Title: string;
 }
 
 export interface MasterForecastCycle {
-  Id: number;
+  ID: number;
   Title: string;
+}
+
+export interface MasterStage {
+  ID: number;
+  Title: string;
+  StageNumber: number;
+  StageType: string;
 }
 

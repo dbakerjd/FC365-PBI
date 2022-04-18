@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
@@ -216,13 +216,11 @@ export class AppDataService {
     return result ? result : null;
   }
 
-  // TOCHECK
-  // es pot substituir la primera crida  per getMasterStage() i la segona per getMasterStageFolders() ?
   /** Recupera els departaments d'una opportunity interna (si entity només els que l'usuari té accés) */
   /** crec que s'hauria de moure a entities services o permissions ? */
   public async getInternalDepartments(entityId: number | null = null, businessUnitId: number | null = null): Promise<NPPFolder[]> {
     let internalStageId = await this.sharepoint.getOneItem(SPLists.MASTER_STAGES_LIST_NAME, "$filter=Title eq 'Internal'");
-    let folders = await this.sharepoint.getAllItems(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=StageNameId eq " + internalStageId.ID);
+    let folders = await this.getMasterStageFolders(internalStageId.ID);
     for (let index = 0; index < folders.length; index++) {
       folders[index].containsModels = folders[index].DepartmentID ? false : true;
     }
@@ -355,8 +353,7 @@ export class AppDataService {
     return masterFolders;
   }
 
-  async getNextStage(stageId: number): Promise<Stage | null> {
-    // es pot utilitzar getMasterStage() ?
+  async getNextStage(stageId: number): Promise<MasterStage | null> {
     let current = await this.sharepoint.getOneItemById(stageId, SPLists.MASTER_STAGES_LIST_NAME);
     return await this.getMasterStage(current.StageType, current.StageNumber + 1);
   }
@@ -501,7 +498,7 @@ export class AppDataService {
   async getMasterApprovalStatusId(status: string): Promise<number | null> {
     const approvalStatus = (await this.getMasterApprovalStatuses()).find(el => el.Title == status);
     if (approvalStatus) {
-      return approvalStatus.Id;
+      return approvalStatus.ID;
     }
     return null;
   }
@@ -515,15 +512,14 @@ export class AppDataService {
     return await this.sharepoint.getAllItems(SPLists.MASTER_FOLDER_LIST_NAME, "$filter=StageNameId eq " + masterStageId);
   }
 
-  /** TOCHECK any type */
-  async getMasterStage(stageType: string, stageNumber: number = 1): Promise<any> {
+  async getMasterStage(stageType: string, stageNumber: number = 1): Promise<MasterStage> {
     return await this.sharepoint.getOneItem(
        SPLists.MASTER_STAGES_LIST_NAME,
       `$select=ID,Title&$filter=(StageType eq '${stageType}') and (StageNumber eq ${stageNumber})`
     );
   }
 
-  async getMasterStages(stagesType: string) {
+  async getMasterStages(stagesType: string): Promise<MasterStage[]> {
     return await this.sharepoint.getAllItems(
       SPLists.MASTER_STAGES_LIST_NAME, 
       `$filter=StageType eq '${stagesType}'`
@@ -963,8 +959,7 @@ export class AppDataService {
     return uploaded;
   }
 
-  /** TOCHECK set type */
-  async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<any> {
+  async getSubfolders(folder: string, isAbsolutePath: boolean = false): Promise<SystemFolder[]> {
     let basePath = FILES_FOLDER;
     if (isAbsolutePath) basePath = '';
     return await this.sharepoint.getPathSubfolders(basePath + folder);

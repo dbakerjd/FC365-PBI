@@ -22,7 +22,7 @@ import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
-import { Action, EntityGeography, Indication, Opportunity, Stage } from '@shared/models/entity';
+import { Action, EntityGeography, Indication, MasterStage, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
@@ -48,7 +48,7 @@ export class ActionsListComponent implements OnInit {
   opportunityGeographies: EntityGeography[] = []; // geographies (not soft removed)
   currentGate: Stage | undefined = undefined;
   lastStageId: number | undefined = undefined; // next stage button control
-  nextStage: Stage | null = null;
+  nextStage: MasterStage | null = null;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   refreshingPowerBi = false;

@@ -211,7 +211,7 @@ export class SharepointService {
     }
   }
 
-  async getPathSubfolders(path: string) {
+  async getPathSubfolders(path: string): Promise<SystemFolder[]> {
     const result = await this.query(
       `GetFolderByServerRelativeUrl('${path}')/folders`,
       '$expand=ListItemAllFields',
