@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterClinicalTrialPhase, MasterCountry, MasterGeography, MasterScenario, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
@@ -81,8 +81,8 @@ interface SPGroup {
 export class AppDataService {
 
   // local "cache"
-  masterBusinessUnitsCache: any[] = [];
-  masterForecastCyclesCache: any[] = [];
+  masterBusinessUnitsCache: MasterBusinessUnit[] = [];
+  masterForecastCyclesCache: MasterForecastCycle[] = [];
   masterOpportunitiesTypesCache: OpportunityType[] = [];
   masterGroupTypesCache: GroupPermission[] = [];
   masterApprovalStatusCache: MasterApprovalStatus[] = [];
@@ -465,7 +465,7 @@ export class AppDataService {
     return this.masterClinicalTrialPhaseCache;
   }
 
-  async getMasterBusinessUnits() {
+  async getMasterBusinessUnits(): Promise<MasterBusinessUnit[]> {
     if (this.masterBusinessUnitsCache.length < 1) {
       const max = await this.sharepoint.countItems(SPLists.MASTER_BUSINESS_UNIT_LIST_NAME);
       const cond = "$skiptoken=Paged=TRUE&$top="+max;
@@ -474,7 +474,7 @@ export class AppDataService {
     return this.masterBusinessUnitsCache;
   }
 
-  async getMasterForecastCycles() {
+  async getMasterForecastCycles(): Promise<MasterForecastCycle[]> {
     if (this.masterForecastCyclesCache && this.masterForecastCyclesCache.length) {
       return this.masterForecastCyclesCache;
     }

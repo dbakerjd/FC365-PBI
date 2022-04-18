@@ -157,3 +157,13 @@ export interface MasterApprovalStatus {
   Title: string;
 }
 
+export interface MasterBusinessUnit {
+  Id: number;
+  Title: string;
+}
+
+export interface MasterForecastCycle {
+  Id: number;
+  Title: string;
+}
+
