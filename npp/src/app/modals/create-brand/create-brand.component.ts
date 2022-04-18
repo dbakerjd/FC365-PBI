@@ -50,7 +50,7 @@ export class CreateBrandComponent implements OnInit {
     //this.model.Brand = this.brand;
 
     let therapies = await this.selectLists.getTherapiesList();
-    let forecastCycles = await this.selectLists.getForecastCycles();
+    let forecastCycles = await this.selectLists.getForecastCyclesList();
     let businessUnits = await this.selectLists.getBusinessUnitsList();
     const geo = (await this.selectLists.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.selectLists.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;

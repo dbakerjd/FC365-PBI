@@ -104,7 +104,7 @@ export class FilesListComponent implements OnInit {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.appData.getCurrentUserInfo();
-      this.masterCycles = await this.selectLists.getForecastCycles();
+      this.masterCycles = await this.selectLists.getForecastCyclesList();
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;

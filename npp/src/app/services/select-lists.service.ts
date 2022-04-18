@@ -79,7 +79,7 @@ export class SelectListsService {
     return masterBU.map(el => { return {value: el.ID, label: el.Title }});
   }
 
-  async getForecastCycles(): Promise<SelectInputList[]> {
+  async getForecastCyclesList(): Promise<SelectInputList[]> {
     const masterFC = await this.appData.getMasterForecastCycles();
     return masterFC.map(el => { return {value: el.ID, label: el.Title }});
   }

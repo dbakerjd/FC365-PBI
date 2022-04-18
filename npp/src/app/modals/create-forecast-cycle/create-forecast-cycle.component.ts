@@ -39,7 +39,7 @@ export class CreateForecastCycleComponent implements OnInit {
   async ngOnInit(): Promise<void> {
 
     this.entity = this.data.entity;
-    this.cycles = await this.selectLists.getForecastCycles();
+    this.cycles = await this.selectLists.getForecastCyclesList();
     const currentYear = new Date().getFullYear();
     
     let year = currentYear;

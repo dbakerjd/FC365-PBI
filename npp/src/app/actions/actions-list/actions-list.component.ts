@@ -27,8 +27,8 @@ import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
 import { AppDataService } from '@services/app/app-data.service';
-import { PermissionsService } from 'src/app/services/permissions.service';
-import { FilesService } from 'src/app/services/files.service';
+import { PermissionsService } from '@services/permissions.service';
+import { FilesService } from '@services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 

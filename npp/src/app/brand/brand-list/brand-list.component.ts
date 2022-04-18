@@ -66,7 +66,7 @@ export class BrandListComponent implements OnInit {
     const businessUnits = await this.selectLists.getBusinessUnitsList();
     const brandFields = await this.selectLists.getBrandFilterFields();
     const therapies = await this.selectLists.getTherapiesList();
-    this.masterCycles = await this.selectLists.getForecastCycles();
+    this.masterCycles = await this.selectLists.getForecastCyclesList();
     
     this.brands = await this.entities.getAll();
 

@@ -57,7 +57,7 @@ export class CreateOpportunityComponent implements OnInit {
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
     const therapies = await this.selectLists.getTherapiesList();
-    let forecastCycles = await this.selectLists.getForecastCycles();
+    let forecastCycles = await this.selectLists.getForecastCyclesList();
     this.oppTypes = await this.selectLists.getOpportunityTypesList();
     const geo = (await this.selectLists.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
     const countries = (await this.selectLists.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
