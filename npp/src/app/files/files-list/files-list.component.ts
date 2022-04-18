@@ -12,7 +12,7 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
-import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
+import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
 import { ExternalUploadFileComponent } from 'src/app/modals/external-upload-file/external-upload-file.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
@@ -320,7 +320,7 @@ export class FilesListComponent implements OnInit {
     if (!file.ListItemAllFields) return;
     if (!this.entity) return;
 
-    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
       height: '300px',
       width: '405px',
       data: {

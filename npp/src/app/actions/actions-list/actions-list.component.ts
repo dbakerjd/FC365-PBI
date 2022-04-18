@@ -10,7 +10,7 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
-import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
+import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -269,7 +269,7 @@ export class ActionsListComponent implements OnInit {
     if (!file.ListItemAllFields) return;
     if (!this.opportunity) return;
 
-    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
       height: '300px',
       width: '405px',
       data: {

@@ -54,9 +54,8 @@ import { PowerBIEmbedModule } from 'powerbi-client-angular';
 import { FilesListComponent } from './files/files-list/files-list.component';
 import { CreateForecastCycleComponent } from './modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CommentsListComponent } from './modals/comments-list/comments-list.component';
-import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
 import { ExternalUploadFileComponent } from './modals/external-upload-file/external-upload-file.component';
-import { ExternalApproveModelComponent } from './modals/external-approve-model/external-approve-model.component';
+import { ApproveModelComponent } from './modals/approve-model/approve-model.component';
 import { EntityEditFileComponent } from './modals/entity-edit-file/entity-edit-file.component';
 import { CreateBrandComponent } from './modals/create-brand/create-brand.component';
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
@@ -123,9 +122,8 @@ import { AppControlService } from '@services/app/app-control.service';
     AuthEndComponent,
     CreateForecastCycleComponent,
     CommentsListComponent,
-    ApproveModelComponent,
     ExternalUploadFileComponent,
-    ExternalApproveModelComponent,
+    ApproveModelComponent,
     EntityEditFileComponent,
     CreateBrandComponent,
     BrandListComponent,
