@@ -182,14 +182,6 @@ export class AppDataService {
     // TODO Remove all related opportunity info if exists (stages, actions, files...)
   }
 
-  async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
-    const oppType = await this.getOpportunityType(oppTypeId);
-    if (oppType?.IsInternal) {
-      return oppType.IsInternal;
-    }
-    return false;
-  }
-
   async setOpportunityStatus(opportunityId: number, status: "Processing" | "Archive" | "Active" | "Approved") {
     return this.sharepoint.updateItem(opportunityId, SPLists.ENTITIES_LIST_NAME, {
       OpportunityStatus: status

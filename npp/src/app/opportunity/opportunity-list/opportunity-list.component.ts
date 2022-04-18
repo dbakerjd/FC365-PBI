@@ -31,7 +31,6 @@ export class OpportunityListComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
   loading = true;
-  opportunityTypes: OpportunityType[] = [];
   canCreate = false;
 
   constructor(
@@ -63,8 +62,6 @@ export class OpportunityListComponent implements OnInit {
     this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
     let indications = await this.selectLists.getIndicationsList();
-    this.opportunityTypes = await this.appData.getOpportunityTypes();
-    let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
     let opportunityFields = await this.selectLists.getOpportunityFilterFields();
     
     this.fields = [{
@@ -91,7 +88,7 @@ export class OpportunityListComponent implements OnInit {
         type: 'select',
         templateOptions: {
           placeholder: 'All types',
-          options: opportunityTypes
+          options: await this.selectLists.getOpportunityTypesList()
         }
       },{
         key: 'indication',
@@ -147,7 +144,7 @@ export class OpportunityListComponent implements OnInit {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
         let opp = await this.appData.getEntity(result.data.opportunity.ID);
         opp.progress = 0;
-        if (await this.appData.isInternalOpportunity(opp.OpportunityTypeId)) {
+        if (await this.entities.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
         }
         let job = this.jobs.startJob(
@@ -209,10 +206,9 @@ export class OpportunityListComponent implements OnInit {
     return; // filtering done with pipes
   }
 
-  navigateTo(item: Opportunity) {
-    if (item.OpportunityStatus === "Processing") return;
-    let opType = this.opportunityTypes.find(el => el.Title == item.OpportunityType?.Title);
-    if(opType?.IsInternal) {
+  async navigateTo(item: Opportunity) {
+    if (item.OpportunityStatus === "Processing" || !item.OpportunityTypeId) return;
+    if(await this.entities.isInternalOpportunity(item.OpportunityTypeId)) {
       this.router.navigate(['opportunities', item.ID, 'files']);
     } else {
       this.router.navigate(['opportunities', item.ID, 'actions']);
@@ -221,8 +217,7 @@ export class OpportunityListComponent implements OnInit {
   }
 
   async computeProgress(opportunity: Opportunity): Promise<number> {
-    let opType = this.opportunityTypes.find(el => el.Title == opportunity.OpportunityType?.Title);
-    if(opType?.IsInternal) {
+    if (opportunity.OpportunityType && await this.entities.isInternalOpportunity(opportunity.OpportunityType?.ID)) {
       return -1; // progress no applies
     }
     let actions = await this.appData.getActions(opportunity.ID);

@@ -31,6 +31,7 @@ import { PermissionsService } from '@services/permissions.service';
 import { FilesService } from '@services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
+import { EntitiesService } from '@services/entities.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -83,7 +84,8 @@ export class ActionsListComponent implements OnInit {
     private readonly files: FilesService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly entities: EntitiesService
     ) { }
 
   ngOnInit(): void {
@@ -535,7 +537,7 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
-          if (!await this.appData.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
+          if (!await this.entities.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
