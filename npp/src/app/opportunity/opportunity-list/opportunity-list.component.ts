@@ -8,7 +8,6 @@ import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { TeamsService } from '@services/microsoft-data/teams.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { User } from '@shared/models/user';
@@ -40,7 +39,6 @@ export class OpportunityListComponent implements OnInit {
     private router: Router, 
     public matDialog: MatDialog,
     public jobs: WorkInProgressService,
-    public teams: TeamsService,
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService,
@@ -113,7 +111,7 @@ export class OpportunityListComponent implements OnInit {
     })
     this.loading = false;
     for (let op of this.opportunities) {
-      op.progress = await this.computeProgress(op);
+      op.progress = await this.entities.getProgress(op);
     }
   }
 
@@ -152,8 +150,7 @@ export class OpportunityListComponent implements OnInit {
           );
         this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
           if (r) {
-            // set active
-            await this.appData.setOpportunityStatus(opp.ID, 'Active');
+            await this.entities.activeEntity(opp.ID);
             opp.OpportunityStatus = 'Active';
             this.initIndicationString(opp);
             this.opportunities = [...this.opportunities, opp];
@@ -216,35 +213,8 @@ export class OpportunityListComponent implements OnInit {
     
   }
 
-  async computeProgress(opportunity: Opportunity): Promise<number> {
-    if (opportunity.OpportunityType && await this.entities.isInternalOpportunity(opportunity.OpportunityType?.ID)) {
-      return -1; // progress no applies
-    }
-    let actions = await this.appData.getActions(opportunity.ID);
-    if (actions.length) {
-      let gates: {'total': number; 'completed': number}[] = [];
-      let currentGate = 0;
-      let gateIndex = 0;
-      for(let act of actions) {
-        if (act.StageNameId == currentGate) {
-          gates[gateIndex-1]['total']++;
-          if (act.Complete) gates[gateIndex-1]['completed']++;
-        } else {
-          currentGate = act.StageNameId;
-          if (act.Complete) gates[gateIndex] = {'total': 1, 'completed': 1};
-          else gates[gateIndex] = {'total': 1, 'completed': 0};
-          gateIndex++;
-        }
-      }
-
-      let gatesMedium = gates.map(function(x) { return x.completed / x.total; });
-      return Math.round((gatesMedium.reduce((a, b) => a + b, 0) / gatesMedium.length) * 10000) / 100;
-    }
-    return 0;
-  }
-
   async archiveOpportunity(opp: Opportunity) {
-    const success = await this.appData.setOpportunityStatus(opp.ID, "Archive");
+    const success = await this.entities.archiveEntity(opp.ID);
     if (success) {
       opp.OpportunityStatus = 'Archive';
       this.toastr.success("The opportunity has been archived");
@@ -271,7 +241,7 @@ export class OpportunityListComponent implements OnInit {
           // create new
           this.createOpportunity(opp);
         } else if (response === false) {
-          const success = await this.appData.setOpportunityStatus(opp.ID, "Active");
+          const success = await this.entities.activeEntity(opp.ID);
           if (success) {
             opp.OpportunityStatus = 'Active';
             this.toastr.success("The opportunity has been restored");

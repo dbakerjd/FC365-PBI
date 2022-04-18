@@ -572,7 +572,7 @@ export class ActionsListComponent implements OnInit {
 
                       if (result.success) {
                         // complete current opp
-                        await this.appData.setOpportunityStatus(this.opportunity.ID, "Approved");
+                        await this.entities.approveEntity(this.opportunity.ID);
 
                         this.toastr.success("A new opportunity was created successfully", result.data.opportunity.Title);
                         let opp = await this.appData.getEntity(result.data.opportunity.ID);
@@ -584,7 +584,7 @@ export class ActionsListComponent implements OnInit {
                           if (!this.opportunity) return;
                           this.files.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active
-                          await this.appData.setOpportunityStatus(opp.ID, 'Active');
+                          await this.entities.activeEntity(opp.ID);
                           this.jobs.finishJob(job.id);
                           this.toastr.success("The opportunity is now active", opp.Title);
                           this.router.navigate(['opportunities', opp.ID, 'files']);
@@ -597,13 +597,13 @@ export class ActionsListComponent implements OnInit {
                     });
                 } else if (newInternalResponse === false) {
                   // only complete
-                  await this.appData.setOpportunityStatus(this.opportunity.ID, "Approved");
+                  await this.entities.approveEntity(this.opportunity.ID);
                   this.opportunity.OpportunityStatus = 'Approved';
                   this.toastr.success("The opportunity has been completed", this.opportunity.Title);
                 }
               });
           } else { // without possibility of pass to internal => complete
-            await this.appData.setOpportunityStatus(this.opportunity.ID, "Approved");
+            await this.entities.approveEntity(this.opportunity.ID);
             this.opportunity.OpportunityStatus = 'Approved';
             this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }

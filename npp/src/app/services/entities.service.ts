@@ -172,4 +172,44 @@ export class EntitiesService {
     return false;
   }
 
+  async archiveEntity(entityId: number) {
+    return await this.appData.setOpportunityStatus(entityId, "Archive");
+  }
+
+  async activeEntity(entityId: number) {
+    return await this.appData.setOpportunityStatus(entityId, "Active");
+  }
+
+  async approveEntity(entityId: number) {
+    return await this.appData.setOpportunityStatus(entityId, "Approved");
+  }
+
+  async getProgress(entity: Opportunity) {
+    console.log('entity', entity);
+    if (entity.OpportunityTypeId && await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      return -1; // progress no applies
+    }
+    let actions = await this.appData.getActions(entity.ID);
+    if (actions.length) {
+      let gates: {'total': number; 'completed': number}[] = [];
+      let currentGate = 0;
+      let gateIndex = 0;
+      for(let act of actions) {
+        if (act.StageNameId == currentGate) {
+          gates[gateIndex-1]['total']++;
+          if (act.Complete) gates[gateIndex-1]['completed']++;
+        } else {
+          currentGate = act.StageNameId;
+          if (act.Complete) gates[gateIndex] = {'total': 1, 'completed': 1};
+          else gates[gateIndex] = {'total': 1, 'completed': 0};
+          gateIndex++;
+        }
+      }
+
+      let gatesMedium = gates.map(function(x) { return x.completed / x.total; });
+      return Math.round((gatesMedium.reduce((a, b) => a + b, 0) / gatesMedium.length) * 10000) / 100;
+    }
+    return 0;
+  }
+
 }
