@@ -147,3 +147,13 @@ export interface MasterScenario {
   Title: string;
 }
 
+export interface MasterClinicalTrialPhase {
+  ID: number;
+  Title: string;
+}
+
+export interface MasterApprovalStatus {
+  Id: number;
+  Title: string;
+}
+

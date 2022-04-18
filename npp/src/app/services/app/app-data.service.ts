@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterCountry, MasterGeography, MasterScenario, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterClinicalTrialPhase, MasterCountry, MasterGeography, MasterScenario, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
@@ -22,11 +22,6 @@ interface MasterAction {
   StageNameId: number;
   OpportunityTypeId: number;
   DueDays: number;
-}
-
-interface MasterApprovalStatus {
-  Id: number;
-  Title: string;
 }
 
 type EntityGeographyType = 'Geography' | 'Country';
@@ -88,17 +83,18 @@ export class AppDataService {
   // local "cache"
   masterBusinessUnitsCache: any[] = [];
   masterForecastCyclesCache: any[] = [];
-  masterOpportunitiesTypes: OpportunityType[] = [];
+  masterOpportunitiesTypesCache: OpportunityType[] = [];
   masterGroupTypesCache: GroupPermission[] = [];
   masterApprovalStatusCache: MasterApprovalStatus[] = [];
   masterGeographiesCache: MasterGeography[] = [];
   masterCountriesCache: MasterCountry[] = [];
   masterScenariosCache: MasterScenario[] = [];
-  masterIndications: {
+  masterClinicalTrialPhaseCache: MasterClinicalTrialPhase[] = [];
+  masterIndicationsCache: {
     therapy: string;
     indications: Indication[]
   }[] = [];
-  masterFolders: {
+  masterFoldersCache: {
     stage: number;
     folders: NPPFolder[]
   }[] = [];
@@ -201,19 +197,19 @@ export class AppDataService {
   }
 
   async getOpportunityTypes(type: string | null = null): Promise<OpportunityType[]> {
-    if (this.masterOpportunitiesTypes.length < 1) {
-      this.masterOpportunitiesTypes = await this.sharepoint.getAllItems( SPLists.MASTER_OPPORTUNITY_TYPES_LIST_NAME);
+    if (this.masterOpportunitiesTypesCache.length < 1) {
+      this.masterOpportunitiesTypesCache = await this.sharepoint.getAllItems( SPLists.MASTER_OPPORTUNITY_TYPES_LIST_NAME);
     }
     if (type) {
-      return this.masterOpportunitiesTypes.filter(el => el.StageType === type);
+      return this.masterOpportunitiesTypesCache.filter(el => el.StageType === type);
     }
-    return this.masterOpportunitiesTypes;
+    return this.masterOpportunitiesTypesCache;
   }
 
   async getOpportunityType(OpportunityTypeId: number): Promise<OpportunityType | null> {
     let result: OpportunityType | undefined;
-    if (this.masterOpportunitiesTypes.length > 0) {
-      result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
+    if (this.masterOpportunitiesTypesCache.length > 0) {
+      result = this.masterOpportunitiesTypesCache.find(ot => ot.ID === OpportunityTypeId);
     } else {
       result = await this.sharepoint.getOneItem(SPLists.MASTER_OPPORTUNITY_TYPES_LIST_NAME, "$filter=Id eq " + OpportunityTypeId);
     }
@@ -318,8 +314,8 @@ export class AppDataService {
 
   async getStageType(OpportunityTypeId: number): Promise<string> {
     let result: OpportunityType | undefined;
-    if (this.masterOpportunitiesTypes.length > 0) {
-      result = this.masterOpportunitiesTypes.find(ot => ot.ID === OpportunityTypeId);
+    if (this.masterOpportunitiesTypesCache.length > 0) {
+      result = this.masterOpportunitiesTypesCache.find(ot => ot.ID === OpportunityTypeId);
     } else {
       result = await this.sharepoint.getOneItem(SPLists.MASTER_OPPORTUNITY_TYPES_LIST_NAME, "$filter=Id eq " + OpportunityTypeId + "&$select=StageType");
     }
@@ -333,7 +329,7 @@ export class AppDataService {
   /** get stage folders. If opportunityId, only the folders with permission. Otherwise, all master folders of stage */
   async getStageFolders(masterStageId: number, opportunityId: number | null = null, businessUnitId: number | null = null): Promise<NPPFolder[]> {
     let masterFolders = [];
-    let cache = this.masterFolders.find(f => f.stage == masterStageId);
+    let cache = this.masterFoldersCache.find(f => f.stage == masterStageId);
     if (cache) {
       masterFolders = cache.folders;
     } else {
@@ -341,7 +337,7 @@ export class AppDataService {
       for (let index = 0; index < masterFolders.length; index++) {
         masterFolders[index].containsModels = masterFolders[index].Title === FORECAST_MODELS_FOLDER_NAME;
       }
-      this.masterFolders.push({
+      this.masterFoldersCache.push({
         stage: masterStageId,
         folders: masterFolders
       });
@@ -421,8 +417,8 @@ export class AppDataService {
 
   /** ---- MASTER INFO ---- */
 
-  async getIndications(therapy: string = 'all'): Promise<Indication[]> {
-    let cache = this.masterIndications.find(i => i.therapy == therapy);
+  async getMasterIndications(therapy: string = 'all'): Promise<Indication[]> {
+    let cache = this.masterIndicationsCache.find(i => i.therapy == therapy);
     if (cache) {
       return cache.indications;
     }
@@ -432,7 +428,7 @@ export class AppDataService {
       cond += `&$filter=TherapyArea eq '${therapy}'`;
     }
     let results = await this.sharepoint.getAllItems( SPLists.MASTER_THERAPY_AREAS_LIST_NAME, cond + '&$orderby=TherapyArea asc,Title asc');
-    this.masterIndications.push({
+    this.masterIndicationsCache.push({
       therapy: therapy,
       indications: results
     });
@@ -440,42 +436,41 @@ export class AppDataService {
   }
 
   async getMasterCountries(): Promise<MasterCountry[]> {
-    if (this.masterCountriesCache && this.masterCountriesCache.length) {
-      return this.masterCountriesCache;
+    if (this.masterCountriesCache.length < 1) {
+      let count = await this.sharepoint.countItems(SPLists.MASTER_COUNTRIES_LIST_NAME);
+      this.masterCountriesCache = await this.sharepoint.getAllItems(SPLists.MASTER_COUNTRIES_LIST_NAME, `$orderby=Title asc&$top=${count}`);
     }
-    let count = await this.sharepoint.countItems(SPLists.MASTER_COUNTRIES_LIST_NAME);
-    this.masterCountriesCache = await this.sharepoint.getAllItems(SPLists.MASTER_COUNTRIES_LIST_NAME, `$orderby=Title asc&$top=${count}`);
     return this.masterCountriesCache;
   }
 
   async getMasterGeographies(): Promise<MasterGeography[]> {
-    if (this.masterGeographiesCache && this.masterGeographiesCache.length) {
-      return this.masterGeographiesCache;
+    if (this.masterGeographiesCache.length < 1) {
+      let count = await this.sharepoint.countItems(SPLists.MASTER_GEOGRAPHIES_LIST_NAME);
+      this.masterGeographiesCache = await this.sharepoint.getAllItems( SPLists.MASTER_GEOGRAPHIES_LIST_NAME, `$orderby=Title asc&$top=${count}`);
     }
-    let count = await this.sharepoint.countItems(SPLists.MASTER_GEOGRAPHIES_LIST_NAME);
-    this.masterGeographiesCache = await this.sharepoint.getAllItems( SPLists.MASTER_GEOGRAPHIES_LIST_NAME, `$orderby=Title asc&$top=${count}`);
     return this.masterGeographiesCache;
   }
 
   async getMasterScenarios(): Promise<MasterScenario[]> {
-    if (this.masterScenariosCache && this.masterScenariosCache.length) {
-      return this.masterScenariosCache;
+    if (this.masterScenariosCache.length < 1) {
+      this.masterScenariosCache = await this.sharepoint.getAllItems(SPLists.MASTER_SCENARIOS_LIST_NAME);
     }
-    this.masterScenariosCache = await this.sharepoint.getAllItems(SPLists.MASTER_SCENARIOS_LIST_NAME);
     return this.masterScenariosCache;
   }
 
-  async getMasterClinicalTrialPhases() {
-    return await this.sharepoint.getAllItems(SPLists.MASTER_CLINICAL_TRIAL_PHASES_LIST_NAME);
+  async getMasterClinicalTrialPhases(): Promise<MasterClinicalTrialPhase[]> {
+    if (this.masterClinicalTrialPhaseCache.length < 1) {
+      this.masterClinicalTrialPhaseCache = await this.sharepoint.getAllItems(SPLists.MASTER_CLINICAL_TRIAL_PHASES_LIST_NAME);
+    }
+    return this.masterClinicalTrialPhaseCache;
   }
 
   async getMasterBusinessUnits() {
-    if (this.masterBusinessUnitsCache && this.masterBusinessUnitsCache.length) {
-      return this.masterBusinessUnitsCache;
+    if (this.masterBusinessUnitsCache.length < 1) {
+      const max = await this.sharepoint.countItems(SPLists.MASTER_BUSINESS_UNIT_LIST_NAME);
+      const cond = "$skiptoken=Paged=TRUE&$top="+max;
+      this.masterBusinessUnitsCache = await this.sharepoint.getAllItems(SPLists.MASTER_BUSINESS_UNIT_LIST_NAME, cond);
     }
-    const max = await this.sharepoint.countItems(SPLists.MASTER_BUSINESS_UNIT_LIST_NAME);
-    const cond = "$skiptoken=Paged=TRUE&$top="+max;
-    this.masterBusinessUnitsCache = await this.sharepoint.getAllItems(SPLists.MASTER_BUSINESS_UNIT_LIST_NAME, cond);
     return this.masterBusinessUnitsCache;
   }
 
@@ -487,12 +482,6 @@ export class AppDataService {
     const cond = "$skiptoken=Paged=TRUE&$top="+max;
     this.masterForecastCyclesCache = await this.sharepoint.getAllItems(SPLists.MASTER_FORECAST_CYCLES_LIST_NAME, cond);
     return this.masterForecastCyclesCache;
-  }
-
-  /** tocheck compatibilty with function getIndication() ? */
-  async getMasterIndications(): Promise<Indication[]> {
-    let count = await this.sharepoint.countItems(SPLists.MASTER_THERAPY_AREAS_LIST_NAME);
-    return await this.sharepoint.getAllItems( SPLists.MASTER_THERAPY_AREAS_LIST_NAME, "$orderby=TherapyArea asc&$skiptoken=Paged=TRUE&$top=" + count);
   }
 
   async getMasterApprovalStatuses(): Promise<MasterApprovalStatus[]> {

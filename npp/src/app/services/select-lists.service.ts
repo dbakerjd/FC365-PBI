@@ -10,9 +10,6 @@ import { AppDataService } from './app/app-data.service';
 })
 export class SelectListsService {
 
-  masterCountriesList: SelectInputList[] = [];
-  masterGeographiesList: SelectInputList[] = [];
-  masterScenariosList: SelectInputList[] = [];
   masterTherapiesList: SelectInputList[] = [];
 
   constructor(
@@ -45,30 +42,20 @@ export class SelectListsService {
   }
 
   async getCountriesList(): Promise<SelectInputList[]> {
-    if (this.masterCountriesList.length < 1) {
-      const masterCountries = await this.appData.getMasterCountries();
-      this.masterCountriesList = masterCountries.map(t => { return { value: t.ID, label: t.Title } });
-    }
-    return this.masterCountriesList;
+    const masterCountries = await this.appData.getMasterCountries();
+    return masterCountries.map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getGeographiesList(): Promise<SelectInputList[]> {
-    if (this.masterGeographiesList.length < 1) {
-      const masterGeographies = await this.appData.getMasterGeographies();
-      this.masterGeographiesList = masterGeographies.map(t => { return { value: t.ID, label: t.Title } });
-    }
-    return this.masterGeographiesList;
+    const masterGeographies = await this.appData.getMasterGeographies();
+    return masterGeographies.map(t => { return { value: t.ID, label: t.Title } });
   }
 
   async getScenariosList(): Promise<SelectInputList[]> {
-    if (this.masterScenariosList.length < 1) {
-      const masterScenarios = await this.appData.getMasterScenarios();
-      this.masterScenariosList = masterScenarios.map(t => { return { value: t.ID, label: t.Title } });
-    }
-    return this.masterScenariosList;
+    const masterScenarios = await this.appData.getMasterScenarios();
+    return masterScenarios.map(t => { return { value: t.ID, label: t.Title } });
   }
 
-  /** TOCHECK why not using cache? */
   async getClinicalTrialPhases(): Promise<SelectInputList[]> {
     const masterCTP = await this.appData.getMasterClinicalTrialPhases();
     return masterCTP.map(t => { return { value: t.ID, label: t.Title } });
@@ -99,25 +86,18 @@ export class SelectListsService {
     return stages.map(v => { return { label: v.Title, value: v.StageNumber } });
   }
 
-
-  /** TOCHECK no es fa mai set de masterTherapiesList cache */
-  /** TOCHECK diferències amb getIndicationsList ? */
+  /** List of all therapies names (no indications related) */
   async getTherapiesList(): Promise<SelectInputList[]> {
-    if (this.masterTherapiesList.length < 1) {
-      const indications = await this.appData.getMasterIndications();
+    const indications = await this.appData.getMasterIndications();
 
-      return indications
-        .map(v => v.TherapyArea)
-        .filter((value, index, self) => self.indexOf(value) === index)
-        .map(v => { return { label: v, value: v } });
-    }
-    return this.masterTherapiesList;
+    return indications
+      .map(v => v.TherapyArea)
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .map(v => { return { label: v, value: v } });
   }
 
-
-
   async getIndicationsList(therapy?: string): Promise<SelectInputList[]> {
-    let indications = await this.appData.getIndications(therapy);
+    let indications = await this.appData.getMasterIndications(therapy);
 
     if (therapy) {
       return indications.map(el => { return { value: el.ID, label: el.Title } })
