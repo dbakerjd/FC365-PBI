@@ -142,13 +142,13 @@ export class FilesService {
   }
 
   async addScenarioSufixToFilename(originFilename: string, scenarioId: number): Promise<string | false> {
-    const scenarios = await this.appData.getScenariosList();
+    const scenarios = await this.appData.getMasterScenarios();
     const extension = originFilename.split('.').pop();
     if (!extension) return false;
 
     const baseFileName = originFilename.substring(0, originFilename.length - (extension.length + 1));
     return baseFileName
-      + '-' + scenarios.find(el => el.value === scenarioId)?.label.replace(/ /g, '').toLocaleLowerCase()
+      + '-' + scenarios.find(el => el.ID === scenarioId)?.Title.replace(/ /g, '').toLocaleLowerCase()
       + '.' + extension;
   }
 

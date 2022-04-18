@@ -11,6 +11,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-create-brand',
@@ -40,21 +41,22 @@ export class CreateBrandComponent implements OnInit {
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService, 
     private readonly permissions: PermissionsService, 
-  ) { }
+    private readonly selectLists: SelectListsService,
+    ) { }
 
   async ngOnInit() {
     this.loading = true;
     this.brand = this.data?.brand;
     //this.model.Brand = this.brand;
 
-    let therapies = await this.appData.getTherapiesList();
-    let forecastCycles = await this.appData.getForecastCycles();
-    let businessUnits = await this.appData.getBusinessUnitsList();
-    const geo = (await this.appData.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
-    const countries = (await this.appData.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    let therapies = await this.selectLists.getTherapiesList();
+    let forecastCycles = await this.selectLists.getForecastCycles();
+    let businessUnits = await this.selectLists.getBusinessUnitsList();
+    const geo = (await this.selectLists.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.selectLists.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
-    let defaultUsersList: SelectInputList[] = await this.appData.getSiteOwnersList();
+    let defaultUsersList: SelectInputList[] = await this.selectLists.getSiteOwnersList();
 
     if (this.brand) {
       //this.brand.FCDueDate = new Date(this.brand.FCDueDate);
@@ -65,7 +67,7 @@ export class CreateBrandComponent implements OnInit {
       
       // default indications for the therapy selected
       if (this.brand && this.brand.Indication && this.brand.Indication.length) {
-        indicationsList = await this.appData.getIndicationsList(this.brand.Indication[0].TherapyArea);
+        indicationsList = await this.selectLists.getIndicationsList(this.brand.Indication[0].TherapyArea);
       }
     }
 
@@ -127,7 +129,7 @@ export class CreateBrandComponent implements OnInit {
               therapySelect.formControl.valueChanges.pipe(
                 takeUntil(this._destroying$),
                 tap(th => {
-                  this.appData.getIndicationsList(th).then(r => {
+                  this.selectLists.getIndicationsList(th).then(r => {
                     if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });

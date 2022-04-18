@@ -9,6 +9,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -43,6 +44,7 @@ export class CreateOpportunityComponent implements OnInit {
     private permissions: PermissionsService, 
     private readonly entities: EntitiesService,
     private readonly appData: AppDataService,
+    private readonly selectLists: SelectListsService,
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateOpportunityComponent>
@@ -54,19 +56,19 @@ export class CreateOpportunityComponent implements OnInit {
     this.opportunity = this.data?.opportunity;
     this.isEdit = this.data?.opportunity && !this.data?.createFrom;
 
-    const therapies = await this.appData.getTherapiesList();
-    let forecastCycles = await this.appData.getForecastCycles();
-    this.oppTypes = await this.appData.getOpportunityTypesList();
-    const geo = (await this.appData.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
-    const countries = (await this.appData.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    const therapies = await this.selectLists.getTherapiesList();
+    let forecastCycles = await this.selectLists.getForecastCycles();
+    this.oppTypes = await this.selectLists.getOpportunityTypesList();
+    const geo = (await this.selectLists.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.selectLists.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
-    let businessUnits = await this.appData.getBusinessUnitsList();
+    let businessUnits = await this.selectLists.getBusinessUnitsList();
     // let stageNumbersList: SelectInputList[] = [];
-    let defaultUsersList: SelectInputList[] = await this.appData.getSiteOwnersList();
+    let defaultUsersList: SelectInputList[] = await this.selectLists.getSiteOwnersList();
     let defaultStageUsersList: SelectInputList[] = [];
     this.firstStepCompleted = false;
-    const trialPhases = await this.appData.getClinicalTrialPhases();
+    const trialPhases = await this.selectLists.getClinicalTrialPhases();
     const currentYear = new Date().getFullYear();
     let year = currentYear;
     let elegibleYears = [currentYear];
@@ -93,13 +95,13 @@ export class CreateOpportunityComponent implements OnInit {
 
       // default indications for the therapy selected
       if (this.opportunity && this.opportunity.Indication && this.opportunity.Indication.length) {
-        indicationsList = await this.appData.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
+        indicationsList = await this.selectLists.getIndicationsList(this.opportunity.Indication[0].TherapyArea);
       }
       // if we are cloning opportunity, get first stage info
       if (this.data?.createFrom && !this.data?.forceInternal) {
         this.stage = await this.appData.getFirstStage(this.opportunity);
         if (this.stage) {
-          defaultStageUsersList = await this.appData.getUsersList(this.stage.StageUsersId);
+          defaultStageUsersList = await this.selectLists.getUsersList(this.stage.StageUsersId);
         }
       }
 
@@ -178,7 +180,7 @@ export class CreateOpportunityComponent implements OnInit {
               therapySelect.formControl.valueChanges.pipe(
                 takeUntil(this._destroying$),
                 tap(th => {
-                  this.appData.getIndicationsList(th).then(r => {
+                  this.selectLists.getIndicationsList(th).then(r => {
                     if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });

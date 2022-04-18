@@ -5,9 +5,9 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ErrorService } from '@services/app/error.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { Opportunity } from '@shared/models/entity';
-import { AppDataService } from '@services/app/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 
 @Component({
@@ -32,14 +32,14 @@ export class CreateForecastCycleComponent implements OnInit {
     public matDialog: MatDialog,
     private error: ErrorService,
     public jobs: WorkInProgressService,
-    private readonly appData: AppDataService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.entity = this.data.entity;
-    this.cycles = await this.appData.getForecastCycles();
+    this.cycles = await this.selectLists.getForecastCycles();
     const currentYear = new Date().getFullYear();
     
     let year = currentYear;

@@ -6,6 +6,7 @@ import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-create-scenario',
@@ -30,12 +31,13 @@ export class CreateScenarioComponent implements OnInit {
     public matDialog: MatDialog,
     private readonly appData: AppDataService,
     private readonly files: FilesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.file = this.data.file;
-    this.scenarios = await this.appData.getScenariosList();
+    this.scenarios = await this.selectLists.getScenariosList();
 
     this.fields = [{
       fieldGroup: [{

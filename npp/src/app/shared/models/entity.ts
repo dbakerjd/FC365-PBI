@@ -131,9 +131,19 @@ export interface Country {
 
 
 export interface MasterGeography {
-  Id: number;
+  ID: number;
   Title: string;
   CountryId: number[];
   Country: Country[];
+}
+
+export interface MasterCountry {
+  ID: number;
+  Title: string;
+}
+
+export interface MasterScenario {
+  ID: number;
+  Title: string;
 }
 

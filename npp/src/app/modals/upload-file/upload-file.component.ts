@@ -82,7 +82,10 @@ export class UploadFileComponent implements OnInit {
       const geography = oppGeographies.find(el => el.Id == this.model.geography);
       const user = await this.appData.getCurrentUserInfo();
       let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
-
+      if (!geography) {
+        throw new Error("Couldn't find the entity geography to upload");
+      }
+      
       Object.assign(fileData, {
         EntityGeographyId: geography.Id ? geography.Id : null,
         ModelScenarioId: this.model.scenario,

@@ -14,6 +14,7 @@ import { User } from '@shared/models/user';
 import { AppDataService } from '@services/app/app-data.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { EntitiesService } from '@services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -40,7 +41,8 @@ export class BrandListComponent implements OnInit {
     private toastr: ToastrService, 
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit() {
@@ -59,12 +61,12 @@ export class BrandListComponent implements OnInit {
     this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
     console.log('cancreate', this.appControl.getAppConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
 
-    const indicationsList = await this.appData.getIndicationsList();
+    const indicationsList = await this.selectLists.getIndicationsList();
     // const forecastCycles = await this.appData.getForecastCycles();
-    const businessUnits = await this.appData.getBusinessUnitsList();
-    const brandFields = await this.appData.getBrandFilterFields();
-    const therapies = await this.appData.getTherapiesList();
-    this.masterCycles = await this.appData.getForecastCycles();
+    const businessUnits = await this.selectLists.getBusinessUnitsList();
+    const brandFields = await this.selectLists.getBrandFilterFields();
+    const therapies = await this.selectLists.getTherapiesList();
+    this.masterCycles = await this.selectLists.getForecastCycles();
     
     this.brands = await this.entities.getAll();
 
@@ -112,7 +114,7 @@ export class BrandListComponent implements OnInit {
             therapySelect.formControl.valueChanges.pipe(
               takeUntil(this._destroying$),
               tap(th => {
-                this.appData.getIndicationsList(th).then(r => {
+                this.selectLists.getIndicationsList(th).then(r => {
                   if (field.templateOptions) field.templateOptions.options = r;
                 });
               }),

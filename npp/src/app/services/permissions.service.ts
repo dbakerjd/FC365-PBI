@@ -50,15 +50,15 @@ export class PermissionsService {
 
     let permissions;
     // add groups to lists
-    permissions = (await this.appData.getGroupPermissions()).filter(el => el.ListFilter === 'List');
+    permissions = (await this.appData.getMasterGroupPermissions()).filter(el => el.ListFilter === 'List');
     await this.setPermissions(permissions, groups);
 
     // add groups to the Opportunity
-    permissions = await this.appData.getGroupPermissions(SPLists.ENTITIES_LIST_NAME);
+    permissions = await this.appData.getMasterGroupPermissions(SPLists.ENTITIES_LIST_NAME);
     await this.setPermissions(permissions, groups, opportunity.ID);
 
     // add groups to the Opp geographies
-    permissions = await this.appData.getGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
+    permissions = await this.appData.getMasterGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
     const oppGeographies = await this.appData.getEntityGeographies(opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
@@ -94,7 +94,7 @@ export class PermissionsService {
     groups.push({ type: 'SU', data: SUGroup });
 
     // add groups to the Stage
-    let permissions = await this.appData.getGroupPermissions(SPLists.ENTITY_STAGES_LIST_NAME);
+    let permissions = await this.appData.getMasterGroupPermissions(SPLists.ENTITY_STAGES_LIST_NAME);
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU and SU
@@ -119,7 +119,7 @@ export class PermissionsService {
     const stageActions = await this.createStageActions(opportunity, stage);
 
     // add groups into Actions
-    permissions = await this.appData.getGroupPermissions(SPLists.ENTITY_ACTIONS_LIST_NAME);
+    permissions = await this.appData.getMasterGroupPermissions(SPLists.ENTITY_ACTIONS_LIST_NAME);
     for (const action of stageActions) {
       await this.setPermissions(permissions, groups, action.Id);
     }
@@ -128,7 +128,7 @@ export class PermissionsService {
     const folders = await this.createStageFolders(opportunity, stage, geographies, groups);
 
     // add groups to folders
-    permissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
+    permissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
     return true;
   }
@@ -321,7 +321,7 @@ export class PermissionsService {
     groups.push({ type: 'OO', data: OOGroup });
     groups.push({ type: 'OU', data: OUGroup });
 
-    let permissions = await this.appData.getGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
+    let permissions = await this.appData.getMasterGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
     let stages = await this.appData.getEntityStages(entity.ID);
     if (stages && stages.length) {
       for (const oppGeo of newGeos) {
@@ -340,7 +340,7 @@ export class PermissionsService {
             let DUGroup = await this.appData.createGroup(DUGroupName, 'Department ID ' + mf.DepartmentID + ' / Geography ID ' + oppGeo.Id);
             let SUGroup = await this.appData.getGroup(`SU-${entity.ID}-${stage.StageNameId}`);
             if (DUGroup && SUGroup) {
-              const permissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
+              const permissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
               let folderGroups: SPGroupListItem[] = [...groups, { type: 'DU', data: DUGroup }, { type: 'SU', data: SUGroup }];
               await this.setPermissions(permissions, folderGroups, folder.ServerRelativeUrl);
             } else {
@@ -361,21 +361,21 @@ export class PermissionsService {
       // (department folders non needed)
       // const departmentPermissions = await this.getGroupPermissions( SPLists.FILES_FOLDER);
       // await this.createFolderGroups(entity.ID, departmentPermissions, folders.rw.filter(el => el.DepartmentID), groups);
-      const WIPPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_WIP);
+      const WIPPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_WIP);
       await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
-      const approvedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_APPROVED);
+      const approvedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_APPROVED);
       await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
-      const archivedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_ARCHIVED);
+      const archivedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_ARCHIVED);
       await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
     }
   }
 
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
-    const geographiesList = await this.appData.getGeographiesList();
-    const countriesList = await this.appData.getCountriesList();
+    const geographiesList = await this.appData.getMasterGeographies();
+    const countriesList = await this.appData.getMasterCountries();
     let res: EntityGeography[] = [];
     for (const g of geographies) {
-      const geoTitle = geographiesList.find(el => el.value == g)?.label;
+      const geoTitle = geographiesList.find(el => el.ID == g)?.Title;
       if (geoTitle) {
         const newGeo = await this.appData.createEntityGeography({
           Title: geoTitle,
@@ -387,7 +387,7 @@ export class PermissionsService {
       }
     }
     for (const c of countries) {
-      const geoTitle = countriesList.find(el => el.value == c)?.label;
+      const geoTitle = countriesList.find(el => el.ID == c)?.Title;
       if (geoTitle) {
         let newGeo: EntityGeography = await this.appData.createEntityGeography({
           Title: geoTitle,
@@ -460,7 +460,7 @@ export class PermissionsService {
           // let SUGroup = await this.createGroup(`SU-${entity.ID}-${stage.StageNameId}`);
           // if (!SUGroup) throw new Error('Error obtaining user group (SU)');
 
-          const permissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
+          const permissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
           for (const mf of modelFolders) {
             const folder = await this.appData.getFolder(SPFolders.FILES_FOLDER + `/${entity.BusinessUnitId}/${entity.ID}/${stage.StageNameId}/${mf.DepartmentID}/${geo.Id}`);
             const DUGroupName = `DU-${entity.ID}-${mf.DepartmentID}-${geo.Id}`;
@@ -476,11 +476,11 @@ export class PermissionsService {
       // internal
       const folders = await this.createInternalFolders(entity, groups, restoreGeos);
 
-      const WIPPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_WIP);
+      const WIPPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_WIP);
       await this.createFolderGroups(entity.ID, WIPPermissions, folders.rw.filter(el => el.GeographyID), groups);
-      const approvedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_APPROVED);
+      const approvedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_APPROVED);
       await this.createFolderGroups(entity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
-      const archivedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_ARCHIVED);
+      const archivedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_ARCHIVED);
       await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);   
     }
 
@@ -512,13 +512,13 @@ export class PermissionsService {
     const folders = await this.createInternalFolders(opportunity, groups, geographies);
 
     // add groups to folders
-    const RefDocsPermissions = await this.appData.getGroupPermissions(SPFolders.FILES_FOLDER);
+    const RefDocsPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, RefDocsPermissions, folders.rw.filter(el => el.DepartmentID), groups);
-    const WIPpermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_WIP);
+    const WIPpermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_WIP);
     await this.createFolderGroups(opportunity.ID, WIPpermissions, folders.rw.filter(el => el.GeographyID), groups);
-    const approvedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_APPROVED);
+    const approvedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_APPROVED);
     await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
-    const archivedPermissions = await this.appData.getGroupPermissions(SPFolders.FOLDER_ARCHIVED);
+    const archivedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_ARCHIVED);
     await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
       
     return true;

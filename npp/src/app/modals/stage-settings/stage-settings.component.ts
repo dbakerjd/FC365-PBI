@@ -5,6 +5,7 @@ import { FormlyFieldConfig } from '@ngx-formly/core';
 import { SelectInputList } from '@shared/models/app-config';
 import { AppDataService } from '@services/app/app-data.service';
 import { EntitiesService } from 'src/app/services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-stage-settings',
@@ -27,13 +28,14 @@ export class StageSettingsComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
     private readonly appData: AppDataService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit() {
     let defaultUsersList: SelectInputList[] = [];
     if (this.data?.stage) {
-      defaultUsersList = await this.appData.getUsersList(this.data?.stage.StageUsersId);
+      defaultUsersList = await this.selectLists.getUsersList(this.data?.stage.StageUsersId);
     }
     this.canSetUsers = this.data?.canSetUsers ? this.data.canSetUsers : false;
 

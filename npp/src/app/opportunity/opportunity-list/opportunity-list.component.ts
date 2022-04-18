@@ -16,6 +16,7 @@ import { Opportunity, OpportunityType } from '@shared/models/entity';
 import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { EntitiesService } from '@services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -43,7 +44,8 @@ export class OpportunityListComponent implements OnInit {
     public teams: TeamsService,
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
     ) { }
 
   async ngOnInit() {
@@ -60,10 +62,10 @@ export class OpportunityListComponent implements OnInit {
     this.currentUser = await this.appData.getCurrentUserInfo();
     this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
-    let indications = await this.appData.getIndicationsList();
+    let indications = await this.selectLists.getIndicationsList();
     this.opportunityTypes = await this.appData.getOpportunityTypes();
     let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
-    let opportunityFields = await this.appData.getOpportunityFilterFields();
+    let opportunityFields = await this.selectLists.getOpportunityFilterFields();
     
     this.fields = [{
         key: 'search',

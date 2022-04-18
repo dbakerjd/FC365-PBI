@@ -30,6 +30,7 @@ import * as SPFolders from '@shared/sharepoint/folders';
 import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-files-list',
@@ -82,7 +83,8 @@ export class FilesListComponent implements OnInit {
     private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
     private readonly appData: AppDataService,
-    private readonly files: FilesService
+    private readonly files: FilesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   ngOnInit(): void {
@@ -102,7 +104,7 @@ export class FilesListComponent implements OnInit {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.appData.getCurrentUserInfo();
-      this.masterCycles = await this.appData.getForecastCycles();
+      this.masterCycles = await this.selectLists.getForecastCycles();
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
@@ -240,7 +242,7 @@ export class FilesListComponent implements OnInit {
 
   async openUploadDialog() {
     if(this.entity) {
-      let geographiesList = await this.appData.getEntityAccessibleGeographiesList(this.entity);
+      let geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(this.entity);
       let folders = [...this.documentFolders];
       if (this.geoFolders.length == 0) {
         // not access to models, remove of the list
@@ -251,7 +253,7 @@ export class FilesListComponent implements OnInit {
         width: '405px',
         data: {
           geographies: geographiesList,
-          scenarios: await this.appData.getScenariosList(),
+          scenarios: await this.selectLists.getScenariosList(),
           folderList: folders,
           selectedFolder: this.currentSection == 'documents' && this.selectedFolder ?  this.selectedFolder.DepartmentID : 0,
           entity: this.entity

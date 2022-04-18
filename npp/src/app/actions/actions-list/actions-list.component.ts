@@ -30,6 +30,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -81,7 +82,8 @@ export class ActionsListComponent implements OnInit {
     private readonly appData: AppDataService,
     private readonly files: FilesService,
     private readonly permissions: PermissionsService,
-    private readonly notifications: NotificationsService
+    private readonly notifications: NotificationsService,
+    private readonly selectLists: SelectListsService
     ) { }
 
   ngOnInit(): void {
@@ -141,7 +143,7 @@ export class ActionsListComponent implements OnInit {
     let geographiesList: SelectInputList[] = [];
     const modelFolder = this.currentFolders.find(f => f.containsModels);
     if (this.opportunity) {
-      geographiesList = await this.appData.getEntityAccessibleGeographiesList(
+      geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(
         this.opportunity,
         this.currentGate.StageNameId
       );
@@ -153,7 +155,7 @@ export class ActionsListComponent implements OnInit {
         folderList: this.currentFolders,
         selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.DepartmentID : null,
         geographies: geographiesList,
-        scenarios: await this.appData.getScenariosList(),
+        scenarios: await this.selectLists.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
         entity: this.opportunity
       }
