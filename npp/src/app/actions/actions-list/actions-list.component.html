@@ -160,7 +160,7 @@
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
+                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
