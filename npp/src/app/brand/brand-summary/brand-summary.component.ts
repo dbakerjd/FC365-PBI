@@ -20,6 +20,7 @@ export class BrandSummaryComponent implements OnInit {
   currentTherapyArea: string = '';
   brands: Opportunity[] = [];
   brandData: {
+    Id: number,
     brandName: string,
     cycle: string,
     modelsCount: number,
@@ -58,6 +59,7 @@ export class BrandSummaryComponent implements OnInit {
     // } catch (e) {
     //   console.log(e);
     // }
+    this.init();
   }
 
   async init() {
@@ -100,10 +102,11 @@ export class BrandSummaryComponent implements OnInit {
     this.brands.forEach(async (el, index) => {
 
       this.brandData.push({
+        Id: el.ID,
         brandName: el.Title,
         cycle: el.ForecastCycle?.Title + " " + el.Year,
-        modelsCount: await this.entities.getBrandModelsCount(el),
-        approvedModelsCount: await this.entities.getBrandApprovedModelsCount(el),
+        modelsCount: await this.entities.getModelsCount(el),
+        approvedModelsCount: await this.entities.getApprovedModelsCount(el),
       });
 
     });

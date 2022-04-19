@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Opportunity, Stage } from '@shared/models/entity';
 import { AppDataService } from './app/app-data.service';
 import { PermissionsService } from './permissions.service';
-import { FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
+import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { FilesService } from './files.service';
 import { BrandInput, OpportunityInput, StageInput } from '@shared/models/inputs';
 
@@ -126,12 +126,32 @@ export class EntitiesService {
     return changes;
   }
 
-  async getBrandModelsCount(brand: Opportunity) {
-    return await this.files.getBrandFolderFilesCount(brand, FOLDER_WIP);
+  /** Count the active working models of an entity */
+  async getModelsCount(entity: Opportunity): Promise<number> {
+    if (await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      const folder = FOLDER_WIP + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0';
+      return await this.files.getFolderFilesCount(folder);
+    } else {
+      const stages = await this.appData.getEntityStages(entity.ID);
+      let count = 0;
+      for (const st of stages) {
+        const folder = FILES_FOLDER + '/' + entity.BusinessUnitId + '/' + entity.ID + '/' + st.StageNameId + '/0';
+        count += await this.files.getFolderFilesCount(folder);
+      }
+      return count;
+    }
   }
 
-  async getBrandApprovedModelsCount(brand: Opportunity) {
-    return await this.files.getBrandFolderFilesCount(brand, FOLDER_APPROVED);
+  /** Count the approved working models of an entity */
+  async getApprovedModelsCount(entity: Opportunity): Promise<number> {
+    console.log('op type id', entity.OpportunityTypeId);
+    if (await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      const folder = FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0';
+      return await this.files.getFolderFilesCount(folder);
+    } else {
+      // [TODO] count external opps approved
+      return -1;
+    }
   }
 
   async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
