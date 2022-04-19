@@ -5,7 +5,6 @@ import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from '@services/app/app-data.service';
-import { TeamsService } from '@services/microsoft-data/teams.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -41,7 +40,6 @@ export class BrandSummaryComponent implements OnInit {
   generatingSeatsTable = true;
 
   constructor(
-    // private teams: TeamsService,
     private readonly entities: EntitiesService,
     private readonly appData: AppDataService
   ) { }
