@@ -88,8 +88,8 @@ export class FilesService {
     return null;
   }
 
-  /** Set the selected status to all models of an entity folder */
-  async setAllEntityModelsStatusInFolder(entity: Opportunity, folder: string, status: string) {
+  /** Restart the state and the model files information of the folder */
+  async restartModelsInFolder(entity: Opportunity, folder: string) {
 
     const geographies = await this.appData.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
 
@@ -101,10 +101,17 @@ export class FilesService {
       let files = await this.appData.getFolderFiles(folder + "/" + geo.ID + "/0", true);
       for (let j = 0; files && j < files.length; j++) {
         let model = files[j];
-        await this.setFileApprovalStatus(rootFolder, model, entity, status);
+        await this.setFileApprovalStatus(rootFolder, model, entity, 'In Progress');
+        await this.cleanFileComments(rootFolder, model);
       }
     }
 
+  }
+
+  /** Cleans the comments history of the file */
+  async cleanFileComments(rootFolder: string, file: NPPFile) {
+    if (!file.ListItemAllFields) return;
+    await this.appData.updateFilePropertiesById(file.ListItemAllFields.ID, rootFolder, { Comments: "[]" });
   }
 
   /** Set the approval status for a file */

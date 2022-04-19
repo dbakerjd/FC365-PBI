@@ -148,10 +148,9 @@ export class EntitiesService {
       ForecastCycleDescriptor: values.ForecastCycleDescriptor,
       Year: values.Year
     };
-
     await this.appData.updateEntity(entity.ID, changes);
 
-    await this.files.setAllEntityModelsStatusInFolder(entity, workInProgressBasePath, "In Progress");
+    await this.files.restartModelsInFolder(entity, workInProgressBasePath);
 
     return changes;
   }
