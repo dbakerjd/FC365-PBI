@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AppType, SelectInputList } from '@shared/models/app-config';
 import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { OpportunityInput, StageInput, BrandInput, EntityGeographyInput } from '@shared/models/inputs';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
@@ -22,49 +23,6 @@ interface MasterAction {
   StageNameId: number;
   OpportunityTypeId: number;
   DueDays: number;
-}
-
-type EntityGeographyType = 'Geography' | 'Country';
-
-type EntityGeographyInput = {
-  Title: string;
-  EntityNameId: number;
-  GeographyId?: number;
-  CountryId?: number;
-  EntityGeographyType: EntityGeographyType 
-}
-
-interface OpportunityInput {
-  Title: string;
-  MoleculeName: string;
-  EntityOwnerId: number;
-  ProjectStartDate?: Date;
-  ProjectEndDate?: Date;
-  OpportunityTypeId: number;
-  IndicationId: number;
-  AppTypeId?: number;
-  Year?: number;
-  
-}
-
-interface StageInput {
-  StageUsersId: number[];
-  StageReview?: Date;
-  Title?: string;
-  EntityNameId?: number;
-  StageNameId?: number;
-}
-
-interface BrandInput {
-  Title?: string;
-  EntityOwnerId?: number;
-  IndicationId?: number;
-  BusinessUnitId?: number;
-  ForecastCycleId?: number;
-  FCDueDate?: Date;
-  Year?: number;
-  AppTypeId?: number;
-  ForecastCycleDescriptor?: string;
 }
 
 interface SPGroup {
