@@ -159,13 +159,13 @@ export class FilesService {
       + '.' + extension;
   }
 
-  async getBrandFolderFilesCount(brand: Opportunity, folder: string) {
-    let currentFolder = folder+'/'+brand.BusinessUnitId+'/'+brand.ID+'/0/0';
-    const geoFolders = await this.appData.getSubfolders(currentFolder);
+  /** Count the number of files contained by the entity folder */
+  async getFolderFilesCount(entityFolder: string) {
+    const geoFolders = await this.appData.getSubfolders(entityFolder, true);
     let currentFiles = [];
     for (const geofolder of geoFolders) {
-      let folder = currentFolder + '/' + geofolder.Name+'/0';
-      currentFiles.push(...await this.appData.getFolderFiles(folder, true));
+      let gf = entityFolder + '/' + geofolder.Name + '/0';
+      currentFiles.push(...await this.appData.getFolderFiles(gf, true));
     }
     return currentFiles.length;
   }
