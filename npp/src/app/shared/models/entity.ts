@@ -27,7 +27,7 @@ export interface Opportunity {
     Year: number;
     ClinicalTrialPhaseId: number;
     ClinicalTrialPhase?: ClinicalTrialPhase[];
-    ForecastCycleDescriptor: string;
+    ForecastCycleDescriptor?: string;
     AppType?: AppType;
     AppTypeId: number;
 }

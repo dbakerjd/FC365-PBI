@@ -178,7 +178,17 @@ export class CreateBrandComponent implements OnInit {
             required: true,
           },
           defaultValue: this.brand?.Year || currentYear
-        },{
+        }, 
+        {
+          key: 'Brand.ForecastCycleDescriptor',
+          type: 'input',
+          templateOptions: {
+            label: 'Forecast Cycle Descriptor',
+            required: false
+          },
+          defaultValue: this.brand?.ForecastCycleDescriptor
+        },
+        {
           key: 'geographies',
           type: 'ngsearchable',
           templateOptions: {

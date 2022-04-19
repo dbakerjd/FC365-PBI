@@ -4,37 +4,7 @@ import { AppDataService } from './app/app-data.service';
 import { PermissionsService } from './permissions.service';
 import { FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { FilesService } from './files.service';
-
-interface OpportunityInput {
-  Title: string;
-  MoleculeName: string;
-  EntityOwnerId: number;
-  ProjectStartDate?: Date;
-  ProjectEndDate?: Date;
-  OpportunityTypeId: number;
-  IndicationId: number;
-  AppTypeId?: number;
-  Year?: number;
-}
-
-interface StageInput {
-  StageUsersId: number[];
-  StageReview: Date;
-  Title?: string;
-  EntityNameId?: number;
-  StageNameId?: number;
-}
-
-interface BrandInput {
-  Title: string;
-  EntityOwnerId: number;
-  IndicationId: number;
-  BusinessUnitId: number;
-  ForecastCycleId: number;
-  FCDueDate?: Date;
-  Year: number;
-  AppTypeId: number;
-}
+import { BrandInput, OpportunityInput, StageInput } from '@shared/models/inputs';
 
 @Injectable({
   providedIn: 'root'
@@ -86,6 +56,7 @@ export class EntitiesService {
   }
 
   async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {
+    if (!b.EntityOwnerId) throw new Error("Invalid data for creating brand");
     const owner = await this.appData.getUserInfo(b.EntityOwnerId);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     b.AppTypeId = this.appData.getAppType().ID;
@@ -101,11 +72,11 @@ export class EntitiesService {
   }
 
   /** Update the entity with new entity data. Returns true in success */
-  async updateEntity(entityId: number, entityData: OpportunityInput): Promise<boolean> {
+  async updateEntity(entityId: number, entityData: OpportunityInput | BrandInput): Promise<boolean> {
     const oppBeforeChanges = await this.appData.getEntity(entityId, false);
     const success = await this.appData.updateEntity(entityId, entityData);
 
-    if (success && oppBeforeChanges.EntityOwnerId !== entityData.EntityOwnerId) { // owner changed
+    if (success && entityData.EntityOwnerId && oppBeforeChanges.EntityOwnerId !== entityData.EntityOwnerId) { // owner changed
       return this.permissions.changeEntityOwnerPermissions(entityId, oppBeforeChanges.EntityOwnerId, entityData.EntityOwnerId);
     }
 
