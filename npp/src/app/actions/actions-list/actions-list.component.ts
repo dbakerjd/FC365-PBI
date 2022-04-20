@@ -29,7 +29,6 @@ import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
 import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from '@services/permissions.service';
 import { FilesService } from '@services/files.service';
-import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { EntitiesService } from '@services/entities.service';
 
@@ -140,16 +139,12 @@ export class ActionsListComponent implements OnInit {
   }
 
   async openUploadDialog() {
-    if (!this.currentGate) return;
+    if (!this.currentGate || !this.opportunity) return;
 
-    let geographiesList: SelectInputList[] = [];
-    const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (this.opportunity) {
-      geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(
-        this.opportunity,
-        this.currentGate.StageNameId
-      );
-    }
+    const geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(
+      this.opportunity,
+      this.currentGate.StageNameId
+    );
     this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
@@ -168,7 +163,9 @@ export class ActionsListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success && result.uploaded) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
+        this.loading = true;
         await this.updateCurrentFiles();
+        this.loading = false;
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
       }
@@ -197,6 +194,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   async updateCurrentFiles() {
+    this.loading = true;
     if (this.currentFolder?.containsModels) {
       let geoFolders = await this.appData.getSubfolders('/'+this.currentFolderUri);
       geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
@@ -208,6 +206,7 @@ export class ActionsListComponent implements OnInit {
       this.currentFiles = await this.appData.getFolderFiles(FILES_FOLDER + '/' + this.currentFolderUri+'/0/0', true);
     }
     this.initLastComments();
+    this.loading = false;
   }
 
   initLastComments() {

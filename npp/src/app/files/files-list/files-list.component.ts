@@ -13,7 +13,6 @@ import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cyc
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
 import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
-import { ExternalUploadFileComponent } from 'src/app/modals/external-upload-file/external-upload-file.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -22,7 +21,6 @@ import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { TeamsService } from '@services/microsoft-data/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
@@ -31,6 +29,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
+import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 
 @Component({
   selector: 'app-files-list',
@@ -77,7 +76,6 @@ export class FilesListComponent implements OnInit {
     private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
-    // private teams: TeamsService,
     public licensing: LicensingService,
     public notifications: NotificationsService,
     private breadcrumbService: BreadcrumbsService,
@@ -100,7 +98,6 @@ export class FilesListComponent implements OnInit {
   }
 
   init() {
-    console.log('files inside');
     this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.appData.getCurrentUserInfo();
@@ -248,7 +245,7 @@ export class FilesListComponent implements OnInit {
         // not access to models, remove of the list
         folders = this.documentFolders.filter(el => !el.containsModels);
       }
-      this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
+      this.dialogInstance = this.matDialog.open(UploadFileComponent, {
         height: '600px',
         width: '405px',
         data: {
@@ -263,7 +260,7 @@ export class FilesListComponent implements OnInit {
       this.dialogInstance.afterClosed()
       .pipe(take(1))
       .subscribe(async (result: any) => {
-        if (result.success) {
+        if (result.success && result.uploaded) {
           this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
           this.updateCurrentFiles();
         } else if (result.success === false) {

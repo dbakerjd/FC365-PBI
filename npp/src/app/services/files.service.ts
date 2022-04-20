@@ -20,7 +20,6 @@ export class FilesService {
       }
     }
 
-    console.log('upload file folder', folder);
     let uploaded: any = await this.appData.uploadFile(fileData, folder, fileName);
 
     if (metadata && uploaded.ListItemAllFields?.ID/* && uploaded.ServerRelativeUrl*/) {
@@ -39,6 +38,59 @@ export class FilesService {
     return uploaded;
   }
 
+  /** Get the upload folder according to the selected options */
+  async constructUploadFolder(entity: Opportunity, stageId: number | undefined, categoryId: number | undefined, geographyId: number | undefined) {
+
+    let fileFolder = '/' + entity.BusinessUnitId + '/' + entity.ID + '/';
+    let rootFolder = FILES_FOLDER;
+
+    if (stageId) {
+      fileFolder += stageId + '/';
+    } else {
+      fileFolder += '0/';
+      rootFolder = FOLDER_WIP;
+    }
+
+    if (categoryId !== 0) { // document folder selected
+      rootFolder = FOLDER_DOCUMENTS;
+      fileFolder += categoryId + '/';
+    } else {
+      fileFolder += '0/';
+    }
+
+    if (geographyId) {
+      fileFolder += geographyId + '/';  
+    } else {
+      fileFolder += '0/';
+    }
+    return rootFolder + fileFolder + '0'; // always 0 for forecast cycle in upload
+  }
+
+  /** Prepare regular file information data to upload */
+  async prepareUploadFileData(data: any) {
+    return {
+      StageNameId: data.StageNameId,
+      EntityNameId: data.EntityNameId,
+      Comments: data.description
+    };
+  }
+
+  /** Prepare a model information data to upload */
+  async prepareUploadModelData(data: any) {
+    const user = await this.appData.getCurrentUserInfo();
+    const userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
+
+    return {
+      EntityNameId: data.EntityNameId,
+      StageNameId: data.StageNameId,
+      EntityGeographyId: data.geography,
+      ModelScenarioId: data.scenario,
+      Comments: data.description ? '[{"text":"'+data.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
+      ApprovalStatusId: await this.appData.getMasterApprovalStatusId("In Progress"),
+      IndicationId: data.IndicationId
+    };
+  }
+
   /** Removes the file and related CSVs, if needed */
   async deleteFile(fileUri: string, checkCSV: boolean = true): Promise<boolean> {
     //First check if it has related CSV files to remove
@@ -47,6 +99,10 @@ export class FilesService {
     }
     //then remove
     return await this.appData.deleteFile(fileUri);
+  }
+
+  async fileExistsInFolder(filename: string, folder: string) {
+    return await this.appData.existsFile(filename, folder);
   }
 
   /** Adds a comments related to file */
