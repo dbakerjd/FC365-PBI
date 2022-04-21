@@ -9,7 +9,7 @@ import { GroupPermission, User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME } from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LicensingService } from '../jd-data/licensing.service';
 import { GraphService } from '../microsoft-data/graph.service';
@@ -498,6 +498,24 @@ export class AppDataService {
         })
       );
   }
+
+  getUsersByField(filter: any): Observable<any> {
+    console.log('filter', filter);
+    return from(this.msgraph.filterUsers(filter)).pipe(
+      map((res: any) => {
+        return res.value.map(
+          (el: any) => { return { value: el.mail, label: el.displayName } as SelectInputList }
+        );
+      })
+    );
+  }
+
+  /** Gets the profile pic of the user */
+  async getUserProfile(mail: string): Promise<Blob | null> {
+    if (mail) return await this.msgraph.getProfilePic(mail);
+    return null;
+  }
+  
 
   /** ----- USERS AND GROUPS ----- **/
 

@@ -180,6 +180,38 @@ export class GraphService {
     return await this.getRequest('me');
   }
 
+  /** List users of Microsoft Graph */
+  async getUsers(): Promise<MSGraphUser[]> {
+    return await this.getRequest('users');
+  }
+
+  async filterUsers(filter: any, limit = 12): Promise<any> {
+    // return await this.getRequest('users', 
+    //   {
+    //     filter: `startswith(displayName, '${filter}'`,
+    //     orderBy: 'displayName',
+    //     top: limit
+    //   }
+    // );
+    try {
+      const graphToken = await this.getMSGraphToken();
+      console.log('graph token', graphToken);
+      // endpoint = this.baseGraphUrl + endpoint + this.generateParamsQueryString(params);
+      return await this.http.get(
+        this.baseGraphUrl + `users?$filter=startswith(displayName,'${filter}')&$count=true&$top=12`,
+        {
+          headers: {
+            token: graphToken
+          }
+        }
+      ).toPromise();
+    } catch (e: any) {
+      this.error.handleError(e);
+      return null;
+    }
+    // https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'a')&$orderby=displayName&$count=true&$top=1
+  }
+
   /** Find a Microsoft Graph User by Principal Name (email) */
   async getUserByPrincipalName(name: string): Promise<MSGraphUser | null> {
     return await this.getRequest(`users/${name}`);
@@ -220,7 +252,7 @@ export class GraphService {
       }
       return null;
     } catch (e: any) {
-      this.error.handleError(e);
+      if (e.status !== 404 && e.status !== 555) this.error.handleError(e);
       return null;
     }
   }

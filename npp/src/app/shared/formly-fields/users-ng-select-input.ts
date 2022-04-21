@@ -6,6 +6,7 @@ import { HttpParams } from "@angular/common/http";
 import { FieldType } from "@ngx-formly/core";
 import { ErrorService } from "@services/app/error.service";
 import { AppDataService } from "@services/app/app-data.service";
+import { DomSanitizer } from "@angular/platform-browser";
 
 /*
   templateOptions: {
@@ -42,18 +43,19 @@ import { AppDataService } from "@services/app/app-data.service";
       [typeahead]="textInput$" *ngIf="!filterLocally">
         <ng-template ng-option-tmp let-item="item">
             {{item.label}} <br/>
-            <small>{{item.email}}</small>
+            <small>{{item.value}}</small>
         </ng-template>
 
         <ng-template ng-label-tmp let-item="item" let-clear="clear">
           <span class="ng-value-label">
-            <!--<img [src]="item.avatar_url" width="20px" height="20px">--> {{item.label}}
+            <img [src]="item.avatar_url" width="20px" height="20px" *ngIf="item.avatar_url"> {{item.label}}
           </span>
           <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true">×</span>
         </ng-template>
 
     </ng-select>
-  `
+  `,
+  styles: [".ng-value-label img { padding-top: 2px; padding-right: 2px; float: left; }"]
 })
 export class FormlyFieldUsersNgSelect extends FieldType {
 
@@ -65,7 +67,7 @@ export class FormlyFieldUsersNgSelect extends FieldType {
 
   filterControl: FormControl = new FormControl();
 
-  constructor(private readonly appData: AppDataService, private readonly error: ErrorService) {
+  constructor(private readonly appData: AppDataService,public sanitize: DomSanitizer) {
     super();
   }
 
@@ -85,9 +87,20 @@ export class FormlyFieldUsersNgSelect extends FieldType {
           distinctUntilChanged(),
           debounceTime(500),
           tap(() => this.searching = true),
-          switchMap(term => this.appData.searchByTermInputList(this.query, this.filterField, term).pipe(
+          // switchMap(term => this.appData.searchByTermInputList(this.query, this.filterField, term).pipe(
+          switchMap(term => this.appData.getUsersByField(term).pipe(
             catchError(() => of([])), // empty list on error
-            tap(() => this.searching = false)
+            tap(async (item) => {
+              this.searching = false;
+              console.log('item', item);
+              for (const i of item) {
+                try {
+                  const avatarBlob = await this.appData.getUserProfile(i.value);
+                  i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
+                }
+                catch(e) { i.avatar_url = null; }
+              }
+            })
           ))
         )
       ) as Observable<any>;
