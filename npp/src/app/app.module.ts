@@ -64,6 +64,7 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 import { AppControlService } from '@services/app/app-control.service';
+import { SeatsTableComponent } from './seats-table/seats-table.component';
 
 @NgModule({
   imports: [
@@ -127,6 +128,7 @@ import { AppControlService } from '@services/app/app-control.service';
     BrandListComponent,
     BrandSummaryComponent,
     BreadcrumbsComponent,
+    SeatsTableComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

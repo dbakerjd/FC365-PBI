@@ -30,51 +30,9 @@
                 <div class="next-tasks-deadline" *ngIf="!t.taskDeadLine"> - </div>
             </div>
         </div>
-        <div class="summary-seats" *ngIf="currentUser?.IsSiteAdmin">
-            <div class="next-tasks-title section-title">Seats Control</div>
-            <app-progress-spinner *ngIf="generatingSeatsTable"></app-progress-spinner>
+        
+        <app-seats-table *ngIf="currentUser?.IsSiteAdmin"></app-seats-table>
 
-            <p *ngIf="!generatingSeatsTable && generalSeatsCount" class="general-count">
-                <label>Total Seats:</label> {{ generalSeatsCount.TotalSeats }} -
-                <label>Assigned Seats:</label> {{ generalSeatsCount.AssignedSeats }} -
-                <label>Available Seats:</label> {{ generalSeatsCount.AvailableSeats }}
-            </p>
-            <table *ngIf="!generatingSeatsTable" class="seats-table">
-                <tr>
-                    <th>User</th>
-                    <th>Email</th>
-                    <th class="centered-value">Has Seat</th>
-                    <th class="centered-value">Seats Value</th>
-                    <th class="centered-value">#Opportunities (Groups)</th>
-                    <th class="centered-value">Opportunity Owner</th>
-                </tr>
-                <ng-container *ngFor="let user of usersList">
-                    <tr>
-                        <td>{{ user.Title }}</td>
-                        <td>{{ user.Email }}</td>
-                        <td class="centered-value">{{ user.seats > 0 ? 'Yes' : 'No' }}</td>
-                        <td class="centered-value">{{ user.seats }}</td>
-                        <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OU')">{{ user.opportunities }}</td>
-                        <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OO')">{{ user.owner }}</td>
-                    </tr>
-                    <tr *ngIf="usersOpportunitiesListItem.userId == user.Id && usersOpportunitiesListItem.list.length > 0" class="opps-list">
-                        <td colspan="6">
-                            <h5 *ngIf="usersOpportunitiesListItem.type == 'OU'">
-                                {{ user.Title }} - Opportunities' user
-                            </h5>
-                            <h5 *ngIf="usersOpportunitiesListItem.type == 'OO'">
-                                {{ user.Title }} - Opportunities' owner
-                            </h5>
-                            <ul>
-                                <li *ngFor="let opp of usersOpportunitiesListItem.list">
-                                    {{ opp.Title }}
-                                </li>
-                            </ul>
-                        </td>
-                    </tr>
-                </ng-container>
-            </table>
-        </div>
     </div>
     <div class="summary-notifications">
         <div class="header">
