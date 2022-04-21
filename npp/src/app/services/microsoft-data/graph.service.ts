@@ -36,6 +36,11 @@ export interface MSGraphUser {
   userPrincipalName: string;
 }
 
+type FilterParam = {
+  field: string;
+  value: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -185,31 +190,29 @@ export class GraphService {
     return await this.getRequest('users');
   }
 
-  async filterUsers(filter: any, limit = 12): Promise<any> {
-    // return await this.getRequest('users', 
-    //   {
-    //     filter: `startswith(displayName, '${filter}'`,
-    //     orderBy: 'displayName',
-    //     top: limit
-    //   }
-    // );
+  /** List users of Microsoft Graph */
+  async filterUsers(filter: FilterParam[], limit = 12): Promise<MSGraphUser[]> {
     try {
       const graphToken = await this.getMSGraphToken();
-      console.log('graph token', graphToken);
-      // endpoint = this.baseGraphUrl + endpoint + this.generateParamsQueryString(params);
-      return await this.http.get(
-        this.baseGraphUrl + `users?$filter=startswith(displayName,'${filter}')&$count=true&$top=12`,
-        {
-          headers: {
-            token: graphToken
+      let filterParams = [];
+      for (const f of filter) {
+        filterParams.push(`startswith(${f.field},'${f.value}')`);
+      }
+      if (filterParams.length) {
+        return await this.http.get(
+          this.baseGraphUrl + 'users?$filter=' + filterParams.join(' OR ') + '&$count=true&$top=' + limit,
+          {
+            headers: {
+              token: graphToken
+            }
           }
-        }
-      ).toPromise();
+        ).toPromise() as MSGraphUser[];
+      } 
+      return [];
     } catch (e: any) {
       this.error.handleError(e);
-      return null;
+      return [];
     }
-    // https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'a')&$orderby=displayName&$count=true&$top=1
   }
 
   /** Find a Microsoft Graph User by Principal Name (email) */

@@ -499,12 +499,15 @@ export class AppDataService {
       );
   }
 
-  getUsersByField(filter: any): Observable<any> {
-    console.log('filter', filter);
-    return from(this.msgraph.filterUsers(filter)).pipe(
+  getUsersByNameOrEmail(filter: string): Observable<any> {
+    const filterParam = [
+      { field: 'displayName', value: filter },
+      { field: 'mail', value: filter }
+    ]
+    return from(this.msgraph.filterUsers(filterParam)).pipe(
       map((res: any) => {
         return res.value.map(
-          (el: any) => { return { value: el.mail, label: el.displayName } as SelectInputList }
+          (el: any) => { return { value: el.mail, label: el.displayName } }
         );
       })
     );

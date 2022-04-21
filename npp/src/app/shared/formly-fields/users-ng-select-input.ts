@@ -87,18 +87,13 @@ export class FormlyFieldUsersNgSelect extends FieldType {
           distinctUntilChanged(),
           debounceTime(500),
           tap(() => this.searching = true),
-          // switchMap(term => this.appData.searchByTermInputList(this.query, this.filterField, term).pipe(
-          switchMap(term => this.appData.getUsersByField(term).pipe(
+          switchMap(term => this.appData.getUsersByNameOrEmail(term).pipe(
             catchError(() => of([])), // empty list on error
             tap(async (item) => {
               this.searching = false;
-              console.log('item', item);
               for (const i of item) {
-                try {
-                  const avatarBlob = await this.appData.getUserProfile(i.value);
-                  i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
-                }
-                catch(e) { i.avatar_url = null; }
+                const avatarBlob = await this.appData.getUserProfile(i.value);
+                i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
               }
             })
           ))

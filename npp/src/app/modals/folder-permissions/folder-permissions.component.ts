@@ -123,7 +123,7 @@ export class FolderPermissionsComponent implements OnInit {
 
       formlyFields.push({
         key: formlyKey,
-        type: 'ngsearchable',
+        type: 'userssearchable',
         templateOptions: {
           label: 'Department Users:',
           placeholder: 'Users with access to ' + sg.folder.Title + ' files',

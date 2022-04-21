@@ -322,7 +322,7 @@ export class CreateOpportunityComponent implements OnInit {
           hideExpression: (m, fs) => fs.hideStageNumbers,
         }, */{
           key: 'Stage.StageUsersId',
-          type: 'ngsearchable',
+          type: 'userssearchable',
           templateOptions: {
             label: 'Stage Users:',
             placeholder: 'Stage Users',
