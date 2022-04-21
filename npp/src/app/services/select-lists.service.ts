@@ -78,7 +78,7 @@ export class SelectListsService {
 
   async getSiteOwnersList(): Promise<SelectInputList[]> {
     const owners = await this.appData.getSiteOwners();
-    return owners.map(v => { return { label: v.Title ? v.Title : '', value: v.Id } })
+    return owners.map(v => { return { label: v.Title ? v.Title + ' (' + v.Email + ')' : '', value: v.Id } });
   }
 
   async getStageNumbersList(stageType: string): Promise<SelectInputList[]> {

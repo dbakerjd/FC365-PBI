@@ -58,7 +58,7 @@ export class StageSettingsComponent implements OnInit {
         hideExpression: true,
       },{
         key: 'StageUsersId',
-        type: 'ngsearchable',
+        type: 'userssearchable',
         templateOptions: {
             label: 'Stage Users',
             placeholder: 'Stage Users',

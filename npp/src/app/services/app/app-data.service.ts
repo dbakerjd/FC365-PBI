@@ -493,7 +493,7 @@ export class AppDataService {
       .pipe(
         map((res: any) => {
           return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+            (el: any) => { return { value: el.Id, label: el.Title, email: el.Email } as SelectInputList }
           );
         })
       );
