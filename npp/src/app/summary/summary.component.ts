@@ -6,6 +6,7 @@ import { NPPNotification } from '@shared/models/notification';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { AppDataService } from '../services/app/app-data.service';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-summary',
@@ -50,10 +51,23 @@ export class SummaryComponent implements OnInit {
   constructor(
     private notifications: NotificationsService,
     private teams: TeamsService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly appControl: AppControlService
   ) { }
 
   async ngOnInit(): Promise<void> {
+    if(this.appControl.isReady) {
+      this.init();
+    }else {
+      this.appControl.readySubscriptions.subscribe(val => {
+        this.init();
+      });
+    }
+    this.init();
+    
+  } 
+
+  async init() {
     try {
       this.notificationsList = await this.notifications.getNotifications();
       this.opportunities = await this.appData.getAllOpportunities(true, true);
@@ -360,7 +374,7 @@ export class SummaryComponent implements OnInit {
     } catch(e) {
       this.teams.hackyConsole += "********RUNTIME ERROR********    "+JSON.stringify(e);
     }
-  } 
+  }
 
   async ngAfterViewInit() {
     this.notifications.updateUnreadNotifications();

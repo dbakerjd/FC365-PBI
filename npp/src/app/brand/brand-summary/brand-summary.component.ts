@@ -5,6 +5,7 @@ import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { AppDataService } from '@services/app/app-data.service';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -41,22 +42,18 @@ export class BrandSummaryComponent implements OnInit {
 
   constructor(
     private readonly entities: EntitiesService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly appControl: AppControlService
   ) { }
 
   async ngOnInit(): Promise<void> {
-    // try {
-    //   if (this.teams.initialized) this.init();
-    //   else {
-    //     this.teams.statusSubject.subscribe(async (msg) => {
-    //       setTimeout(async () => {
-    //         this.init();
-    //       }, 500);
-    //     });
-    //   }
-    // } catch (e) {
-    //   console.log(e);
-    // }
+    if(this.appControl.isReady) {
+      this.init();
+    }else {
+      this.appControl.readySubscriptions.subscribe(val => {
+        this.init();
+      });
+    }
     this.init();
   }
 
