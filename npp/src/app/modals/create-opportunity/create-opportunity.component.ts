@@ -196,7 +196,8 @@ export class CreateOpportunityComponent implements OnInit {
             options: businessUnits,
             required: true,
           },
-          defaultValue: this.opportunity?.BusinessUnitId
+          defaultValue: this.opportunity?.BusinessUnitId,
+          hideExpression: this.isEdit
         }, {
           key: 'Opportunity.ClinicalTrialPhaseId',
           type: 'select',

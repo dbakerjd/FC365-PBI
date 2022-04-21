@@ -145,7 +145,8 @@ export class CreateBrandComponent implements OnInit {
             options: businessUnits,
             required: true,
           },
-          defaultValue: this.brand?.BusinessUnitId
+          defaultValue: this.brand?.BusinessUnitId,
+          hideExpression: this.isEdit
         }, {
           key: 'Brand.ForecastCycleId',
           type: 'select',
