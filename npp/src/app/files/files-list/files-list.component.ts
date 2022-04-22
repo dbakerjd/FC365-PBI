@@ -573,7 +573,7 @@ export class FilesListComponent implements OnInit {
     try {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
-        const reportName: string = "Epi Report";
+        const reportName: string = "Epi Report Inline";
 
         let response = await this.powerBi.refreshReport(reportName);
         this.refreshingPowerBi = false;   

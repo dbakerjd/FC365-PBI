@@ -829,7 +829,7 @@ export class ActionsListComponent implements OnInit {
       if(!this.refreshingPowerBi) {
         this.refreshingPowerBi = true;
         //const at the moment needs to be dynamic
-        const reportName: string = "Epi Report"
+        const reportName: string = "Epi Report Inline"
 
         let response = await this.powerBi.refreshReport(reportName);
         console.log("status is: "+response);
