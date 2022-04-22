@@ -3,8 +3,11 @@ import * as Highcharts from 'highcharts';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { NPPNotification } from '@shared/models/notification';
-import { EntitiesService } from 'src/app/services/entities.service';
-import { AppDataService } from '@services/app/app-data.service';
+import { EntitiesService } from '@services/entities.service';
+import { AppControlService } from '@services/app/app-control.service';
+import { NotificationsService } from '@services/notifications.service';
+import { ErrorService } from '@services/app/error.service';
+import { PermissionsService } from '@services/permissions.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -13,11 +16,12 @@ import { AppDataService } from '@services/app/app-data.service';
 })
 export class BrandSummaryComponent implements OnInit {
 
+  loadingGraphics = true;
+  loadingTable = true;
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
   currentUser: User | undefined = undefined;
   currentTherapyArea: string = '';
-  brands: Opportunity[] = [];
   brandData: {
     Id: number,
     brandName: string,
@@ -26,92 +30,54 @@ export class BrandSummaryComponent implements OnInit {
     approvedModelsCount: number
   }[] = [];
 
-  usersList: User[] = [];
-  usersOpportunitiesListItem: { type: string | null, userId: number | null, list: Opportunity[] } = {
-    type: null,
-    userId: null,
-    list: []
-  };
-  generalSeatsCount: {
-    TotalSeats: number,
-    AssignedSeats: number,
-    AvailableSeats: number
-  } | null = null;
-  generatingSeatsTable = true;
-
   constructor(
+    private notifications: NotificationsService,
+    private readonly permissions: PermissionsService,
     private readonly entities: EntitiesService,
-    private readonly appData: AppDataService
+    private readonly appControl: AppControlService,
+    private readonly error: ErrorService
   ) { }
 
   async ngOnInit(): Promise<void> {
-    // try {
-    //   if (this.teams.initialized) this.init();
-    //   else {
-    //     this.teams.statusSubject.subscribe(async (msg) => {
-    //       setTimeout(async () => {
-    //         this.init();
-    //       }, 500);
-    //     });
-    //   }
-    // } catch (e) {
-    //   console.log(e);
-    // }
-    this.init();
+    if (this.appControl.isReady) {
+      this.init();
+    } else {
+      this.appControl.readySubscriptions.subscribe(val => {
+        this.init();
+      });
+    }
   }
 
   async init() {
     //@ts-ignore
     window.SummaryComponent = this;
 
-    const user = await this.appData.getCurrentUserInfo();
-    this.notificationsList = await this.appData.getUserNotifications(user.Id);
+    this.currentUser = await this.permissions.getCurrentUserInfo();
+    this.notificationsList = await this.notifications.getNotifications();
     this.therapyAreasData = { areas: {}, total: 0 };
 
-    this.brands = await this.entities.getAll();
+    const brands = await this.entities.getAll();
 
-    this.brands.forEach(async (el, index) => {
-
-      //populate therapyAreasData
-      if (el.Indication && el.Indication.length) {
-        for (let i = 0; i < el.Indication.length; i++) {
-          this.therapyAreasData.total += 1;
-          let indication = el.Indication[i];
-          if (this.therapyAreasData.areas[indication.TherapyArea]) {
-            this.therapyAreasData.areas[indication.TherapyArea].count += 1;
-            if (this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
-              this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
-            } else {
-              this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
-            }
-          } else {
-            this.therapyAreasData.areas[indication.TherapyArea] = {
-              count: 1,
-              indications: {}
-            };
-            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
-          }
-        }
-      }
-    });
+    for (const el of brands) {
+      this.populateTherapyAreasData(el);
+    }
 
     this.renderTherapyAreasGraph();
 
-    this.brands.forEach(async (el, index) => {
+    this.loadingGraphics = false;
 
+    for (const el of brands) {
       this.brandData.push({
         Id: el.ID,
         brandName: el.Title,
-        cycle: el.ForecastCycle?.Title + " " + el.Year,
+        cycle: el.ForecastCycleDescriptor ? el.ForecastCycleDescriptor + " " + el.Year : el.Year.toString(),
         modelsCount: await this.entities.getModelsCount(el),
         approvedModelsCount: await this.entities.getApprovedModelsCount(el),
       });
 
-    });
+    }
+    this.loadingTable = false;
 
-    // seats
-    this.currentUser = await this.appData.getCurrentUserInfo();
-    if (this.currentUser.IsSiteAdmin) this.loadSeatsInfo();
   }
 
   renderTherapyAreasGraph() {
@@ -176,8 +142,13 @@ export class BrandSummaryComponent implements OnInit {
       }]
     };
 
-    //@ts-ignore
-    if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);
+    try {
+      //@ts-ignore
+      if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);
+    } catch (e) {
+      this.error.handleError(e);
+    }
+    
   }
 
   renderIndicationsGraph() {
@@ -230,49 +201,27 @@ export class BrandSummaryComponent implements OnInit {
     if (Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);
   }
 
-  private async loadSeatsInfo() {
-    this.generatingSeatsTable = true;
-    this.usersList = await this.appData.getUsers();
-    this.usersList = this.usersList.filter(el => el.Email);
-
-    for (let index = 0; index < this.usersList.length; index++) {
-      const user: any = this.usersList[index];
-      const result = await this.appData.getSeats(user.Email);
-      if (index == 0 && result) {
-        this.generalSeatsCount = {
-          AssignedSeats: result?.AssignedSeats,
-          TotalSeats: result?.TotalSeats,
-          AvailableSeats: result?.AvailableSeats
+  private populateTherapyAreasData(b: Opportunity) {
+    if (b.Indication && b.Indication.length) {
+      for (let i = 0; i < b.Indication.length; i++) {
+        this.therapyAreasData.total += 1;
+        let indication = b.Indication[i];
+        if (this.therapyAreasData.areas[indication.TherapyArea]) {
+          this.therapyAreasData.areas[indication.TherapyArea].count += 1;
+          if (this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
+            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
+          } else {
+            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
+          }
+        } else {
+          this.therapyAreasData.areas[indication.TherapyArea] = {
+            count: 1,
+            indications: {}
+          };
+          this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
         }
       }
-      user['seats'] = result?.UserGroupsCount;
-      const groups = await this.appData.getUserGroups(user.Id);
-      const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
-      const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
-      user['opportunities'] = OUgroups.length;
-      user['owner'] = OOgroups.length;
     }
-
-    this.generatingSeatsTable = false;
   }
 
-  async listOpportunities(userId: number, group: 'OU' | 'OO') {
-    if (this.usersOpportunitiesListItem.type == group && this.usersOpportunitiesListItem.userId == userId) {
-      this.usersOpportunitiesListItem.type = null;
-      this.usersOpportunitiesListItem.userId = null;
-      this.usersOpportunitiesListItem.list = [];
-      return;
-    }
-    const groups = await this.appData.getUserGroups(userId);
-    const OUgroups = groups.filter(g => g.Title.startsWith(group + '-'));
-    const allOpportunities = await this.appData.getAllOpportunities(false, false);
-    const oppsList = OUgroups.map(e => {
-      const splittedName = e.Title.split('-');
-      return splittedName[1];
-    });
-    const oppsListRelated = allOpportunities.filter(opp => oppsList.includes(opp.ID.toString()));
-    this.usersOpportunitiesListItem.type = group;
-    this.usersOpportunitiesListItem.userId = userId;
-    this.usersOpportunitiesListItem.list = oppsListRelated;
-  }
 }

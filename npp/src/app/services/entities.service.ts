@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Opportunity, Stage } from '@shared/models/entity';
+import { Action, Opportunity, Stage } from '@shared/models/entity';
 import { AppDataService } from './app/app-data.service';
 import { PermissionsService } from './permissions.service';
 import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
@@ -82,6 +82,10 @@ export class EntitiesService {
 
     return success;
   }
+
+  async getAllStages(): Promise<Stage[]> {
+    return await this.appData.getAllStages();
+  }
   
   /** Update the entity stage with new data. Returns true in success */
   async updateStageSettings(stageId: number, data: any): Promise<boolean> {
@@ -162,24 +166,36 @@ export class EntitiesService {
     return false;
   }
 
-  async archiveEntity(entityId: number) {
+  async archiveEntity(entityId: number): Promise<boolean> {
     return await this.appData.setOpportunityStatus(entityId, "Archive");
   }
 
-  async activeEntity(entityId: number) {
+  async activeEntity(entityId: number): Promise<boolean> {
     return await this.appData.setOpportunityStatus(entityId, "Active");
   }
 
-  async approveEntity(entityId: number) {
+  async approveEntity(entityId: number): Promise<boolean> {
     return await this.appData.setOpportunityStatus(entityId, "Approved");
   }
 
-  async getProgress(entity: Opportunity) {
+  async getStageActions(entityId: number, stageNameId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId, stageNameId);
+  }
+
+  async getStageActionsRaw(entityId: number, stageNameId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId, stageNameId, { expand: false, sortBy: 'Timestamp asc'});
+  }
+
+  async getEntityActions(entityId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId);
+  }
+
+  async getProgress(entity: Opportunity): Promise<number> {
     console.log('entity', entity);
     if (entity.OpportunityTypeId && await this.isInternalOpportunity(entity.OpportunityTypeId)) {
       return -1; // progress no applies
     }
-    let actions = await this.appData.getActions(entity.ID);
+    let actions = await this.getEntityActions(entity.ID);
     if (actions.length) {
       let gates: {'total': number; 'completed': number}[] = [];
       let currentGate = 0;

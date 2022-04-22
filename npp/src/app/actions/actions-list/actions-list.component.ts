@@ -106,7 +106,7 @@ export class ActionsListComponent implements OnInit {
         }
         this.gates = await this.appData.getEntityStages(params.id);
         this.gates.forEach(async (el, index) => {
-          el.actions = await this.appData.getActions(params.id, el.StageNameId);
+          el.actions = await this.entities.getStageActions(params.id, el.StageNameId);
           el.folders = await this.appData.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
           this.setStatus(el.actions);
 
