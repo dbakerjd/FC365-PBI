@@ -7,6 +7,7 @@ import { EntitiesService } from '@services/entities.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { NotificationsService } from '@services/notifications.service';
 import { AppDataService } from '@services/app/app-data.service';
+import { ErrorService } from '@services/app/error.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -15,11 +16,12 @@ import { AppDataService } from '@services/app/app-data.service';
 })
 export class BrandSummaryComponent implements OnInit {
 
+  loadingGraphics = true;
+  loadingTable = true;
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
   currentUser: User | undefined = undefined;
   currentTherapyArea: string = '';
-  brands: Opportunity[] = [];
   brandData: {
     Id: number,
     brandName: string,
@@ -28,24 +30,12 @@ export class BrandSummaryComponent implements OnInit {
     approvedModelsCount: number
   }[] = [];
 
-  usersList: User[] = [];
-  usersOpportunitiesListItem: { type: string | null, userId: number | null, list: Opportunity[] } = {
-    type: null,
-    userId: null,
-    list: []
-  };
-  generalSeatsCount: {
-    TotalSeats: number,
-    AssignedSeats: number,
-    AvailableSeats: number
-  } | null = null;
-  generatingSeatsTable = true;
-
   constructor(
     private notifications: NotificationsService,
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService,
-    private readonly appControl: AppControlService
+    private readonly appControl: AppControlService,
+    private readonly error: ErrorService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -66,46 +56,27 @@ export class BrandSummaryComponent implements OnInit {
     this.notificationsList = await this.notifications.getNotifications();
     this.therapyAreasData = { areas: {}, total: 0 };
 
-    this.brands = await this.entities.getAll();
+    const brands = await this.entities.getAll();
 
-    this.brands.forEach(async (el, index) => {
-
-      //populate therapyAreasData
-      if (el.Indication && el.Indication.length) {
-        for (let i = 0; i < el.Indication.length; i++) {
-          this.therapyAreasData.total += 1;
-          let indication = el.Indication[i];
-          if (this.therapyAreasData.areas[indication.TherapyArea]) {
-            this.therapyAreasData.areas[indication.TherapyArea].count += 1;
-            if (this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
-              this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
-            } else {
-              this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
-            }
-          } else {
-            this.therapyAreasData.areas[indication.TherapyArea] = {
-              count: 1,
-              indications: {}
-            };
-            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
-          }
-        }
-      }
-    });
+    for (const el of brands) {
+      this.populateTherapyAreasData(el);
+    }
 
     this.renderTherapyAreasGraph();
 
-    this.brands.forEach(async (el, index) => {
+    this.loadingGraphics = false;
 
+    for (const el of brands) {
       this.brandData.push({
         Id: el.ID,
         brandName: el.Title,
-        cycle: el.ForecastCycle?.Title + " " + el.Year,
+        cycle: el.ForecastCycleDescriptor ? el.ForecastCycleDescriptor + " " + el.Year : el.Year.toString(),
         modelsCount: await this.entities.getModelsCount(el),
         approvedModelsCount: await this.entities.getApprovedModelsCount(el),
       });
 
-    });
+    }
+    this.loadingTable = false;
 
   }
 
@@ -171,8 +142,13 @@ export class BrandSummaryComponent implements OnInit {
       }]
     };
 
-    //@ts-ignore
-    if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);
+    try {
+      //@ts-ignore
+      if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chartTherapyAreas', optionsTherapyAreas);
+    } catch (e) {
+      this.error.handleError(e);
+    }
+    
   }
 
   renderIndicationsGraph() {
@@ -223,6 +199,29 @@ export class BrandSummaryComponent implements OnInit {
     };
     //@ts-ignore
     if (Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);
+  }
+
+  private populateTherapyAreasData(b: Opportunity) {
+    if (b.Indication && b.Indication.length) {
+      for (let i = 0; i < b.Indication.length; i++) {
+        this.therapyAreasData.total += 1;
+        let indication = b.Indication[i];
+        if (this.therapyAreasData.areas[indication.TherapyArea]) {
+          this.therapyAreasData.areas[indication.TherapyArea].count += 1;
+          if (this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title]) {
+            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] += 1;
+          } else {
+            this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
+          }
+        } else {
+          this.therapyAreasData.areas[indication.TherapyArea] = {
+            count: 1,
+            indications: {}
+          };
+          this.therapyAreasData.areas[indication.TherapyArea].indications[indication.Title] = 1;
+        }
+      }
+    }
   }
 
 }

@@ -4,6 +4,7 @@
         <div class="header">
             <h4><div class="doc-btn-icon"></div> Brands Insights</h4>
         </div>
+        <app-progress-spinner *ngIf="loadingGraphics"></app-progress-spinner>
         <div class="graph">
             <div id="chartTherapyAreas"></div>
         </div>
@@ -12,18 +13,22 @@
         </div>
         <div class="next-tasks">
             <div class="next-tasks-title section-title">Brands</div>
-            <div class="next-tasks-header">
-                <div class="next-tasks-brand-name">Brand Name</div>
-                <div class="next-tasks-forecast-cycle">Forecast Cycle</div>
-                <div class="next-tasks-models">Models</div>
-                <div class="next-tasks-approved">Approved Models</div>
-            </div>
-            <div class="next-tasks-content" *ngFor="let b of brandData">
-                <div class="next-tasks-brand-name">{{ b.brandName}}</div>
-                <div class="next-tasks-forecast-cycle">{{ b.cycle}}</div>
-                <div class="next-tasks-models">{{ b.modelsCount }}</div>
-                <div class="next-tasks-approved">{{ b.approvedModelsCount }}</div>
-            </div>
+
+            <app-progress-spinner *ngIf="loadingTable"></app-progress-spinner>
+            <ng-container *ngIf="!loadingTable">
+                <div class="next-tasks-header">
+                    <div class="next-tasks-brand-name">Brand Name</div>
+                    <div class="next-tasks-forecast-cycle">Forecast Cycle</div>
+                    <div class="next-tasks-models">Models</div>
+                    <div class="next-tasks-approved">Approved Models</div>
+                </div>
+                <div class="next-tasks-content" *ngFor="let b of brandData">
+                    <div class="next-tasks-brand-name">{{ b.brandName}}</div>
+                    <div class="next-tasks-forecast-cycle">{{ b.cycle}}</div>
+                    <div class="next-tasks-models">{{ b.modelsCount }}</div>
+                    <div class="next-tasks-approved">{{ b.approvedModelsCount }}</div>
+                </div>
+            </ng-container>
         </div>
 
         <app-seats-table *ngIf="currentUser?.IsSiteAdmin"></app-seats-table>
