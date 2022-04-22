@@ -6,8 +6,8 @@ import { NPPNotification } from '@shared/models/notification';
 import { EntitiesService } from '@services/entities.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { NotificationsService } from '@services/notifications.service';
-import { AppDataService } from '@services/app/app-data.service';
 import { ErrorService } from '@services/app/error.service';
+import { PermissionsService } from '@services/permissions.service';
 
 @Component({
   selector: 'app-brand-summary',
@@ -32,7 +32,7 @@ export class BrandSummaryComponent implements OnInit {
 
   constructor(
     private notifications: NotificationsService,
-    private readonly appData: AppDataService,
+    private readonly permissions: PermissionsService,
     private readonly entities: EntitiesService,
     private readonly appControl: AppControlService,
     private readonly error: ErrorService
@@ -52,7 +52,7 @@ export class BrandSummaryComponent implements OnInit {
     //@ts-ignore
     window.SummaryComponent = this;
 
-    this.currentUser = await this.appData.getCurrentUserInfo();
+    this.currentUser = await this.permissions.getCurrentUserInfo();
     this.notificationsList = await this.notifications.getNotifications();
     this.therapyAreasData = { areas: {}, total: 0 };
 

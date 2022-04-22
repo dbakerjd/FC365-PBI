@@ -26,6 +26,10 @@ export class PermissionsService {
 
   constructor(private readonly appData: AppDataService) { }
 
+  async getCurrentUserInfo(): Promise<User> {
+    return await this.appData.getCurrentUserInfo();
+  }
+
   /* set permissions related to working groups a list or item */
   async setPermissions(permissions: GroupPermission[], workingGroups: SPGroupListItem[], itemOrFolder: number | string | null = null) {
     let folders = [SPFolders.FILES_FOLDER, SPFolders.FOLDER_APPROVED, SPFolders.FOLDER_ARCHIVED, SPFolders.FOLDER_WIP];

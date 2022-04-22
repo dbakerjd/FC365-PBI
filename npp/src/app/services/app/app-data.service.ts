@@ -325,22 +325,16 @@ export class AppDataService {
     );
   }
 
-  async getActions(opportunityId: number, stageId?: number): Promise<Action[]> {
+  async getActions(opportunityId: number, stageId?: number, options?: any): Promise<Action[]> {
     let filterConditions = `(EntityNameId eq ${opportunityId})`;
     if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
-    return await this.sharepoint.getAllItems(
-      SPLists.ENTITY_ACTIONS_LIST_NAME,
-      `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=StageNameId%20asc&$expand=TargetUser`
-    );
-  }
+    const sortParam = options?.sortBy ? options.sortBy : 'StageNameId%20asc';
 
-  /** TOCHECK passar parametre per filtre select o no */
-  async getActionsRaw(opportunityId: number, stageId?: number): Promise<Action[]> {
-    let filterConditions = `(EntityNameId eq ${opportunityId})`;
-    if (stageId) filterConditions += ` and (StageNameId eq ${stageId})`;
     return await this.sharepoint.getAllItems(
       SPLists.ENTITY_ACTIONS_LIST_NAME,
-      `$filter=${filterConditions}&$orderby=Timestamp%20asc`
+      options?.expand ?
+        `$select=*,TargetUser/ID,TargetUser/FirstName,TargetUser/LastName&$filter=${filterConditions}&$orderby=${sortParam}&$expand=TargetUser`
+        : `$filter=${filterConditions}&$orderby=${sortParam}`
     );
   }
   

@@ -4,10 +4,10 @@ import { NPPNotification } from '@shared/models/notification';
 import { User } from '@shared/models/user';
 import { Opportunity } from '@shared/models/entity';
 import { NotificationsService } from '@services/notifications.service';
-import { AppDataService } from '@services/app/app-data.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { EntitiesService } from '@services/entities.service';
 import { ErrorService } from '@services/app/error.service';
+import { PermissionsService } from '@services/permissions.service';
 
 @Component({
   selector: 'app-summary',
@@ -34,7 +34,7 @@ export class SummaryComponent implements OnInit {
 
   constructor(
     private notifications: NotificationsService,
-    private readonly appData: AppDataService,
+    private readonly permissions: PermissionsService,
     private readonly entities: EntitiesService,
     private readonly appControl: AppControlService,
     private readonly error: ErrorService
@@ -56,7 +56,7 @@ export class SummaryComponent implements OnInit {
 
   async init() {
     this.notificationsList = await this.notifications.getNotifications();
-    this.currentUser = await this.appData.getCurrentUserInfo();
+    this.currentUser = await this.permissions.getCurrentUserInfo();
 
     await this.prepareData();
     this.createGraphics();
@@ -65,7 +65,7 @@ export class SummaryComponent implements OnInit {
 
   private async prepareData() {
     const opportunities = await this.entities.getAll();
-    const gates = await this.appData.getAllStages();
+    const gates = await this.entities.getAllStages();
 
     this.therapyAreasData  = { areas: {}, total: 0 };
     this.currentTasks = [];
@@ -85,7 +85,7 @@ export class SummaryComponent implements OnInit {
       this.populateTherapyAreasData(el);
 
       let lastGate = el.gates[el.gates.length - 1];
-      let lastGateTasks = await this.appData.getActionsRaw(lastGate.EntityNameId, lastGate.StageNameId);
+      let lastGateTasks = await this.entities.getStageActionsRaw(lastGate.EntityNameId, lastGate.StageNameId);
       let lastTask = lastGateTasks.find(el => !el.Complete);
       let taskInfo = {
         opportunityName: el.Title,
