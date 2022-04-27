@@ -98,7 +98,7 @@ export class PermissionsService {
     await this.setPermissions(permissions, groups, stage.ID);
 
     // add stage users to group OU and SU
-    let addedSU = [];
+    let addedSU: User[] = [];
     for (const userMail of users) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
@@ -109,7 +109,7 @@ export class PermissionsService {
 
       await this.appData.addUserToGroupFromMail(userMail, SUGroup.Id);
       if (!user) user = await this.appData.getUserInfoByMail(userMail);
-      addedSU.push(user!.Id);
+      addedSU.push(user!);
     }
     if (addedSU.length < 1) {
       // add owner as stage user to don't leave the field blank
@@ -118,7 +118,7 @@ export class PermissionsService {
       await this.appData.updateStage(stage.ID, { StageUsersId: [owner.Id]});
     } else {
       // update with only the stage users with seat
-      await this.appData.updateStage(stage.ID, { StageUsersId: addedSU});
+      await this.appData.updateStage(stage.ID, { StageUsersId: addedSU.map(su => su!.Id)});
     }
 
     // Actions
@@ -137,7 +137,11 @@ export class PermissionsService {
     permissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
 
-    this.addUsersToPowerBI_RLS([owner], opportunity.ID, geographies);
+    // power bi rls
+    let ownersAndStageUsers: User[];
+    if (addedSU.some(su => su.Id == owner.Id)) ownersAndStageUsers = addedSU;
+    else ownersAndStageUsers = addedSU.concat(owner);
+    await this.addUsersToPowerBI_RLS(ownersAndStageUsers, opportunity.ID, geographies);
 
     return true;
   }
@@ -214,6 +218,10 @@ export class PermissionsService {
       success = await this.appData.addUserToGroup(newOwner, OOGroup.Id) && success;
     }
 
+    const geographies = await this.appData.getEntityGeographies(oppId);
+    await this.addUsersToPowerBI_RLS([newOwner], oppId, geographies);
+    await this.removeUsersToPowerBI_RLS([currentOwnerId], oppId, geographies);
+
     return success;
   }
 
@@ -246,6 +254,13 @@ export class PermissionsService {
         if (!success) return false;
       }
     }
+
+    const geographies = await this.appData.getEntityGeographies(oppId);
+    let users = await this.appData.getUsersByEmails(addedUsers);
+    await this.addUsersToPowerBI_RLS(users, oppId, geographies);
+    users = await this.appData.getUsersByEmails(removedUsers);
+    await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), oppId, geographies);
+    
     return success;
   }
 
@@ -539,7 +554,7 @@ export class PermissionsService {
     const archivedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_ARCHIVED);
     await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
     
-    this.addUsersToPowerBI_RLS([owner], opportunity.ID, geographies);
+    await this.addUsersToPowerBI_RLS([owner], opportunity.ID, geographies);
 
     return true;
   }
@@ -784,10 +799,19 @@ export class PermissionsService {
   }
 
   private async addUsersToPowerBI_RLS(users: User[], entityId: number, geographies: EntityGeography[]) {
+    for (const u of users) {
+      for (const g of geographies) {
+        const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
+        await this.appData.addPowerBI_RLS(u, entityId, geoCountries);
+      }
+    }
+  }
+
+  private async removeUsersToPowerBI_RLS(users: number[], entityId: number, geographies: EntityGeography[]) {
     users.forEach(u => {
       geographies.forEach(async g => {
         const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
-        this.appData.addPowerBI_RLS(u, entityId, geoCountries);
+        await this.appData.removePowerBI_RLS(entityId, geoCountries, u);
       })
     });
   }

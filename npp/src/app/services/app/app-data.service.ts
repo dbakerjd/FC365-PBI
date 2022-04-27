@@ -835,9 +835,11 @@ export class AppDataService {
     for (const country of countries) {
       const rlsItem = rlsList.find(e => e.CountryId == country.ID);
       if (rlsItem) {
-        await this.sharepoint.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST_NAME, {
-          Removed: "false"
-        });
+        if (rlsItem.Removed) {
+          await this.sharepoint.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST_NAME, {
+            Removed: "false"
+          });
+        }
       } else {
         await this.sharepoint.createItem(SPLists.POWER_BI_ACCESS_LIST_NAME, {
           Title: user.Title,
