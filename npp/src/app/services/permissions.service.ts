@@ -130,6 +130,9 @@ export class PermissionsService {
     // add groups to folders
     permissions = await this.appData.getMasterGroupPermissions(SPFolders.FILES_FOLDER);
     await this.createFolderGroups(opportunity.ID, permissions, folders, groups);
+
+    this.addUsersToPowerBI_RLS([owner], opportunity.ID, geographies);
+
     return true;
   }
 
@@ -520,7 +523,9 @@ export class PermissionsService {
     await this.createFolderGroups(opportunity.ID, approvedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_APPROVED)), groups);
     const archivedPermissions = await this.appData.getMasterGroupPermissions(SPFolders.FOLDER_ARCHIVED);
     await this.createFolderGroups(opportunity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);
-      
+    
+    this.addUsersToPowerBI_RLS([owner], opportunity.ID, geographies);
+
     return true;
   }
 
@@ -761,5 +766,14 @@ export class PermissionsService {
       }
       await this.setPermissions(permissions, folderGroups, f.ServerRelativeUrl);
     }
+  }
+
+  private async addUsersToPowerBI_RLS(users: User[], entityId: number, geographies: EntityGeography[]) {
+    users.forEach(u => {
+      geographies.forEach(async g => {
+        const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
+        this.appData.addPowerBI_RLS(u, entityId, geoCountries);
+      })
+    });
   }
 }
