@@ -13,6 +13,8 @@ export interface JDLicense {
   TotalSeats: number;
   AssignedSeats: number;
   AvailableSeats: number;
+  ContactName: string;
+  ContactEmail: string;
 }
 
 interface JDLicenseContext {
@@ -186,6 +188,16 @@ export class LicensingService {
 
   getSharepointDomain() {
     return this.getSharepointUri()?.split('/')[2];
+  }
+
+  getContactInfo(): { contactName: string; contactEmail: string; } | null {
+    if (this.license) {
+      return {
+        contactName: this.license.ContactName,
+        contactEmail: this.license.ContactEmail
+      };
+    }
+    return null;
   }
   
 }
