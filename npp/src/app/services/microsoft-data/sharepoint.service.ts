@@ -476,11 +476,24 @@ export class SharepointService {
   }
 
   /** Adds the user to the Sharepoint Group */
-  async addUserToSharepointGroup(userLoginName: string, groupId: number) {
+  async addLoginNameToSharepointGroup(userLoginName: string, groupId: number) {
     try {
       await this.http.post(
         this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
         { LoginName: userLoginName }
+      ).toPromise();
+      return true;
+    } catch (e: any) {
+      return false;
+    }
+  }
+
+  /** Adds the user with the email to the Sharepoint Group */
+  async addEmailToSharepointGroup(email: string, groupId: number) {
+    try {
+      await this.http.post(
+        this.licensing.getSharepointApiUri() + `sitegroups(${groupId})/users`,
+        { LoginName: 'i:0#.f|membership|' + email }
       ).toPromise();
       return true;
     } catch (e: any) {

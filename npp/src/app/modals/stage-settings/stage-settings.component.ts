@@ -62,8 +62,6 @@ export class StageSettingsComponent implements OnInit {
         templateOptions: {
             label: 'Stage Users',
             placeholder: 'Stage Users',
-            filterLocally: false,
-            query: 'siteusers',
             multiple: true,
             options: defaultUsersList,
             required: true
@@ -87,7 +85,7 @@ export class StageSettingsComponent implements OnInit {
       this.isEdit = true;
       this.model.ID = this.data.stage.ID;
       this.model.Title = this.data.stage.Title;
-      this.model.StageUsersId = this.data.stage.StageUsersId;
+      this.model.StageUsersId = defaultUsersList.map(e => e.value);
       this.model.StageReview = new Date(this.data.stage.StageReview);
       this.model.stageType = this.data.stage.StageType;
     }
@@ -107,10 +105,7 @@ export class StageSettingsComponent implements OnInit {
     let success;
     if (this.model.ID) { // update
       this.updating = this.dialogRef.disableClose = true;
-      success = await this.entities.updateStageSettings(this.model.ID, {
-        StageReview: this.model.StageReview,
-        StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
-      });
+      success = await this.entities.updateStageSettings(this.model.ID, {...this.model});
       this.updating = this.dialogRef.disableClose = false;
 
       this.dialogRef.close({
@@ -121,13 +116,13 @@ export class StageSettingsComponent implements OnInit {
     } else {
       const newStage = await this.appData.createStage({
         StageReview: this.model.StageReview,
-        StageUsersId: this.model.StageUsersId,
         EntityNameId: this.model.opportunityId,
         StageNameId: this.model.nextMasterStageId
       });
       this.dialogRef.close({
         success: newStage ? true : false, 
-        data: newStage
+        data: newStage,
+        users: this.model.StageUsersId
       });
     }
   }

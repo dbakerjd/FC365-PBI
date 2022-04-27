@@ -46,14 +46,15 @@ export class NotificationsService {
   }
 
   async newOpportunityAccessNotification(
-    userIds: number[],
+    userMails: string[],
     opportunity: Opportunity
   ) {
     const currentUser = await this.getCurrentUser();
-    for (const user of userIds) {
-      if (currentUser.Id == user) continue;
-      await this.appData.createNotification(
-        user,
+    for (const mail of userMails) {
+      if (currentUser.Email == mail) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(
+        user.Id,
         `${currentUser.Title} has given you access to a new opportunity: ${opportunity.Title}`
       );
     }
@@ -69,27 +70,29 @@ export class NotificationsService {
     }
   }
 
-  async modelFolderAccessNotification(userIds: number[], opportunityId: number) {
+  async modelFolderAccessNotification(userMails: string[], opportunityId: number) {
     const currentUser = await this.getCurrentUser();
     let notificationMessage = `${currentUser.Title} has given you access to Forecast Models`;
     const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
-    for (const user of userIds) {
-      if (user == currentUser.Id) continue;
-      await this.appData.createNotification(user, notificationMessage);
+    for (const mail of userMails) {
+      if (mail == currentUser.Email) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(user.Id, notificationMessage);
     }
   }
 
-  async folderAccessNotification(userIds: number[], opportunityId: number, departmentId: number) {
+  async folderAccessNotification(usersMails: string[], opportunityId: number, departmentId: number) {
     const currentUser = await this.getCurrentUser();
     const folder = await this.appData.getNPPFolderByDepartment(departmentId);
     if (!folder) return;
     let notificationMessage = `${currentUser.Title} has given you access to ${folder.Title}`;
     const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
-    for (const user of userIds) {
-      if (user == currentUser.Id) continue;
-      await this.appData.createNotification(user, notificationMessage);
+    for (const mail of usersMails) {
+      if (mail == currentUser.Email) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(user.Id, notificationMessage);
     }
   }
 

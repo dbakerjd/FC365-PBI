@@ -44,7 +44,6 @@ export class AppControlService {
     }
 
     this.config = await this.appData.getAppConfig();
-    console.log('config', this.config);
     let apps = await this.appData.getApp(appTitle);
     this.app = (apps && apps.length) ? apps[0] : undefined;
 

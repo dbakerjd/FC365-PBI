@@ -73,7 +73,7 @@ export class SelectListsService {
 
   async getUsersList(usersId: number[]): Promise<SelectInputList[]> {
     const users = await this.appData.getUsersByIds(usersId);
-    return users.map((u: User) => { return { label: u.Title!, value: u.Id } });
+    return users.map((u: User) => { return { label: u.Title!, value: u.Email! } });
   }
 
   async getSiteOwnersList(): Promise<SelectInputList[]> {

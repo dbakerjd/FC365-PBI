@@ -44,7 +44,7 @@ export class PermissionsService {
     }
   }
 
-  async initializeOpportunity(opportunity: Opportunity, stage: Stage | null): Promise<boolean> {
+  async initializeOpportunity(opportunity: Opportunity, stage?: Stage, users?: string[]): Promise<boolean> {
     const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID);
     if (groups.length < 1) return false;
 
@@ -64,8 +64,8 @@ export class PermissionsService {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
 
-    if (stage) {
-      await this.initializeStage(opportunity, stage, oppGeographies);
+    if (stage && users) {
+      await this.initializeStage(opportunity, stage, oppGeographies, users);
     } else {
       await this.initializeInternalEntityFolders(opportunity, oppGeographies);
     }
@@ -73,7 +73,7 @@ export class PermissionsService {
     return true;
   }
 
-  async initializeStage(opportunity: Opportunity, stage: Stage, geographies: EntityGeography[]): Promise<boolean> {
+  async initializeStage(opportunity: Opportunity, stage: Stage, geographies: EntityGeography[], users: string[]): Promise<boolean> {
     const OUGroup = await this.appData.createGroup('OU-' + opportunity.ID);
     const OOGroup = await this.appData.createGroup('OO-' + opportunity.ID);
     const SUGroup = await this.appData.createGroup(`SU-${opportunity.ID}-${stage.StageNameId}`);
@@ -99,18 +99,24 @@ export class PermissionsService {
 
     // add stage users to group OU and SU
     let addedSU = [];
-    for (const userId of stage.StageUsersId) {
-      const user = await this.appData.getUserInfo(userId);
-      if (!await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true)) continue;
-      await this.appData.addUserToGroup(user, SUGroup.Id);
-      addedSU.push(user.Id);
+    for (const userMail of users) {
+      let user = await this.appData.getUserInfoByMail(userMail);
+      let userSeated;
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
+
+      if (!userSeated) continue;
+
+      await this.appData.addUserToGroupFromMail(userMail, SUGroup.Id);
+      if (!user) user = await this.appData.getUserInfoByMail(userMail);
+      addedSU.push(user!.Id);
     }
     if (addedSU.length < 1) {
       // add owner as stage user to don't leave the field blank
       // owner has seat assigned in this point
       await this.appData.addUserToGroup(owner, SUGroup.Id);
       await this.appData.updateStage(stage.ID, { StageUsersId: [owner.Id]});
-    } else if (addedSU.length < stage.StageUsersId.length) {
+    } else {
       // update with only the stage users with seat
       await this.appData.updateStage(stage.ID, { StageUsersId: addedSU});
     }
@@ -140,8 +146,8 @@ export class PermissionsService {
     departmentId: number,
     folderDepartmentId: number,
     geoId: number | null,
-    currentUsersList: number[],
-    newUsersList: number[]
+    currentUsersList: string[],
+    newUsersList: string[]
   ): Promise<boolean> {
     // groups needed
     const OUGroup = await this.appData.getGroup('OU-' + oppId);
@@ -162,24 +168,30 @@ export class PermissionsService {
     const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
 
     let success = true;
-    for (const userId of removedUsers) {
-      success = success && await this.appData.removeUserFromGroup(DUGroup.Id, userId);
+    for (const userMail of removedUsers) {
+      const user = await this.appData.getUserInfoByMail(userMail);
+      if (!user) return false;
+      success = success && await this.appData.removeUserFromGroup(DUGroup.Id, user.Id);
       if (success && geoId) { // it's model folder
-        this.appData.removePowerBI_RLS(oppId, geoCountriesList, userId);
+        this.appData.removePowerBI_RLS(oppId, geoCountriesList, user.Id);
       }
-      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU group
+      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['OU']); // remove (if needed) of OU group
     }
 
     if (!success) return success;
 
-    for (const userId of addedUsers) {
-      const user = await this.appData.getUserInfo(userId);
-      if (!await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true)) {
-        continue;
-      }
-      success = success && await this.appData.addUserToGroup(user, DUGroup.Id);
+    for (const userMail of addedUsers) {
+      let user = await this.appData.getUserInfoByMail(userMail);
+      let userSeated;
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
+       
+      if (!userSeated) continue;
+      
+      success = success && await this.appData.addUserToGroupFromMail(userMail, DUGroup.Id);
       if (success && geoId) { // it's model folder
-        this.appData.addPowerBI_RLS(user, oppId, geoCountriesList);
+        if (!user) user = await this.appData.getUserInfoByMail(userMail);
+        this.appData.addPowerBI_RLS(user!, oppId, geoCountriesList);
       }
       if (!success) return success;
     }
@@ -202,14 +214,15 @@ export class PermissionsService {
     return success;
   }
 
-  async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsers: number[], newUsers: number[]): Promise<boolean> {
-    const removedUsers = currentUsers.filter(item => newUsers.indexOf(item) < 0);
-    const addedUsers = newUsers.filter(item => currentUsers.indexOf(item) < 0);
+  async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsersMails: string[], newUsersMails: string[]): Promise<boolean> {
+    const removedUsers = currentUsersMails.filter(item => newUsersMails.indexOf(item) < 0);
+    const addedUsers = newUsersMails.filter(item => currentUsersMails.indexOf(item) < 0);
 
     let success = true;
-    for (const userId of removedUsers) {
-      success = success && await this.removeUserFromAllGroups(oppId, userId, ['SU'], masterStageId.toString());
-      success = success && await this.removeUserFromAllGroups(oppId, userId, ['OU']); // remove (if needed) of OU group
+    for (const userMail of removedUsers) {
+      const user = await this.appData.getUserInfoByMail(userMail);
+      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['SU'], masterStageId.toString());
+      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['OU']); // remove (if needed) of OU group
     }
 
     if (!success) return false;
@@ -219,12 +232,14 @@ export class PermissionsService {
       const SUGroup = await this.appData.getGroup(`SU-${oppId}-${masterStageId}`);
       if (!OUGroup || !SUGroup) return false;
 
-      for (const userId of addedUsers) {
-        const user = await this.appData.getUserInfo(userId);
-        if (!(success = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true) && success)) {
-          continue;
-        }
-        success = success && await this.appData.addUserToGroup(user, SUGroup.Id);
+      for (const userMail of addedUsers) {
+        const user = await this.appData.getUserInfoByMail(userMail);
+        let userSeated;
+        if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+        else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
+
+        if (!userSeated) continue;
+        success = success && await this.appData.addUserToGroupFromMail(userMail, SUGroup.Id);
         if (!success) return false;
       }
     }

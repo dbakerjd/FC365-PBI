@@ -371,9 +371,11 @@ export class ActionsListComponent implements OnInit {
       .subscribe(async (result: any) => {
         if (this.currentGate && result.success) {
           // notification to new users
+          result.data.StageUsersId = (await this.appData.getUsersByEmails(result.data.StageUsersId)).map(u => u.Id);
           const currentStageUsers = this.currentGate.StageUsersId;
           const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
           await this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
+
           // update current info
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
@@ -497,7 +499,7 @@ export class ActionsListComponent implements OnInit {
             let opp = await this.appData.getEntity(result.data.EntityNameId);
             const oppGeographies = await this.appData.getEntityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
-            this.permissions.initializeStage(opp, result.data,oppGeographies).then(async r => {
+            this.permissions.initializeStage(opp, result.data, oppGeographies, result.users).then(async r => {
               await this.jobs.finishJob(job.id);
               this.toastr.success("Next stage has been created successfully", result.data.Title);
               this.alreadyGoingNextStage = false;

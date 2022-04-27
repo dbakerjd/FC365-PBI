@@ -2,9 +2,7 @@ import {Component} from "@angular/core";
 import {catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil, tap} from "rxjs/operators";
 import {concat, Observable, of, ReplaySubject, Subject} from "rxjs";
 import {FormControl} from "@angular/forms";
-import { HttpParams } from "@angular/common/http";
 import { FieldType } from "@ngx-formly/core";
-import { ErrorService } from "@services/app/error.service";
 import { AppDataService } from "@services/app/app-data.service";
 import { DomSanitizer } from "@angular/platform-browser";
 
@@ -19,17 +17,6 @@ import { DomSanitizer } from "@angular/platform-browser";
 @Component({
   selector: 'app-formly-field-users-ng-select',
   template: `
-    <ng-select [items]="to.options"
-      [bindLabel]="labelProp"
-      [bindValue]="valueProp"
-      [multiple]="to.multiple"
-      [placeholder]="to.placeholder"
-      [formControl]="formControl" *ngIf="filterLocally">
-        <ng-template ng-option-tmp let-item="item">
-            {{item.name}} <br/>
-            <small>{{item.gender}}</small>
-        </ng-template>
-    </ng-select>
     <ng-select [items]="to.options | async"
       [bindLabel]="labelProp"
       [bindValue]="valueProp"
@@ -40,7 +27,7 @@ import { DomSanitizer } from "@angular/platform-browser";
       [minTermLength]="2"
       [loading]="searching"
       typeToSearchText="Please enter 2 or more characters"
-      [typeahead]="textInput$" *ngIf="!filterLocally">
+      [typeahead]="textInput$">
         <ng-template ng-option-tmp let-item="item">
             {{item.label}} <br/>
             <small>{{item.value}}</small>
@@ -61,9 +48,6 @@ export class FormlyFieldUsersNgSelect extends FieldType {
 
   textInput$ = new Subject<string>();
   searching: boolean = false;
-  query = '';
-  filterLocally = true;
-  filterField = 'Title';
 
   filterControl: FormControl = new FormControl();
 
@@ -73,34 +57,30 @@ export class FormlyFieldUsersNgSelect extends FieldType {
 
   ngOnInit() {
 
-    const { filterField, filterLocally, query, options} = this.to;
-
-    this.filterField = filterField ? filterField : this.filterField;
-    this.filterLocally = filterLocally === undefined ? this.filterLocally : filterLocally;
-    this.query = query ? query : this.query;
-
-    if (!this.filterLocally && this.query) {
-
-      this.to.options = concat(
-        of(this.to.options ? this.to.options : []), // default items
-        this.textInput$.pipe(
-          distinctUntilChanged(),
-          debounceTime(500),
-          tap(() => this.searching = true),
-          switchMap(term => this.appData.getUsersByNameOrEmail(term).pipe(
-            catchError(() => of([])), // empty list on error
-            tap(async (item) => {
-              this.searching = false;
-              for (const i of item) {
-                const avatarBlob = await this.appData.getUserProfile(i.value);
-                i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
-              }
-            })
-          ))
-        )
-      ) as Observable<any>;
-
+    if (this.to.options) {
+      this.to.options.forEach(async (element: any) => {
+        const avatarBlob = await this.appData.getUserProfile(element.value);
+        element.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
+      });
     }
+    this.to.options = concat(
+      of(this.to.options ? this.to.options : []), // default items
+      this.textInput$.pipe(
+        distinctUntilChanged(),
+        debounceTime(500),
+        tap(() => this.searching = true),
+        switchMap(term => this.appData.getUsersByNameOrEmail(term).pipe(
+          catchError(() => of([])), // empty list on error
+          tap(async (item) => {
+            this.searching = false;
+            for (const i of item) {
+              const avatarBlob = await this.appData.getUserProfile(i.value);
+              i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
+            }
+          })
+        ))
+      )
+    ) as Observable<any>;
   
   }
 

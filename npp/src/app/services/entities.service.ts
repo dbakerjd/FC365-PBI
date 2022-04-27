@@ -56,8 +56,7 @@ export class EntitiesService {
   }
 
   async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {
-    if (!b.EntityOwnerId) throw new Error("Invalid data for creating brand");
-    const owner = await this.appData.getUserInfo(b.EntityOwnerId);
+    const owner = await this.appData.getUserInfo(b.EntityOwnerId!);
     if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
     b.AppTypeId = this.appData.getAppType().ID;
     if(!b.AppTypeId) throw new Error("Could not create an Entity (no AppType assigned)");
@@ -65,7 +64,7 @@ export class EntitiesService {
 
     if (brand) {
       await this.permissions.createGeographies(brand.ID, geographies, countries);
-      await this.permissions.initializeOpportunity(brand, null);
+      await this.permissions.initializeOpportunity(brand);
     }
     
     return brand; 
@@ -86,14 +85,21 @@ export class EntitiesService {
   /** Update the entity stage with new data. Returns true in success */
   async updateStageSettings(stageId: number, data: any): Promise<boolean> {
     const currentStage = await this.appData.getEntityStage(stageId);
-    let success = await this.appData.updateStage(stageId, data);
+    let success = true;
 
-    return success && await this.permissions.changeStageUsersPermissions(
-      currentStage.EntityNameId,
-      currentStage.StageNameId,
-      currentStage.StageUsersId,
-      data.StageUsersId
-    );
+    if (data.StageUsersId) {
+      success = await this.permissions.changeStageUsersPermissions(
+        currentStage.EntityNameId,
+        currentStage.StageNameId,
+        (await this.appData.getUsersByIds(currentStage.StageUsersId)).map(u => u.Email!), // pass the current users mails
+        data.StageUsersId
+      );
+
+      const newStageUsers = await this.appData.getUsersByEmails(data.StageUsersId);
+      data.StageUsersId = newStageUsers.map(u => u.Id);
+    }
+
+    return success && await this.appData.updateStage(stageId, data);
   }
 
   async createEntityForecastCycle(entity: Opportunity, values: any) {
@@ -144,7 +150,6 @@ export class EntitiesService {
 
   /** Count the approved working models of an entity */
   async getApprovedModelsCount(entity: Opportunity): Promise<number> {
-    console.log('op type id', entity.OpportunityTypeId);
     if (await this.isInternalOpportunity(entity.OpportunityTypeId)) {
       const folder = FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0';
       return await this.files.getFolderFilesCount(folder);
@@ -175,7 +180,6 @@ export class EntitiesService {
   }
 
   async getProgress(entity: Opportunity) {
-    console.log('entity', entity);
     if (entity.OpportunityTypeId && await this.isInternalOpportunity(entity.OpportunityTypeId)) {
       return -1; // progress no applies
     }

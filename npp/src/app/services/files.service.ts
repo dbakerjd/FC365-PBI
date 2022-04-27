@@ -31,7 +31,6 @@ export class FilesService {
       if (!metadata.Comments) {
         metadata.Comments = " ";
       }
-      console.log('upload file metadata folder', metadata, rootFolder);
 
       await this.appData.updateFilePropertiesById(uploaded.ListItemAllFields.ID, rootFolder, metadata);
     }
