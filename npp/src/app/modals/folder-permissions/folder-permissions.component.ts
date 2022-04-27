@@ -104,7 +104,7 @@ export class FolderPermissionsComponent implements OnInit {
 
     for (const sg of stageGroups) {
       const defaultUsersList: SelectInputList[] = (await this.appData.getGroupMembers(sg.group))
-        .map(el => { return { value: el.Id, label: el.Title ? el.Title : '' } });
+        .map(el => { return { value: el.Email, label: el.Title ? el.Title : '' } });
 
       // save current users list for department
       this.currentUsersList.push({ 
@@ -123,12 +123,10 @@ export class FolderPermissionsComponent implements OnInit {
 
       formlyFields.push({
         key: formlyKey,
-        type: 'ngsearchable',
+        type: 'userssearchable',
         templateOptions: {
           label: 'Department Users:',
           placeholder: 'Users with access to ' + sg.folder.Title + ' files',
-          filterLocally: false,
-          query: 'siteusers',
           multiple: true,
           options: defaultUsersList,
         },
@@ -176,7 +174,7 @@ export class FolderPermissionsComponent implements OnInit {
             );
             if (success) {
               // notifications
-              const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
+              const addedUsers: string[] = this.model.DepartmentUsersId[key][geoKey].filter((item: string) => currentList.list.indexOf(item) < 0);
               await this.notifications.modelFolderAccessNotification(addedUsers, this.entityId);
               // update current list
               currentList.list = this.model.DepartmentUsersId[key][geoKey];
@@ -196,7 +194,7 @@ export class FolderPermissionsComponent implements OnInit {
           );
           if (success) {
             //notifications
-            const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
+            const addedUsers: string[] = this.model.DepartmentUsersId[key].filter((item: string) => currentList.list.indexOf(item) < 0);
             await this.notifications.folderAccessNotification(addedUsers, this.entityId, +key);
             // update current list
             currentList.list = this.model.DepartmentUsersId[key]; 

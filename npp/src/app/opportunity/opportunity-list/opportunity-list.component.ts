@@ -113,6 +113,10 @@ export class OpportunityListComponent implements OnInit {
     for (let op of this.opportunities) {
       op.progress = await this.entities.getProgress(op);
     }
+
+    // this.appData.deleteAllGroups();
+    // this.appData.removeUserSeat('demouser@jdforecasting.com');
+    
   }
 
   initIndicationString(el: Opportunity) {
@@ -148,7 +152,7 @@ export class OpportunityListComponent implements OnInit {
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );
-        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage, result.users).then(async r => {
           if (r) {
             await this.entities.activeEntity(opp.ID);
             opp.OpportunityStatus = 'Active';
@@ -157,7 +161,7 @@ export class OpportunityListComponent implements OnInit {
             this.jobs.finishJob(job.id);
             this.toastr.success("The opportunity is now active", opp.Title);
             await this.notifications.opportunityOwnerNotification(result.data.opportunity);
-            if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+            if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.users, result.data.opportunity);
           } else {
             this.appData.deleteOpportunity(opp.ID);
             this.jobs.finishJob(job.id);

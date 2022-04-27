@@ -322,13 +322,11 @@ export class CreateOpportunityComponent implements OnInit {
           },
           hideExpression: (m, fs) => fs.hideStageNumbers,
         }, */{
-          key: 'Stage.StageUsersId',
-          type: 'ngsearchable',
+          key: 'StageUsersMails',
+          type: 'userssearchable',
           templateOptions: {
             label: 'Stage Users:',
             placeholder: 'Stage Users',
-            filterLocally: false,
-            query: 'siteusers',
             multiple: true,
             required: true,
             options: defaultStageUsersList,
@@ -402,7 +400,8 @@ export class CreateOpportunityComponent implements OnInit {
       
       this.dialogRef.close({
         success: newOpp ? true : false,
-        data: newOpp
+        data: newOpp,
+        users: this.model.StageUsersMails
       });
     }
   }

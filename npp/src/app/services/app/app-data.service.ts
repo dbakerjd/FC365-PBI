@@ -9,10 +9,10 @@ import { GroupPermission, User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME } from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LicensingService } from '../jd-data/licensing.service';
-import { GraphService } from '../microsoft-data/graph.service';
+import { GraphService, MSGraphUser } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
 
 
@@ -487,11 +487,32 @@ export class AppDataService {
       .pipe(
         map((res: any) => {
           return res.value.map(
-            (el: any) => { return { value: el.Id, label: el.Title } as SelectInputList }
+            (el: any) => { return { value: el.Id, label: el.Title, email: el.Email } as SelectInputList }
           );
         })
       );
   }
+
+  getUsersByNameOrEmail(filter: string): Observable<any> {
+    const filterParam = [
+      { field: 'displayName', value: filter },
+      { field: 'mail', value: filter }
+    ]
+    return from(this.msgraph.filterUsers(filterParam)).pipe(
+      map((res: any) => {
+        return res.value.map(
+          (el: any) => { return { value: el.mail, label: el.displayName } }
+        );
+      })
+    );
+  }
+
+  /** Gets the profile pic of the user */
+  async getUserProfile(mail: string): Promise<Blob | null> {
+    if (mail) return await this.msgraph.getProfilePic(mail);
+    return null;
+  }
+  
 
   /** ----- USERS AND GROUPS ----- **/
 
@@ -518,9 +539,28 @@ export class AppDataService {
     return await this.sharepoint.query(`siteusers/getbyid('${userId}')`).toPromise();
   }
 
+  async getUserInfoByMail(userMail: string): Promise<User | null> {
+    const users = await this.sharepoint.query('siteusers', `$filter=Email eq '${userMail}'`).toPromise();
+    return users.value[0] ? users.value[0] : null;
+  }
+
+  async getEnterpriseUserInfo(principalName: string): Promise<MSGraphUser | null> {
+    return await this.msgraph.getUserByPrincipalName(principalName);
+  }
+
   /** Get a subgroup of users from their ids */
   async getUsersByIds(usersId: number[]): Promise<User[]> {
     const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
+    const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
+    if (users.value) {
+      return users.value;
+    }
+    return [];
+  }
+
+  /** Get a subgroup of users from their emails */
+  async getUsersByEmails(usersMails: string[]): Promise<User[]> {
+    const conditions = usersMails.map(e => { return `(Email eq '${e}')` }).join(' or ');
     const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
     if (users.value) {
       return users.value;
@@ -577,15 +617,11 @@ export class AppDataService {
 
   /** Adds a user to a group */
   async addUserToGroup(user: User, groupId: number): Promise<boolean> {
-    return user.LoginName ? await this.sharepoint.addUserToSharepointGroup(user.LoginName, groupId) : false;
+    return user.LoginName ? await this.sharepoint.addLoginNameToSharepointGroup(user.LoginName, groupId) : false;
   }
 
-  async removeUserFromGroupId(userId: number, groupId: number): Promise<boolean> {
-    return await this.sharepoint.removeUserFromSharepointGroup(userId, groupId);
-  }
-
-  async removeUserFromGroupName(userId: number, groupName: string): Promise<boolean> {
-    return await this.sharepoint.removeUserFromSharepointGroup(userId, groupName);
+  async addUserToGroupFromMail(email: string, groupId: number): Promise<boolean> {
+    return await this.sharepoint.addEmailToSharepointGroup(email, groupId);
   }
 
   /** Create group with name. If group previously exists, get the group */
@@ -609,17 +645,16 @@ export class AppDataService {
     return [];
   }
 
-  async userIsInGroup(userId: number, groupId: number): Promise<boolean> {
+  async userIsInGroup(userId: number | string, groupId: number): Promise<boolean> {
     try {
       const groupUsers = await this.getGroupMembers(groupId);
-      return groupUsers.some(user => user.Id === userId);
+      return groupUsers.some(user => (typeof userId === 'number' ? user.Id === userId : user.Email === userId));
     } catch (e) {
       return false;
     }
   }
 
   /** only for development purposes */
-  /*
   async deleteAllGroups() {
     const groups = await this.getGroups();
     for (const g of groups) {
@@ -628,7 +663,6 @@ export class AppDataService {
       }
     }
   }
-  */
 
   async getAADGroupName(): Promise<string | null> {
     const AADGroup = await this.sharepoint.getOneItem(SPLists.MASTER_AAD_GROUPS_LIST_NAME, `$filter=AppTypeId eq ${this.getAppType().ID}`);
@@ -673,15 +707,15 @@ export class AppDataService {
     }
   }
 
-  /** Adds a user to a Sharepoint group. If ask for seat, also try to assign a seat for the user */
-  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false): Promise<boolean> {
+  /** Adds a user to a group. If ask for seat, also try to assign a seat for the user */
+  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false, newUser = false): Promise<boolean> {
     try {
       if (askForSeat) {
         //check if is previously in the group, to avoid ask again for the same seat
-        if (await this.userIsInGroup(user.Id, groupId)) {
+        if (!newUser && await this.userIsInGroup(user.Id, groupId)) {
           return true;
         }
-        await this.askSeatForUser(user);
+        await this.askSeatForUser(user.Email!);
       }
       return await this.addUserToGroup(user, groupId);
     } catch (e: any) {
@@ -696,18 +730,28 @@ export class AppDataService {
       return false;
     }
   }
+
+  async addNewUserToGroup(userMail: string, groupId: number): Promise<boolean> {
+    if (await this.askSeatForUser(userMail)) {
+      return await this.addUserToGroupFromMail(userMail, groupId);
+    }
+    return false;
+  }
   
   /** Remove a user from a Sharepoint group. If removeSeat, also free his seat */
-  async removeUserFromGroup(group: string | number, userId: number, removeSeat = false): Promise<boolean> {
+  async removeUserFromGroup(group: string | number, userId: number | string, removeSeat = false): Promise<boolean> {
+    
+    const user = typeof userId === 'number' ? await this.getUserInfo(userId) : await this.getUserInfoByMail(userId);
+    if (!user) return false;
+
     try {
-      if (removeSeat) {
-        const user = await this.getUserInfo(userId);
-        await this.removeUserSeat(user);
+      if (removeSeat && user.Email) {
+        await this.removeUserSeat(user.Email);
       }
       if (typeof group == 'string') {
-        return await this.removeUserFromGroupName(userId, group);
+        return await this.removeUserFromGroupName(user.Id, group);
       } else {
-        return await this.removeUserFromGroupId(userId, group);
+        return await this.removeUserFromGroupId(user.Id, group);
       }
     } catch (e: any) {
       if (e.status == 400) {
@@ -806,7 +850,7 @@ export class AppDataService {
    * @param countries List of countries to remove
    * @param userId Remove only the access for the user [optional]
   */
-   async removePowerBI_RLS(entityId: number, countries: Country[], userId: number | null = null) {
+   async removePowerBI_RLS(entityId: number, countries: Country[], userId?: number) {
     let conditions = `$filter=EntityNameId eq ${entityId} and Removed eq 0`;
     if (userId) {
       conditions += ` and TargetUserId eq ${userId}`;
@@ -938,18 +982,22 @@ export class AppDataService {
 
   /** ---- PRIVATE ----- **/
   
-  private async askSeatForUser(user: User) {
-    if (!user.Email) return false;
+  /** 
+   * Asks a seat for the user. Returns true in success, false otherwise.
+   * Shows a warning if there are no more seats available 
+   **/
+  private async askSeatForUser(userMail: string, userName?: string) {
+    if (!userMail && userMail.length === 0) throw new Error('Trying to ask for a seat with an empty email');
     try {
-      const response = await this.licensing.addSeat(user.Email);
+      const response = await this.licensing.addSeat(userMail);
       if (response?.UserGroupsCount == 1) { // assigned seat for first time
         const RLSGroup = await this.getAADGroupName();
-        if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(user.Email, RLSGroup);
+        if (RLSGroup) this.msgraph.addUserToPowerBI_RLSGroup(userMail, RLSGroup);
       }
       return true;
     } catch (e: any) {
       if (e.status === 422) {
-        this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
+        this.toastr.warning(`Sorry, there are no more free seats for user <${ userName ? userName : userMail}>. This \
         user could not be assigned.`, "No Seats Available!", {
           disableTimeOut: true,
           closeButton: true
@@ -960,13 +1008,12 @@ export class AppDataService {
     }
   }
 
-  private async removeUserSeat(user: User) {
-    if (!user.Email) return false;
+  async removeUserSeat(userMail: string) {
     try {
-      const response = await this.licensing.removeSeat(user.Email);
+      const response = await this.licensing.removeSeat(userMail);
       if (response?.UserGroupsCount == 0) { // removed the last seat for user
         const RLSGroup = await this.getAADGroupName();
-        if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(user.Email, RLSGroup);
+        if (RLSGroup) this.msgraph.removeUserToPowerBI_RLSGroup(userMail, RLSGroup);
       }
       return true;
     } catch (e: any) {
@@ -1002,6 +1049,14 @@ export class AppDataService {
       select,
       'all'
     ).toPromise();
+  }
+
+  private async removeUserFromGroupId(userId: number, groupId: number): Promise<boolean> {
+    return await this.sharepoint.removeUserFromSharepointGroup(userId, groupId);
+  }
+
+  private async removeUserFromGroupName(userId: number, groupName: string): Promise<boolean> {
+    return await this.sharepoint.removeUserFromSharepointGroup(userId, groupName);
   }
   
 }

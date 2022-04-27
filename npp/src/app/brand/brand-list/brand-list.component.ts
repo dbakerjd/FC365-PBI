@@ -59,7 +59,6 @@ export class BrandListComponent implements OnInit {
     
     this.currentUser = await this.appData.getCurrentUserInfo();
     this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
-    console.log('cancreate', this.appControl.getAppConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
 
     const indicationsList = await this.selectLists.getIndicationsList();
     // const forecastCycles = await this.appData.getForecastCycles();

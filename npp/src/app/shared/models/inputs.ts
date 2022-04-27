@@ -11,7 +11,8 @@ export type OpportunityInput = {
 }
 
 export type StageInput = {
-    StageUsersId: number[];
+    StageUsersId?: number[];
+    StageUsersMails?: string[];
     StageReview?: Date;
     Title?: string;
     EntityNameId?: number;
