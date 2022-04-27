@@ -61,10 +61,18 @@ export class LicensingService {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST',
       });
-      return await this.httpClient.post(this.licensingApiUrl + '/license', {
-        "appId" : context.entityId,
-        "teamSiteDomain" : context.teamSiteDomain
-      }, { 
+      let dataRequest;
+      if (context.entityId && context.teamSiteDomain) {
+        dataRequest = {
+          "appId" : context.entityId,
+          "teamSiteDomain" : context.teamSiteDomain
+        }
+      } else {
+        dataRequest = {
+          "InstallationAddress" : context.host
+        }
+      }
+      return await this.httpClient.post(this.licensingApiUrl + '/license', dataRequest, { 
         headers: headers
       }).toPromise() as JDLicense;
   }

@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ErrorService } from '@services/app/error.service';
 import { LicensingService } from '@services/jd-data/licensing.service';
+import { DOCUMENT } from '@angular/common';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -13,9 +14,11 @@ export function loggerCallback(logLevel: LogLevel, message: string) {
 }
 
 export interface LicenseContext {
-  entityId: string;
-  teamSiteDomain: string;
+  host: string;
+  entityId?: string;
+  teamSiteDomain?: string;
 }
+
 @Injectable({
   providedIn: 'root'
 })
@@ -23,7 +26,8 @@ export class TeamsService {
   public account: any = false;
   public user: any = false;
   public token: any = false;
-  public context: any = false;
+  public context: any;
+  public host: string = '';
   public currentlyLoginIn = false;
   public authObj: string = '';
   public hackyConsole: string = '';
@@ -63,8 +67,11 @@ export class TeamsService {
     }
   });
 
-  constructor( private errorService: ErrorService, private licensing: LicensingService) { 
-
+  constructor( 
+    private errorService: ErrorService, 
+    private licensing: LicensingService,
+    @Inject(DOCUMENT) private document: Document
+  ) { 
     this.context = this.getEnvironmentContext();
     this.startTeams();
 
@@ -114,18 +121,10 @@ export class TeamsService {
     return this.userLoggedIn;
   }
 
-  getEnvironmentContext(): LicenseContext | null {
-    if (environment.licensingInfo) {
-      if (environment.licensingInfo.entityId && environment.licensingInfo.teamSiteDomain) {
-        return {
-          entityId: environment.licensingInfo.entityId,
-          teamSiteDomain: environment.licensingInfo.teamSiteDomain
-        };
-      } else {
-        this.errorService.handleError({ message: 'Bad licensing info in app environment' });
-      }
+  getEnvironmentContext(): LicenseContext {
+    return {
+      host: document.location.host
     }
-    return null;
   }
 
   startTeams() {
@@ -134,7 +133,7 @@ export class TeamsService {
       this.initialized = true;
       microsoftTeams.getContext((context) => {
         if (context) this.isLoadedInsideTeams = true;
-        this.context = context;
+        this.context = Object.assign(this.context, {...context});
         this.statusSubject.next("initialized");
       });
     });
