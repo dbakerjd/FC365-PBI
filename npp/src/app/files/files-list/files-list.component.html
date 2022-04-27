@@ -83,7 +83,7 @@
                     <div class="info-icons-selected-section"></div>
                 </div>
                 <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
-                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0" (click)="refreshPowerBi()"></div>
+                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0 && isOwner" (click)="refreshPowerBi()"></div>
                 <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0" (click)="navigateTo(entity)"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
             </div>
