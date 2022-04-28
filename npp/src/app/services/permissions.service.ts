@@ -403,6 +403,12 @@ export class PermissionsService {
     }
   }
 
+  /** Check if a user has any access to an entity */
+  async isUserInEntity(entityId: number, userId: number) {
+    const entityUsers = await this.appData.getGroupMembers('OU-' + entityId);
+    return entityUsers.some(u => u.Id === userId);
+  }
+
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
     const geographiesList = await this.appData.getMasterGeographies();
     const countriesList = await this.appData.getMasterCountries();
@@ -808,11 +814,15 @@ export class PermissionsService {
   }
 
   private async removeUsersToPowerBI_RLS(users: number[], entityId: number, geographies: EntityGeography[]) {
-    users.forEach(u => {
-      geographies.forEach(async g => {
-        const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
-        await this.appData.removePowerBI_RLS(entityId, geoCountries, u);
-      })
-    });
+    for (const u of users) {
+      if (!await this.isUserInEntity(entityId, u)) {
+        for (const g of geographies) {
+          const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
+          await this.appData.removePowerBI_RLS(entityId, geoCountries, u);
+        }
+      }
+    }
   }
+
+
 }

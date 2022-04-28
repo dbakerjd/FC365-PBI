@@ -556,20 +556,24 @@ export class AppDataService {
 
   /** Get a subgroup of users from their ids */
   async getUsersByIds(usersId: number[]): Promise<User[]> {
-    const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
-    const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
-    if (users.value) {
-      return users.value;
+    if (usersId.length > 0) {
+      const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
+      const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
+      if (users.value) {
+        return users.value;
+      }
     }
     return [];
   }
 
   /** Get a subgroup of users from their emails */
   async getUsersByEmails(usersMails: string[]): Promise<User[]> {
-    const conditions = usersMails.map(e => { return `(Email eq '${e}')` }).join(' or ');
-    const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
-    if (users.value) {
-      return users.value;
+    if (usersMails.length > 0) {
+      const conditions = usersMails.map(e => { return `(Email eq '${e}')` }).join(' or ');
+      const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
+      if (users.value) {
+        return users.value;
+      }
     }
     return [];
   }
