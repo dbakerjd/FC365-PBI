@@ -2,7 +2,9 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity } from '@shared/models/entity';
+import { NPPFile } from '@shared/models/file-system';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-reject-model',
@@ -34,7 +36,7 @@ export class RejectModelComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<RejectModelComponent>,
-    private readonly sharepoint: SharepointService,
+    private readonly files: FilesService
   ) { }
 
   ngOnInit(): void {
@@ -48,9 +50,9 @@ export class RejectModelComponent implements OnInit {
     if (this.file) {
       let commentsStr = '';
       if(this.model.comments) {
-        commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        commentsStr = await this.files.addFileComment(this.file, this.model.comments);
       }
-      const  result = await this.sharepoint.setEntityApprovalStatus(this.rootFolder, this.file, this.entity, "In Progress", commentsStr);
+      const  result = await this.files.setFileApprovalStatus(this.rootFolder, this.file, this.entity, "In Progress", commentsStr);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments

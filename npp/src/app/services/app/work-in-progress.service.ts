@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
-import { BlockDialogComponent } from '../modals/block-dialog/block-dialog.component';
+import { BlockDialogComponent } from '../../modals/block-dialog/block-dialog.component';
 
 export interface NPPJob {
   id: string;

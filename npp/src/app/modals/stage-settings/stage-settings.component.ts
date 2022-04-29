@@ -2,7 +2,10 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { SelectInputList, SharepointService, Stage } from 'src/app/services/sharepoint.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { AppDataService } from '@services/app/app-data.service';
+import { EntitiesService } from 'src/app/services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-stage-settings',
@@ -24,13 +27,15 @@ export class StageSettingsComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<StageSettingsComponent>,
-    private sharepoint: SharepointService, 
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit() {
     let defaultUsersList: SelectInputList[] = [];
     if (this.data?.stage) {
-      defaultUsersList = await this.sharepoint.getUsersList(this.data?.stage.StageUsersId);
+      defaultUsersList = await this.selectLists.getUsersList(this.data?.stage.StageUsersId);
     }
     this.canSetUsers = this.data?.canSetUsers ? this.data.canSetUsers : false;
 
@@ -53,12 +58,10 @@ export class StageSettingsComponent implements OnInit {
         hideExpression: true,
       },{
         key: 'StageUsersId',
-        type: 'ngsearchable',
+        type: 'userssearchable',
         templateOptions: {
             label: 'Stage Users',
             placeholder: 'Stage Users',
-            filterLocally: false,
-            query: 'siteusers',
             multiple: true,
             options: defaultUsersList,
             required: true
@@ -82,7 +85,7 @@ export class StageSettingsComponent implements OnInit {
       this.isEdit = true;
       this.model.ID = this.data.stage.ID;
       this.model.Title = this.data.stage.Title;
-      this.model.StageUsersId = this.data.stage.StageUsersId;
+      this.model.StageUsersId = defaultUsersList.map(e => e.value);
       this.model.StageReview = new Date(this.data.stage.StageReview);
       this.model.stageType = this.data.stage.StageType;
     }
@@ -102,10 +105,7 @@ export class StageSettingsComponent implements OnInit {
     let success;
     if (this.model.ID) { // update
       this.updating = this.dialogRef.disableClose = true;
-      success = await this.sharepoint.updateStage(this.model.ID, {
-        StageReview: this.model.StageReview,
-        StageUsersId: this.model.StageUsersId ? this.model.StageUsersId : this.data.stage.StageUsersId
-      });
+      success = await this.entities.updateStageSettings(this.model.ID, {...this.model});
       this.updating = this.dialogRef.disableClose = false;
 
       this.dialogRef.close({
@@ -114,15 +114,15 @@ export class StageSettingsComponent implements OnInit {
       });
 
     } else {
-      const newStage = await this.sharepoint.createStage({
+      const newStage = await this.appData.createStage({
         StageReview: this.model.StageReview,
-        StageUsersId: this.model.StageUsersId,
         EntityNameId: this.model.opportunityId,
         StageNameId: this.model.nextMasterStageId
       });
       this.dialogRef.close({
         success: newStage ? true : false, 
-        data: newStage
+        data: newStage,
+        users: this.model.StageUsersId
       });
     }
   }

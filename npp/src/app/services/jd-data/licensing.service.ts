@@ -2,7 +2,7 @@ import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angula
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Md5 } from 'ts-md5';
-import { ErrorService } from './error.service';
+import { ErrorService } from '../app/error.service';
 
 export interface JDLicense {
   Tier: string;
