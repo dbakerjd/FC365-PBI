@@ -1,0 +1,95 @@
+import {Component} from "@angular/core";
+import {catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil, tap} from "rxjs/operators";
+import {concat, Observable, of, ReplaySubject, Subject} from "rxjs";
+import {FormControl} from "@angular/forms";
+import { FieldType } from "@ngx-formly/core";
+import { AppDataService } from "@services/app/app-data.service";
+import { DomSanitizer } from "@angular/platform-browser";
+
+/*
+  templateOptions: {
+    query?: string, //url to hit for values, default ''
+    filterLocally?: boolean, //should query all and filter locally, default false,
+    filterField?: string, //field name to filter by, default title
+  }
+*/
+
+@Component({
+  selector: 'app-formly-field-users-ng-select',
+  template: `
+    <ng-select [items]="to.options | async"
+      [bindLabel]="labelProp"
+      [bindValue]="valueProp"
+      [multiple]="to.multiple"
+      [placeholder]="to.placeholder"
+      [formControl]="formControl"
+      [trackByFn]="trackByFn"
+      [minTermLength]="2"
+      [loading]="searching"
+      typeToSearchText="Please enter 2 or more characters"
+      [typeahead]="textInput$">
+        <ng-template ng-option-tmp let-item="item">
+            {{item.label}} <br/>
+            <small>{{item.value}}</small>
+        </ng-template>
+
+        <ng-template ng-label-tmp let-item="item" let-clear="clear">
+          <span class="ng-value-label">
+            <img [src]="item.avatar_url" width="20px" height="20px" *ngIf="item.avatar_url"> {{item.label}}
+          </span>
+          <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true">×</span>
+        </ng-template>
+
+    </ng-select>
+  `,
+  styles: [".ng-value-label img { padding-top: 2px; padding-right: 2px; float: left; }"]
+})
+export class FormlyFieldUsersNgSelect extends FieldType {
+
+  textInput$ = new Subject<string>();
+  searching: boolean = false;
+
+  filterControl: FormControl = new FormControl();
+
+  constructor(private readonly appData: AppDataService,public sanitize: DomSanitizer) {
+    super();
+  }
+
+  ngOnInit() {
+
+    if (this.to.options) {
+      this.to.options.forEach(async (element: any) => {
+        const avatarBlob = await this.appData.getUserProfile(element.value);
+        element.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
+      });
+    }
+    this.to.options = concat(
+      of(this.to.options ? this.to.options : []), // default items
+      this.textInput$.pipe(
+        distinctUntilChanged(),
+        debounceTime(500),
+        tap(() => this.searching = true),
+        switchMap(term => this.appData.getUsersByNameOrEmail(term).pipe(
+          catchError(() => of([])), // empty list on error
+          tap(async (item) => {
+            this.searching = false;
+            for (const i of item) {
+              const avatarBlob = await this.appData.getUserProfile(i.value);
+              i.avatar_url = avatarBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(avatarBlob)) : null;
+            }
+          })
+        ))
+      )
+    ) as Observable<any>;
+  
+  }
+
+  trackByFn(item: any) {
+    return item.Id;
+  }
+
+  get labelProp(): string { return this.to.labelProp || 'label'; }
+  get valueProp(): string { return this.to.valueProp || 'value'; }
+  get groupProp(): string { return this.to.groupProp || 'group'; }
+
+}

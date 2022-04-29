@@ -1,15 +1,14 @@
 import {FormlyFieldConfig} from '@ngx-formly/core';
-import { NPPFolder, SelectInputList } from 'src/app/services/sharepoint.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { NPPFolder } from '@shared/models/file-system';
 
 export class UploadFileConfig {
   
-  constructor() {
-
-  }
+  constructor() { }
 
   fields(
-    opportunityId: number, 
-    stageId: number, 
+    entityId: number, 
+    stageId: number | null, 
     folders: NPPFolder[], 
     selectedFolder: number | null,
     geographiesList: SelectInputList[], 
@@ -26,7 +25,7 @@ export class UploadFileConfig {
           },
           {
             key: 'EntityNameId',
-            defaultValue: opportunityId
+            defaultValue: entityId
           },
           {
             key: 'file',

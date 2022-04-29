@@ -9,6 +9,7 @@ import { FormlyFieldFile } from "./file-input";
 import { FileValueAccessor } from "./file-value-accessor";
 import { FormlyFieldNgSelect } from "./ng-select-input";
 import { FormlyFieldSearchableSelectApi } from "./sharepoint-searchable-select";
+import { FormlyFieldUsersNgSelect } from "./users-ng-select-input";
 
 export function afterDateValidator(control: AbstractControl) {
   const { ProjectStartDate, ProjectEndDate } = control.value.Opportunity;
@@ -31,6 +32,7 @@ export const FORMLY_CONFIG = {
     { name: 'datepicker', component: FormlyFieldDatePicker, wrappers: ['form-field'] },
     { name: 'searchable', component: FormlyFieldSearchableSelectApi, wrappers: ['form-field'] },
     { name: 'ngsearchable', component: FormlyFieldNgSelect, wrappers: ['form-field'] },
+    { name: 'userssearchable', component: FormlyFieldUsersNgSelect, wrappers: ['form-field'] },
   ],
   validators: [
     { name: 'afterDate', validation: afterDateValidator },
@@ -54,7 +56,8 @@ export const FORMLY_CONFIG = {
     FormlyFieldFile,
     FormlyFieldDatePicker,
     FormlyFieldSearchableSelectApi,
-    FormlyFieldNgSelect
+    FormlyFieldNgSelect,
+    FormlyFieldUsersNgSelect
   ]
 })
 export class FormlyTypesModule { }

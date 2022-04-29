@@ -1,12 +1,14 @@
 import { Inject, Component, OnInit } from '@angular/core';
-import { UploadFileConfig } from 'src/app/shared/forms/upload-file.config';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { Indication, NPPFolder, SharepointService } from 'src/app/services/sharepoint.service';
 import { Observable } from 'rxjs';
-import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { take } from 'rxjs/operators';
+import { NPPFolder } from '@shared/models/file-system';
+import { Indication } from '@shared/models/entity';
+import { FilesService } from 'src/app/services/files.service';
+import { UploadFileConfig } from '@shared/forms/upload-file.config';
 
 @Component({
   selector: 'app-upload-file',
@@ -14,30 +16,25 @@ import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.compone
   styleUrls: ['./upload-file.component.scss']
 })
 export class UploadFileComponent implements OnInit {
-  formConfig: UploadFileConfig = new UploadFileConfig();
+  formConfig: UploadFileConfig;
   fields: FormlyFieldConfig[] = [];
   form: FormGroup = new FormGroup({});
   model: any = { };
   folders: NPPFolder[] = [];
   uploading = false; // spinner control
-  businessUnitId: number = 0;
-  forecastCycleId: number = 0;
-  geoId: number = 0;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<UploadFileComponent>,
-    public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService,
+    private matDialog: MatDialog,
+    private readonly files: FilesService
   ) { 
-    this.businessUnitId = this.data.entity.BusinessUnitId ? this.data.entity.BusinessUnitId : 0;
-    this.forecastCycleId = this.data.entity.ForecastCycleId ? this.data.entity.ForecastCycleId : 0;
+    this.formConfig = new UploadFileConfig();
   }
 
   ngOnInit(): void {
-    this.formConfig = new UploadFileConfig();
     this.fields = this.formConfig.fields(
-      this.data.entity.Id, 
+      this.data.entity.ID, 
       this.data.masterStageId, 
       this.data.folderList,
       this.data.selectedFolder,
@@ -54,108 +51,68 @@ export class UploadFileComponent implements OnInit {
       this.validateAllFormFields(this.form);
       return;
     }
-
-    const user = await this.sharepoint.getCurrentUserInfo();
-    let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
-
-    let fileData = {
-      StageNameId: this.model.StageNameId,
-      EntityNameId: this.model.EntityNameId,
-      Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
-    };
-
+    
     this.uploading = this.dialogRef.disableClose = true;
 
-    let fileFolder = '/' + this.businessUnitId + '/' + this.model.EntityNameId + '/' + this.model.StageNameId + '/' + this.model.category;
-    
-    if (this.data.folderList.find((f: NPPFolder) => f.DepartmentID == this.model.category).containsModels) {
-      // add geography to folder route
-      fileFolder += '/' + this.model.geography + '/0';
+    let folderToUpload = await this.files.constructUploadFolder(this.data.entity, this.data.masterStageId, this.model.category, this.model.geography);
+    const uploadingModel = !!this.model.geography;
 
-      // read opp geography to get master ID of country / geography
-      const oppGeographies = await this.sharepoint.getOpportunityGeographies(this.model.EntityNameId);
-      const geography = oppGeographies.find(el => el.Id == this.model.geography);
-      const user = await this.sharepoint.getCurrentUserInfo();
-      let userName = user.Title && user.Title.indexOf("@") == -1 ? user.Title : user.Email;
-
-      Object.assign(fileData, {
-        EntityGeographyId: geography.Id ? geography.Id : null,
-        ModelScenarioId: this.model.scenario,
-        Comments: this.model.description ? '[{"text":"'+this.model.description.replace(/'/g, "{COMMA}")+'","email":"'+user.Email+'","name": "'+ userName +'","userId":'+user.Id+',"createdAt":"'+new Date().toISOString()+'"}]' : '[]',
-        ApprovalStatusId: await this.sharepoint.getApprovalStatusId("In Progress"),
-        IndicationId: this.model.IndicationId
-      });
-      let scenarioFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-
-      if (await this.sharepoint.existsFile(scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
-        const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
-          maxWidth: "400px",
-          height: "200px",
-          data: {
-            message: `A model with this name (${scenarioFileName}) already exists in this location. Do you want to overwrite it?`,
-            confirmButtonText: 'Yes, overwrite',
-            cancelButtonText: 'No, keep the original'
-          }
-        });
-      
-        dialogRef.afterClosed()
-          .pipe(take(1))
-          .subscribe(async uploadConfirmed => {
-            if (uploadConfirmed) {
-              this.uploadFileToFolder(fileData, scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder);
-            } else {
-              // do nothing and close
-              this.dialogRef.close({
-                success: true, 
-                uploaded: false
-              });
-            }
-          });
-      } else {
-        this.uploadFileToFolder(fileData, scenarioFileName, this.sharepoint.getBaseFilesFolder() + fileFolder);
-      }
-      
+    let fileData = {};
+    if (uploadingModel) {
+      fileData = await this.files.prepareUploadModelData(this.model);
     } else {
-      fileFolder = fileFolder + '/0/0';
-      // regular file
-      Object.assign(fileData, {
-        Comments: this.model.description
+      fileData = await this.files.prepareUploadFileData(this.model);
+    }
+
+    let cleanFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, ""); // clean filename
+    let scenarioExists = null;
+    if (uploadingModel) scenarioExists = await this.files.getFileByScenarios(folderToUpload, this.model.scenario);
+    let fileExists = await this.files.fileExistsInFolder(cleanFileName, folderToUpload);
+    if (fileExists || scenarioExists) {
+      let message = '';
+      if(fileExists) {
+        message = `A model with this name (${cleanFileName}) already exists in this location.`
+        if(scenarioExists) {
+          message += " Also, a model with the same scenario exists. Do you want to overwrite everything?"
+        } else {
+          message += " Do you want to overwrite it?"
+        }
+      } else if(scenarioExists) {
+        message = "A model with the same scenario already exists. Do you want to overwrite it?"
+      }
+
+      const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+        maxWidth: "400px",
+        height: "250px",
+        data: {
+          message,
+          confirmButtonText: 'Yes, overwrite',
+          cancelButtonText: 'No, keep the original'
+        }
       });
-      const cleanFilename = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
-      if (await this.sharepoint.existsFile(cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder)) {
-        const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
-          maxWidth: "400px",
-          height: "200px",
-          data: {
-            message: `A file with this name (${cleanFilename}) already exists inside the folder. Do you want to overwrite it?`,
-            confirmButtonText: 'Yes, overwrite',
-            cancelButtonText: 'No, keep the original'
+    
+      dialogRef.afterClosed()
+        .pipe(take(1))
+        .subscribe(async uploadConfirmed => {
+          if (uploadConfirmed) {
+            this.uploadFileToFolder(fileData, cleanFileName, folderToUpload);
+          } else {
+            // do nothing and close
+            this.dialogRef.close({
+              success: true, 
+              uploaded: false
+            });
           }
         });
-    
-        dialogRef.afterClosed()
-          .pipe(take(1))
-          .subscribe(async uploadConfirmed => {
-            if (uploadConfirmed) {
-              this.uploadFileToFolder(fileData, cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder);
-            } else {
-              this.dialogRef.close({
-                success: true, 
-                uploaded: false
-              });
-            }
-          });
       } else {
-        this.uploadFileToFolder(fileData, cleanFilename, this.sharepoint.getBaseFilesFolder() + fileFolder);
+        this.uploadFileToFolder(fileData, cleanFileName, folderToUpload);
       }
-      
-    }
   }
 
   private async uploadFileToFolder(fileData: any, fileName: string, folder: string) {
     this.readFileDataAsText(this.model.file[0]).subscribe(
       data => {
-        this.sharepoint.uploadFile(data, folder, fileName, fileData).then(
+        this.files.uploadFileToFolder(data, folder, fileName, fileData).then(
           r => { 
             if (Object.keys(r).length > 0) {
               this.uploading = this.dialogRef.disableClose = false; // finished

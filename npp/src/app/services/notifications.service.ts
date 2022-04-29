@@ -1,5 +1,9 @@
 import { Injectable } from '@angular/core';
-import { NPPNotification, Opportunity, SharepointService, User } from './sharepoint.service';
+import { NPPNotification } from '@shared/models/notification';
+import { Opportunity } from '@shared/models/entity';
+import { User } from '@shared/models/user';
+import { SharepointService } from './microsoft-data/sharepoint.service';
+import { AppDataService } from './app/app-data.service';
 
 @Injectable({
   providedIn: 'root',
@@ -7,7 +11,7 @@ import { NPPNotification, Opportunity, SharepointService, User } from './sharepo
 export class NotificationsService {
   currentUser: User | undefined;
 
-  constructor(private sharepoint: SharepointService) {}
+  constructor(private sharepoint: SharepointService, private readonly appData: AppDataService) {}
 
 
   async getNotifications(): Promise<NPPNotification[]> {
@@ -15,26 +19,26 @@ export class NotificationsService {
     const limit = 15;
     const fromDate = new Date();
     fromDate.setMonth(fromDate.getMonth() - 1);
-    return await this.sharepoint.getUserNotifications(currentUser.Id, fromDate, limit);
+    return await this.appData.getUserNotifications(currentUser.Id, fromDate, limit);
   }
 
   async getUnreadNotifications(): Promise<number> {
     const currentUser = await this.getCurrentUser();
-    return await this.sharepoint.notificationsCount(currentUser.Id, 'ReadAt eq null');
+    return await this.appData.notificationsCount(currentUser.Id, 'ReadAt eq null');
   }
 
   async updateUnreadNotifications() {
     const currentUser = await this.getCurrentUser();
-    const unreadNotifications = await this.sharepoint.getUserNotifications(currentUser.Id, false);
+    const unreadNotifications = await this.appData.getUserNotifications(currentUser.Id, false);
     for (const not of unreadNotifications) {
-      await this.sharepoint.updateNotification(not.Id, { ReadAt: new Date() })
+      await this.appData.updateNotification(not.Id, { ReadAt: new Date() })
     }
   }
 
   async opportunityOwnerNotification(opportunity: Opportunity) {
     const currentUser = await this.getCurrentUser();
     if (currentUser.Id !== opportunity.EntityOwnerId) {
-      await this.sharepoint.createNotification(
+      await this.appData.createNotification(
         opportunity.EntityOwnerId,
         `${currentUser.Title} has made you the owner of the opportunity '${opportunity.Title}'`
       );
@@ -42,14 +46,15 @@ export class NotificationsService {
   }
 
   async newOpportunityAccessNotification(
-    userIds: number[],
+    userMails: string[],
     opportunity: Opportunity
   ) {
     const currentUser = await this.getCurrentUser();
-    for (const user of userIds) {
-      if (currentUser.Id == user) continue;
-      await this.sharepoint.createNotification(
-        user,
+    for (const mail of userMails) {
+      if (currentUser.Email == mail) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(
+        user.Id,
         `${currentUser.Title} has given you access to a new opportunity: ${opportunity.Title}`
       );
     }
@@ -61,31 +66,33 @@ export class NotificationsService {
     if (opportunityTitle) notificationMessage += ` of '${opportunityTitle}' opportunity`;
     for (const user of userIds) {
       if (user == currentUser.Id) continue;
-      await this.sharepoint.createNotification(user, notificationMessage);
+      await this.appData.createNotification(user, notificationMessage);
     }
   }
 
-  async modelFolderAccessNotification(userIds: number[], opportunityId: number) {
+  async modelFolderAccessNotification(userMails: string[], opportunityId: number) {
     const currentUser = await this.getCurrentUser();
     let notificationMessage = `${currentUser.Title} has given you access to Forecast Models`;
-    const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+    const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
-    for (const user of userIds) {
-      if (user == currentUser.Id) continue;
-      await this.sharepoint.createNotification(user, notificationMessage);
+    for (const mail of userMails) {
+      if (mail == currentUser.Email) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(user.Id, notificationMessage);
     }
   }
 
-  async folderAccessNotification(userIds: number[], opportunityId: number, departmentId: number) {
+  async folderAccessNotification(usersMails: string[], opportunityId: number, departmentId: number) {
     const currentUser = await this.getCurrentUser();
-    const folder = await this.sharepoint.getNPPFolderByDepartment(departmentId);
+    const folder = await this.appData.getNPPFolderByDepartment(departmentId);
     if (!folder) return;
     let notificationMessage = `${currentUser.Title} has given you access to ${folder.Title}`;
-    const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+    const opportunity = await this.appData.getEntity(opportunityId);
     if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
-    for (const user of userIds) {
-      if (user == currentUser.Id) continue;
-      await this.sharepoint.createNotification(user, notificationMessage);
+    for (const mail of usersMails) {
+      if (mail == currentUser.Email) continue;
+      const user = await this.appData.getUserInfoByMail(mail);
+      if (user) await this.appData.createNotification(user.Id, notificationMessage);
     }
   }
 
@@ -130,26 +137,26 @@ export class NotificationsService {
     const currentUser = await this.getCurrentUser();
     let users: User[] = [];
     for (const group of usersGroups) {
-      users = users.concat(await this.sharepoint.getGroupMembers(group));
+      users = users.concat(await this.appData.getGroupMembers(group));
     }
     const uniqueUsers = [...new Map(users.map(u => [u.Id, u])).values()].filter((u: User) => u.Id != currentUser.Id);
 
     if (users.length < 1) return;
 
     if (opportunityId) {
-      const opportunity = await this.sharepoint.getOpportunity(opportunityId);
+      const opportunity = await this.appData.getEntity(opportunityId);
       if (opportunity.Title) notificationMessage += ` at '${opportunity.Title}' opportunity`;
     }
     
     // create notifications to involved users
     for (const u of uniqueUsers) {
-      await this.sharepoint.createNotification(u.Id, notificationMessage);
+      await this.appData.createNotification(u.Id, notificationMessage);
     }
   }
 
   private async getCurrentUser(): Promise<User> {
     if (!this.currentUser) {
-      this.currentUser = await this.sharepoint.getCurrentUserInfo();
+      this.currentUser = await this.appData.getCurrentUserInfo();
     }
     return this.currentUser;
   }

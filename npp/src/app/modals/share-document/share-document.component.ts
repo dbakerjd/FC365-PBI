@@ -3,7 +3,8 @@ import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { NPPFile, SharepointService } from 'src/app/services/sharepoint.service';
+import { NPPFile } from '@shared/models/file-system';
+import { AppDataService } from '@services/app/app-data.service';
 
 @Component({
   selector: 'app-share-document',
@@ -19,7 +20,7 @@ export class ShareDocumentComponent implements OnInit {
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
-    private readonly sharepoint: SharepointService,
+    private readonly appData: AppDataService,
     private readonly toastr: ToastrService,
     public dialogRef: MatDialogRef<ShareDocumentComponent>
   ) { }
@@ -47,9 +48,9 @@ export class ShareDocumentComponent implements OnInit {
   async onSubmit() {
     const fileId = this.file?.ListItemAllFields?.ID;
     if (fileId && this.model.usersId) {
-      const userFrom = await this.sharepoint.getCurrentUserInfo();
+      const userFrom = await this.appData.getCurrentUserInfo();
       for (const userId of this.model.usersId) {
-        await this.sharepoint.createNotification(
+        await this.appData.createNotification(
           userId, 
           `The file "${this.file?.Name}" was shared with you by ${userFrom.Title}`
         );
