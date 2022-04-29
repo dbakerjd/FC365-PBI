@@ -2,7 +2,7 @@ export const environment = {
   ssoRedirectUrl: 'https://icy-water-0ae577403.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: true,
-  version: '0.5.2',
+  version: '0.5.3',
   contact: {
     name: 'Technical Team',
     email: 'dbaker@jdforecasting.com'
