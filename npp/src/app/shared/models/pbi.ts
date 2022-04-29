@@ -12,3 +12,14 @@ export interface PBIReport {
     GroupId: string;
     ComponentType: string;
   }
+
+  export interface PBIDataset {
+    id: string;
+    name: string;
+    addRowsAPIEnabled: boolean;
+    configuredBy: string;
+    isRefreshable: true;
+    isEffectiveIdentityRequired: boolean;
+    isEffectiveIdentityRolesRequired: boolean;
+    isOnPremGatewayRequired: boolean;
+  }

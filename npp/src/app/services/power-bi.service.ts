@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
 import { ErrorService } from './app/error.service';
 import { environment } from 'src/environments/environment';
-import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
+import { PBIDataset, PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
 import { AppDataService } from './app/app-data.service';
 import { TeamsService } from './microsoft-data/teams.service';
 
@@ -111,6 +111,18 @@ export class PowerBiService {
     return returnObject;
 
 
+  }
+
+  async getDataset(groupId: string) {
+    const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/datasets`;
+
+    let result = await this.http.get(url).toPromise();
+    console.log('result dataset', result);
+
+    // if (result.value && result.value.length > 0) {
+    //   return result.value
+    // }
+    // return null;
   }
 
   async getPBIToken() {
