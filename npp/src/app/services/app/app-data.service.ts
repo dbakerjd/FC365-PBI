@@ -550,20 +550,24 @@ export class AppDataService {
 
   /** Get a subgroup of users from their ids */
   async getUsersByIds(usersId: number[]): Promise<User[]> {
-    const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
-    const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
-    if (users.value) {
-      return users.value;
+    if (usersId.length > 0) {
+      const conditions = usersId.map(e => { return '(Id eq ' + e + ')' }).join(' or ');
+      const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
+      if (users.value) {
+        return users.value;
+      }
     }
     return [];
   }
 
   /** Get a subgroup of users from their emails */
   async getUsersByEmails(usersMails: string[]): Promise<User[]> {
-    const conditions = usersMails.map(e => { return `(Email eq '${e}')` }).join(' or ');
-    const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
-    if (users.value) {
-      return users.value;
+    if (usersMails.length > 0) {
+      const conditions = usersMails.map(e => { return `(Email eq '${e}')` }).join(' or ');
+      const users = await this.sharepoint.query('siteusers', '$filter=' + conditions).toPromise();
+      if (users.value) {
+        return users.value;
+      }
     }
     return [];
   }
@@ -829,9 +833,11 @@ export class AppDataService {
     for (const country of countries) {
       const rlsItem = rlsList.find(e => e.CountryId == country.ID);
       if (rlsItem) {
-        await this.sharepoint.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST_NAME, {
-          Removed: "false"
-        });
+        if (rlsItem.Removed) {
+          await this.sharepoint.updateItem(rlsItem.Id, SPLists.POWER_BI_ACCESS_LIST_NAME, {
+            Removed: "false"
+          });
+        }
       } else {
         await this.sharepoint.createItem(SPLists.POWER_BI_ACCESS_LIST_NAME, {
           Title: user.Title,

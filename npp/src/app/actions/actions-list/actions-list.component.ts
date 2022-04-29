@@ -369,7 +369,7 @@ export class ActionsListComponent implements OnInit {
     this.dialogInstance.afterClosed()
       .pipe(take(1))
       .subscribe(async (result: any) => {
-        if (this.currentGate && result.success) {
+        if (this.currentGate && result?.success) {
           // notification to new users
           result.data.StageUsersId = (await this.appData.getUsersByEmails(result.data.StageUsersId)).map(u => u.Id);
           const currentStageUsers = this.currentGate.StageUsersId;
