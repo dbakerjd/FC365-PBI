@@ -908,6 +908,11 @@ export class AppDataService {
     return await this.sharepoint.updateItem(fileId, rootFolder, properties);
   }
 
+  async changeFileEditor(authorId: number, folder: string, fileId: number) {
+    const user = await this.getUserInfo(authorId);
+    if (user.LoginName) await this.sharepoint.updateReadOnlyField(folder, fileId, 'Editor', user.LoginName);
+  }
+
   async getFileByName(path: string, filename: string) {
     return await this.sharepoint.getPathFiles(path, `$filter=Name eq '${this.clearFileName(filename)}'`);
   }
@@ -979,7 +984,8 @@ export class AppDataService {
   }
 
   async assignPermissionToFolder(folderUrl: string, groupId: number, permission: string) {
-    return await this.sharepoint.addRolePermissionToFolder(folderUrl, groupId, permission);
+    return await this.sharepoint.addRolePermissionToFolder(folderUrl, groupId, permission)
+      && await this.sharepoint.removeRolePermission(folderUrl, (await this.getCurrentUserInfo()).Id); //evita s'afegeixi l'usuari actual per defecte
   }
 
   async assignPermissionToList(listName: string, groupId: number, permission: string, id: number = 0) {

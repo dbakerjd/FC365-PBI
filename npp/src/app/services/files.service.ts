@@ -380,15 +380,10 @@ export class FilesService {
       let rootFolder = arrFolder[3];
       
       success = await this.appData.updateFilePropertiesById(newFileInfo.value[0].ListItemAllFields.ID, rootFolder, newData);
-      // TOCHECK pass updateReadOnlyFiled inside updateFilePropertiesById
-      if(success && authorId) {
-        const user = await this.appData.getUserInfo(authorId);
-        // TOCHECK this call is commented temporally
-        // if (user.LoginName)
-          // await this.sharepoint.updateReadOnlyField(rootFolder, newFileInfo.value[0].ListItemAllFields.ID, 'Editor', user.LoginName);
+      if (success) {
+        await this.appData.changeFileEditor(authorId, rootFolder, newFileInfo.value[0].ListItemAllFields.ID);
       }
     }
-
     return success;
   }
 

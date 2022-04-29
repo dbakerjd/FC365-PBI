@@ -281,11 +281,7 @@ export class SharepointService {
   
   async existsFile(filename: string, folder: string): Promise<boolean> {
     try {
-      /** tocheck use getFileByName */
-      let file = await this.query(
-        `GetFolderByServerRelativeUrl('${folder}')/Files`,
-        `$expand=ListItemAllFields&$filter=Name eq '${filename}'`,
-      ).toPromise();
+      const file = await this.getPathFiles(folder, `$filter=Name eq '${filename}'`);
       return file.value.length > 0;
     } catch (e) {
       return false;
@@ -375,8 +371,6 @@ export class SharepointService {
     const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
     // permissions to folders without inherit
     let success = await this.setRolePermission(baseUrl, groupId, roleName, false);
-    // TOCHECK !! move remove to appData
-    // return success && await this.removeRolePermission(baseUrl, (await this.getCurrentUserInfo()).Id);
     return success;
   }
 
@@ -397,7 +391,8 @@ export class SharepointService {
     }
   }
 
-  private async removeRolePermission(baseUrl: string, groupId: number) {
+  async removeRolePermission(folderUrl: string, groupId: number) {
+    const baseUrl = this.licensing.getSharepointApiUri() + `GetFolderByServerRelativeUrl('${folderUrl}')/ListItemAllFields`;
     try {
       await this.http.post(
         baseUrl + `/roleassignments/removeroleassignment(principalid=${groupId})`,
