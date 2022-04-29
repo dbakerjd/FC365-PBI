@@ -1,0 +1,225 @@
+import { Injectable } from '@angular/core';
+import { Action, Opportunity, Stage } from '@shared/models/entity';
+import { AppDataService } from './app/app-data.service';
+import { PermissionsService } from './permissions.service';
+import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_WIP } from '@shared/sharepoint/folders';
+import { FilesService } from './files.service';
+import { BrandInput, OpportunityInput, StageInput } from '@shared/models/inputs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EntitiesService {
+
+  constructor(
+    private readonly appData: AppDataService,
+    private readonly permissions: PermissionsService,
+    private readonly files: FilesService
+  ) { }
+
+  async getAll(expand = true, onlyActive = false): Promise<Opportunity[]> {
+    return await this.appData.getAllOpportunities(expand, onlyActive);
+  }
+
+  async createOpportunity(opp: OpportunityInput, st: StageInput, stageStartNumber: number = 1):
+    Promise<{ opportunity: Opportunity, stage: Stage | null } | false> {
+    opp.AppTypeId = this.appData.getAppType().ID;
+    if(!opp.AppTypeId) throw new Error("Could not create an Entity (no AppType assigned)");
+    
+    // clean fields according type
+    const isInternal = await this.isInternalOpportunity(opp.OpportunityTypeId);
+    if (isInternal) {
+      opp.ProjectStartDate = opp.ProjectEndDate = undefined;
+    } else {
+      opp.Year = undefined;
+    }
+
+    const opportunity = await this.appData.createEntity(opp);
+    if (!opportunity) return false;
+
+    // get master stage info
+    let stage = null;
+
+    if(!isInternal) {
+      const opportunityType = await this.appData.getOpportunityType(opp.OpportunityTypeId);
+      const stageType = opportunityType?.StageType;
+      if(!stageType) throw new Error("Could not determine Opportunity Type");
+      const masterStage = await this.appData.getMasterStage(stageType, stageStartNumber);
+  
+      stage = await this.appData.createStage(
+        { ...st, Title: masterStage.Title, EntityNameId: opportunity.ID, StageNameId: masterStage.ID }
+      );
+      if (!stage) this.appData.deleteOpportunity(opportunity.ID);
+    }
+
+    return { opportunity, stage };
+  }
+
+  async createBrand(b: BrandInput, geographies: number[], countries: number[]): Promise<Opportunity|undefined> {
+    const owner = await this.appData.getUserInfo(b.EntityOwnerId!);
+    if (!owner.LoginName) throw new Error("Could not obtain owner's information.");
+    b.AppTypeId = this.appData.getAppType().ID;
+    if(!b.AppTypeId) throw new Error("Could not create an Entity (no AppType assigned)");
+    let brand: Opportunity = await this.appData.createEntity(b);
+
+    if (brand) {
+      await this.permissions.createGeographies(brand.ID, geographies, countries);
+      await this.permissions.initializeOpportunity(brand);
+    }
+    
+    return brand; 
+  }
+
+  /** Update the entity with new entity data. Returns true in success */
+  async updateEntity(entityId: number, entityData: OpportunityInput | BrandInput): Promise<boolean> {
+    const oppBeforeChanges = await this.appData.getEntity(entityId, false);
+    const success = await this.appData.updateEntity(entityId, entityData);
+
+    if (success && entityData.EntityOwnerId && oppBeforeChanges.EntityOwnerId !== entityData.EntityOwnerId) { // owner changed
+      return this.permissions.changeEntityOwnerPermissions(entityId, oppBeforeChanges.EntityOwnerId, entityData.EntityOwnerId);
+    }
+
+    return success;
+  }
+
+  async getAllStages(): Promise<Stage[]> {
+    return await this.appData.getAllStages();
+  }
+  
+  /** Update the entity stage with new data. Returns true in success */
+  async updateStageSettings(stageId: number, data: any): Promise<boolean> {
+    const currentStage = await this.appData.getEntityStage(stageId);
+    let success = true;
+
+    if (data.StageUsersId) {
+      success = await this.permissions.changeStageUsersPermissions(
+        currentStage.EntityNameId,
+        currentStage.StageNameId,
+        (await this.appData.getUsersByIds(currentStage.StageUsersId)).map(u => u.Email!), // pass the current users mails
+        data.StageUsersId
+      );
+
+      const newStageUsers = await this.appData.getUsersByEmails(data.StageUsersId);
+      data.StageUsersId = newStageUsers.map(u => u.Id);
+    }
+
+    return success && await this.appData.updateStage(stageId, data);
+  }
+
+  async createEntityForecastCycle(entity: Opportunity, values: any) {
+    const geographies = await this.appData.getEntityGeographies(entity.ID); // 1 = stage id would be dynamic in the future
+    let archivedBasePath = `${FOLDER_ARCHIVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let approvedBasePath = `${FOLDER_APPROVED}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+    let workInProgressBasePath = `${FOLDER_WIP}/${entity.BusinessUnitId}/${entity.ID}/0/0`;
+
+    let cycle = await this.appData.createEntityForecastCycle(entity);
+
+    for (const geo of geographies) {
+      let geoFolder = `${archivedBasePath}/${geo.ID}/${cycle.ID}`;
+      const cycleFolder = await this.appData.createFolder(geoFolder, true);
+      if(cycleFolder) {
+        await this.files.moveAllFolderFiles(`${approvedBasePath}/${geo.ID}/0`, geoFolder);
+      }else {
+        throw new Error("Could not create Forecast Cycle folder");
+      }
+    }
+
+    let changes = {
+      ForecastCycleId: values.ForecastCycle,
+      ForecastCycleDescriptor: values.ForecastCycleDescriptor,
+      Year: values.Year
+    };
+    await this.appData.updateEntity(entity.ID, changes);
+
+    await this.files.restartModelsInFolder(entity, workInProgressBasePath);
+
+    return changes;
+  }
+
+  /** Count the active working models of an entity */
+  async getModelsCount(entity: Opportunity): Promise<number> {
+    if (await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      const folder = FOLDER_WIP + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0';
+      return await this.files.getFolderFilesCount(folder);
+    } else {
+      const stages = await this.appData.getEntityStages(entity.ID);
+      let count = 0;
+      for (const st of stages) {
+        const folder = FILES_FOLDER + '/' + entity.BusinessUnitId + '/' + entity.ID + '/' + st.StageNameId + '/0';
+        count += await this.files.getFolderFilesCount(folder);
+      }
+      return count;
+    }
+  }
+
+  /** Count the approved working models of an entity */
+  async getApprovedModelsCount(entity: Opportunity): Promise<number> {
+    if (await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      const folder = FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0';
+      return await this.files.getFolderFilesCount(folder);
+    } else {
+      // [TODO] count external opps approved
+      return -1;
+    }
+  }
+
+  async isInternalOpportunity(oppTypeId: number): Promise<boolean> {
+    const oppType = await this.appData.getOpportunityType(oppTypeId);
+    if (oppType?.IsInternal) {
+      return oppType.IsInternal;
+    }
+    return false;
+  }
+
+  async archiveEntity(entityId: number): Promise<boolean> {
+    return await this.appData.setOpportunityStatus(entityId, "Archive");
+  }
+
+  async activeEntity(entityId: number): Promise<boolean> {
+    return await this.appData.setOpportunityStatus(entityId, "Active");
+  }
+
+  async approveEntity(entityId: number): Promise<boolean> {
+    return await this.appData.setOpportunityStatus(entityId, "Approved");
+  }
+
+  async getStageActions(entityId: number, stageNameId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId, stageNameId);
+  }
+
+  async getStageActionsRaw(entityId: number, stageNameId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId, stageNameId, { expand: false, sortBy: 'Timestamp asc'});
+  }
+
+  async getEntityActions(entityId: number): Promise<Action[]> {
+    return await this.appData.getActions(entityId);
+  }
+
+  async getProgress(entity: Opportunity): Promise<number> {
+    if (entity.OpportunityTypeId && await this.isInternalOpportunity(entity.OpportunityTypeId)) {
+      return -1; // progress no applies
+    }
+    let actions = await this.getEntityActions(entity.ID);
+    if (actions.length) {
+      let gates: {'total': number; 'completed': number}[] = [];
+      let currentGate = 0;
+      let gateIndex = 0;
+      for(let act of actions) {
+        if (act.StageNameId == currentGate) {
+          gates[gateIndex-1]['total']++;
+          if (act.Complete) gates[gateIndex-1]['completed']++;
+        } else {
+          currentGate = act.StageNameId;
+          if (act.Complete) gates[gateIndex] = {'total': 1, 'completed': 1};
+          else gates[gateIndex] = {'total': 1, 'completed': 0};
+          gateIndex++;
+        }
+      }
+
+      let gatesMedium = gates.map(function(x) { return x.completed / x.total; });
+      return Math.round((gatesMedium.reduce((a, b) => a + b, 0) / gatesMedium.length) * 10000) / 100;
+    }
+    return 0;
+  }
+
+}

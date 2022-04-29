@@ -41,9 +41,8 @@ input, select, textarea,
 }
 
 .ng-select .ng-select-container {
-    height: 36px !important;
     width: calc(100% - 1.2rem) !important;
-    line-height: 36px !important;
+    line-height: 25px !important;
     min-height: 36px !important;
 
     /** content place correction **/

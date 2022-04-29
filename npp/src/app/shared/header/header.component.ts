@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { environment } from 'src/environments/environment';
 
 @Component({

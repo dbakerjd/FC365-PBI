@@ -8,9 +8,13 @@ import { Subject } from 'rxjs';
 import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { CreateBrandComponent } from 'src/app/modals/create-brand/create-brand.component';
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Indication, Opportunity, SelectInputList, SharepointService, User } from 'src/app/services/sharepoint.service';
-import { TeamsService } from 'src/app/services/teams.service';
+import { AppControlService } from '@services/app/app-control.service';
+import { Indication, Opportunity } from '@shared/models/entity';
+import { User } from '@shared/models/user';
+import { AppDataService } from '@services/app/app-data.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { EntitiesService } from '@services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -31,13 +35,21 @@ export class BrandListComponent implements OnInit {
   loading = true;
   canCreate = false;
 
-  constructor(private sharepoint: SharepointService, private teams: TeamsService, private router: Router, public matDialog: MatDialog, private toastr: ToastrService, public disambiguator: InlineNppDisambiguationService) { }
+  constructor(
+    private router: Router, 
+    public matDialog: MatDialog, 
+    private toastr: ToastrService, 
+    private readonly appControl: AppControlService,
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
+  ) { }
 
   async ngOnInit() {
-    if(this.disambiguator.isReady) {
+    if(this.appControl.isReady) {
       this.init();
     }else {
-      this.disambiguator.readySubscriptions.subscribe(val => {
+      this.appControl.readySubscriptions.subscribe(val => {
         this.init();
       });
     }
@@ -45,18 +57,17 @@ export class BrandListComponent implements OnInit {
 
   async init() {
     
-    this.currentUser = await this.sharepoint.getCurrentUserInfo();
-    this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
-    console.log('cancreate', this.disambiguator.getConfigValue('AllowCreation'), !!this.currentUser?.IsSiteAdmin);
+    this.currentUser = await this.appData.getCurrentUserInfo();
+    this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
-    const indicationsList = await this.sharepoint.getIndicationsList();
-    // const forecastCycles = await this.sharepoint.getForecastCycles();
-    const businessUnits = await this.sharepoint.getBusinessUnitsList();
-    const brandFields = await this.sharepoint.getBrandFields();
-    const therapies = await this.sharepoint.getTherapiesList();
-    this.masterCycles = await this.sharepoint.getForecastCycles();
+    const indicationsList = await this.selectLists.getIndicationsList();
+    // const forecastCycles = await this.appData.getForecastCycles();
+    const businessUnits = await this.selectLists.getBusinessUnitsList();
+    const brandFields = await this.selectLists.getBrandFilterFields();
+    const therapies = await this.selectLists.getTherapiesList();
+    this.masterCycles = await this.selectLists.getForecastCyclesList();
     
-    this.brands = await this.disambiguator.getEntities() as Opportunity[];
+    this.brands = await this.entities.getAll();
 
     const owners = this.brands.map(el => { return { label: el.EntityOwner?.Title, value: el.EntityOwnerId }});
     const uniqueOwners = [...new Map(owners.map(o => [o.value, o])).values()];
@@ -102,7 +113,7 @@ export class BrandListComponent implements OnInit {
             therapySelect.formControl.valueChanges.pipe(
               takeUntil(this._destroying$),
               tap(th => {
-                this.sharepoint.getIndicationsList(th).then(r => {
+                this.selectLists.getIndicationsList(th).then(r => {
                   if (field.templateOptions) field.templateOptions.options = r;
                 });
               }),
@@ -154,7 +165,7 @@ export class BrandListComponent implements OnInit {
     });
 
     this.dialogInstance.afterClosed().subscribe(async (result:Opportunity) => {
-      this.brands = await this.disambiguator.getEntities() as Opportunity[];
+      this.brands = await this.entities.getAll();
       this.onSubmit();
     });
     
@@ -173,7 +184,7 @@ export class BrandListComponent implements OnInit {
     .pipe(take(1))
     .subscribe(async (result: any) => {
       if (result.success) {
-        Object.assign(brand, await this.sharepoint.getBrand(brand.ID));
+        Object.assign(brand, await this.appData.getEntity(brand.ID));
       } else if (result.success === false) {
         this.toastr.error("The brand couldn't be updated", "Try again");
       }

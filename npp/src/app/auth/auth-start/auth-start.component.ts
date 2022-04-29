@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { EventMessage, EventType, IPublicClientApplication, RedirectRequest } from '@azure/msal-browser';
-import { ErrorService } from 'src/app/services/error.service';
-import { TeamsService } from 'src/app/services/teams.service';
+import { ErrorService } from '@services/app/error.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
 @Component({
   selector: 'app-auth-start',

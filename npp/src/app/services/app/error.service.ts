@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
-import { TeamsService } from './teams.service';
 
 @Injectable({
   providedIn: 'root'

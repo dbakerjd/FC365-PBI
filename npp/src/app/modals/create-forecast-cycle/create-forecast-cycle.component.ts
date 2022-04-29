@@ -2,10 +2,12 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { ErrorService } from 'src/app/services/error.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { ErrorService } from '@services/app/error.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
+import { Opportunity } from '@shared/models/entity';
+import { EntitiesService } from 'src/app/services/entities.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 
 @Component({
@@ -28,16 +30,16 @@ export class CreateForecastCycleComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateForecastCycleComponent>,
     public matDialog: MatDialog,
-    private readonly sharepoint: SharepointService,
     private error: ErrorService,
     public jobs: WorkInProgressService,
-    private readonly disambiguation: InlineNppDisambiguationService
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.entity = this.data.entity;
-    this.cycles = await this.sharepoint.getForecastCycles();
+    this.cycles = await this.selectLists.getForecastCyclesList();
     const currentYear = new Date().getFullYear();
     
     let year = currentYear;
@@ -94,7 +96,7 @@ export class CreateForecastCycleComponent implements OnInit {
       }
       
       this.updating = this.dialogRef.disableClose = true;
-      let success = await this.disambiguation.createForecastCycle(this.entity, this.form.value);
+      let success = await this.entities.createEntityForecastCycle(this.entity, this.form.value);
       this.jobs.finishJob(job.id);
       this.updating = this.dialogRef.disableClose = false;
       this.dialogRef.close(success);

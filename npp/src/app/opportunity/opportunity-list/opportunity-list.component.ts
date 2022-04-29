@@ -7,11 +7,15 @@ import { ToastrService } from 'ngx-toastr';
 import { take } from 'rxjs/operators';
 import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-dialog.component';
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
-import { Opportunity, OpportunityType, SharepointService, User } from 'src/app/services/sharepoint.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { TeamsService } from 'src/app/services/teams.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
+import { AppControlService } from '@services/app/app-control.service';
+import { User } from '@shared/models/user';
+import { Opportunity, OpportunityType } from '@shared/models/entity';
+import { AppDataService } from '@services/app/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
+import { EntitiesService } from '@services/entities.service';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -26,38 +30,37 @@ export class OpportunityListComponent implements OnInit {
   fields: FormlyFieldConfig[] = [];
   dialogInstance: any;
   loading = true;
-  opportunityTypes: OpportunityType[] = [];
   canCreate = false;
 
   constructor(
-    private sharepoint: SharepointService, 
+    private permissions: PermissionsService, 
     private notifications: NotificationsService,
     private toastr: ToastrService,
     private router: Router, 
     public matDialog: MatDialog,
     public jobs: WorkInProgressService,
-    public teams: TeamsService,
-    public disambiguator: InlineNppDisambiguationService
+    private readonly appControl: AppControlService,
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService,
+    private readonly selectLists: SelectListsService
     ) { }
 
   async ngOnInit() {
-    if(this.disambiguator.isReady) {
+    if(this.appControl.isReady) {
       this.init();
     }else {
-      this.disambiguator.readySubscriptions.subscribe(val => {
+      this.appControl.readySubscriptions.subscribe(val => {
         this.init();
       });
     }
   }
 
   async init() {
-    this.currentUser = await this.sharepoint.getCurrentUserInfo();
-    this.canCreate = this.disambiguator.getConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
+    this.currentUser = await this.appData.getCurrentUserInfo();
+    this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
-    let indications = await this.sharepoint.getIndicationsList();
-    this.opportunityTypes = await this.sharepoint.getOpportunityTypes();
-    let opportunityTypes = this.opportunityTypes.map(t => { return { value: t.ID, label: t.Title } });
-    let opportunityFields = await this.sharepoint.getOpportunityFields();
+    let indications = await this.selectLists.getIndicationsList();
+    let opportunityFields = await this.selectLists.getOpportunityFilterFields();
     
     this.fields = [{
         key: 'search',
@@ -83,7 +86,7 @@ export class OpportunityListComponent implements OnInit {
         type: 'select',
         templateOptions: {
           placeholder: 'All types',
-          options: opportunityTypes
+          options: await this.selectLists.getOpportunityTypesList()
         }
       },{
         key: 'indication',
@@ -102,14 +105,18 @@ export class OpportunityListComponent implements OnInit {
       }
     ];
 
-    this.opportunities = await this.sharepoint.getOpportunities();
+    this.opportunities = await this.entities.getAll();
     this.opportunities.forEach(el => {
       this.initIndicationString(el);
     })
     this.loading = false;
     for (let op of this.opportunities) {
-      op.progress = await this.computeProgress(op);
+      op.progress = await this.entities.getProgress(op);
     }
+
+    // this.appData.deleteAllGroups();
+    // this.appData.removeUserSeat('demouser@jdforecasting.com');
+    
   }
 
   initIndicationString(el: Opportunity) {
@@ -137,27 +144,26 @@ export class OpportunityListComponent implements OnInit {
      
       if (result.success) {
         this.toastr.success("An opportunity was created successfully", result.data.opportunity.Title);
-        let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+        let opp = await this.appData.getEntity(result.data.opportunity.ID);
         opp.progress = 0;
-        if (await this.sharepoint.isInternalOpportunity(opp.OpportunityTypeId)) {
+        if (await this.entities.isInternalOpportunity(opp.OpportunityTypeId)) {
           opp.progress = -1;
         }
         let job = this.jobs.startJob(
           "initialize opportunity "+result.data.opportunity.id
           );
-        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage, result.users).then(async r => {
           if (r) {
-            // set active
-            await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+            await this.entities.activeEntity(opp.ID);
             opp.OpportunityStatus = 'Active';
             this.initIndicationString(opp);
             this.opportunities = [...this.opportunities, opp];
             this.jobs.finishJob(job.id);
             this.toastr.success("The opportunity is now active", opp.Title);
             await this.notifications.opportunityOwnerNotification(result.data.opportunity);
-            if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.data.stage.StageUsersId, result.data.opportunity);
+            if(result.data.stage) await this.notifications.newOpportunityAccessNotification(result.users, result.data.opportunity);
           } else {
-            this.sharepoint.deleteOpportunity(opp.ID);
+            this.appData.deleteOpportunity(opp.ID);
             this.jobs.finishJob(job.id);
             this.toastr.error("The opportunity couldn't be created", "Try again");
           }
@@ -190,7 +196,7 @@ export class OpportunityListComponent implements OnInit {
         if (opp.EntityOwnerId !== result.data.EntityOwnerId) {
           await this.notifications.opportunityOwnerNotification(result.data);
         }
-        Object.assign(opp, await this.sharepoint.getOpportunity(opp.ID));
+        Object.assign(opp, await this.appData.getEntity(opp.ID));
       } else if (result.success === false) {
         this.toastr.error("The opportunity couldn't be updated", "Try again");
       }
@@ -201,10 +207,9 @@ export class OpportunityListComponent implements OnInit {
     return; // filtering done with pipes
   }
 
-  navigateTo(item: Opportunity) {
-    if (item.OpportunityStatus === "Processing") return;
-    let opType = this.opportunityTypes.find(el => el.Title == item.OpportunityType?.Title);
-    if(opType?.IsInternal) {
+  async navigateTo(item: Opportunity) {
+    if (item.OpportunityStatus === "Processing" || !item.OpportunityTypeId) return;
+    if(await this.entities.isInternalOpportunity(item.OpportunityTypeId)) {
       this.router.navigate(['opportunities', item.ID, 'files']);
     } else {
       this.router.navigate(['opportunities', item.ID, 'actions']);
@@ -212,36 +217,8 @@ export class OpportunityListComponent implements OnInit {
     
   }
 
-  async computeProgress(opportunity: Opportunity): Promise<number> {
-    let opType = this.opportunityTypes.find(el => el.Title == opportunity.OpportunityType?.Title);
-    if(opType?.IsInternal) {
-      return -1; // progress no applies
-    }
-    let actions = await this.sharepoint.getActions(opportunity.ID);
-    if (actions.length) {
-      let gates: {'total': number; 'completed': number}[] = [];
-      let currentGate = 0;
-      let gateIndex = 0;
-      for(let act of actions) {
-        if (act.StageNameId == currentGate) {
-          gates[gateIndex-1]['total']++;
-          if (act.Complete) gates[gateIndex-1]['completed']++;
-        } else {
-          currentGate = act.StageNameId;
-          if (act.Complete) gates[gateIndex] = {'total': 1, 'completed': 1};
-          else gates[gateIndex] = {'total': 1, 'completed': 0};
-          gateIndex++;
-        }
-      }
-
-      let gatesMedium = gates.map(function(x) { return x.completed / x.total; });
-      return Math.round((gatesMedium.reduce((a, b) => a + b, 0) / gatesMedium.length) * 10000) / 100;
-    }
-    return 0;
-  }
-
   async archiveOpportunity(opp: Opportunity) {
-    const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Archive");
+    const success = await this.entities.archiveEntity(opp.ID);
     if (success) {
       opp.OpportunityStatus = 'Archive';
       this.toastr.success("The opportunity has been archived");
@@ -268,7 +245,7 @@ export class OpportunityListComponent implements OnInit {
           // create new
           this.createOpportunity(opp);
         } else if (response === false) {
-          const success = await this.sharepoint.setOpportunityStatus(opp.ID, "Active");
+          const success = await this.entities.activeEntity(opp.ID);
           if (success) {
             opp.OpportunityStatus = 'Active';
             this.toastr.success("The opportunity has been restored");

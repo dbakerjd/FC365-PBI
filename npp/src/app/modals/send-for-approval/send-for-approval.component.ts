@@ -2,8 +2,9 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { NPPFile, Opportunity, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity } from '@shared/models/entity';
+import { NPPFile } from '@shared/models/file-system';
+import { FilesService } from 'src/app/services/files.service';
 
 @Component({
   selector: 'app-send-for-approval',
@@ -34,8 +35,7 @@ export class SendForApprovalComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<SendForApprovalComponent>,
-    private readonly sharepoint: SharepointService,
-    private readonly disambiguator: InlineNppDisambiguationService
+    private readonly files: FilesService
   ) { }
 
   ngOnInit(): void {
@@ -49,9 +49,9 @@ export class SendForApprovalComponent implements OnInit {
     if (this.fileId && this.file) {
       let commentsStr = '';
       if(this.model.comments) {
-        commentsStr = await this.sharepoint.addComment(this.file, this.model.comments);
+        commentsStr = await this.files.addFileComment(this.file, this.model.comments);
       }
-      const result = await this.disambiguator.setEntityApprovalStatus(this.data.rootFolder, this.file, this.entity, "Submitted", commentsStr);
+      const result = await this.files.setFileApprovalStatus(this.data.rootFolder, this.file, this.entity, "Submitted", commentsStr);
       this.dialogRef.close({
         success: result,
         comments: this.model.comments

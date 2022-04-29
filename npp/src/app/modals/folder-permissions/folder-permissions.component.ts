@@ -3,9 +3,13 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ToastrService } from 'ngx-toastr';
-import { ErrorService } from 'src/app/services/error.service';
+import { ErrorService } from '@services/app/error.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { NPPFolder, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
+import { Opportunity } from '@shared/models/entity';
+import { NPPFolder } from '@shared/models/file-system';
+import { AppDataService } from '@services/app/app-data.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
+import { SelectInputList } from '@shared/models/app-config';
 
 @Component({
   selector: 'app-folder-permissions',
@@ -28,10 +32,11 @@ export class FolderPermissionsComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<FolderPermissionsComponent>,
-    private sharepoint: SharepointService, 
+    private permissions: PermissionsService, 
     private readonly notifications: NotificationsService,
     private readonly toastr: ToastrService,
-    private readonly error: ErrorService
+    private readonly error: ErrorService,
+    private readonly appData: AppDataService
   ) {
     this.entity = this.data.entity;
   }
@@ -39,7 +44,7 @@ export class FolderPermissionsComponent implements OnInit {
   async ngOnInit() {
     if (!this.entity) return;
   
-    const geographiesList = (await this.sharepoint.getEntityGeographies(this.entity.ID))
+    const geographiesList = (await this.appData.getEntityGeographies(this.entity.ID))
       .map(el => { return { label: el.Title, value: el.Id } });
 
     this.entityId = this.entity.ID;
@@ -98,8 +103,8 @@ export class FolderPermissionsComponent implements OnInit {
     }
 
     for (const sg of stageGroups) {
-      const defaultUsersList: SelectInputList[] = (await this.sharepoint.getGroupMembers(sg.group))
-        .map(el => { return { value: el.Id, label: el.Title ? el.Title : '' } });
+      const defaultUsersList: SelectInputList[] = (await this.appData.getGroupMembers(sg.group))
+        .map(el => { return { value: el.Email, label: el.Title ? el.Title : '' } });
 
       // save current users list for department
       this.currentUsersList.push({ 
@@ -118,12 +123,10 @@ export class FolderPermissionsComponent implements OnInit {
 
       formlyFields.push({
         key: formlyKey,
-        type: 'ngsearchable',
+        type: 'userssearchable',
         templateOptions: {
           label: 'Department Users:',
           placeholder: 'Users with access to ' + sg.folder.Title + ' files',
-          filterLocally: false,
-          query: 'siteusers',
           multiple: true,
           options: defaultUsersList,
         },
@@ -160,7 +163,7 @@ export class FolderPermissionsComponent implements OnInit {
           // is a department with geographies
           for (const geoKey in this.model.DepartmentUsersId[key]) {
             const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
-            success = success && await this.sharepoint.updateDepartmentUsers(
+            success = success && await this.permissions.updateDepartmentUsers(
               this.entityId,
               this.stageId,
               +key,
@@ -171,7 +174,7 @@ export class FolderPermissionsComponent implements OnInit {
             );
             if (success) {
               // notifications
-              const addedUsers = this.model.DepartmentUsersId[key][geoKey].filter((item: number) => currentList.list.indexOf(item) < 0);
+              const addedUsers: string[] = this.model.DepartmentUsersId[key][geoKey].filter((item: string) => currentList.list.indexOf(item) < 0);
               await this.notifications.modelFolderAccessNotification(addedUsers, this.entityId);
               // update current list
               currentList.list = this.model.DepartmentUsersId[key][geoKey];
@@ -180,7 +183,7 @@ export class FolderPermissionsComponent implements OnInit {
           }
         } else {
           const currentList = this.currentUsersList.find(el => el.departmentID == key);
-          success = success && await this.sharepoint.updateDepartmentUsers(
+          success = success && await this.permissions.updateDepartmentUsers(
             this.entityId,
             this.stageId,
             +key,
@@ -191,7 +194,7 @@ export class FolderPermissionsComponent implements OnInit {
           );
           if (success) {
             //notifications
-            const addedUsers = this.model.DepartmentUsersId[key].filter((item: number) => currentList.list.indexOf(item) < 0);
+            const addedUsers: string[] = this.model.DepartmentUsersId[key].filter((item: string) => currentList.list.indexOf(item) < 0);
             await this.notifications.folderAccessNotification(addedUsers, this.entityId, +key);
             // update current list
             currentList.list = this.model.DepartmentUsersId[key]; 

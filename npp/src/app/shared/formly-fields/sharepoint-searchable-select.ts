@@ -3,10 +3,9 @@ import {debounceTime, distinctUntilChanged, filter, map, takeUntil, tap} from "r
 import {ReplaySubject, Subject} from "rxjs";
 import {FormControl} from "@angular/forms";
 import { HttpParams } from "@angular/common/http";
-import { SharepointService } from "src/app/services/sharepoint.service";
+import { SharepointService } from "src/app/services/microsoft-data/sharepoint.service";
 import { FieldType } from "@ngx-formly/core";
-import { ErrorService } from "src/app/services/error.service";
-import { THIS_EXPR } from "@angular/compiler/src/output/output_ast";
+import { ErrorService } from "@services/app/error.service";
 
 /*
   templateOptions: {

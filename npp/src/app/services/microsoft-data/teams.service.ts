@@ -3,8 +3,8 @@ import { LogLevel, PopupRequest, AccountInfo, RedirectRequest, AuthenticationRes
 import * as microsoftTeams from "@microsoft/teams-js";
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ErrorService } from './error.service';
-import { LicensingService } from './licensing.service';
+import { ErrorService } from '@services/app/error.service';
+import { LicensingService } from '@services/jd-data/licensing.service';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
