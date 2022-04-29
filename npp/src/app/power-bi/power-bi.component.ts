@@ -1,15 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { TeamsService } from '../services/teams.service';
-import { HttpClient } from '@angular/common/http';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IReportEmbedConfiguration, models, Report } from 'powerbi-client';
 import { PowerBIReportEmbedComponent } from 'powerbi-client-angular';
-import { LicensingService } from '../services/licensing.service';
-import * as microsoftTeams from "@microsoft/teams-js";
-import { ErrorService } from '../services/error.service';
 import { ToastrService } from 'ngx-toastr';
-import { PBIReport, SharepointService } from '../services/sharepoint.service';
 import { PageDetails, PowerBiService } from '../services/power-bi.service';
+import { PBIReport } from '../shared/models/pbi';
+import { AppDataService } from '../services/app/app-data.service';
 
 @Component({
   selector: 'app-power-bi',
@@ -68,15 +65,11 @@ export class PowerBiComponent implements OnInit {
   };
 
   constructor(
-    public licensing: LicensingService,
-    private sharepoint: SharepointService,
     private powerBi: PowerBiService,
     public teams: TeamsService,
-    private error: ErrorService,
     private toastr: ToastrService,
-    private router: Router,
     private route: ActivatedRoute,
-
+    private readonly appData: AppDataService
   ) {
 
     this.route.params.subscribe(params => {
@@ -93,7 +86,7 @@ export class PowerBiComponent implements OnInit {
   }
 
   async getReportNames() {
-    return this.pbireports = await this.sharepoint.getReports();
+    return this.pbireports = await this.appData.getReports();
   }
 
   async setEmbed(ID: number) {
@@ -157,7 +150,7 @@ export class PowerBiComponent implements OnInit {
   async embedReport(highContrastMode: models.ContrastMode, ID: number): Promise<void> {
     //set pbi report
 
-    this.pbireport = await this.sharepoint.getReport(ID);
+    this.pbireport = await this.appData.getReport(ID);
     //get token
     const token = await this.powerBi.getPBIToken();
 

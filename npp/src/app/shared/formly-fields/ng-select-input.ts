@@ -3,10 +3,9 @@ import {catchError, debounceTime, distinctUntilChanged, filter, map, switchMap, 
 import {concat, Observable, of, ReplaySubject, Subject} from "rxjs";
 import {FormControl} from "@angular/forms";
 import { HttpParams } from "@angular/common/http";
-import { SharepointService } from "src/app/services/sharepoint.service";
 import { FieldType } from "@ngx-formly/core";
-import { ErrorService } from "src/app/services/error.service";
-import { THIS_EXPR } from "@angular/compiler/src/output/output_ast";
+import { ErrorService } from "@services/app/error.service";
+import { AppDataService } from "@services/app/app-data.service";
 
 /*
   templateOptions: {
@@ -50,7 +49,7 @@ export class FormlyFieldNgSelect extends FieldType {
 
   filterControl: FormControl = new FormControl();
 
-  constructor(private readonly api: SharepointService, private readonly error: ErrorService) {
+  constructor(private readonly appData: AppDataService, private readonly error: ErrorService) {
     super();
   }
 
@@ -70,7 +69,7 @@ export class FormlyFieldNgSelect extends FieldType {
           distinctUntilChanged(),
           debounceTime(500),
           tap(() => this.searching = true),
-          switchMap(term => this.api.searchByTermInputList(this.query, this.filterField, term).pipe(
+          switchMap(term => this.appData.searchByTermInputList(this.query, this.filterField, term).pipe(
             catchError(() => of([])), // empty list on error
             tap(() => this.searching = false)
           ))
