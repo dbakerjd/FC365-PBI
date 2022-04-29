@@ -162,10 +162,10 @@ export class PermissionsService {
     let SUGroup = null;
     if(stageId) SUGroup = await this.appData.getGroup('SU-' + oppId + '-' + stageId);
     let groupName = `DU-${oppId}-${departmentId}`;
-    let geoCountriesList: Country[] = [];
+    let entityGeography;
     if (geoId) {
       groupName += `-${geoId}`;
-      geoCountriesList = await this.getCountriesOfEntityGeography(geoId);
+      entityGeography = await this.appData.getEntityGeography(geoId);
     }
     const DUGroup = await this.appData.getGroup(groupName);
 
@@ -179,9 +179,6 @@ export class PermissionsService {
       const user = await this.appData.getUserInfoByMail(userMail);
       if (!user) return false;
       success = success && await this.appData.removeUserFromGroup(DUGroup.Id, user.Id);
-      if (success && geoId) { // it's model folder
-        this.appData.removePowerBI_RLS(oppId, geoCountriesList, user.Id);
-      }
       success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['OU']); // remove (if needed) of OU group
     }
 
@@ -196,12 +193,17 @@ export class PermissionsService {
       if (!userSeated) continue;
       
       success = success && await this.appData.addUserToGroupFromMail(userMail, DUGroup.Id);
-      if (success && geoId) { // it's model folder
-        if (!user) user = await this.appData.getUserInfoByMail(userMail);
-        this.appData.addPowerBI_RLS(user!, oppId, geoCountriesList);
-      }
       if (!success) return success;
     }
+
+    // update power bi rls groups after all removing
+    if (success && entityGeography) {
+      let users = await this.appData.getUsersByEmails(addedUsers);
+      await this.addUsersToPowerBI_RLS(users, oppId, [entityGeography]);
+      users = await this.appData.getUsersByEmails(removedUsers);
+      await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), oppId, [entityGeography]);
+    }
+
     return success;
   }
 
