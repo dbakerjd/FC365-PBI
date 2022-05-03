@@ -21,8 +21,6 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { PowerBiService } from 'src/app/services/power-bi.service';
-import { TeamsService } from '@services/microsoft-data/teams.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
@@ -72,12 +70,10 @@ export class FilesListComponent implements OnInit {
   loading = false;
 
   constructor(
-    private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
-    // private teams: TeamsService,
     public licensing: LicensingService,
     public notifications: NotificationsService,
     private breadcrumbService: BreadcrumbsService,
@@ -584,7 +580,7 @@ export class FilesListComponent implements OnInit {
         this.refreshingPowerBi = true;
         const reportName: string = "Epi Report";
 
-        let response = await this.powerBi.refreshReport(reportName);
+        let response = await this.appData.refreshPBIReport(reportName);
         this.refreshingPowerBi = false;   
         switch (response){
           case 202:{

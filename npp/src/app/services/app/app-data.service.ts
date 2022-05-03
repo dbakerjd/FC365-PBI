@@ -14,6 +14,7 @@ import { map } from 'rxjs/operators';
 import { LicensingService } from '../jd-data/licensing.service';
 import { GraphService } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
+import { PowerBiService } from '@services/power-bi.service';
 
 
 interface MasterAction {
@@ -62,6 +63,7 @@ export class AppDataService {
   constructor(
     private readonly sharepoint: SharepointService, 
     private readonly msgraph: GraphService,
+    private readonly powerbi: PowerBiService,
     private readonly licensing: LicensingService,
     private readonly toastr: ToastrService
   ) { }
@@ -780,6 +782,25 @@ export class AppDataService {
     let order = '$orderby=ComponentOrder';
     let reportComponents: PBIRefreshComponent[];
     return reportComponents = (await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_COMPONENTS_LIST_NAME, `${select}&${filter}&${order}`)).map(t => { return { ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title } })
+  }
+
+  async getPBITodayRefreshes() {
+    const datasets = await this.powerbi.getDataset('0cdfe372-a31d-4892-9ced-099277da476a');
+    const refreshes = await this.powerbi.getDatasetRefreshes('0cdfe372-a31d-4892-9ced-099277da476a', '85e72782-1d2b-426d-9e54-d57abcfeab6b', 8)
+    
+    const today = new Date().setHours(0, 0, 0, 0);
+    return refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today);
+  }
+
+  async refreshPBIReport(reportName: string, option = true): Promise<number> {
+    if (option) {
+      this.getPBITodayRefreshes();
+      return 1;
+    } else {
+        const report = await this.getReportByName(encodeURIComponent(reportName));
+        const reportComponents = await this.getComponents(report);
+        return await this.powerbi.refreshReport(reportName, reportComponents);
+    }
   }
 
   /** Add Power BI Row Level Security Access for the user to the entity */

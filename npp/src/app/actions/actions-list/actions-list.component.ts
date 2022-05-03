@@ -20,7 +20,6 @@ import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.comp
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { PowerBiService } from 'src/app/services/power-bi.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { Action, EntityGeography, Indication, MasterStage, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
@@ -77,7 +76,6 @@ export class ActionsListComponent implements OnInit {
     private toastr: ToastrService,
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
-    public powerBi: PowerBiService,
     private breadcrumbService: BreadcrumbsService,
     public sanitize: DomSanitizer,
     private readonly appData: AppDataService,
@@ -841,7 +839,7 @@ export class ActionsListComponent implements OnInit {
         //const at the moment needs to be dynamic
         const reportName: string = "Epi Report"
 
-        let response = await this.powerBi.refreshReport(reportName);
+        let response = await this.appData.refreshPBIReport(reportName);
         console.log("status is: "+response);
         switch (response){
           case 202:{
