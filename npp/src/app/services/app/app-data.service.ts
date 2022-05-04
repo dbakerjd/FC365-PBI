@@ -784,32 +784,26 @@ export class AppDataService {
     return reportComponents = (await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_COMPONENTS_LIST_NAME, `${select}&${filter}&${order}`)).map(t => { return { ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title } })
   }
 
-  /** Get the number of resfreshed to the report made today */
+  /** Get the number of resfreshes available today */
   async getPBIAvailableRefreshes(reportName: string, limit: number): Promise<number> {
     const report = await this.getPBIReportByName(reportName);
-    const components = (await this.getPBIComponents(report)).filter(c => c.ComponentType === 'Datasets');
+    const datasetComponent = (await this.getPBIComponents(report)).find(c => c.ComponentType === 'Datasets');
 
-    if (components.length == 1) {
-      const datasetComponent = components[0];
+    if (datasetComponent) {
       const dataset = (await this.powerbi.getDataset(datasetComponent.GroupId)).find(ds => ds.name === datasetComponent.ComponentName);
       if (dataset) {
         const refreshes = await this.powerbi.getDatasetRefreshes(datasetComponent.GroupId, dataset.id, limit);
         const today = new Date().setHours(0, 0, 0, 0);
         return Math.max(limit - refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today).length, 0);
       }
-
     }
     return -1;
   }
 
-  async refreshPBIReport(reportName: string, option = true): Promise<number> {
-    if (option) {
-      return await this.getPBIAvailableRefreshes(reportName, 8);
-    } else {
-        const report = await this.getPBIReportByName(encodeURIComponent(reportName));
-        const reportComponents = await this.getPBIComponents(report);
-        return await this.powerbi.refreshReport(reportName, reportComponents);
-    }
+  async refreshPBIReport(reportName: string): Promise<number> {
+    const report = await this.getPBIReportByName(encodeURIComponent(reportName));
+    const reportComponents = await this.getPBIComponents(report);
+    return await this.powerbi.refreshReport(reportName, reportComponents);
   }
 
   /** Add Power BI Row Level Security Access for the user to the entity */
