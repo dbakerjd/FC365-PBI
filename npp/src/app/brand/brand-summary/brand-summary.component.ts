@@ -20,6 +20,7 @@ export class BrandSummaryComponent implements OnInit {
   loadingTable = true;
   notificationsList: NPPNotification[] = [];
   therapyAreasData: any = {};
+  seatsTableOption: 'All Users' | 'Admin Only' | 'Off' = 'All Users';
   currentUser: User | undefined = undefined;
   currentTherapyArea: string = '';
   brandData: {
@@ -54,6 +55,7 @@ export class BrandSummaryComponent implements OnInit {
 
     this.currentUser = await this.permissions.getCurrentUserInfo();
     this.notificationsList = await this.notifications.getNotifications();
+    this.seatsTableOption = await this.appControl.getAppConfigValue('SeatsTable');
     this.therapyAreasData = { areas: {}, total: 0 };
 
     const brands = await this.entities.getAll();
@@ -199,6 +201,19 @@ export class BrandSummaryComponent implements OnInit {
     };
     //@ts-ignore
     if (Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chartIndications', optionsIndications);
+  }
+
+  showSeatsTable() {
+    switch(this.seatsTableOption) {
+      case 'All Users':
+        return true;
+      case 'Admin Only':
+        return this.currentUser?.IsSiteAdmin;
+      case 'Off':
+        return false;
+      default:
+        return false;
+    }
   }
 
   private populateTherapyAreasData(b: Opportunity) {
