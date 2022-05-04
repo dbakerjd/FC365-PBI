@@ -86,7 +86,7 @@ export class PowerBiComponent implements OnInit {
   }
 
   async getReportNames() {
-    return this.pbireports = await this.appData.getReports();
+    return this.pbireports = await this.appData.getPBIReports();
   }
 
   async setEmbed(ID: number) {
@@ -150,7 +150,7 @@ export class PowerBiComponent implements OnInit {
   async embedReport(highContrastMode: models.ContrastMode, ID: number): Promise<void> {
     //set pbi report
 
-    this.pbireport = await this.appData.getReport(ID);
+    this.pbireport = await this.appData.getPBIReport(ID);
     //get token
     const token = await this.powerBi.getPBIToken();
 

@@ -762,21 +762,21 @@ export class AppDataService {
 
   /** ---- Power BI ---- **/
 
-  async getReports(): Promise<PBIReport[]>{
+  async getPBIReports(): Promise<PBIReport[]>{
     return await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_LIST_NAME,'$orderby=SortOrder');
   }
 
-  async getReport(id:number): Promise<PBIReport>{
+  async getPBIReport(id:number): Promise<PBIReport>{
     return await this.sharepoint.getOneItemById(id, SPLists.MASTER_POWER_BI_LIST_NAME);
   }
 
-  async getReportByName(reportName:string): Promise<PBIReport>{
+  async getPBIReportByName(reportName:string): Promise<PBIReport>{
     let filter = `$filter=Title eq '${reportName}'`;
     let select = `$select=ID,name,GroupId,pageName,Title`;
     return await this.sharepoint.getOneItem(SPLists.MASTER_POWER_BI_LIST_NAME,`${select}&${filter}`)
   }
 
-  async getComponents(report: PBIReport): Promise<PBIRefreshComponent[]> {
+  async getPBIComponents(report: PBIReport): Promise<PBIRefreshComponent[]> {
     let select = `$select=Title,ComponentType,GroupId`
     let filter = `$filter=ReportTypeId eq'${report.ID}'`;
     let order = '$orderby=ComponentOrder';
@@ -797,8 +797,8 @@ export class AppDataService {
       this.getPBITodayRefreshes();
       return 1;
     } else {
-        const report = await this.getReportByName(encodeURIComponent(reportName));
-        const reportComponents = await this.getComponents(report);
+        const report = await this.getPBIReportByName(encodeURIComponent(reportName));
+        const reportComponents = await this.getPBIComponents(report);
         return await this.powerbi.refreshReport(reportName, reportComponents);
     }
   }
