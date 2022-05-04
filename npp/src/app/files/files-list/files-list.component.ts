@@ -586,9 +586,7 @@ export class FilesListComponent implements OnInit {
         this.doRefresh(reportName);
       } else {
         const pbiLimit = this.appControl.getAppConfigValue('PBIRefreshLimit');
-        let availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
-
-        availableRefreshes = 1;
+        const availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
 
         if (availableRefreshes < 1) {
           this.toastr.warning(`You reached your Power BI license limit of refreshes (${pbiLimit}) for today`, 'Limit reached');
