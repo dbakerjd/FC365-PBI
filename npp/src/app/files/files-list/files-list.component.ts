@@ -20,7 +20,6 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { PowerBiService } from 'src/app/services/power-bi.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
@@ -30,6 +29,7 @@ import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-files-list',
@@ -71,7 +71,6 @@ export class FilesListComponent implements OnInit {
   loading = false;
 
   constructor(
-    private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
@@ -81,6 +80,7 @@ export class FilesListComponent implements OnInit {
     private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
     private readonly appData: AppDataService,
+    private readonly appControl: AppControlService,
     private readonly files: FilesService,
     private readonly selectLists: SelectListsService
   ) { }
@@ -576,33 +576,75 @@ export class FilesListComponent implements OnInit {
   }
   
   async refreshPowerBi() {
-    try {
-      if(!this.refreshingPowerBi) {
-        this.refreshingPowerBi = true;
-        const reportName: string = "Epi Report";
+    if (!this.refreshingPowerBi) {
+      this.refreshingPowerBi = true;
+      const reportName = "Epi Report";
 
-        let response = await this.powerBi.refreshReport(reportName);
-        this.refreshingPowerBi = false;   
-        switch (response){
-          case 202:{
-            this.toastr.success("Analytics report succesfully refreshed.");
-            break;
-          }
-          case 409:{
-            this.toastr.error("Report currently refreshing. Please try again later");
-            break;
-          }
-          default:{
-            this.toastr.error(`Unknown error, ${response}`);
-            break;
-          }
+      const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
+
+      if (pbiPremium) {
+        this.doRefresh(reportName);
+      } else {
+        const pbiLimit = this.appControl.getAppConfigValue('PBIRefreshLimit');
+        const availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
+
+        if (availableRefreshes < 1) {
+          this.toastr.warning(`You reached your Power BI license limit of refreshes (${pbiLimit}) for today`, 'Limit reached');
+          this.refreshingPowerBi = false;
+          return;
         }
-      }  
-    } catch(e: any) {
+
+        if (availableRefreshes < 4) {
+          const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+            maxWidth: "400px",
+            minWidth: "350px",
+            height: "200px",
+            data: {
+              message: `There are only ${availableRefreshes} available refreshes more for your Power BI license for today. Do you want to continue?`,
+              confirmButtonText: 'Yes, refresh',
+            }
+          });
+
+          dialogRef.afterClosed()
+            .pipe(take(1))
+            .subscribe(async dorefresh => {
+              if (dorefresh) {
+                this.doRefresh(reportName, availableRefreshes);
+              }
+            });
+        } else {
+          this.doRefresh(reportName, availableRefreshes);
+        }
+      }
+      this.refreshingPowerBi = false;
+    }
+
+  }
+
+  private async doRefresh(reportName: string, availableRefreshes?: number) {
+    try {
+      let response = await this.appData.refreshPBIReport(reportName);
+      this.refreshingPowerBi = false;
+      switch (response) {
+        case 202: {
+          if (availableRefreshes && availableRefreshes > 1) this.toastr.success(`Analytics report succesfully refreshed. You have ${availableRefreshes - 1} refreshes left for today.`);
+          else this.toastr.success("Analytics report succesfully refreshed.");
+          break;
+        }
+        case 409: {
+          this.toastr.error("Report currently refreshing. Please try again later");
+          break;
+        }
+        default: {
+          this.toastr.error(`Unknown error, ${response}`);
+          break;
+        }
+      }
+    }
+    catch(e: any) {
       this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
-    
   }
 
   navigateTo(item: Opportunity) {

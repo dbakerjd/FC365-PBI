@@ -4,9 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IReportEmbedConfiguration, models, Report } from 'powerbi-client';
 import { PowerBIReportEmbedComponent } from 'powerbi-client-angular';
 import { ToastrService } from 'ngx-toastr';
-import { PageDetails, PowerBiService } from '../services/power-bi.service';
-import { PBIReport } from '../shared/models/pbi';
-import { AppDataService } from '../services/app/app-data.service';
+import { PageDetails, PBIReport } from '@shared/models/pbi';
+import { AppDataService } from '@services/app/app-data.service';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 
 @Component({
   selector: 'app-power-bi',
@@ -86,7 +86,7 @@ export class PowerBiComponent implements OnInit {
   }
 
   async getReportNames() {
-    return this.pbireports = await this.appData.getReports();
+    return this.pbireports = await this.appData.getPBIReports();
   }
 
   async setEmbed(ID: number) {
@@ -150,7 +150,7 @@ export class PowerBiComponent implements OnInit {
   async embedReport(highContrastMode: models.ContrastMode, ID: number): Promise<void> {
     //set pbi report
 
-    this.pbireport = await this.appData.getReport(ID);
+    this.pbireport = await this.appData.getPBIReport(ID);
     //get token
     const token = await this.powerBi.getPBIToken();
 
