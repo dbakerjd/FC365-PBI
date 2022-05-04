@@ -16,7 +16,6 @@ import { GraphService } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
 import { PowerBiService } from '@services/power-bi.service';
 
-const POWER_BI_PRO_REFRESH_LIMIT = 8; 
 
 interface MasterAction {
   Id: number,
@@ -786,18 +785,17 @@ export class AppDataService {
   }
 
   /** Get the number of resfreshed to the report made today */
-  async getPBITodayRefreshes(reportName: string): Promise<number> {
+  async getPBIAvailableRefreshes(reportName: string, limit: number): Promise<number> {
     const report = await this.getPBIReportByName(reportName);
     const components = (await this.getPBIComponents(report)).filter(c => c.ComponentType === 'Datasets');
 
     if (components.length == 1) {
       const datasetComponent = components[0];
       const dataset = (await this.powerbi.getDataset(datasetComponent.GroupId)).find(ds => ds.name === datasetComponent.ComponentName);
-      console.log('datasets', dataset);
       if (dataset) {
-        const refreshes = await this.powerbi.getDatasetRefreshes(datasetComponent.GroupId, dataset.id, POWER_BI_PRO_REFRESH_LIMIT);
+        const refreshes = await this.powerbi.getDatasetRefreshes(datasetComponent.GroupId, dataset.id, limit);
         const today = new Date().setHours(0, 0, 0, 0);
-        return refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today).length;
+        return Math.max(limit - refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today).length, 0);
       }
 
     }
@@ -806,7 +804,7 @@ export class AppDataService {
 
   async refreshPBIReport(reportName: string, option = true): Promise<number> {
     if (option) {
-      return await this.getPBITodayRefreshes(reportName);
+      return await this.getPBIAvailableRefreshes(reportName, 8);
     } else {
         const report = await this.getPBIReportByName(encodeURIComponent(reportName));
         const reportComponents = await this.getPBIComponents(report);

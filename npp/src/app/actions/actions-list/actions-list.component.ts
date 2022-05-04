@@ -31,6 +31,7 @@ import { FilesService } from '@services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { EntitiesService } from '@services/entities.service';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -79,6 +80,7 @@ export class ActionsListComponent implements OnInit {
     private breadcrumbService: BreadcrumbsService,
     public sanitize: DomSanitizer,
     private readonly appData: AppDataService,
+    private readonly appControl: AppControlService,
     private readonly files: FilesService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
@@ -833,37 +835,78 @@ export class ActionsListComponent implements OnInit {
   }
 
   async refreshPowerBi() {
-    try {
-      if(!this.refreshingPowerBi) {
-        this.refreshingPowerBi = true;
-        //const at the moment needs to be dynamic
-        const reportName: string = "Epi Report"
+    if (!this.refreshingPowerBi) {
+      this.refreshingPowerBi = true;
+      //const at the moment needs to be dynamic
+      const reportName = "Epi Report";
 
-        let response = await this.appData.refreshPBIReport(reportName);
-        console.log("status is: "+response);
-        switch (response){
-          case 202:{
-            this.toastr.success("Analytics report succesfully refreshed.");
-            break;
-          }
-          case 409:{
-            this.toastr.error("Report currently refreshing. Please try again later");
-            break;
-          }
-          default:{
-            this.toastr.error(`Unknown error, ${response}`);
-            break;
-          }
+      const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
+
+      if (pbiPremium) {
+        this.doRefresh(reportName);
+      } else {
+        const pbiLimit = this.appControl.getAppConfigValue('PBIRefreshLimit');
+        let availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
+
+        availableRefreshes = 1;
+
+        if (availableRefreshes < 1) {
+          this.toastr.warning(`You reached your Power BI license limit of refreshes (${pbiLimit}) for today`, 'Limit reached');
+          this.refreshingPowerBi = false;
+          return;
         }
 
-        this.refreshingPowerBi = false;   
-      }  
-    } catch(e: any) {
+        if (availableRefreshes < 4) {
+          const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+            maxWidth: "400px",
+            minWidth: "350px",
+            height: "200px",
+            data: {
+              message: `There are only ${availableRefreshes} available refreshes more for your Power BI license for today. Do you want to continue?`,
+              confirmButtonText: 'Yes, refresh',
+            }
+          });
+
+          dialogRef.afterClosed()
+            .pipe(take(1))
+            .subscribe(async dorefresh => {
+              if (dorefresh) {
+                this.doRefresh(reportName, availableRefreshes);
+              }
+            });
+        } else {
+          this.doRefresh(reportName, availableRefreshes);
+        }
+      }
       this.refreshingPowerBi = false;
-      
+    }
+
+  }
+
+  private async doRefresh(reportName: string, availableRefreshes?: number) {
+    try {
+      let response = await this.appData.refreshPBIReport(reportName);
+      this.refreshingPowerBi = false;
+      switch (response) {
+        case 202: {
+          if (availableRefreshes && availableRefreshes > 1) this.toastr.success(`Analytics report succesfully refreshed. You have ${availableRefreshes - 1} refreshes left for today.`);
+          else this.toastr.success("Analytics report succesfully refreshed.");
+          break;
+        }
+        case 409: {
+          this.toastr.error("Report currently refreshing. Please try again later");
+          break;
+        }
+        default: {
+          this.toastr.error(`Unknown error, ${response}`);
+          break;
+        }
+      }
+    }
+    catch(e: any) {
+      this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
-    
   }
 
   navigateTo(item: Opportunity) {
