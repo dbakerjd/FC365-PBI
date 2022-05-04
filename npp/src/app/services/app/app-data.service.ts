@@ -14,7 +14,7 @@ import { map } from 'rxjs/operators';
 import { LicensingService } from '../jd-data/licensing.service';
 import { GraphService } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
-import { PowerBiService } from '@services/power-bi.service';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 
 
 interface MasterAction {

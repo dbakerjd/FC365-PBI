@@ -4,9 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IReportEmbedConfiguration, models, Report } from 'powerbi-client';
 import { PowerBIReportEmbedComponent } from 'powerbi-client-angular';
 import { ToastrService } from 'ngx-toastr';
-import { PageDetails, PowerBiService } from '../services/power-bi.service';
-import { PBIReport } from '../shared/models/pbi';
-import { AppDataService } from '../services/app/app-data.service';
+import { PageDetails, PBIReport } from '@shared/models/pbi';
+import { AppDataService } from '@services/app/app-data.service';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 
 @Component({
   selector: 'app-power-bi',

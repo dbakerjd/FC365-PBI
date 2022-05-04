@@ -1,16 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { ErrorService } from './app/error.service';
+import { ErrorService } from '@services/app/error.service';
 import { environment } from 'src/environments/environment';
 import { PBIDataset, PBIDatasetRefresh, PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
-import { TeamsService } from './microsoft-data/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
-export interface PageDetails {
-  ReportSection: string;
-  DisplayName: string;
-}
 
-export interface PBIResult {
+
+interface PBIResult {
   'odata.metadata': string;
   value: any;
 }

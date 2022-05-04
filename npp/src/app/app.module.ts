@@ -48,7 +48,6 @@ import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
 import { EditFileComponent } from './modals/edit-file/edit-file.component';
-import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 import { PowerBIEmbedModule } from 'powerbi-client-angular';
 import { FilesListComponent } from './files/files-list/files-list.component';
@@ -65,6 +64,7 @@ import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 import { AppControlService } from '@services/app/app-control.service';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 
 @NgModule({
   imports: [

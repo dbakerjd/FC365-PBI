@@ -32,3 +32,8 @@ export interface PBIDatasetRefresh {
   startTime: Date;
   status: string;
 }
+
+export interface PageDetails {
+  ReportSection: string;
+  DisplayName: string;
+}
