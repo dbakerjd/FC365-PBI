@@ -103,16 +103,15 @@ export class PowerBiService {
 
   }
 
-  async getDataset(groupId: string) {
+  async getDataset(groupId: string): Promise<PBIDataset[]> {
     const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/datasets`;
 
-    let result = await this.http.get(url).toPromise();
-    console.log('result dataset', result);
+    let result = await this.http.get(url).toPromise() as PBIResult;
 
-    // if (result.value && result.value.length > 0) {
-    //   return result.value
-    // }
-    // return null;
+    if (result.value && result.value.length > 0) {
+      return result.value
+    }
+    return [];
   }
 
   async getDatasetRefreshes(groupId: string, datasetId: string, top?: number): Promise<PBIDatasetRefresh[]> {

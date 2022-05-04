@@ -96,7 +96,6 @@ export class FilesListComponent implements OnInit {
   }
 
   init() {
-    console.log('files inside');
     this.loading = true;
     this.route.params.subscribe(async (params) => {
       this.currentUser = await this.appData.getCurrentUserInfo();

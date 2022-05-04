@@ -16,6 +16,7 @@ import { GraphService } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
 import { PowerBiService } from '@services/power-bi.service';
 
+const POWER_BI_PRO_REFRESH_LIMIT = 8; 
 
 interface MasterAction {
   Id: number,
@@ -784,18 +785,28 @@ export class AppDataService {
     return reportComponents = (await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_COMPONENTS_LIST_NAME, `${select}&${filter}&${order}`)).map(t => { return { ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title } })
   }
 
-  async getPBITodayRefreshes() {
-    const datasets = await this.powerbi.getDataset('0cdfe372-a31d-4892-9ced-099277da476a');
-    const refreshes = await this.powerbi.getDatasetRefreshes('0cdfe372-a31d-4892-9ced-099277da476a', '85e72782-1d2b-426d-9e54-d57abcfeab6b', 8)
-    
-    const today = new Date().setHours(0, 0, 0, 0);
-    return refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today);
+  /** Get the number of resfreshed to the report made today */
+  async getPBITodayRefreshes(reportName: string): Promise<number> {
+    const report = await this.getPBIReportByName(reportName);
+    const components = (await this.getPBIComponents(report)).filter(c => c.ComponentType === 'Datasets');
+
+    if (components.length == 1) {
+      const datasetComponent = components[0];
+      const dataset = (await this.powerbi.getDataset(datasetComponent.GroupId)).find(ds => ds.name === datasetComponent.ComponentName);
+      console.log('datasets', dataset);
+      if (dataset) {
+        const refreshes = await this.powerbi.getDatasetRefreshes(datasetComponent.GroupId, dataset.id, POWER_BI_PRO_REFRESH_LIMIT);
+        const today = new Date().setHours(0, 0, 0, 0);
+        return refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today).length;
+      }
+
+    }
+    return -1;
   }
 
   async refreshPBIReport(reportName: string, option = true): Promise<number> {
     if (option) {
-      this.getPBITodayRefreshes();
-      return 1;
+      return await this.getPBITodayRefreshes(reportName);
     } else {
         const report = await this.getPBIReportByName(encodeURIComponent(reportName));
         const reportComponents = await this.getPBIComponents(report);
