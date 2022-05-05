@@ -18,7 +18,7 @@ const routes: Routes = [
   { path: '', component: DashboardComponent, data: { breadcrumb: 'Home' } },
   { path: 'summary', component: SummaryComponent, data: { breadcrumb: 'NPP Summary' } },
   { path: 'brands-summary', component: BrandSummaryComponent },
-  { path: 'general-area', component: GeneralAreaComponent },
+  { path: 'general-area', component: GeneralAreaComponent, data: { breadcrumb: 'General Area' } },
   { path: 'opportunities', component: OpportunityListComponent, data: { breadcrumb: 'NPP Opportunity Assessment'} },
   { path: 'opportunities/:id/actions', component: ActionsListComponent, data: { breadcrumb: { label: 'NPP Opportunity Assessment', url: 'opportunities' } } },
   { path: 'opportunities/:id/files', component: FilesListComponent, data: { breadcrumb: { label: 'NPP Opportunity Assessment', url: 'opportunities' } } },

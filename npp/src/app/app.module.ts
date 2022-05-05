@@ -66,6 +66,7 @@ import { AppControlService } from '@services/app/app-control.service';
 import { SeatsTableComponent } from './seats-table/seats-table.component';
 import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 import { GeneralAreaComponent } from './general-area/general-area.component';
+import { SimpleUploadComponent } from './modals/simple-upload/simple-upload.component';
 
 @NgModule({
   imports: [
@@ -131,6 +132,7 @@ import { GeneralAreaComponent } from './general-area/general-area.component';
     BreadcrumbsComponent,
     SeatsTableComponent,
     GeneralAreaComponent,
+    SimpleUploadComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

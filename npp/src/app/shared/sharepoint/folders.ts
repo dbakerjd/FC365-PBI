@@ -8,3 +8,4 @@ export const FOLDER_POWER_BI_WIP = "Power BI Work In Progress";
 export const FOLDER_POWER_BI_APPROVED = "Power BI Approved Models";
 export const FOLDER_POWER_BI_ARCHIVED = "Power BI Archived Models";
 export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';
+export const GLOBAL_DOCUMENTS_FOLDER = 'Global Documents';

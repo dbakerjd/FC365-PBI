@@ -6,7 +6,7 @@ import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/model
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
 import { GroupPermission, User } from '@shared/models/user';
-import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME } from '@shared/sharepoint/folders';
+import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME, GLOBAL_DOCUMENTS_FOLDER } from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
 import { from, Observable } from 'rxjs';
@@ -1074,6 +1074,9 @@ export class AppDataService {
         break;
       case FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
+        break;
+      case GLOBAL_DOCUMENTS_FOLDER:
+        select = '$select=*';
         break;
       default:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';
