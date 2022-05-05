@@ -65,6 +65,7 @@ import { TeamsService } from '@services/microsoft-data/teams.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { SeatsTableComponent } from './seats-table/seats-table.component';
 import { PowerBiService } from '@services/microsoft-data/power-bi.service';
+import { GeneralAreaComponent } from './general-area/general-area.component';
 
 @NgModule({
   imports: [
@@ -129,6 +130,7 @@ import { PowerBiService } from '@services/microsoft-data/power-bi.service';
     BrandSummaryComponent,
     BreadcrumbsComponent,
     SeatsTableComponent,
+    GeneralAreaComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

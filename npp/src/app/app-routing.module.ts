@@ -12,11 +12,13 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { OpportunityListComponent } from './opportunity/opportunity-list/opportunity-list.component';
 import { PowerBiComponent } from './power-bi/power-bi.component';
 import { SummaryComponent } from './summary/summary.component';
+import { GeneralAreaComponent } from './general-area/general-area.component';
 
 const routes: Routes = [
   { path: '', component: DashboardComponent, data: { breadcrumb: 'Home' } },
   { path: 'summary', component: SummaryComponent, data: { breadcrumb: 'NPP Summary' } },
   { path: 'brands-summary', component: BrandSummaryComponent },
+  { path: 'general-area', component: GeneralAreaComponent },
   { path: 'opportunities', component: OpportunityListComponent, data: { breadcrumb: 'NPP Opportunity Assessment'} },
   { path: 'opportunities/:id/actions', component: ActionsListComponent, data: { breadcrumb: { label: 'NPP Opportunity Assessment', url: 'opportunities' } } },
   { path: 'opportunities/:id/files', component: FilesListComponent, data: { breadcrumb: { label: 'NPP Opportunity Assessment', url: 'opportunities' } } },

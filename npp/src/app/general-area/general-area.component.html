@@ -1,0 +1,108 @@
+<app-npp-header [currentSection]="'general-area'"></app-npp-header>
+<!-- <div class="brand-info-wrapper top-info-wrapper" *ngIf="entity">
+    <div class="brand-name">
+        <h2>{{entity?.Title}}</h2>
+        <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}} {{entity?.ForecastCycleDescriptor}}</p>
+    </div>
+    <div class="brand-indication">
+        <p><label>BusinessUnit: </label>{{entity?.BusinessUnit?.Title}}</p>
+        <p><label>Indication: </label>{{getIndications(entity?.Indication)}}</p>
+    </div>
+    <div class="brand-dates">
+        <p><label>Therapy Area: </label> {{getTherapyArea(entity?.Indication)}}</p>
+        <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
+    </div>
+    <div class="brand-owner">
+        <div class="owner-pic">
+            <div class="owner-pic-background"></div>
+            <img [src]="defaultProfilePic" alt="" *ngIf="!ownerProfilePic" />
+            <img [src]="ownerProfilePic" alt="{{entity?.EntityOwner?.Title}}" *ngIf="ownerProfilePic" />
+        </div>
+        <div class="owner-info">
+            <div class="owner-info-title"><label>Owner</label></div>
+            <div class="owner-info-name">
+                {{entity?.EntityOwner?.Title}}
+            </div>
+        </div>
+    </div>
+</div> -->
+<div class="folder-and-actions-wrapper opportunity-contents">
+    <div class="folder-wrapper left-selection">
+        <div class="folder-item-wrapper" *ngIf="documentFolders.length > 1">
+            <div class="folder-item left-top-selection" (click)="setSection('documents')">
+                <span>Reference Documents</span>
+                <svg>
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
+            </div>
+            <div class="folders-wrapper">
+                <ng-container *ngFor="let folder of documentFolders">
+                    <div class="folders-item left-dd-selection" *ngIf="!folder.containsModels"
+                        [ngClass]="{'selected-status': selectedFolder.Id === folder.ID}" (click)="setFolder(folder)">
+                        <svg>
+                            <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                        </svg>
+                        <span>{{folder.Title}}</span>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+    <div class="files-wrapper">
+        <div class="folder-info-wrapper">
+            <div class="folder-info-review">
+
+            </div>
+
+            <div class="folder-info-progress">&nbsp;</div>
+
+            <div class="folder-info-icons opportunity-top-actions">
+                <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()"></div>
+                <div class="info-icons-documents" matTooltip="Documents" (click)="showFolders()"
+                    *ngIf="documentFolders.length > 1">
+                    <div class="info-icons-selected-section"></div>
+                </div>
+            </div>
+        </div>
+        <!-- DOCUMENTS LIST -->
+        <div class="documents-files">
+            <app-progress-spinner *ngIf="loading"></app-progress-spinner>
+
+            <ng-container *ngIf="currentFiles && currentFiles.length && !loading">
+                <div class="documents-files-item" *ngFor="let file of currentFiles">
+                    <div class="documents-files-item-name">
+                        <p><label>Name: </label>{{file.Name}}</p>
+                    </div>
+                    <div class="documents-files-item-uploaded">
+                        <p>
+                            <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
+                            <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
+                                {{file.ListItemAllFields.Author.FirstName + ' ' +
+                                file.ListItemAllFields.Author.LastName}}
+                            </ng-container>
+                        </p>
+                    </div>
+                    <div class="documents-files-item-comments">
+                        <p *ngIf="file.ListItemAllFields.Comments">
+                            <label>Description: </label>
+                            {{file.ListItemAllFields.Comments}}
+                        </p>
+                    </div>
+                    <div class="documents-files-item-icons">
+                        <div class="documents-files-item-icons-file" matTooltip="Open file"
+                            (click)="openFile(file.ListItemAllFields.ID)"></div>
+                        <div class="documents-files-item-icons-download" matTooltip="Download file"
+                            (click)="openFile(file.ListItemAllFields.ID, true)"></div>
+                        <div class="documents-files-item-icons-share" matTooltip="Share file"
+                            (click)="shareFile(file.ListItemAllFields.ID, selectedDepartmentId)"></div>
+                        <div class="documents-files-item-icons-remove" matTooltip="Delete file"
+                            (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                    </div>
+                </div>
+            </ng-container>
+            <h3 *ngIf="(!currentFiles || currentFiles.length == 0) && !loading" style="text-align: center;">No Files
+                Found
+                in {{ selectedFolder?.Title }}</h3>
+        </div>
+    </div>
+</div>

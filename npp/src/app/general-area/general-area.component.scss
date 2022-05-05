@@ -1,0 +1,38 @@
+.folder-and-actions-wrapper {
+
+    .folder-item {
+        &.selected-item {
+            text-align: left;
+            span {
+                margin-left: 2rem;
+            }
+        }
+    }
+    .files-wrapper {
+
+        .documents-folders {
+            .document-folder-item {
+                display: inline-block;
+                cursor: pointer;
+                padding: 20px;
+                margin: 20px;
+                .document-folder-icon {
+                    margin: 0 auto;
+                    width: 51px;
+                    height: 45px;
+                    background: url("/assets/folder.svg") no-repeat center;
+                    background-size: cover;
+                }
+            }
+        }
+        .folder-info-wrapper {
+            .folder-info-review {
+                width: 30%;
+            }
+            .folder-info-progress {
+                flex: 1;
+            }
+        }
+
+    }
+}
