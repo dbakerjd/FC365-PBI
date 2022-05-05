@@ -1,12 +1,17 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { FormlyFieldConfig } from '@ngx-formly/core';
-import { EntityGeography, Opportunity, SelectInputList, SharepointService } from 'src/app/services/sharepoint.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { ToastrService } from 'ngx-toastr';
+import { EntityGeography, Opportunity } from '@shared/models/entity';
+import { AppDataService } from '@services/app/app-data.service';
+import { EntitiesService } from 'src/app/services/entities.service';
+import { PermissionsService } from 'src/app/services/permissions.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
 
 @Component({
   selector: 'app-create-brand',
@@ -29,36 +34,40 @@ export class CreateBrandComponent implements OnInit {
   geographies: EntityGeography[] = [];
 
   constructor(
-    private sharepoint: SharepointService, 
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateBrandComponent>, 
     public jobs: WorkInProgressService, 
-    public toastr: ToastrService) { }
+    public toastr: ToastrService,
+    private readonly appData: AppDataService,
+    private readonly entities: EntitiesService, 
+    private readonly permissions: PermissionsService, 
+    private readonly selectLists: SelectListsService,
+    ) { }
 
   async ngOnInit() {
     this.loading = true;
     this.brand = this.data?.brand;
     //this.model.Brand = this.brand;
 
-    let therapies = await this.sharepoint.getTherapiesList();
-    let forecastCycles = await this.sharepoint.getForecastCycles();
-    let businessUnits = await this.sharepoint.getBusinessUnitsList();
-    const geo = (await this.sharepoint.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
-    const countries = (await this.sharepoint.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
+    let therapies = await this.selectLists.getTherapiesList();
+    let forecastCycles = await this.selectLists.getForecastCyclesList();
+    let businessUnits = await this.selectLists.getBusinessUnitsList();
+    const geo = (await this.selectLists.getGeographiesList()).map(el => { return { label: el.label, value: 'G-' + el.value } });
+    const countries = (await this.selectLists.getCountriesList()).map(el => { return { label: el.label, value: 'C-' + el.value } });;
     const locationsList = geo.concat(countries);
     let indicationsList: SelectInputList[] = [];
-    let defaultUsersList: SelectInputList[] = await this.sharepoint.getSiteOwnersList();
+    let defaultUsersList: SelectInputList[] = await this.selectLists.getSiteOwnersList();
 
     if (this.brand) {
       //this.brand.FCDueDate = new Date(this.brand.FCDueDate);
       this.isEdit = true;
-      this.geographies = await this.sharepoint.getEntityGeographies(this.brand?.ID);
+      this.geographies = await this.appData.getEntityGeographies(this.brand?.ID);
       this.model.geographies = this.geographies.map(el => el.CountryId ? 'C-'+el.CountryId : 'G-' + el.GeographyId);
     
       
       // default indications for the therapy selected
       if (this.brand && this.brand.Indication && this.brand.Indication.length) {
-        indicationsList = await this.sharepoint.getIndicationsList(this.brand.Indication[0].TherapyArea);
+        indicationsList = await this.selectLists.getIndicationsList(this.brand.Indication[0].TherapyArea);
       }
     }
 
@@ -120,7 +129,7 @@ export class CreateBrandComponent implements OnInit {
               therapySelect.formControl.valueChanges.pipe(
                 takeUntil(this._destroying$),
                 tap(th => {
-                  this.sharepoint.getIndicationsList(th).then(r => {
+                  this.selectLists.getIndicationsList(th).then(r => {
                     if (r.length > 0) field.formControl?.setValue(r[0].value);
                     if (field.templateOptions) field.templateOptions.options = r;
                   });
@@ -136,7 +145,8 @@ export class CreateBrandComponent implements OnInit {
             options: businessUnits,
             required: true,
           },
-          defaultValue: this.brand?.BusinessUnitId
+          defaultValue: this.brand?.BusinessUnitId,
+          hideExpression: this.isEdit
         }, {
           key: 'Brand.ForecastCycleId',
           type: 'select',
@@ -169,7 +179,17 @@ export class CreateBrandComponent implements OnInit {
             required: true,
           },
           defaultValue: this.brand?.Year || currentYear
-        },{
+        }, 
+        {
+          key: 'Brand.ForecastCycleDescriptor',
+          type: 'input',
+          templateOptions: {
+            label: 'Forecast Cycle Descriptor',
+            required: false
+          },
+          defaultValue: this.brand?.ForecastCycleDescriptor
+        },
+        {
           key: 'geographies',
           type: 'ngsearchable',
           templateOptions: {
@@ -193,8 +213,8 @@ export class CreateBrandComponent implements OnInit {
     try {
       if (this.isEdit) {
         this.updating = this.dialogRef.disableClose = true;
-        await this.sharepoint.updateEntityGeographies(this.data.brand, this.model.geographies);
-        const success = await this.sharepoint.updateBrand(this.data.brand.ID, this.model.Brand);
+        await this.permissions.updateEntityGeographies(this.data.brand, this.model.geographies);
+        const success = await this.entities.updateEntity(this.data.brand.ID, this.model.Brand);
         this.updating = this.dialogRef.disableClose = false;
         this.jobs.finishJob(job.id);
         this.toastr.success("The brand has been updated", this.model.Brand.Title);
@@ -204,9 +224,9 @@ export class CreateBrandComponent implements OnInit {
         });
       } else {
         // force opportunity type
-        const internalType = (await this.sharepoint.getOpportunityTypes()).find(el => el.IsInternal);
+        const internalType = (await this.appData.getOpportunityTypes()).find(el => el.IsInternal);
         this.model.Brand.OpportunityTypeId = internalType?.ID;
-        let brand = await this.sharepoint.createBrand(
+        let brand = await this.entities.createBrand(
           this.model.Brand,
           this.model.geographies.filter((el: string) => el.startsWith('G-')).map((el: string) => +el.substring(2)),
           this.model.geographies.filter((el: string) => el.startsWith('C-')).map((el: string) => +el.substring(2)));

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { from, Observable } from 'rxjs';
-import { TeamsService } from '../services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { InteractionRequiredAuthError } from '@azure/msal-common';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {

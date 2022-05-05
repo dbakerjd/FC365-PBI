@@ -1,6 +1,6 @@
-import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DatepickerOptions } from 'ng2-datepicker';
 import { ToastrService } from 'ngx-toastr';
@@ -10,7 +10,7 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateOpportunityComponent } from 'src/app/modals/create-opportunity/create-opportunity.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EditFileComponent } from 'src/app/modals/edit-file/edit-file.component';
-import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
+import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
@@ -18,12 +18,19 @@ import { ShareDocumentComponent } from 'src/app/modals/share-document/share-docu
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { LicensingService } from 'src/app/services/licensing.service';
+import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { Action, Stage, NPPFile, NPPFolder, Opportunity, SharepointService, User, SelectInputList, FILES_FOLDER, FOLDER_DOCUMENTS, FileComments, Indication, EntityGeography } from 'src/app/services/sharepoint.service';
-import { WorkInProgressService } from 'src/app/services/work-in-progress.service';
+import { WorkInProgressService } from '@services/app/work-in-progress.service';
+import { Action, EntityGeography, Indication, MasterStage, Opportunity, Stage } from '@shared/models/entity';
+import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
+import { User } from '@shared/models/user';
+import { FILES_FOLDER, FOLDER_DOCUMENTS } from '@shared/sharepoint/folders';
+import { AppDataService } from '@services/app/app-data.service';
+import { PermissionsService } from '@services/permissions.service';
+import { FilesService } from '@services/files.service';
+import { SelectListsService } from '@services/select-lists.service';
+import { EntitiesService } from '@services/entities.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -41,7 +48,7 @@ export class ActionsListComponent implements OnInit {
   opportunityGeographies: EntityGeography[] = []; // geographies (not soft removed)
   currentGate: Stage | undefined = undefined;
   lastStageId: number | undefined = undefined; // next stage button control
-  nextStage: Stage | null = null;
+  nextStage: MasterStage | null = null;
   currentActions: Action[] | undefined = undefined;
   currentGateProgress: number = 0;
   refreshingPowerBi = false;
@@ -58,12 +65,11 @@ export class ActionsListComponent implements OnInit {
   displayingModels: boolean = false;
   dialogInstance: any; 
   loading = false;
-  profilePic: string = '/assets/user.svg';
+  defaultProfilePic = '/assets/user.svg';
+  ownerProfilePic: SafeUrl | null = null;
   hasAccessToModels = false;
 
   constructor(
-    private readonly sharepoint: SharepointService, 
-    private readonly notifications: NotificationsService,
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
@@ -72,31 +78,36 @@ export class ActionsListComponent implements OnInit {
     public jobs: WorkInProgressService,
     public powerBi: PowerBiService,
     private breadcrumbService: BreadcrumbsService,
-    public disambiguator: InlineNppDisambiguationService
+    public sanitize: DomSanitizer,
+    private readonly appData: AppDataService,
+    private readonly files: FilesService,
+    private readonly permissions: PermissionsService,
+    private readonly notifications: NotificationsService,
+    private readonly selectLists: SelectListsService,
+    private readonly entities: EntitiesService
     ) { }
 
   ngOnInit(): void {
     this.route.params.subscribe(async (params) => {
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
-        this.opportunity = await this.sharepoint.getOpportunity(params.id);
+        this.opportunity = await this.appData.getEntity(params.id);
         if (!this.opportunity) {
           this.router.navigate(['notfound']);
         }
-        this.currentUser = await this.sharepoint.getCurrentUserInfo();
+        this.currentUser = await this.appData.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
         this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
-        this.opportunityGeographies = await this.sharepoint.getOpportunityGeographies(this.opportunity.ID, false);
+        this.opportunityGeographies = await this.appData.getEntityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
-          let pic = await this.sharepoint.getUserProfilePic(this.opportunity.EntityOwnerId);
-          this.opportunity.EntityOwner.profilePicUrl = pic ? pic+'' : '/assets/user.svg';
-          this.profilePic = this.opportunity.EntityOwner.profilePicUrl;
+          const profileImgBlob = await this.appData.getUserProfilePic(this.opportunity.EntityOwnerId);
+          this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
-        this.gates = await this.sharepoint.getStages(params.id);
+        this.gates = await this.appData.getEntityStages(params.id);
         this.gates.forEach(async (el, index) => {
-          el.actions = await this.sharepoint.getActions(params.id, el.StageNameId);
-          el.folders = await this.sharepoint.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
+          el.actions = await this.entities.getStageActions(params.id, el.StageNameId);
+          el.folders = await this.appData.getStageFolders(el.StageNameId, this.opportunityId, this.opportunity?.BusinessUnitId);
           this.setStatus(el.actions);
 
           //set current gate
@@ -110,7 +121,7 @@ export class ActionsListComponent implements OnInit {
               this.setGate(el.ID);
             }
             this.lastStageId = el.ID;
-            this.nextStage = await this.sharepoint.getNextStage(el.StageNameId);
+            this.nextStage = await this.appData.getNextStage(el.StageNameId);
           }
 
         });
@@ -128,16 +139,12 @@ export class ActionsListComponent implements OnInit {
   }
 
   async openUploadDialog() {
-    if (!this.currentGate) return;
+    if (!this.currentGate || !this.opportunity) return;
 
-    let geographiesList: SelectInputList[] = [];
-    const modelFolder = this.currentFolders.find(f => f.containsModels);
-    if (this.opportunity) {
-      geographiesList = await this.sharepoint.getAccessibleGeographiesList(
-        this.opportunity,
-        this.currentGate.StageNameId
-      );
-    }
+    const geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(
+      this.opportunity,
+      this.currentGate.StageNameId
+    );
     this.dialogInstance = this.matDialog.open(UploadFileComponent, {
       height: '600px',
       width: '405px',
@@ -145,7 +152,7 @@ export class ActionsListComponent implements OnInit {
         folderList: this.currentFolders,
         selectedFolder: this.currentSection === 'documents' && this.currentFolder ? this.currentFolder.DepartmentID : null,
         geographies: geographiesList,
-        scenarios: await this.sharepoint.getScenariosList(),
+        scenarios: await this.selectLists.getScenariosList(),
         masterStageId: this.currentGate?.StageNameId,
         entity: this.opportunity
       }
@@ -156,7 +163,9 @@ export class ActionsListComponent implements OnInit {
     .subscribe(async (result: any) => {
       if (result.success && result.uploaded) {
         this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
+        this.loading = true;
         await this.updateCurrentFiles();
+        this.loading = false;
       } else if (result.success === false) {
         this.toastr.error("Sorry, there was a problem uploading your file");
       }
@@ -185,17 +194,19 @@ export class ActionsListComponent implements OnInit {
   }
 
   async updateCurrentFiles() {
+    this.loading = true;
     if (this.currentFolder?.containsModels) {
-      let geoFolders = await this.sharepoint.getSubfolders('/'+this.currentFolderUri);
+      let geoFolders = await this.appData.getSubfolders('/'+this.currentFolderUri);
       geoFolders = geoFolders.filter((gf: any) => this.opportunityGeographies.some((og: EntityGeography) => +gf.Name === og.ID));
       this.currentFiles = [];
       for (const geofolder of geoFolders) {
-        this.currentFiles.push(...await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
+        this.currentFiles.push(...await this.appData.getFolderFiles(FILES_FOLDER + '/' + this.currentFolderUri + '/' + geofolder.Name+'/0', true));
       }
     } else {
-      this.currentFiles = await this.sharepoint.readEntityFolderFiles(this.sharepoint.getBaseFilesFolder() + '/' + this.currentFolderUri+'/0/0', true);
+      this.currentFiles = await this.appData.getFolderFiles(FILES_FOLDER + '/' + this.currentFolderUri+'/0/0', true);
     }
     this.initLastComments();
+    this.loading = false;
   }
 
   initLastComments() {
@@ -259,7 +270,7 @@ export class ActionsListComponent implements OnInit {
     if (!file.ListItemAllFields) return;
     if (!this.opportunity) return;
 
-    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
       height: '300px',
       width: '405px',
       data: {
@@ -358,11 +369,13 @@ export class ActionsListComponent implements OnInit {
     this.dialogInstance.afterClosed()
       .pipe(take(1))
       .subscribe(async (result: any) => {
-        if (this.currentGate && result.success) {
+        if (this.currentGate && result?.success) {
           // notification to new users
+          result.data.StageUsersId = (await this.appData.getUsersByEmails(result.data.StageUsersId)).map(u => u.Id);
           const currentStageUsers = this.currentGate.StageUsersId;
           const addedStageUsers = result.data.StageUsersId.filter((item: number) => currentStageUsers.indexOf(item) < 0);
           await this.notifications.stageAccessNotification(addedStageUsers, this.currentGate.Title, this.opportunity?.Title);
+
           // update current info
           this.currentGate.StageUsersId = result.data.StageUsersId;
           this.currentGate.StageReview = result.data.StageReview;
@@ -437,11 +450,11 @@ export class ActionsListComponent implements OnInit {
     if (this.opportunity?.OpportunityStatus !== 'Active' || !this.isActiveStage(action.StageNameId)) return;
 
     let done = false;
-    if (!this.currentUser) this.currentUser = await this.sharepoint.getCurrentUserInfo(); // no tenim ID user al sharepoint
+    if (!this.currentUser) this.currentUser = await this.appData.getCurrentUserInfo(); // no tenim ID user al sharepoint
 
-    if (action.Complete) done = await this.sharepoint.uncompleteAction(action.Id);
+    if (action.Complete) done = await this.appData.uncompleteAction(action.Id);
     else {
-      done = await this.sharepoint.completeAction(action.Id, this.currentUser.Id);
+      done = await this.appData.completeAction(action.Id, this.currentUser.Id);
     }
 
     if (done) {
@@ -459,7 +472,7 @@ export class ActionsListComponent implements OnInit {
   }
 
   onDueDateChange(actionId: number, value: string) {
-    this.sharepoint.setActionDueDate(actionId, value);
+    this.appData.setActionDueDate(actionId, value);
   }
 
   async goNextStage() {
@@ -483,10 +496,10 @@ export class ActionsListComponent implements OnInit {
             let job = this.jobs.startJob(
               'initialize stage ' + result.data.ID
             );
-            let opp = await this.sharepoint.getOpportunity(result.data.EntityNameId);
-            const oppGeographies = await this.sharepoint.getOpportunityGeographies(opp.ID);
+            let opp = await this.appData.getEntity(result.data.EntityNameId);
+            const oppGeographies = await this.appData.getEntityGeographies(opp.ID);
             this.alreadyGoingNextStage = true;
-            this.sharepoint.initializeStage(opp, result.data,oppGeographies).then(async r => {
+            this.permissions.initializeStage(opp, result.data, oppGeographies, result.users).then(async r => {
               await this.jobs.finishJob(job.id);
               this.toastr.success("Next stage has been created successfully", result.data.Title);
               this.alreadyGoingNextStage = false;
@@ -525,7 +538,7 @@ export class ActionsListComponent implements OnInit {
           // complete opportunity
           if (!this.opportunity) return;
 
-          if (!await this.sharepoint.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
+          if (!await this.entities.isInternalOpportunity(this.opportunity.OpportunityTypeId)) {
             const newPhaseDialog = this.matDialog.open(ConfirmDialogComponent, {
               maxWidth: "400px",
               height: "200px",
@@ -560,19 +573,19 @@ export class ActionsListComponent implements OnInit {
 
                       if (result.success) {
                         // complete current opp
-                        await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+                        await this.entities.approveEntity(this.opportunity.ID);
 
                         this.toastr.success("A new opportunity was created successfully", result.data.opportunity.Title);
-                        let opp = await this.sharepoint.getOpportunity(result.data.opportunity.ID);
+                        let opp = await this.appData.getEntity(result.data.opportunity.ID);
                         opp.progress = 0;
                         let job = this.jobs.startJob(
                           "initialize opportunity " + result.data.opportunity.id
                         );
-                        this.sharepoint.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
+                        this.permissions.initializeOpportunity(result.data.opportunity, result.data.stage).then(async r => {
                           if (!this.opportunity) return;
-                          this.sharepoint.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
+                          this.files.copyFilesExternalToInternal(this.opportunity?.ID, opp.ID);
                           // set active
-                          await this.sharepoint.setOpportunityStatus(opp.ID, 'Active');
+                          await this.entities.activeEntity(opp.ID);
                           this.jobs.finishJob(job.id);
                           this.toastr.success("The opportunity is now active", opp.Title);
                           this.router.navigate(['opportunities', opp.ID, 'files']);
@@ -585,18 +598,18 @@ export class ActionsListComponent implements OnInit {
                     });
                 } else if (newInternalResponse === false) {
                   // only complete
-                  await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+                  await this.entities.approveEntity(this.opportunity.ID);
                   this.opportunity.OpportunityStatus = 'Approved';
                   this.toastr.success("The opportunity has been completed", this.opportunity.Title);
                 }
               });
           } else { // without possibility of pass to internal => complete
-            await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+            await this.entities.approveEntity(this.opportunity.ID);
             this.opportunity.OpportunityStatus = 'Approved';
             this.toastr.success("The opportunity has been completed", this.opportunity.Title);
           }
          // complete
-        //  await this.sharepoint.setOpportunityStatus(this.opportunity.ID, "Approved");
+        //  await this.appData.setOpportunityStatus(this.opportunity.ID, "Approved");
         //  this.opportunity.OpportunityStatus = 'Approved';
         //  this.toastr.success("The opportunity has been completed", this.opportunity.Title);
         }
@@ -667,7 +680,7 @@ export class ActionsListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
+    const response = await this.appData.readFile(fileInfo.ServerRelativeUrl);
     var newBlob = new Blob([response]);
 
     if (forceDownload) {
@@ -741,16 +754,16 @@ export class ActionsListComponent implements OnInit {
     }
     
     // users with access
-    let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    let folderUsersList = await this.appData.getGroupMembers(folderGroup);
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('OO-' + this.opportunityId),
-      await this.sharepoint.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
+      await this.appData.getGroupMembers('OO-' + this.opportunityId),
+      await this.appData.getGroupMembers('SU-' + this.opportunityId + '-' + this.currentGate?.StageNameId)
     );
 
     // clean users list
     let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
-    const currentUser = await this.sharepoint.getCurrentUserInfo();
+    const currentUser = await this.appData.getCurrentUserInfo();
     uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
@@ -807,7 +820,7 @@ export class ActionsListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
+          if (await this.files.deleteFile(fileInfo.ServerRelativeUrl, this.currentFolder?.containsModels)) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");

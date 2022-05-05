@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ErrorService } from './error.service';
-import { TeamsService } from './teams.service';
+import { ErrorService } from '@services/app/error.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 
 export interface MSGraphQueryParams {
   count?: boolean;
@@ -34,6 +34,11 @@ export interface MSGraphUser {
   mail: string;
   surName: string;
   userPrincipalName: string;
+}
+
+type FilterParam = {
+  field: string;
+  value: string;
 }
 
 @Injectable({
@@ -180,6 +185,36 @@ export class GraphService {
     return await this.getRequest('me');
   }
 
+  /** List users of Microsoft Graph */
+  async getUsers(): Promise<MSGraphUser[]> {
+    return await this.getRequest('users');
+  }
+
+  /** List users of Microsoft Graph */
+  async filterUsers(filter: FilterParam[], limit = 12): Promise<MSGraphUser[]> {
+    try {
+      const graphToken = await this.getMSGraphToken();
+      let filterParams = [];
+      for (const f of filter) {
+        filterParams.push(`startswith(${f.field},'${f.value}')`);
+      }
+      if (filterParams.length) {
+        return await this.http.get(
+          this.baseGraphUrl + 'users?$filter=' + filterParams.join(' OR ') + '&$count=true&$top=' + limit,
+          {
+            headers: {
+              token: graphToken
+            }
+          }
+        ).toPromise() as MSGraphUser[];
+      } 
+      return [];
+    } catch (e: any) {
+      this.error.handleError(e);
+      return [];
+    }
+  }
+
   /** Find a Microsoft Graph User by Principal Name (email) */
   async getUserByPrincipalName(name: string): Promise<MSGraphUser | null> {
     return await this.getRequest(`users/${name}`);
@@ -199,5 +234,29 @@ export class GraphService {
     const user = await this.getUserByPrincipalName(email);
     if (group && user) return this.removeUserToAzureGroup(user.id, group.id);
     return false;
+  }
+
+  /** User profile pic from Microsoft Graph */
+  async getProfilePic(email: string): Promise<Blob | null> {
+    try {
+      const graphToken = await this.getMSGraphToken();
+      const endpoint = this.baseGraphUrl + 'users/' + email + '/photo/$value';
+      const result = await this.http.get(
+        endpoint,
+        {
+          headers: {
+            token: graphToken
+          },
+          responseType: 'arraybuffer',
+        }
+      ).toPromise();
+      if (result) {
+        return new Blob([result]);
+      }
+      return null;
+    } catch (e: any) {
+      if (e.status !== 404 && e.status !== 555) this.error.handleError(e);
+      return null;
+    }
   }
 }

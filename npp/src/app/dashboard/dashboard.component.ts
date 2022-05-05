@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { TeamsService } from '../services/teams.service';
+import { TeamsService } from '@services/microsoft-data/teams.service';
 import { Router } from '@angular/router';
-import { LicensingService } from '../services/licensing.service';
+import { LicensingService } from '../services/jd-data/licensing.service';
 import { environment } from 'src/environments/environment';
-import { animate, query, stagger, state, style, transition, trigger } from '@angular/animations';
-import { SharepointService } from '../services/sharepoint.service';
+import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,23 +28,24 @@ export class DashboardComponent implements OnInit {
   account: any;
   version = environment.version;
   items: any[] = [];
+  loadedApp = false;
+
+  private readonly _destroying$ = new Subject<void>();
+
   constructor(
     private readonly teams: TeamsService, 
     private router: Router, 
     private licensing: LicensingService,
-    private sharepoint: SharepointService
   ) { }
 
   async ngOnInit() {
 
-    if (!this.licensing.license) {
-      this.router.navigate(['splash/non-license']);
-    }
-
-    if (!await this.sharepoint.canConnect()) {
-      this.router.navigate(['splash/non-access']);
-    }
-
+    this.teams.statusSubject
+      .pipe(takeUntil(this._destroying$))
+      .subscribe(async (msg) => {
+        if (msg == 'loggedIn') this.loadedApp = true;
+      });
+    
     let NPPitems = [{
       src: 'assets/dashboard/npp-summary.svg',
       text: 'NPP Summary',
@@ -100,6 +102,11 @@ export class DashboardComponent implements OnInit {
 
   navigateTo(item: any) {
     this.router.navigate(item.route);
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next();
+    this._destroying$.complete();
   }
 
 }

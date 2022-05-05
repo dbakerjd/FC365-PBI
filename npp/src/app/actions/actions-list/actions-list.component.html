@@ -21,7 +21,8 @@
     <div class="opportunity-owner">
         <div class="owner-pic">
             <div class="owner-pic-background"></div>
-            <img [src]="profilePic" *ngIf="profilePic"/>
+            <img [src]="defaultProfilePic" alt="" *ngIf="!ownerProfilePic" />
+            <img [src]="ownerProfilePic" alt="{{opportunity.EntityOwner.FirstName + ' ' + opportunity.EntityOwner.LastName}}" *ngIf="ownerProfilePic" />
         </div>
         <div class="owner-info">
             <div class="owner-info-title"><label>Opportunity Owner</label></div>
@@ -75,8 +76,8 @@
                 <div class="info-icons-settings" matTooltip="Stage Settings" (click)="openStageSettings()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || isStageUser || currentUser?.IsSiteAdmin"></div>
                 
-                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="refreshPowerBi()"></div>
-                <div class="info-icons-power-bi" matTooltip="Go to Power BI" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="navigateTo(entity)"></div>
+                <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels && isOwner"  (click)="refreshPowerBi()"></div>
+                <div class="info-icons-power-bi" matTooltip="Go to Report" *ngIf="licensing.license?.HasPowerBi && hasAccessToModels"  (click)="navigateTo(entity)"></div>
             </div>
         </div>
         <div [ngSwitch]="currentSection">
@@ -159,7 +160,7 @@
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
+                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>

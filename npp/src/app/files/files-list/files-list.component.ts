@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { DatepickerOptions } from 'ng2-datepicker';
@@ -11,19 +12,24 @@ import { ConfirmDialogComponent } from 'src/app/modals/confirm-dialog/confirm-di
 import { CreateForecastCycleComponent } from 'src/app/modals/create-forecast-cycle/create-forecast-cycle.component';
 import { CreateScenarioComponent } from 'src/app/modals/create-scenario/create-scenario.component';
 import { EntityEditFileComponent } from 'src/app/modals/entity-edit-file/entity-edit-file.component';
-import { ExternalApproveModelComponent } from 'src/app/modals/external-approve-model/external-approve-model.component';
-import { ExternalUploadFileComponent } from 'src/app/modals/external-upload-file/external-upload-file.component';
+import { ApproveModelComponent } from 'src/app/modals/approve-model/approve-model.component';
 import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/folder-permissions.component';
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
-import { InlineNppDisambiguationService } from 'src/app/services/inline-npp-disambiguation.service';
-import { LicensingService } from 'src/app/services/licensing.service';
+import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { PowerBiService } from 'src/app/services/power-bi.service';
-import { SharepointService, FileComments, NPPFile, SelectInputList, User, FORECAST_MODELS_FOLDER_NAME, NPPFolder, NPPFileMetadata, ForecastCycle, Indication, Opportunity, FOLDER_ARCHIVED, FOLDER_APPROVED, FOLDER_WIP, FOLDER_DOCUMENTS, FILES_FOLDER, EntityGeography, EntityForecastCycle } from 'src/app/services/sharepoint.service';
-import { TeamsService } from 'src/app/services/teams.service';
+import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
+import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
+import { User } from '@shared/models/user';
+import * as SPFolders from '@shared/sharepoint/folders';
+import { AppDataService } from '@services/app/app-data.service';
+import { FilesService } from 'src/app/services/files.service';
+import { SelectInputList } from '@shared/models/app-config';
+import { SelectListsService } from '@services/select-lists.service';
+import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 
 @Component({
   selector: 'app-files-list',
@@ -47,7 +53,8 @@ export class FilesListComponent implements OnInit {
   dateOptions: DatepickerOptions = {
     format: 'Y-M-d'
   };
-  profilePic: string | boolean = '';
+  defaultProfilePic = '/assets/user.svg';
+  ownerProfilePic: SafeUrl | null = null;
   currentSection = 'models';
   currentFiles: NPPFile[] = [];
   uploadDialogInstance: any; 
@@ -64,55 +71,56 @@ export class FilesListComponent implements OnInit {
   loading = false;
 
   constructor(
-    private sharepoint: SharepointService, 
     private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
-    private teams: TeamsService,
     public licensing: LicensingService,
-    public disambiguator: InlineNppDisambiguationService,
     public notifications: NotificationsService,
-    private breadcrumbService: BreadcrumbsService
+    private breadcrumbService: BreadcrumbsService,
+    private sanitize: DomSanitizer,
+    private readonly appData: AppDataService,
+    private readonly files: FilesService,
+    private readonly selectLists: SelectListsService
   ) { }
 
   ngOnInit(): void {
-    if(this.teams.initialized) this.init();
-    else {
-      this.teams.statusSubject.subscribe(async (msg) => {
-        setTimeout(async () => {
-          this.init();
-        }, 500);
-      });
-    }
+    // if(this.teams.initialized) this.init();
+    // else {
+    //   this.teams.statusSubject.subscribe(async (msg) => {
+    //     setTimeout(async () => {
+    //       this.init();
+    //     }, 500);
+    //   });
+    // }
+    this.init();
   }
 
   init() {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
-      this.currentUser = await this.sharepoint.getCurrentUserInfo();
-      this.masterCycles = await this.sharepoint.getForecastCycles();
+      this.currentUser = await this.appData.getCurrentUserInfo();
+      this.masterCycles = await this.selectLists.getForecastCyclesList();
 
       if(params.id && params.id != this.entityId) {
         this.entityId = params.id;
-        this.entity = await this.sharepoint.getOpportunity(params.id);
+        this.entity = await this.appData.getEntity(params.id);
         if (!this.entity) {
           this.router.navigate(['notfound']);
         }
-        this.entityGeographies = await this.sharepoint.getOpportunityGeographies(this.entity.ID, false);
-        this.documentFolders = await this.sharepoint.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
+        this.entityGeographies = await this.appData.getEntityGeographies(this.entity.ID, false);
+        this.documentFolders = await this.appData.getInternalDepartments(this.entityId, this.entity.BusinessUnitId);
         let owner = this.entity.EntityOwner;
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
           this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
           
-          this.cycles = await this.disambiguator.getForecastCycles(this.entity);
+          this.cycles = await this.appData.getEntityForecastCycles(this.entity);
 
-          let pic = await this.sharepoint.getUserProfilePic(ownerId);
-          owner.profilePicUrl = pic ? pic : '/assets/user.svg';
-          this.profilePic = owner.profilePicUrl;
+          let profileImgBlob = await this.appData.getUserProfilePic(ownerId);
+          this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
         this.setStatus(this.modelStatus[0]);
       }
@@ -127,13 +135,13 @@ export class FilesListComponent implements OnInit {
   getSharepointFolderNameByModelStatus(status: string) {
     switch(status) {
       case 'Archived':
-        return FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_ARCHIVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Approved':
-        return FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_APPROVED+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       case 'Work in Progress':
-        return FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
+        return SPFolders.FOLDER_WIP+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/0';
       default:
-        return FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
+        return SPFolders.FOLDER_DOCUMENTS+'/'+this.entity?.BusinessUnitId+'/'+this.entity?.ID+'/0/'+this.selectedDepartmentId+'/0/0';
     }
   }
 
@@ -144,13 +152,13 @@ export class FilesListComponent implements OnInit {
   getRootFolder(status: string) {
     switch(status) {
       case 'Archived':
-        return FOLDER_ARCHIVED;
+        return SPFolders.FOLDER_ARCHIVED;
       case 'Approved':
-        return FOLDER_APPROVED;
+        return SPFolders.FOLDER_APPROVED;
       case 'Work in Progress':
-        return FOLDER_WIP;
+        return SPFolders.FOLDER_WIP;
       default:
-        return FOLDER_DOCUMENTS;
+        return SPFolders.FOLDER_DOCUMENTS;
     }
   }
 
@@ -171,7 +179,7 @@ export class FilesListComponent implements OnInit {
         let currentFolder = this.getCurrentFolder();
         
         if (this.currentStatus != 'none') {
-          this.geoFolders = await this.sharepoint.getSubfolders(currentFolder, true);
+          this.geoFolders = await this.appData.getSubfolders(currentFolder, true);
           // only folders of geography not removed
           this.geoFolders = this.geoFolders.filter(gf => this.entityGeographies.some((eg: EntityGeography) => +eg.ID === +gf.Name));
           this.currentFiles = [];
@@ -182,10 +190,10 @@ export class FilesListComponent implements OnInit {
             } else {
               folder = folder + '/0';
             }
-            this.currentFiles.push(...await this.disambiguator.readFolderFiles(folder, true));
+            this.currentFiles.push(...await this.appData.getFolderFiles(folder, true));
           }
         } else {
-          this.currentFiles = await this.disambiguator.readFolderFiles(currentFolder, true);
+          this.currentFiles = await this.appData.getFolderFiles(currentFolder, true);
         }
 
         this.initLastComments();
@@ -231,18 +239,18 @@ export class FilesListComponent implements OnInit {
 
   async openUploadDialog() {
     if(this.entity) {
-      let geographiesList = await this.disambiguator.getAccessibleGeographiesList(this.entity);
+      let geographiesList = await this.selectLists.getEntityAccessibleGeographiesList(this.entity);
       let folders = [...this.documentFolders];
       if (this.geoFolders.length == 0) {
         // not access to models, remove of the list
         folders = this.documentFolders.filter(el => !el.containsModels);
       }
-      this.dialogInstance = this.matDialog.open(ExternalUploadFileComponent, {
+      this.dialogInstance = this.matDialog.open(UploadFileComponent, {
         height: '600px',
         width: '405px',
         data: {
           geographies: geographiesList,
-          scenarios: await this.sharepoint.getScenariosList(),
+          scenarios: await this.selectLists.getScenariosList(),
           folderList: folders,
           selectedFolder: this.currentSection == 'documents' && this.selectedFolder ?  this.selectedFolder.DepartmentID : 0,
           entity: this.entity
@@ -252,7 +260,7 @@ export class FilesListComponent implements OnInit {
       this.dialogInstance.afterClosed()
       .pipe(take(1))
       .subscribe(async (result: any) => {
-        if (result.success) {
+        if (result.success && result.uploaded) {
           this.toastr.success(`The file ${result.name} was uploaded successfully`, "File Uploaded");
           this.updateCurrentFiles();
         } else if (result.success === false) {
@@ -309,7 +317,7 @@ export class FilesListComponent implements OnInit {
     if (!file.ListItemAllFields) return;
     if (!this.entity) return;
 
-    this.dialogInstance = this.matDialog.open(ExternalApproveModelComponent, {
+    this.dialogInstance = this.matDialog.open(ApproveModelComponent, {
       height: '300px',
       width: '405px',
       data: {
@@ -397,7 +405,7 @@ export class FilesListComponent implements OnInit {
     const fileInfo = this.currentFiles.find(f => f.ListItemAllFields?.ID === fileId);
     if (!fileInfo) return;
 
-    const response = await this.sharepoint.readFile(fileInfo.ServerRelativeUrl);
+    const response = await this.appData.readFile(fileInfo.ServerRelativeUrl);
     var newBlob = new Blob([response]);
 
     if (forceDownload) {
@@ -471,15 +479,15 @@ export class FilesListComponent implements OnInit {
     }
 
     // users with access
-    let folderUsersList = await this.sharepoint.getGroupMembers(folderGroup);
+    let folderUsersList = await this.appData.getGroupMembers(folderGroup);
     folderUsersList = folderUsersList.concat(
-      await this.sharepoint.getGroupMembers('OO-' + this.entityId)
+      await this.appData.getGroupMembers('OO-' + this.entityId)
     );
 
     // clean users list
     let uniqueFolderUsersList = [...new Map(folderUsersList.map(u => [u.Id, u])).values()];
     // remove own user
-    const currentUser = await this.sharepoint.getCurrentUserInfo();
+    const currentUser = await this.appData.getCurrentUserInfo();
     uniqueFolderUsersList = uniqueFolderUsersList.filter(el => el.Id !== currentUser.Id);
 
     this.matDialog.open(ShareDocumentComponent, {
@@ -556,7 +564,7 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async deleteConfirmed => {
         if (deleteConfirmed) {
-          if (await this.sharepoint.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
+          if (await this.files.deleteFile(fileInfo.ServerRelativeUrl, this.currentStatus == 'Work in Progress')) {
             // remove file for the current files list
             this.currentFiles = this.currentFiles.filter(f => f.ListItemAllFields?.ID !== fileId);
             this.toastr.success(`The file ${fileInfo.Name} has been deleted`, "File Removed");
@@ -618,7 +626,7 @@ export class FilesListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success) {
           this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.entity) this.cycles = await this.disambiguator.getForecastCycles(this.entity);
+          if(this.entity) this.cycles = await this.appData.getEntityForecastCycles(this.entity);
           this.entity = Object.assign(this.entity, {
             ForecastCycleId: success.ForecastCycleId,
             ForecastCycle: { 
