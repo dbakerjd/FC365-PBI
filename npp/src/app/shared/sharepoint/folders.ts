@@ -1,0 +1,10 @@
+export const FILES_FOLDER = "Current Opportunity Library";
+export const FOLDER_APPROVED = 'Approved Models';
+export const FOLDER_ARCHIVED = 'Archived Models';
+export const FOLDER_WIP = 'Work in Progress';
+export const FOLDER_DOCUMENTS = FILES_FOLDER;
+export const FOLDER_POWER_BI_DOCUMENTS = "Power BI Current Opportunity Library";
+export const FOLDER_POWER_BI_WIP = "Power BI Work In Progress";
+export const FOLDER_POWER_BI_APPROVED = "Power BI Approved Models";
+export const FOLDER_POWER_BI_ARCHIVED = "Power BI Archived Models";
+export const FORECAST_MODELS_FOLDER_NAME = 'Forecast Models';

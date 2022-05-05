@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { LicensingService } from './licensing.service';
-import { ErrorService } from './error.service';
-import { TeamsService } from './teams.service';
-import { PBIRefreshComponent, PBIReport, SharepointService } from './sharepoint.service';
+import { ErrorService } from './app/error.service';
 import { environment } from 'src/environments/environment';
+import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
+import { AppDataService } from './app/app-data.service';
+import { TeamsService } from './microsoft-data/teams.service';
 
 export interface PageDetails {
   ReportSection: string;
@@ -36,13 +36,13 @@ export class PowerBiService {
     private http: HttpClient, 
     private error: ErrorService, 
     private teams: TeamsService, 
-    private sharepoint: SharepointService) { }
+    private readonly appData: AppDataService) { }
 
   async refreshReport(reportName: string): Promise<number> {
     try {
 
-      this.report = await this.sharepoint.getReportByName(encodeURIComponent(reportName));
-      this.reportComponents = await this.sharepoint.getComponents(this.report);
+      this.report = await this.appData.getReportByName(encodeURIComponent(reportName));
+      this.reportComponents = await this.appData.getComponents(this.report);
 
       const token = await this.getPBIToken();
       const userObjectId = this.teams.context.userObjectId;
