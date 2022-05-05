@@ -6,13 +6,18 @@ export const environment = {
   ssoRedirectUrl: 'https://localhost:4200/auth-end',
   production: false,
   isInlineApp: true,
-  version: '0.5.1',
+  version: '0.5.3',
   contact: {
     name: 'PBI Teams',
     email: 'rheath@jdforecasting.com'
   },
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
-  functionAppDomain: 'localhost'
+  functionAppDomain: 'localhost',
+  hashUserEmails: false,
+  licensingInfo: {
+    entityId : 'FC365-Enterprise-Inline-Dev',
+    teamSiteDomain : 'janddconsulting.sharepoint.com'
+  }
 };
 
 /*
