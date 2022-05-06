@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
 import { AppDataService } from './app/app-data.service';
 import { TeamsService } from './microsoft-data/teams.service';
+import { LicensingService } from './jd-data/licensing.service';
 
 export interface PageDetails {
   ReportSection: string;
@@ -36,7 +37,9 @@ export class PowerBiService {
     private http: HttpClient, 
     private error: ErrorService, 
     private teams: TeamsService, 
-    private readonly appData: AppDataService) { }
+    private licensing: LicensingService,
+    private readonly appData: AppDataService
+  ) { }
 
   async refreshReport(reportName: string): Promise<number> {
     try {
@@ -45,14 +48,13 @@ export class PowerBiService {
       this.reportComponents = await this.appData.getComponents(this.report);
 
       const token = await this.getPBIToken();
-      const userObjectId = this.teams.context.userObjectId;
+      // const userObjectId = this.teams.context.userObjectId;
 
       const body = {
         reportType: reportName,
         token: token,
-        userObjectId: userObjectId,
-        entityId: this.teams.context.entityId,
-        teamSiteDomain: this.teams.context.teamSiteDomain,
+        // userObjectId: userObjectId,
+        appId: this.licensing.license?.AppId,
         reportComponents: this.reportComponents
       }
 

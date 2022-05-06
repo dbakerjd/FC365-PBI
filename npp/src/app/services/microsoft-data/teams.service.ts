@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 import { ErrorService } from '@services/app/error.service';
 import { LicensingService } from '@services/jd-data/licensing.service';
 import { DOCUMENT } from '@angular/common';
+import { LicenseContext } from '@shared/models/app-config';
 
 const isIE = window.navigator.userAgent.indexOf("MSIE ") > -1 || window.navigator.userAgent.indexOf("Trident/") > -1; // Remove this line to use Angular Universal
 
@@ -13,11 +14,6 @@ export function loggerCallback(logLevel: LogLevel, message: string) {
   console.log(message);
 }
 
-export interface LicenseContext {
-  host: string;
-  entityId?: string;
-  teamSiteDomain?: string;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -72,7 +68,7 @@ export class TeamsService {
     private licensing: LicensingService,
     @Inject(DOCUMENT) private document: Document
   ) { 
-    this.context = this.getEnvironmentContext();
+    this.context = this.getBrowserContext();
     this.startTeams();
 
     while (!this._hasAttemptedConnection); // wait for start teams attempt
@@ -121,7 +117,7 @@ export class TeamsService {
     return this.userLoggedIn;
   }
 
-  getEnvironmentContext(): LicenseContext {
+  getBrowserContext(): LicenseContext {
     return {
       host: document.location.host
     }

@@ -1,6 +1,7 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { LicenseContext } from '@shared/models/app-config';
 import { Md5 } from 'ts-md5';
 import { ErrorService } from '../app/error.service';
 
@@ -9,6 +10,7 @@ export interface JDLicense {
   Expiration: Date;
   SharePointUri: string;
   HasPowerBi: boolean;
+  AppId: string;
   TenantId: string;
   TotalSeats: number;
   AssignedSeats: number;
@@ -18,8 +20,8 @@ export interface JDLicense {
 }
 
 interface JDLicenseContext {
-  appId: number;
-  teamSiteDomain: string;
+  appId?: string;
+  installationAddress?: string;
 }
 
 interface SeatsResponse {
@@ -62,10 +64,9 @@ export class LicensingService {
         'Access-Control-Allow-Methods': 'POST',
       });
       let dataRequest;
-      if (context.entityId && context.teamSiteDomain) {
+      if (context.entityId) {
         dataRequest = {
           "appId" : context.entityId,
-          "teamSiteDomain" : context.teamSiteDomain
         }
       } else {
         dataRequest = {
@@ -77,13 +78,18 @@ export class LicensingService {
       }).toPromise() as JDLicense;
   }
 
-  async setJDLicense(context: any) {
+  async setJDLicense(context: LicenseContext) {
     this.license = await this.askLicensingApi(context);
     localStorage.setItem("JDLicense", JSON.stringify(this.license));
-    this.licenseContext = {
-      appId : context.entityId,
-      teamSiteDomain : context.teamSiteDomain
-    };
+    if (context.entityId) {
+      this.licenseContext = { appId: context.entityId }
+    } else {
+      this.licenseContext = { installationAddress: context.host }
+    }
+  }
+
+  getJDLicense(): JDLicense | null {
+    return this.license;
   }
 
   isValidJDLicense() {
