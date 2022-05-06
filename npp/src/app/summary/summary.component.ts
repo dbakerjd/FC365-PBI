@@ -18,6 +18,7 @@ export class SummaryComponent implements OnInit {
 
   loadingGraphics = true;
   loadingTasksTable = true;
+  seatsTableOption: 'All Users' | 'Admin Only' | 'Off' = 'All Users';
   currentUser: User | undefined = undefined;
   notificationsList: NPPNotification[] = [];
   gateProjects: Opportunity[] = [];
@@ -57,6 +58,7 @@ export class SummaryComponent implements OnInit {
   async init() {
     this.notificationsList = await this.notifications.getNotifications();
     this.currentUser = await this.permissions.getCurrentUserInfo();
+    this.seatsTableOption = await this.appControl.getAppConfigValue('SeatsTable');
 
     await this.prepareData();
     this.createGraphics();
@@ -419,6 +421,19 @@ export class SummaryComponent implements OnInit {
     };
     //@ts-ignore
     if(Object.keys(self.therapyAreasData.areas).length) Highcharts.chart('chart-4', optionsIndications);  
+  }
+
+  showSeatsTable() {
+    switch(this.seatsTableOption) {
+      case 'All Users':
+        return true;
+      case 'Admin Only':
+        return this.currentUser?.IsSiteAdmin;
+      case 'Off':
+        return false;
+      default:
+        return false;
+    }
   }
 
   private populateTherapyAreasData(opp: Opportunity) {

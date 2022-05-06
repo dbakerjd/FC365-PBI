@@ -415,6 +415,12 @@ export class PermissionsService {
     return entityUsers.some(u => u.Id === userId);
   }
 
+  /** Get the user groups inside an entity */
+  async getUserEntityGroups(userId: number, entityId: number) {
+    const userGroups = await this.appData.getUserGroups(userId);
+    return userGroups.filter(g => Number(g.Title.split('-')[1]) == entityId);
+  }
+
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
     const geographiesList = await this.appData.getMasterGeographies();
     const countriesList = await this.appData.getMasterCountries();
@@ -821,10 +827,17 @@ export class PermissionsService {
 
   private async removeUsersToPowerBI_RLS(users: number[], entityId: number, geographies: EntityGeography[]) {
     for (const u of users) {
-      if (!await this.isUserInEntity(entityId, u)) {
-        for (const g of geographies) {
-          const geoCountries = await this.getCountriesOfEntityGeography(g.Id);
-          await this.appData.removePowerBI_RLS(entityId, geoCountries, u);
+      const userGroups = await this.getUserEntityGroups(u, entityId);
+      if (!userGroups.some(g => g.Title.startsWith('OO') || g.Title.startsWith('SO'))) {
+        for (const geo of geographies) {
+          if (!userGroups.some(group => {
+            const gSplit = group.Title.split('-');
+            return group.Title.startsWith('DU') && gSplit.length > 3 && Number(gSplit[3]) == geo.Id;
+          })) {
+            // no està assignat a la geography
+            const geoCountries = await this.getCountriesOfEntityGeography(geo.Id);
+            await this.appData.removePowerBI_RLS(entityId, geoCountries, u);
+          }
         }
       }
     }

@@ -92,10 +92,6 @@ export class DashboardComponent implements OnInit {
     return this.teams.user;
   }
 
-  getContext()  {
-    return this.teams.context;
-  }
-
   getToken()  {
     return this.teams.token;
   }

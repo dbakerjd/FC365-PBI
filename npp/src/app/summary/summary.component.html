@@ -36,7 +36,7 @@
             </ng-container>
         </div>
         
-        <app-seats-table *ngIf="currentUser?.IsSiteAdmin"></app-seats-table>
+        <app-seats-table *ngIf="showSeatsTable()"></app-seats-table>
 
     </div>
     <div class="summary-notifications">

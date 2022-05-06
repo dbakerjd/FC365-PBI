@@ -74,14 +74,4 @@ export class AppControlService {
     return undefined;
   }
 
-  async getEntities() {
-    if(this.app) {
-      return this.appData.getAllEntities(this.app.ID);
-    } else {
-      this.error.toastr.error("Tried to get Entities but the app was not ready yet.")
-      return [];
-    }
-    
-  }
-
 }
