@@ -578,7 +578,7 @@ export class FilesListComponent implements OnInit {
   async refreshPowerBi() {
     if (!this.refreshingPowerBi) {
       this.refreshingPowerBi = true;
-      const reportName = "Epi Report";
+      const reportName = "Epi Report Inline";
 
       const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
 

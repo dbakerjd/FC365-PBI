@@ -839,7 +839,7 @@ export class ActionsListComponent implements OnInit {
     if (!this.refreshingPowerBi) {
       this.refreshingPowerBi = true;
       //const at the moment needs to be dynamic
-      const reportName = "Epi Report";
+      const reportName = "Epi Report Inline";
 
       const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
 
