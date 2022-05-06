@@ -1,6 +1,7 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { LicenseContext } from '@shared/models/app-config';
 import { Md5 } from 'ts-md5';
 import { ErrorService } from '../app/error.service';
 
@@ -9,15 +10,18 @@ export interface JDLicense {
   Expiration: Date;
   SharePointUri: string;
   HasPowerBi: boolean;
+  AppId: string;
   TenantId: string;
   TotalSeats: number;
   AssignedSeats: number;
   AvailableSeats: number;
+  ContactName: string;
+  ContactEmail: string;
 }
 
 interface JDLicenseContext {
-  appId: number;
-  teamSiteDomain: string;
+  appId?: string;
+  installationAddress?: string;
 }
 
 interface SeatsResponse {
@@ -59,21 +63,33 @@ export class LicensingService {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST',
       });
-      return await this.httpClient.post(this.licensingApiUrl + '/license', {
-        "appId" : context.entityId,
-        "teamSiteDomain" : context.teamSiteDomain
-      }, { 
+      let dataRequest;
+      if (context.entityId) {
+        dataRequest = {
+          "appId" : context.entityId,
+        }
+      } else {
+        dataRequest = {
+          "InstallationAddress" : context.host
+        }
+      }
+      return await this.httpClient.post(this.licensingApiUrl + '/license', dataRequest, { 
         headers: headers
       }).toPromise() as JDLicense;
   }
 
-  async setJDLicense(context: any) {
+  async setJDLicense(context: LicenseContext) {
     this.license = await this.askLicensingApi(context);
     localStorage.setItem("JDLicense", JSON.stringify(this.license));
-    this.licenseContext = {
-      appId : context.entityId,
-      teamSiteDomain : context.teamSiteDomain
-    };
+    if (context.entityId) {
+      this.licenseContext = { appId: context.entityId }
+    } else {
+      this.licenseContext = { installationAddress: context.host }
+    }
+  }
+
+  getJDLicense(): JDLicense | null {
+    return this.license;
   }
 
   isValidJDLicense() {
@@ -186,6 +202,16 @@ export class LicensingService {
 
   getSharepointDomain() {
     return this.getSharepointUri()?.split('/')[2];
+  }
+
+  getContactInfo(): { contactName: string; contactEmail: string; } | null {
+    if (this.license) {
+      return {
+        contactName: this.license.ContactName,
+        contactEmail: this.license.ContactEmail
+      };
+    }
+    return null;
   }
   
 }

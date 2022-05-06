@@ -1,0 +1,14 @@
+<app-dialog-header title="Upload File"></app-dialog-header>
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-dialog-content>
+        <formly-form [model]="model" [fields]="fields" [form]="form"></formly-form>
+    </mat-dialog-content>
+    <div class="dialog-footer">
+        <div class="dialog-cancel-button" mat-dialog-close *ngIf="!uploading">Cancel</div>
+        <div class="dialog-cancel-button" *ngIf="uploading">Close</div>
+        <div class="dialog-submit-button" cdkFocusInitial (click)="onSubmit()" *ngIf="!uploading">Upload and close</div>
+        <div class="dialog-submit-button" *ngIf="uploading">
+            <app-progress-spinner [size]="small"></app-progress-spinner>
+        </div>
+    </div>
+</form>
