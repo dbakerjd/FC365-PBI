@@ -91,6 +91,10 @@ export class AppDataService {
     return await this.sharepoint.getAllItems(SPLists.MASTER_APPS_LIST_NAME, "$select=*&$filter=Title eq '" + appId + "'");
   }
 
+  async getAppContactInfo() {
+    return await this.licensing.getContactInfo();
+  }
+
   /** ------ ENTITIES ------- **/
 
   async getEntity(id: number, expand = true): Promise<Opportunity> {

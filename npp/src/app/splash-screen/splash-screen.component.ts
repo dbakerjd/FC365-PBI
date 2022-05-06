@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AppDataService } from '@services/app/app-data.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -14,10 +15,13 @@ export class SplashScreenComponent implements OnInit {
   appTitle = 'NPP';
   client: any;
   
-  constructor(private readonly route: ActivatedRoute) { }
+  constructor(
+    private readonly route: ActivatedRoute, 
+    private readonly appData: AppDataService
+  ) { }
 
-  ngOnInit(): void {
-    this.client = environment.contact;
+  async ngOnInit(): Promise<void> {
+    this.client = await this.appData.getAppContactInfo();
     this.route.params.subscribe(async (params) => {
       if (params.message && typeof params.message === 'string') {
         this.messageToShow = params.message;

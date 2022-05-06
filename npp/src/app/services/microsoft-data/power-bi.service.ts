@@ -4,6 +4,8 @@ import { ErrorService } from '@services/app/error.service';
 import { environment } from 'src/environments/environment';
 import { PBIDataset, PBIDatasetRefresh, PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
 import { TeamsService } from '@services/microsoft-data/teams.service';
+import { GraphService } from '@services/microsoft-data/graph.service';
+import { LicensingService } from '@services/jd-data/licensing.service';
 
 
 
@@ -28,21 +30,22 @@ export class PowerBiService {
   constructor(
     private http: HttpClient, 
     private error: ErrorService, 
-    private teams: TeamsService
+    private teams: TeamsService,
+    private readonly licensing: LicensingService,
+    private readonly msgraph: GraphService
   ) { }
 
   async refreshReport(reportName: string, reportComponents: PBIRefreshComponent[]): Promise<number> {
     try {
 
       const token = await this.getPBIToken();
-      const userObjectId = this.teams.context.userObjectId;
+      const userObjectId = (await this.msgraph.getCurrentMSGraphUser()).id;
 
       const body = {
         reportType: reportName,
         token: token,
         userObjectId: userObjectId,
-        entityId: this.teams.context.entityId,
-        teamSiteDomain: this.teams.context.teamSiteDomain,
+        appId: this.licensing.license?.AppId,
         reportComponents: reportComponents
       }
 
