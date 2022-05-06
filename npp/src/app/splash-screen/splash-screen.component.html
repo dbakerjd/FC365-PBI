@@ -11,9 +11,9 @@
             <h1 *ngSwitchCase="'non-access'">It looks like you don't have permission to access the FC365 {{appTitle}} App</h1>
         </ng-container>
         <h2>
-            This application is currently intended for <span class="client">{{ client.name }}</span>. 
+            This application is currently intended for <span class="client">{{ client.contactName }}</span>. 
             If you think that this is an error, please raise a request with 
-            <span class="client"><a href="mailto:{{client.email}}?subject='FC365 {{appTitle}} App'">{{ client.email }}</a></span> 
+            <span class="client"><a href="mailto:{{client.contactEmail}}?subject='FC365 {{appTitle}} App'">{{ client.contactEmail }}</a></span> 
             detailing that you don't have access to the FC365 {{appTitle}} App.
         </h2>
     </div>

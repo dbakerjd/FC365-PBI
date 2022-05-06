@@ -1,17 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpResponse } from '@angular/common/http';
-import { ErrorService } from './app/error.service';
+import { ErrorService } from '@services/app/error.service';
 import { environment } from 'src/environments/environment';
-import { PBIRefreshComponent, PBIReport } from '../shared/models/pbi';
-import { AppDataService } from './app/app-data.service';
-import { TeamsService } from './microsoft-data/teams.service';
+import { PBIDataset, PBIDatasetRefresh, PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
+import { TeamsService } from '@services/microsoft-data/teams.service';
+import { GraphService } from '@services/microsoft-data/graph.service';
+import { LicensingService } from '@services/jd-data/licensing.service';
 
-export interface PageDetails {
-  ReportSection: string;
-  DisplayName: string;
-}
 
-export interface PBIResult {
+
+interface PBIResult {
   'odata.metadata': string;
   value: any;
 }
@@ -29,31 +27,26 @@ export interface PBIObject {
 
 export class PowerBiService {
 
-  report: PBIReport| undefined = undefined;
-  reportComponents: PBIRefreshComponent[] = [];
-
   constructor(
     private http: HttpClient, 
     private error: ErrorService, 
-    private teams: TeamsService, 
-    private readonly appData: AppDataService) { }
+    private teams: TeamsService,
+    private readonly licensing: LicensingService,
+    private readonly msgraph: GraphService
+  ) { }
 
-  async refreshReport(reportName: string): Promise<number> {
+  async refreshReport(reportName: string, reportComponents: PBIRefreshComponent[]): Promise<number> {
     try {
 
-      this.report = await this.appData.getReportByName(encodeURIComponent(reportName));
-      this.reportComponents = await this.appData.getComponents(this.report);
-
       const token = await this.getPBIToken();
-      const userObjectId = this.teams.context.userObjectId;
+      const userObjectId = (await this.msgraph.getCurrentMSGraphUser()).id;
 
       const body = {
         reportType: reportName,
         token: token,
         userObjectId: userObjectId,
-        entityId: this.teams.context.entityId,
-        teamSiteDomain: this.teams.context.teamSiteDomain,
-        reportComponents: this.reportComponents
+        appId: this.licensing.license?.AppId,
+        reportComponents: reportComponents
       }
 
       const url = environment.functionAppUrl;
@@ -65,9 +58,6 @@ export class PowerBiService {
           resolve(error.status);
         })
       })
-
-      //this.teams.hackyConsole += "******* POWER BI REFRESH ********      " + JSON.stringify(res) + "       ************************";
-
 
     } catch (e: any) {
 
@@ -111,6 +101,29 @@ export class PowerBiService {
     return returnObject;
 
 
+  }
+
+  async getDataset(groupId: string): Promise<PBIDataset[]> {
+    const url: string = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/datasets`;
+
+    let result = await this.http.get(url).toPromise() as PBIResult;
+
+    if (result.value && result.value.length > 0) {
+      return result.value
+    }
+    return [];
+  }
+
+  async getDatasetRefreshes(groupId: string, datasetId: string, top?: number): Promise<PBIDatasetRefresh[]> {
+    let url = `https://api.powerbi.com/v1.0/myorg/groups/${groupId}/datasets/${datasetId}/refreshes`;
+    if (top) url += '?top=' + top;
+
+    let result = await this.http.get(url).toPromise() as PBIResult;
+    
+    if (result.value && result.value.length > 0) {
+      return result.value;
+    }
+    return [];
   }
 
   async getPBIToken() {

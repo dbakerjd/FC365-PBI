@@ -14,10 +14,6 @@ export const environment = {
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost',
   hashUserEmails: false,
-  licensingInfo: {
-    entityId : 'NPPBetaDev',
-    teamSiteDomain : 'janddconsulting.sharepoint.com'
-  }
 };
 
 /*
