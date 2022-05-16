@@ -3,7 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  ssoRedirectUrl: 'https://localhost:4200/auth-end',
+  ssoRedirectUrl: 'https://localhost:3200/auth-end',
   production: false,
   isInlineApp: true,
   version: '0.5.4',
