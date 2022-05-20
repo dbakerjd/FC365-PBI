@@ -22,9 +22,10 @@ export class SummaryComponent implements OnInit {
   currentUser: User | undefined = undefined;
   notificationsList: NPPNotification[] = [];
   gateProjects: Opportunity[] = [];
-  phaseProjects: Opportunity[] = [];
+  allProjects: Opportunity[] = [];
   gateCount: any = {};
-  phaseCount: any = {};
+  // phaseCount: any = {};
+  clinicalTrialPhaseCount: any = {};
   therapyAreasData: any = {};
   currentTherapyArea: string = '';
   currentTasks: {
@@ -99,7 +100,8 @@ export class SummaryComponent implements OnInit {
     }
     
     this.gateProjects = opportunities.filter(el => el.isGateType);
-    this.phaseProjects = opportunities.filter(el => !el.isGateType);
+    this.allProjects = opportunities;
+    // this.phaseProjects = opportunities.filter(el => !el.isGateType);
   }
 
   private tasksTable() {
@@ -154,17 +156,15 @@ export class SummaryComponent implements OnInit {
         }
       });
 
-      this.phaseCount = { phases: {}, Total: 0 };
-      this.phaseProjects.forEach(p => {
-        let numPhases = p.gates?.length;
-        if (numPhases) {
-          if (this.phaseCount.phases["Phase " + numPhases]) {
-            this.phaseCount.phases["Phase " + numPhases] += 1;
-          } else {
-            this.phaseCount.phases["Phase " + numPhases] = 1;
-          }
+      this.clinicalTrialPhaseCount = { ctp: {}, Total: 0 };
+      this.allProjects.forEach(p => {
+        const clinicalTrialPhase = p.ClinicalTrialPhase;
+        
+        if (clinicalTrialPhase) {
+          if (this.clinicalTrialPhaseCount.ctp[clinicalTrialPhase.Title]) this.clinicalTrialPhaseCount.ctp[clinicalTrialPhase.Title] += 1;
+          else this.clinicalTrialPhaseCount.ctp[clinicalTrialPhase.Title] = 1;
 
-          this.phaseCount.Total += 1;
+          this.clinicalTrialPhaseCount.Total += 1;
         }
       });
 
@@ -234,7 +234,7 @@ export class SummaryComponent implements OnInit {
           type: 'pie'
         },
         title: {
-          text: 'Current Phase: ' + this.phaseCount.Total + ' Projects',
+          text: 'Current Phase: ' + this.clinicalTrialPhaseCount.Total + ' Projects',
           style: {
             "fontSize": "1.2rem",
             "color": "#000"
@@ -264,13 +264,13 @@ export class SummaryComponent implements OnInit {
           }
         },
         series: [{
-          name: 'Current Phase',
+          name: 'Clinical Trial Phases',
           colorByPoint: true,
-          data: Object.keys(this.phaseCount.phases).map(key => {
+          data: Object.keys(this.clinicalTrialPhaseCount.ctp).map(key => {
             return {
               name: key,
-              y: this.phaseCount.phases[key] * 100 / this.phaseCount.Total,
-              value: this.phaseCount.phases[key],
+              y: this.clinicalTrialPhaseCount.ctp[key] * 100 / this.clinicalTrialPhaseCount.Total,
+              value: this.clinicalTrialPhaseCount.ctp[key],
               sliced: true
             }
           })
@@ -347,7 +347,7 @@ export class SummaryComponent implements OnInit {
       //@ts-ignore
       if (this.gateProjects.length) Highcharts.chart('chart', optionsGateProjects);
       //@ts-ignore
-      if (this.phaseProjects.length) Highcharts.chart('chart-2', optionsPhaseProjects);
+      if (this.allProjects.length) Highcharts.chart('chart-2', optionsPhaseProjects);
       //@ts-ignore
       if (Object.keys(this.therapyAreasData.areas).length) Highcharts.chart('chart-3', optionsTherapyAreas);
 

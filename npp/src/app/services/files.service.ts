@@ -361,15 +361,17 @@ export class FilesService {
 
   /** Clone a forecast model to a new file with new scenarios */
   async cloneForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], authorId: number, comments = ''): Promise<boolean> {
-
     const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
+
+    let fileWithSameScenarios = await this.getFileByScenarios(destinationFolder, newScenarios);
+    if (fileWithSameScenarios) this.appData.deleteFile(fileWithSameScenarios.ServerRelativeUrl);
 
     let success = await this.appData.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
     if (!success) return false;
 
     let newFileInfo = await this.appData.getFileByName(destinationFolder, newFilename);
 
-    if (newFileInfo.value[0].ListItemAllFields && originFile.ListItemAllFields) {
+    if (newFileInfo[0].ListItemAllFields && originFile.ListItemAllFields) {
       const newData:any = {
         ModelScenarioId: newScenarios,
         Comments: comments ? comments : null,
@@ -379,9 +381,9 @@ export class FilesService {
       let arrFolder = destinationFolder.split("/");
       let rootFolder = arrFolder[3];
       
-      success = await this.appData.updateFilePropertiesById(newFileInfo.value[0].ListItemAllFields.ID, rootFolder, newData);
+      success = await this.appData.updateFilePropertiesById(newFileInfo[0].ListItemAllFields.ID, rootFolder, newData);
       if (success) {
-        await this.appData.changeFileEditor(authorId, rootFolder, newFileInfo.value[0].ListItemAllFields.ID);
+        await this.appData.changeFileEditor(authorId, rootFolder, newFileInfo[0].ListItemAllFields.ID);
       }
     }
     return success;

@@ -7,6 +7,9 @@ import { AppDataService } from '@services/app/app-data.service';
 import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { take } from 'rxjs/operators';
+import { forkJoin, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-create-scenario',
@@ -84,23 +87,94 @@ export class CreateScenarioComponent implements OnInit {
     let success = false;
 
     const destinationFolder = this.file.ServerRelativeUrl.replace('/' + this.file.Name, '/');
+    const scenarios = await this.appData.getMasterScenarios();
+    
     if (this.model.multipleFiles) {
       success = true;
+      let dialogsObs: Observable<any>[] = [];
+
       for (const scenId of this.model.scenario) {
-        const newFileName = await this.files.addScenarioSufixToFilename(this.file.Name, scenId);
-        if (newFileName) {
-          success = success && await this.createScenario(newFileName, destinationFolder, [scenId]);
+        const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, [scenId]);
+        if (existsFileWithSameScenarios) {
+          const currentScenario = scenarios.find(s => s.ID == scenId);
+          const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+            maxWidth: "400px",
+            height: "250px",
+            data: {
+              message: `A model with the scenario ${currentScenario?.Title} already exists. Do you want to overwrite it?`,
+              confirmButtonText: 'Yes, overwrite',
+              cancelButtonText: 'No, keep the original',
+              reference: scenId
+            }
+          });
+          dialogsObs.push(dialogRef.afterClosed());
         }
       }
+
+      forkJoin(dialogsObs)
+        .subscribe(async confirmations => {
+          for (const scenId of this.model.scenario) {
+            const confirmation = confirmations.find(c => c.reference == scenId);
+            if (!confirmation || (confirmation && confirmation.result)) {
+              const newFileName = await this.files.addScenarioSufixToFilename(this.file!.Name, scenId);
+              if (newFileName) {
+                success = success && await this.createScenario(newFileName, destinationFolder, [scenId]);
+              }
+            }
+          }
+          this.updating = this.dialogRef.disableClose = false;
+          this.dialogRef.close(success);
+        });
+
     } else {
-      // clone in one file
-      let newFileName = this.file.Name;
-      for (const scenId of this.model.scenario) {
-        const filenameSuffixed = await this.files.addScenarioSufixToFilename(newFileName, scenId);
-        if (filenameSuffixed) newFileName = filenameSuffixed;
+      success = true;
+      const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, this.model.scenario);
+      
+      if (existsFileWithSameScenarios) {
+        const scenariosNames = this.model.scenario.map((scenId: number) => {
+          const scenario = scenarios.find(s => s.ID == scenId);
+          if (scenario) return scenario.Title;
+          else return "";
+        });
+        let modalMessage = '';
+        if (scenariosNames.length > 1) {
+          modalMessage = `A model with the same scenarios (${scenariosNames.join(', ')}) already exists. Do you want to overwrite it?`
+        } else {
+          modalMessage = `A model with the same scenario (${scenariosNames}) already exists. Do you want to overwrite it?`
+        }
+        const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+          maxWidth: "400px",
+          height: "250px",
+          data: {
+            message: `A model with the same scenarios (${scenariosNames}) already exists. Do you want to overwrite it?`,
+            confirmButtonText: 'Yes, overwrite',
+            cancelButtonText: 'No, keep the original'
+          }
+        });
+      
+        dialogRef.afterClosed()
+          .pipe(take(1))
+          .subscribe(async overwrite => {
+            if (overwrite) {
+              await this.cloneInOneFile(this.file!.Name, destinationFolder);
+            } else {
+              // do nothing and close
+              this.updating = this.dialogRef.disableClose = false;
+              this.dialogRef.close(true);
+            }
+          });
+      } else {
+        await this.cloneInOneFile(this.file.Name, destinationFolder);
       }
-      success = await this.createScenario(newFileName, destinationFolder, this.model.scenario);
     }
+  }
+
+  private async cloneInOneFile(filename: string, destinationFolder: string) {
+    for (const scenId of this.model.scenario) {
+      const filenameSuffixed = await this.files.addScenarioSufixToFilename(filename, scenId);
+      if (filenameSuffixed) filename = filenameSuffixed;
+    }
+    const success = await this.createScenario(filename, destinationFolder, this.model.scenario);
     this.updating = this.dialogRef.disableClose = false;
     this.dialogRef.close(success);
   }
