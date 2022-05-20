@@ -46,6 +46,8 @@ export class PowerBiService {
         token: token,
         userObjectId: userObjectId,
         appId: this.licensing.license?.AppId,
+        tenantId: this.licensing.license?.TenantId,
+        entityId: this.teams.context.entityId,
         reportComponents: reportComponents
       }
 
