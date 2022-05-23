@@ -40,6 +40,7 @@ export class DashboardComponent implements OnInit {
 
   async ngOnInit() {
 
+    this.loadedApp = this.teams.isLoggedIn();
     this.teams.statusSubject
       .pipe(takeUntil(this._destroying$))
       .subscribe(async (msg) => {
