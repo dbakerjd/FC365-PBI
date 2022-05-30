@@ -69,7 +69,7 @@ export class BrandListComponent implements OnInit {
     
     this.brands = await this.entities.getAll();
 
-    const owners = this.brands.map(el => { return { label: el.EntityOwner?.Title, value: el.EntityOwnerId }});
+    const owners = this.brands.map(el => { return { label: el.EntityOwner?.FirstName + ' ' + el.EntityOwner?.LastName, value: el.EntityOwnerId }});
     const uniqueOwners = [...new Map(owners.map(o => [o.value, o])).values()];
 
     this.fields = [{
