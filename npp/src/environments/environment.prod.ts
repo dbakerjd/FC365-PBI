@@ -2,7 +2,7 @@ export const environment = {
   ssoRedirectUrl: 'https://nice-cliff-0f19cff03.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: false,
-  version: '0.5.5',
+  version: '0.5.6',
   contact: {
     name: 'Technical Team',
     email: 'dbaker@jdforecasting.com'
