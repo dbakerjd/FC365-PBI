@@ -27,6 +27,9 @@
         
         .header-menu-link-wrapper {
             height: 100%;
+            img, svg path {
+                fill: #fff;
+            }
         }
         a {
             text-decoration: none !important;
@@ -58,7 +61,7 @@
     .header-menu-link-wrapper.selected,
     .header-menu-link:hover {
         img, svg path {
-            fill: #F15A29;
+            fill: #F15A29 !important;
         }
         div.selected-item {
             display: block;
