@@ -1,6 +1,6 @@
 {
     "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.12/MicrosoftTeams.schema.json",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "manifestVersion": "1.12",
     "id": "e01a5bd5-f2cd-4c2c-846a-0236444cdb61",
     "packageName": "com.microsoft.teams.extension",
@@ -13,7 +13,7 @@
         "mpnId": "6384361",
         "websiteUrl": "https://jdforecasting.com/",
         "privacyUrl": "https://jdforecasting.com/privacy-policy/",
-        "termsOfUseUrl": "https://jdforecasting.com/terms-of-service/"
+        "termsOfUseUrl": "https://jdforecasting.com/terms/"
     },
     "description": {
         "short": "All-in-one, pharmaceutical forecasting platform",
