@@ -6,14 +6,15 @@ export const environment = {
   ssoRedirectUrl: 'https://localhost:3200/auth-end',
   production: false,
   isInlineApp: false,
-  version: '0.5.4',
-  contact: {
-    name: 'Janssen Team',
-    email: 'clientcontact@example.com'
-  },
+  version: '0.5.7',
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost',
-  hashUserEmails: false,
+  //AAD api scope to use. For multitenant must be preceded by domain, otherwise api://{clientID}/{scope}
+  apiScope: 'https://janddconsulting.onmicrosoft.com/FC365-Test-NPP/user_impersonation',
+  //AAD client ID
+  clientID: '6c76f4df-ba13-4aca-8e16-d7c0bb9d9a51',
+  //use common for multitenant apps, otherwise use TenantId
+  authority: 'common'
 };
 
 /*
