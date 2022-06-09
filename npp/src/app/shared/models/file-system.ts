@@ -23,6 +23,7 @@ export interface NPPFile {
     StageNameId?: number;
     ApprovalStatusId?: number;
     ApprovalStatus?: any;
+    ApprovalDate?: Date;
     EntityGeographyId?: number;
     EntityGeography?: EntityGeography;
     ModelScenarioId?: number[];

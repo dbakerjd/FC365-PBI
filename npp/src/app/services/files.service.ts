@@ -186,12 +186,16 @@ export class FilesService {
       await this.appData.updateFilePropertiesById(file.ListItemAllFields.ID, rootFolder, data);
       let res;
       if (status === "Approved" && entity && file.ServerRelativeUrl.indexOf(FILES_FOLDER) == -1) {
+        // copy the model to approved folder
         let arrFolder = file.ServerRelativeUrl.split("/");
         await this.removeOldApprovedModel(entity, file);
         res = await this.appData.copyFile(file.ServerRelativeUrl, '/' + arrFolder[1] + '/' + arrFolder[2] + '/' + FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0/' + arrFolder[arrFolder.length - 3] + '/0/', file.Name);
 
         if (res) {
-          await this.appData.updateFilePropertiesByPath(res, { OriginalModelId: file.ListItemAllFields.ID })
+          await this.appData.updateFilePropertiesByPath(res, { 
+            OriginalModelId: file.ListItemAllFields.ID,
+            ApprovalDate: new Date().toISOString()
+          })
           await this.copyCSV(file, res);
         }
         return res;
