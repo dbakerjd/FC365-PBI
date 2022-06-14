@@ -659,7 +659,8 @@ export class FilesListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        entity: this.entity
+        entity: this.entity,
+        cycles: this.cycles
       }
     });
 
@@ -668,16 +669,18 @@ export class FilesListComponent implements OnInit {
       .subscribe(async (success: any) => {
         if (success) {
           this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.entity) this.cycles = await this.appData.getEntityForecastCycles(this.entity);
-          this.entity = Object.assign(this.entity, {
-            ForecastCycleId: success.ForecastCycleId,
-            ForecastCycle: { 
-              Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
-              ID: success.ForecastCycleId
-            },
-            Year: success.Year,
-            ForecastCycleDescriptor: success.ForecastCycleDescriptor
-          });
+          if(this.entity) {
+            this.cycles = await this.appData.getEntityForecastCycles(this.entity);
+            this.entity = Object.assign(this.entity, {
+              ForecastCycleId: success.ForecastCycleId,
+              ForecastCycle: { 
+                Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
+                ID: success.ForecastCycleId
+              },
+              Year: success.Year,
+              ForecastCycleDescriptor: success.ForecastCycleDescriptor
+            });
+          } 
           this.updateCurrentFiles();
         } else if (success === false) {
           this.toastr.error('The new forecast cycle could not be created', 'Try Again');
