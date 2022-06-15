@@ -152,8 +152,14 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <div>
-                                    <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                <div class="documents-files-item-model-status">
+                                    <div [ngClass]="{
+                                        'status-in-progress': file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress', 
+                                        'status-submitted': file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted', 
+                                        'status-approved': file.ListItemAllFields?.ApprovalStatus?.Title == 'Approved'
+                                    }">
+                                        <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
+                                    </div>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
                                         <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> 
                                         <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
