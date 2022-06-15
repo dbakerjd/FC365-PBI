@@ -6,7 +6,7 @@ import { Opportunity } from './shared/models/entity';
 })
 export class FilterPipe implements PipeTransform {
 
-  transform(list: Opportunity[], titleFilter?: string, statusFilter?: string, typeFilter?: string, indicationFilter?: number): any {
+  transform(list: Opportunity[], titleFilter?: string, statusFilter?: string, typeFilter?: string, indicationFilter?: any): any {
     if (titleFilter) {
       list = [...list.filter(e => e.Title.search(new RegExp(titleFilter, 'i')) > -1)];
     }
@@ -19,8 +19,13 @@ export class FilterPipe implements PipeTransform {
       list = [...list.filter(e => e.OpportunityTypeId === +typeFilter)];
     }
 
-    if (indicationFilter) {
-      list = [...list.filter(e => (e.IndicationId.indexOf(indicationFilter) > -1))];
+    if (indicationFilter && indicationFilter.length > 0) {
+      list = [...list.filter(e => indicationFilter.some((currentFilter: number | string) => { 
+        // if currentFilter is a string, is the 'Therapy name' including all 'Indications'
+        // if its a number is an individual 'Indication'
+        if (typeof currentFilter === 'string') return e.Indication.some(i => i.TherapyArea === currentFilter);
+        else return e.IndicationId.includes(currentFilter)
+      }))];
     }
     
     return list;

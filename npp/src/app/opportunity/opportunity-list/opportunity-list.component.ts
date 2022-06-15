@@ -90,7 +90,7 @@ export class OpportunityListComponent implements OnInit {
         }
       },{
         key: 'indication',
-        type: 'select',
+        type: 'ngselectgroups',
         templateOptions: {
           placeholder: 'All indications',
           options: indications,

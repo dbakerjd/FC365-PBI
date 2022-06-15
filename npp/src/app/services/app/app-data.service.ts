@@ -364,6 +364,7 @@ export class AppDataService {
 
   /** ---- MASTER INFO ---- */
 
+  /** Get the list of all indications or for a concrete therapy */
   async getMasterIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndicationsCache.find(i => i.therapy == therapy);
     if (cache) {

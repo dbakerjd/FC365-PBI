@@ -53,6 +53,24 @@ input, select, textarea,
     }
 }
 
+.opportunity-filter {
+    select {
+        background-color: #fff;
+    }
+
+    .ng-select .ng-select-container {
+        height: 36px;
+        .ng-value-container {
+            flex-wrap: nowrap !important;
+            overflow: hidden;
+        }
+        .ng-placeholder {
+            color: #666 !important;
+            top: 0.5rem !important;
+        }
+    }
+}
+
 .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
     top: 0;
 }
