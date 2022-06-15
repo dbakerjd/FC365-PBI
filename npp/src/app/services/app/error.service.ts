@@ -10,9 +10,11 @@ export class ErrorService {
   constructor(public toastr: ToastrService) { }
 
   handleError(e: any) {
-    this.toastr.error(e.message);
-    if(e.status && e.status == 403) {
-      this.subject.next('unauthorized');
+    let errorMessage = e.message;
+    if(e.status) {
+      if (e.status == 403) this.subject.next('unauthorized');
+      else if (e.status === 423) errorMessage = "The file is locked by another user right now. Try again later";
     }
+    this.toastr.error(errorMessage);
   }
 }
