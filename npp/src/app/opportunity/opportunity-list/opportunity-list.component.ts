@@ -92,7 +92,7 @@ export class OpportunityListComponent implements OnInit {
         key: 'indication',
         type: 'ngselectgroups',
         templateOptions: {
-          placeholder: 'All indications',
+          placeholder: 'All therapies/indications',
           options: indications,
         }
       },{

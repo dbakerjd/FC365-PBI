@@ -567,12 +567,18 @@ app-opportunity-list, app-brand-list {
             color: #666;
         }
 
+        // search by name field filter
         &:nth-child(1) {
             width: 25%;
             input {
                 padding: 1px 4px 1px 7.5px;
                 width: 100%;
             }
+        }
+
+        // indications field filter
+        &:nth-child(4) {
+            width: 20%;
         }
     }
 }
