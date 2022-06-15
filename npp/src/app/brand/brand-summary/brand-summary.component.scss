@@ -97,49 +97,6 @@
     }
 
     .next-tasks {
-        width: 100%;
-        .next-tasks-header {
-            width: 100%;
-            padding: 2%;
-            div {
-                font-weight: bold;
-            }
-        }
-
-        .next-tasks-content {
-            width: 100%;
-            padding: 0 2%;
-            & > div {
-                line-height: 3rem;
-                border-bottom: 1px solid #fff;
-            }
-        }
-
-        .next-tasks-brand-name {
-            width: 55%;
-            display: inline-block;
-        }
-        .next-tasks-forecast-cycle {
-            width: 25%;
-            display: inline-block;
-        }
-
-        .next-tasks-models {
-            width: 10%;
-            display: inline-block;
-        }
-
-        .next-tasks-approved {
-            width: 10%;
-            display: inline-block;
-        }
-
-        .next-tasks-title {
-            width: 100%;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
         padding-bottom: 50px;
     }
 
