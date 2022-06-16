@@ -186,6 +186,7 @@ export class FilesListComponent implements OnInit {
           for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
+              this.cycles = await this.appData.getEntityForecastCycles(this.entity!);
               folder = folder + '/' + this.currentCycle;
             } else {
               folder = folder + '/0';
