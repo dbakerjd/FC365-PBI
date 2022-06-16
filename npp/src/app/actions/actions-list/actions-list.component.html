@@ -207,9 +207,18 @@
                     </div>
                     <div class="action-item-completed" *ngIf="!action.Complete"><label>Not completed yet</label></div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
-                        <label>Due by </label>
+                        <label class="duedate-warning" matTooltip="Please note that the due by date is currently scheduled to occur after the entire gate / phase has been reviewed." matTooltipClass='red-tooltip' *ngIf="afterGateDue(action.ActionDueDate); else simpleDueLabel">
+                            Due by 
+                            <span class="duedate-warning-icon">
+                                <div class="action-item-status-icon"></div>
+                            </span>
+                        </label>
+                        <ng-template #simpleDueLabel>
+                            <label>Due by</label>
+                        </ng-template>
                         <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner || currentUser?.IsSiteAdmin"></ngx-datepicker>
                         <span *ngIf="!isOwner && !currentUser?.IsSiteAdmin">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
+                        
                     </div>
                     <div class="action-item-status">
                         <div class="action-item-status-button" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">
