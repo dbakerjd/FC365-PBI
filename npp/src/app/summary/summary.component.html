@@ -30,7 +30,9 @@
                 <tr class="next-tasks-content" *ngFor="let t of currentTasks">
                     <td >{{t.opportunityName}}</td>
                     <td >{{t.taskName}}</td>
-                    <td *ngIf="t.taskDeadLine">{{t.taskDeadLine | date : 'd MMM y' }}</td>
+                    <td *ngIf="t.taskDeadLine" [ngClass]="getDeadlineClass(t.taskDeadLine)">
+                        {{t.taskDeadLine | date : 'd MMM y' }}
+                    </td>
                     <td *ngIf="!t.taskDeadLine"> - </td>
                 </tr>
             </table>

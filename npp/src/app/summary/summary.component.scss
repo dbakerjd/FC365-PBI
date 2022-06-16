@@ -98,6 +98,19 @@
 
     .next-tasks {
         padding-bottom: 50px;
+
+        td.deadline {
+            color: green;
+
+            &.late {
+                color: red;
+            }
+
+            &.soon {
+                color: orange;
+            }
+        }
+
     }
 
     .section-title {

@@ -436,6 +436,20 @@ export class SummaryComponent implements OnInit {
     }
   }
 
+  /** get the deadline date class */
+  getDeadlineClass(date: Date) {
+    const today = new Date();
+    const nextWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7).getTime();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).getTime();
+    const deadlineDate = new Date(date).getTime();
+    if (deadlineDate < today.getTime() || deadlineDate < nextWeek) {
+      return 'deadline late';
+    } else if (deadlineDate < nextMonth) {
+      return 'deadline soon';
+    }
+    return 'deadline';
+  }
+
   private populateTherapyAreasData(opp: Opportunity) {
     if (opp.Indication && opp.Indication.length) {
       for (let i = 0; i < opp.Indication.length; i++) {
