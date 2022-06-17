@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { Action, Country, EntityForecastCycle, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { OpportunityInput, StageInput, BrandInput, EntityGeographyInput } from '@shared/models/inputs';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
@@ -212,7 +212,7 @@ export class AppDataService {
     );
   }
 
-  async getEntityForecastCycles(entity: Opportunity) {
+  async getEntityForecastCycles(entity: Opportunity): Promise<EntityForecastCycle[]> {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.sharepoint.getAllItems(
