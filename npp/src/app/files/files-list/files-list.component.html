@@ -185,7 +185,9 @@
                                     </div>
                                 </ng-container>
                                 <div class="documents-files-item-model-indications">
-
+                                    <p *ngIf="file.ListItemAllFields.ApprovalDate">
+                                        <label>Approved at: </label> {{ file.ListItemAllFields.ApprovalDate | date : 'Y-M-d HH:mm'}}
+                                    </p>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">
