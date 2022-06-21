@@ -16,7 +16,7 @@
     </div>
     <div class="opportunity-molecule">
         <p><label>Molecule Name: </label> {{opportunity.MoleculeName}}</p>
-        <p><label>{{stringMapper.getString('Indications')}}: </label> {{opportunity.Indication.Title}}</p> 
+        <p><label>{{stringMapper.getString('Indications')}}: </label> {{getIndications(opportunity.Indication)}}</p> 
     </div>
     <div class="opportunity-owner">
         <div class="owner-pic">
