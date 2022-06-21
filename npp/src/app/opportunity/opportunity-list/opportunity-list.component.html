@@ -27,7 +27,7 @@
             <div class="opportunity-name" (click)="navigateTo(item)">
                 <p class="opportunity-title">{{item.Title}}</p>
                 <p><label>Molecule Name: </label> {{item.MoleculeName}}</p>
-                <p><label>Indication: </label> {{item.IndicationAsString}}</p>
+                <p><label>{{stringMapper.getString('Indications')}}: </label> {{item.IndicationAsString}}</p>
                 <p><label>Clinical Trial Phase: </label> {{item.ClinicalTrialPhase?.Title}}</p>
             </div>
             <div class="opportunity-progress" (click)="navigateTo(item)">
@@ -35,7 +35,7 @@
                 <p *ngIf="item.EntityOwner"><label>Opportunity Owner: </label> {{item.EntityOwner.FirstName + ' ' + item.EntityOwner.LastName}}</p>
                 <p *ngIf="item.ProjectEndDate"><label>Project End Date: </label> {{item.ProjectEndDate | date : 'MMM y'}}</p>
                 <p *ngIf="item.Year"><label>Year: </label> {{item.Year }}</p>
-                <p><label>Therapy Area: </label> {{item.TherapyAreaAsString}}</p>
+                <p><label>{{stringMapper.getString('Therapy Areas')}}: </label> {{item.TherapyAreaAsString}}</p>
             </div>
             <div class="opportunity-actions">
                 <div class="opportunity-icon-edit" matTooltip="Edit Opportunity" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.EntityOwnerId" (click)="editOpportunity(item)"></div>

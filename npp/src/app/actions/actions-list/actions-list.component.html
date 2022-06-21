@@ -16,7 +16,7 @@
     </div>
     <div class="opportunity-molecule">
         <p><label>Molecule Name: </label> {{opportunity.MoleculeName}}</p>
-        <p><label>Indication: </label> {{opportunity.Indication.Title}}</p> 
+        <p><label>{{stringMapper.getString('Indications')}}: </label> {{opportunity.Indication.Title}}</p> 
     </div>
     <div class="opportunity-owner">
         <div class="owner-pic">
@@ -143,7 +143,7 @@
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
-                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p><label>{{stringMapper.getString('Indications')}}: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>

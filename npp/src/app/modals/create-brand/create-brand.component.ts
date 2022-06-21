@@ -12,6 +12,7 @@ import { EntitiesService } from 'src/app/services/entities.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-create-brand',
@@ -42,6 +43,7 @@ export class CreateBrandComponent implements OnInit {
     private readonly entities: EntitiesService, 
     private readonly permissions: PermissionsService, 
     private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
     ) { }
 
   async ngOnInit() {
@@ -106,7 +108,7 @@ export class CreateBrandComponent implements OnInit {
           key: 'therapy',
           type: 'select',
           templateOptions: {
-            label: 'Therapy Area:',
+            label: this.stringMapper.getString('Therapy Areas') + ':',
             options: therapies,
             required: true,
           },
@@ -115,7 +117,7 @@ export class CreateBrandComponent implements OnInit {
           key: 'Brand.IndicationId',
           type: 'ngsearchable',
           templateOptions: {
-            label: 'Indication Name:',
+            label: this.stringMapper.getString('Indications') + ':',
             options: indicationsList,
             multiple: true,
             required: true,

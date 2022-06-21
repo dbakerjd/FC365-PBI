@@ -15,6 +15,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { EntitiesService } from '@services/entities.service';
 import { SelectListsService } from '@services/select-lists.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -42,7 +43,8 @@ export class BrandListComponent implements OnInit {
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   async ngOnInit() {
@@ -95,14 +97,14 @@ export class BrandListComponent implements OnInit {
         key: 'therapy',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Therapy Areas',
+          placeholder: 'All ' + this.stringMapper.getString('Therapy Areas'),
           options: therapies,
         }
       },{
         key: 'indication',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Indications',
+          placeholder: 'All ' + this.stringMapper.getString('Indications'),
           options: indicationsList
         },
         hooks: {

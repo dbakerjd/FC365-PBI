@@ -31,6 +31,7 @@ import { FilesService } from '@services/files.service';
 import { SelectListsService } from '@services/select-lists.service';
 import { EntitiesService } from '@services/entities.service';
 import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -84,7 +85,8 @@ export class ActionsListComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
     private readonly selectLists: SelectListsService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly stringMapper: StringMapperService
     ) { }
 
   ngOnInit(): void {

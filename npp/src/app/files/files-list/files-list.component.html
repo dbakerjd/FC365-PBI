@@ -6,11 +6,11 @@
     </div>
     <div class="brand-indication">
         <p><label>BusinessUnit: </label>{{entity?.BusinessUnit?.Title}}</p>
-        <p><label>Indication: </label>{{getIndications(entity?.Indication)}}</p>
+        <p><label>{{stringMapper.getString('Indication')}}: </label>{{getIndications(entity?.Indication)}}</p>
     </div>
     <div class="brand-dates">
         <!-- <p><label>Forecast Cycle Due Date: </label> {{entity?.FCDueDate | date : 'dd MMM y'}}</p>-->
-        <p><label>Therapy Area: </label> {{getTherapyArea(entity?.Indication)}}</p>
+        <p><label>{{stringMapper.getString('Therapy Area')}}: </label> {{getTherapyArea(entity?.Indication)}}</p>
         <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
     </div>
     <div class="brand-owner">
@@ -156,7 +156,7 @@
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
-                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p><label>{{stringMapper.getString('Indications')}}: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Last Modified at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Editor"><label> by </label>

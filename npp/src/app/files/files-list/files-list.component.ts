@@ -30,6 +30,7 @@ import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-files-list',
@@ -82,7 +83,8 @@ export class FilesListComponent implements OnInit {
     private readonly appData: AppDataService,
     private readonly appControl: AppControlService,
     private readonly files: FilesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   ngOnInit(): void {
@@ -530,12 +532,12 @@ export class FilesListComponent implements OnInit {
         }
 
         if(res.needsIndicationsUpdate && res.indicationsUpdateWorked) {
-          str += ` Indications have been updated.`
+          str += ` ${this.stringMapper.getString('Indications')} have been updated.`
         }
 
         if(res.needsIndicationsUpdate && !res.indicationsUpdateWorked) {
           error = true;
-          str += ` There was an error updating model indications.`
+          str += ` There was an error updating model ${this.stringMapper.getString('Indications').toLocaleLowerCase()}.`
         }
 
         if (!error) {

@@ -18,7 +18,7 @@
             <div class="opportunity-status">
                 <p class="brand-forecast-cyle">{{item.ForecastCycle?.Title}} {{item.Year}}</p>
                 <p class="brand-business-unit"><label>Business Unit:</label> {{item.BusinessUnit?.Title}}</p>
-                <p class="brand-indication"><label>Indication:</label> {{getIndications(item.Indication)}}</p>
+                <p class="brand-indication"><label>{{stringMapper.getString('Indications')}}:</label> {{getIndications(item.Indication)}}</p>
             </div>
             <div class="opportunity-name" (click)="navigateTo(item)">
                 <p class="opportunity-title">{{item.Title}}</p>
@@ -26,7 +26,7 @@
             <div class="opportunity-progress" (click)="navigateTo(item)">
                 <p *ngIf="item.EntityOwner"><label>Brand Owner: </label> {{item.EntityOwner?.FirstName + ' ' + item.EntityOwner?.LastName}}</p>
                 <!-- <p><label>Forecast Cycle Due Date: </label> {{item.FCDueDate | date : 'dd MMM y'}}</p>-->
-                <p *ngIf="item.Indication && item.Indication.length"><label>Therapy Area: </label> {{item.Indication[0].TherapyArea}}</p>
+                <p *ngIf="item.Indication && item.Indication.length"><label>{{stringMapper.getString('Therapy Area')}}: </label> {{item.Indication[0].TherapyArea}}</p>
             </div>
             <div class="opportunity-actions">
                 <div class="opportunity-icon-edit" matTooltip="Edit Brand" *ngIf="currentUser?.IsSiteAdmin || currentUser?.Id == item.BrandOwnerId" (click)="editBrand(item)"></div>

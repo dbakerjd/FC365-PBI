@@ -10,6 +10,7 @@ import { PermissionsService } from 'src/app/services/permissions.service';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-create-opportunity',
@@ -45,6 +46,7 @@ export class CreateOpportunityComponent implements OnInit {
     private readonly entities: EntitiesService,
     private readonly appData: AppDataService,
     private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService,
     public matDialog: MatDialog,
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<CreateOpportunityComponent>
@@ -157,7 +159,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'therapy',
           type: 'select',
           templateOptions: {
-            label: 'Therapy Area:',
+            label: this.stringMapper.getString('Therapy Area') + ':',
             options: therapies,
             required: true,
           },
@@ -166,7 +168,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'Opportunity.IndicationId',
           type: 'ngsearchable',
           templateOptions: {
-            label: 'Indication Name:',
+            label: this.stringMapper.getString('Indications') + ':',
             options: indicationsList,
             multiple: true,
             required: true,

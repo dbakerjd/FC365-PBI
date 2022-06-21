@@ -13,7 +13,7 @@ export class StringMapperService {
     this.loadList(); 
   }
 
-  async loadList() {
+  private async loadList() {
     this.mappingList = await this.appData.getStringMappingItems();
   }
 
