@@ -671,7 +671,10 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (success: any) => {
         if (success) {
-          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
+          this.toastr.success(
+            `The new ${this.stringMapper.getString('Forecast Cycle', 'l')} has been created successfully`, 
+            "New " + this.stringMapper.getString('Forecast Cycle')
+          );
           if(this.entity) {
             this.cycles = await this.appData.getEntityForecastCycles(this.entity);
             this.entity = Object.assign(this.entity, {
@@ -686,7 +689,7 @@ export class FilesListComponent implements OnInit {
           } 
           this.updateCurrentFiles();
         } else if (success === false) {
-          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+          this.toastr.error(`The new ${this.stringMapper.getString('Forecast Cycle', 'l')} could not be created`, 'Try Again');
         }
       });
   }

@@ -278,7 +278,10 @@ export class BrandListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (success: any) => {
         if (success) {
-          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
+          this.toastr.success(
+            `The new ${this.stringMapper.getString('forecast cycle', 'l')} has been created successfully`, 
+            "New " + this.stringMapper.getString('Forecast Cycle')
+          );
           brand = Object.assign(brand, {
             ForecastCycleId: success.ForecastCycleId,
             ForecastCycle: { 
@@ -288,7 +291,7 @@ export class BrandListComponent implements OnInit {
             Year: success.Year
         });
         } else if (success === false) {
-          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+          this.toastr.error(`The new ${this.stringMapper.getString('forecast cycle', 'l')} could not be created`, 'Try Again');
         }
       });
   }

@@ -256,7 +256,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'Opportunity.ForecastCycleId',
           type: 'select',
           templateOptions: {
-            label: 'Forecast Cycle:',
+            label: this.stringMapper.getString('Forecast Cycle') + ':',
             options: forecastCycles,
             required: true,
           },
@@ -266,7 +266,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'Opportunity.Year',
           type: 'select',
           templateOptions: {
-            label: 'Year:',
+            label: this.stringMapper.getString('FC Year') + ':',
             options: elegibleYears.map(el => {
               return {
                 label: el,
@@ -281,7 +281,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'Opportunity.ForecastCycleDescriptor',
           type: 'input',
           templateOptions: {
-            label: 'Forecast Cycle Descriptor:',
+            label: this.stringMapper.getString('Forecast Cycle Descriptor'),
             required: false,
           },
           defaultValue: this.opportunity?.ForecastCycleDescriptor,

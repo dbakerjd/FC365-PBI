@@ -9,7 +9,6 @@
         <p><label>{{stringMapper.getString('Indication')}}: </label>{{getIndications(entity?.Indication)}}</p>
     </div>
     <div class="brand-dates">
-        <!-- <p><label>Forecast Cycle Due Date: </label> {{entity?.FCDueDate | date : 'dd MMM y'}}</p>-->
         <p><label>{{stringMapper.getString('Therapy Area')}}: </label> {{getTherapyArea(entity?.Indication)}}</p>
         <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
     </div>
@@ -68,7 +67,7 @@
         <div class="folder-info-wrapper">
             <div class="folder-info-review">
                 <div class="forecast-cycles-wrapper" *ngIf="currentStatus == 'Archive' && selectedCycle">
-                    <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
+                    <label (click)="selectCycle(false)">{{ stringMapper.getString('Forecast Cycles') }}</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
                 </div>
             </div>
 
@@ -82,7 +81,7 @@
                 <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'models'}" *ngIf="geoFolders.length > 0">
                     <div class="info-icons-selected-section"></div>
                 </div>
-                <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
+                <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create {{ stringMapper.getString('Forecast Cycle')}}" (click)="createForecast()"></div>
                 <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0 && isOwner" (click)="refreshPowerBi()"></div>
                 <div class="info-icons-power-bi" matTooltip="Go to Report" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0" (click)="navigateTo(entity)"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
@@ -126,7 +125,7 @@
             </div>
             <div *ngSwitchCase="'models'">
                 <div class="documents-folders" *ngIf="currentStatus=='Archived' && !selectedCycle">
-                    <h3 *ngIf="!cycles || cycles.length == 0" style="text-align: center;">No Archived Forecast Cycles Found</h3>  
+                    <h3 *ngIf="!cycles || cycles.length == 0" style="text-align: center;">No Archived {{ stringMapper.getString('Forecast Cycles') }} Found</h3>  
                     <div class="document-folder-item" *ngFor="let cycle of cycles" (click)="selectCycle(cycle)">
                         <div class="document-folder-icon"></div>
                         {{cycle.Title}}
