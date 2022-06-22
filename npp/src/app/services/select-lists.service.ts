@@ -33,7 +33,7 @@ export class SelectListsService {
     return [
       { value: 'Title', label: 'Brand Name' },
       //{ value: 'FCDueDate', label: 'Forecast Cycle Due Date' },
-      { value: 'BusinessUnit.Title', label: 'Business Unit' },
+      { value: 'BusinessUnit.Title', label: this.stringMapper.getString('Business Unit') },
       { value: 'Indication.Title', label: this.stringMapper.getString('Indication') },
     ];
   }

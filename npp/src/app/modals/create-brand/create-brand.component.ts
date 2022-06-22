@@ -143,7 +143,7 @@ export class CreateBrandComponent implements OnInit {
           key: 'Brand.BusinessUnitId',
           type: 'select',
           templateOptions: {
-            label: 'Business Unit:',
+            label: this.stringMapper.getString('Business Unit') + ':',
             options: businessUnits,
             required: true,
           },

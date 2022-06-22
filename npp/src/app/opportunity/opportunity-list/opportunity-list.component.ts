@@ -95,8 +95,8 @@ export class OpportunityListComponent implements OnInit {
         key: 'indication',
         type: 'ngselectgroups',
         templateOptions: {
-          placeholder: 'All ' + this.stringMapper.getString('Therapy Areas').toLocaleLowerCase()
-            + '/' + this.stringMapper.getString('Indications').toLocaleLowerCase(),
+          placeholder: 'All ' + this.stringMapper.getString('Therapy Areas', 'l')
+            + '/' + this.stringMapper.getString('Indications', 'l'),
           options: indications,
         }
       },{

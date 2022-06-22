@@ -296,7 +296,7 @@ export class ActionsListComponent implements OnInit {
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+          this.toastr.error(`There was a problem ${this.stringMapper.getString('approving', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -319,14 +319,14 @@ export class ActionsListComponent implements OnInit {
         if (result.success) {
           // update view
           await this.updateCurrentFiles();
-          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          this.toastr.warning("The model " + file.Name + " has been " + this.stringMapper.getString('rejected', 'l'), "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
             `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+          this.toastr.error(`There were a problem ${this.stringMapper.getString('rejecting', 'l')} the forecast model`, 'Try again');
         }
       });
   }

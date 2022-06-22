@@ -20,7 +20,7 @@
                     <div class="next-tasks-brand-name">Brand Name</div>
                     <div class="next-tasks-forecast-cycle">Forecast Cycle</div>
                     <div class="next-tasks-models">Models</div>
-                    <div class="next-tasks-approved">Approved Models</div>
+                    <div class="next-tasks-approved">{{stringMapper.getString('Approved', 'f')}} Models</div>
                 </div>
                 <div class="next-tasks-content" *ngFor="let b of brandData">
                     <div class="next-tasks-brand-name">{{ b.brandName}}</div>

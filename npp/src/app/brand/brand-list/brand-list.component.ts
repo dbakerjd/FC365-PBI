@@ -127,7 +127,7 @@ export class BrandListComponent implements OnInit {
         key: 'businessUnit',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Business Units',
+          placeholder: 'All ' + this.stringMapper.getString('Business Units'),
           options: businessUnits
         }
       }/*,{

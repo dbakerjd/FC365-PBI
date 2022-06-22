@@ -194,7 +194,7 @@ export class CreateOpportunityComponent implements OnInit {
           key: 'Opportunity.BusinessUnitId',
           type: 'select',
           templateOptions: {
-            label: 'Business Unit:',
+            label: this.stringMapper.getString('Business Unit') + ':',
             options: businessUnits,
             required: true,
           },

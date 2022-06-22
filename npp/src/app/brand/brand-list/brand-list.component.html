@@ -17,7 +17,7 @@
         <div class="opportunity-list-item" *ngFor="let item of filteredBrands">
             <div class="opportunity-status">
                 <p class="brand-forecast-cyle">{{item.ForecastCycle?.Title}} {{item.Year}}</p>
-                <p class="brand-business-unit"><label>Business Unit:</label> {{item.BusinessUnit?.Title}}</p>
+                <p class="brand-business-unit"><label>{{stringMapper.getString('Business Unit')}}:</label> {{item.BusinessUnit?.Title}}</p>
                 <p class="brand-indication"><label>{{stringMapper.getString('Indications')}}:</label> {{getIndications(item.Indication)}}</p>
             </div>
             <div class="opportunity-name" (click)="navigateTo(item)">
