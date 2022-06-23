@@ -477,6 +477,13 @@ export class ActionsListComponent implements OnInit {
     this.appData.setActionDueDate(actionId, value);
   }
 
+  afterGateDue(taskDueDate: Date) {
+    if (this.currentGate?.StageReview) {
+      return taskDueDate.getTime() > new Date(this.currentGate.StageReview).getTime();
+    }
+    return false;
+  }
+
   async goNextStage() {
     if (!this.currentGate || this.alreadyGoingNextStage) return;
 

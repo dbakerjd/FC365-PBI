@@ -152,8 +152,14 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <div>
-                                    <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                <div class="documents-files-item-model-status">
+                                    <div [ngClass]="{
+                                        'status-in-progress': file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress', 
+                                        'status-submitted': file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted', 
+                                        'status-approved': file.ListItemAllFields?.ApprovalStatus?.Title == 'Approved'
+                                    }">
+                                        <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
+                                    </div>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
                                         <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="{{stringMapper.getString('Approve', 'f')}} the Forecast Model">{{stringMapper.getString('Approve', 'f')}}</span> 
                                         <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="{{stringMapper.getString('Reject', 'f')}} the Forecast Model">{{stringMapper.getString('Reject', 'f')}}</span>
@@ -201,9 +207,18 @@
                     </div>
                     <div class="action-item-completed" *ngIf="!action.Complete"><label>Not completed yet</label></div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
-                        <label>Due by </label>
+                        <label class="duedate-warning" matTooltip="Please note that the due by date is currently scheduled to occur after the entire gate / phase has been reviewed." matTooltipClass='red-tooltip' *ngIf="afterGateDue(action.ActionDueDate); else simpleDueLabel">
+                            Due by 
+                            <span class="duedate-warning-icon">
+                                <div class="action-item-status-icon"></div>
+                            </span>
+                        </label>
+                        <ng-template #simpleDueLabel>
+                            <label>Due by</label>
+                        </ng-template>
                         <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner || currentUser?.IsSiteAdmin"></ngx-datepicker>
                         <span *ngIf="!isOwner && !currentUser?.IsSiteAdmin">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
+                        
                     </div>
                     <div class="action-item-status">
                         <div class="action-item-status-button" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">

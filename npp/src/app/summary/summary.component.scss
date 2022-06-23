@@ -97,39 +97,20 @@
     }
 
     .next-tasks {
-        width: 100%;
-        .next-tasks-header {
-            width: 100%;
-            padding: 2%;
-            div {
-                font-weight: bold;
-            }
-        }
-
-        .next-tasks-content {
-            width: 100%;
-            padding: 0 2%;
-            & > div {
-                line-height: 3rem;
-                border-bottom: 1px solid #fff;
-            }
-        }
-
-        .next-tasks-opportunity-name {
-            width: 33%;
-            display: inline-block;
-        }
-        .next-tasks-task-name {
-            width: 33%;
-            display: inline-block;
-        }
-
-        .next-tasks-deadline {
-            width: 33%;
-            display: inline-block;
-        }
-
         padding-bottom: 50px;
+
+        td.deadline {
+            color: green;
+
+            &.late {
+                color: red;
+            }
+
+            &.soon {
+                color: orange;
+            }
+        }
+
     }
 
     .section-title {
@@ -139,3 +120,4 @@
         font-weight: bold;
     }
 }
+
