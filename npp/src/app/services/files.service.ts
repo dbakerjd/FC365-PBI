@@ -130,6 +130,18 @@ export class FilesService {
     return commentsStr;   
   }
 
+  async firstCommentString(str: string) {
+    let currentUser = await this.appData.getCurrentUserInfo();
+    let newComment = {
+      text: str,
+      email: currentUser.Email,
+      name: currentUser.Title?.indexOf("@") == -1 ? currentUser.Title : currentUser.Email,
+      userId: currentUser.Id,
+      createdAt: new Date().toISOString()
+    }
+    return JSON.stringify([newComment]);
+  }
+
   /** Search for a model with scenarios assigned */
   async getFileByScenarios(path: string, scenarios: number[]) {
     let files = await this.appData.getFolderFiles(path, false);

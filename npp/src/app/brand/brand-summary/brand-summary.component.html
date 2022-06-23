@@ -15,20 +15,20 @@
             <div class="next-tasks-title section-title">Brands</div>
 
             <app-progress-spinner *ngIf="loadingTable"></app-progress-spinner>
-            <ng-container *ngIf="!loadingTable">
-                <div class="next-tasks-header">
-                    <div class="next-tasks-brand-name">Brand Name</div>
-                    <div class="next-tasks-forecast-cycle">{{stringMapper.getString('Forecast Cycle')}}</div>
-                    <div class="next-tasks-models">Models</div>
-                    <div class="next-tasks-approved">{{stringMapper.getString('Approved', 'f')}} Models</div>
-                </div>
-                <div class="next-tasks-content" *ngFor="let b of brandData">
-                    <div class="next-tasks-brand-name">{{ b.brandName}}</div>
-                    <div class="next-tasks-forecast-cycle">{{ b.cycle}}</div>
-                    <div class="next-tasks-models">{{ b.modelsCount }}</div>
-                    <div class="next-tasks-approved">{{ b.approvedModelsCount }}</div>
-                </div>
-            </ng-container>
+            <table *ngIf="!loadingTable">
+                <tr>
+                    <th>Brand Name</th>
+                    <th class="centered-value">{{stringMapper.getString('Forecast Cycle')}}</th>
+                    <th class="centered-value">Models</th>
+                    <th class="centered-value">{{stringMapper.getString('Approved', 'f')}} Models</th>
+                </tr>
+                <tr *ngFor="let b of brandData">
+                    <td>{{ b.brandName}}</td>
+                    <td class="centered-value">{{ b.cycle}}</td>
+                    <td class="centered-value">{{ b.modelsCount }}</td>
+                    <td class="centered-value">{{ b.approvedModelsCount }}</td>
+                </tr>
+            </table>
         </div>
 
         <app-seats-table *ngIf="showSeatsTable()"></app-seats-table>
