@@ -15,6 +15,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { EntitiesService } from '@services/entities.service';
 import { SelectListsService } from '@services/select-lists.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-brand-list',
@@ -42,7 +43,8 @@ export class BrandListComponent implements OnInit {
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   async ngOnInit() {
@@ -95,14 +97,14 @@ export class BrandListComponent implements OnInit {
         key: 'therapy',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Therapy Areas',
+          placeholder: 'All ' + this.stringMapper.getString('Therapy Areas'),
           options: therapies,
         }
       },{
         key: 'indication',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Indications',
+          placeholder: 'All ' + this.stringMapper.getString('Indications'),
           options: indicationsList
         },
         hooks: {
@@ -125,7 +127,7 @@ export class BrandListComponent implements OnInit {
         key: 'businessUnit',
         type: 'select',
         templateOptions: {
-          placeholder: 'All Business Units',
+          placeholder: 'All ' + this.stringMapper.getString('Business Units'),
           options: businessUnits
         }
       }/*,{
@@ -276,7 +278,10 @@ export class BrandListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (success: any) => {
         if (success) {
-          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
+          this.toastr.success(
+            `The new ${this.stringMapper.getString('forecast cycle', 'l')} has been created successfully`, 
+            "New " + this.stringMapper.getString('Forecast Cycle')
+          );
           brand = Object.assign(brand, {
             ForecastCycleId: success.ForecastCycleId,
             ForecastCycle: { 
@@ -286,7 +291,7 @@ export class BrandListComponent implements OnInit {
             Year: success.Year
         });
         } else if (success === false) {
-          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+          this.toastr.error(`The new ${this.stringMapper.getString('forecast cycle', 'l')} could not be created`, 'Try Again');
         }
       });
   }

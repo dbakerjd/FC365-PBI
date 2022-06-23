@@ -5,12 +5,11 @@
         <p class="brand-forecast-cyle">{{entity?.ForecastCycle?.Title}} {{entity?.Year}} {{entity?.ForecastCycleDescriptor}}</p>
     </div>
     <div class="brand-indication">
-        <p><label>BusinessUnit: </label>{{entity?.BusinessUnit?.Title}}</p>
-        <p><label>Indication: </label>{{getIndications(entity?.Indication)}}</p>
+        <p><label>{{stringMapper.getString('Business Unit')}}: </label>{{entity?.BusinessUnit?.Title}}</p>
+        <p><label>{{stringMapper.getString('Indication')}}: </label>{{getIndications(entity?.Indication)}}</p>
     </div>
     <div class="brand-dates">
-        <!-- <p><label>Forecast Cycle Due Date: </label> {{entity?.FCDueDate | date : 'dd MMM y'}}</p>-->
-        <p><label>Therapy Area: </label> {{getTherapyArea(entity?.Indication)}}</p>
+        <p><label>{{stringMapper.getString('Therapy Area')}}: </label> {{getTherapyArea(entity?.Indication)}}</p>
         <p *ngIf="entity?.ClinicalTrialPhase"><label>Clinical Trial Phase: </label> {{entity?.ClinicalTrialPhase?.Title}}</p>
     </div>
     <div class="brand-owner">
@@ -68,7 +67,7 @@
         <div class="folder-info-wrapper">
             <div class="folder-info-review">
                 <div class="forecast-cycles-wrapper" *ngIf="currentStatus == 'Archive' && selectedCycle">
-                    <label (click)="selectCycle(false)">Forecast Cycles</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
+                    <label (click)="selectCycle(false)">{{ stringMapper.getString('Forecast Cycles') }}</label> > {{selectedCycle.Title}} {{selectedCycle.Descriptor}}
                 </div>
             </div>
 
@@ -82,7 +81,7 @@
                 <div class="info-icons-models" matTooltip="Forecast Models" (click)="showModels()" [ngClass]="{ 'top-action-selected': currentSection == 'models'}" *ngIf="geoFolders.length > 0">
                     <div class="info-icons-selected-section"></div>
                 </div>
-                <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create Forecast Cycle" (click)="createForecast()"></div>
+                <div class="info-icons-settings" *ngIf="isOwner || currentUser?.IsSiteAdmin" matTooltip="Create {{ stringMapper.getString('Forecast Cycle')}}" (click)="createForecast()"></div>
                 <div class="info-icons-refresh-bi" matTooltip="Refresh Analytics" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0 && isOwner" (click)="refreshPowerBi()"></div>
                 <div class="info-icons-power-bi" matTooltip="Go to Report" *ngIf="licensing.license?.HasPowerBi && geoFolders.length > 0" (click)="navigateTo(entity)"></div>
                 <div class="info-icons-department-users" matTooltip="Users Access" (click)="openFolderPermissions()" *ngIf="isOwner || currentUser?.IsSiteAdmin"></div>                
@@ -126,7 +125,7 @@
             </div>
             <div *ngSwitchCase="'models'">
                 <div class="documents-folders" *ngIf="currentStatus=='Archived' && !selectedCycle">
-                    <h3 *ngIf="!cycles || cycles.length == 0" style="text-align: center;">No Results Found</h3>  
+                    <h3 *ngIf="!cycles || cycles.length == 0" style="text-align: center;">No Archived {{ stringMapper.getString('Forecast Cycles') }} Found</h3>  
                     <div class="document-folder-item" *ngFor="let cycle of cycles" (click)="selectCycle(cycle)">
                         <div class="document-folder-icon"></div>
                         {{cycle.Title}}
@@ -156,7 +155,7 @@
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
-                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p><label>{{stringMapper.getString('Indications')}}: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Last Modified at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Editor"><label> by </label>
@@ -175,17 +174,19 @@
                                             <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
                                         </div>
                                         <div *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
-                                            <span (click)="approve(file)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span>
-                                            <span (click)="rejectModel(file)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
+                                            <span (click)="approve(file)" class="model-approve-btn" matTooltip="{{stringMapper.getString('Approve', 'f')}} the Forecast Model">{{stringMapper.getString('Approve')}}</span>
+                                            <span (click)="rejectModel(file)" class="model-reject-btn" matTooltip="{{stringMapper.getString('Reject', 'f')}} the Forecast Model">{{stringMapper.getString('Reject')}}</span>
                                         </div>
                                     </div>
                                     <div class="documents-files-item-model-actions">
-                                        <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file)"></div>
+                                        <div class="model-send-approve-icon" matTooltip="Send for {{stringMapper.getString('Approval', 'f')}}" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file)"></div>
                                         <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                     </div>
                                 </ng-container>
                                 <div class="documents-files-item-model-indications">
-
+                                    <p *ngIf="file.ListItemAllFields.ApprovalDate">
+                                        <label>{{stringMapper.getString('Approved', 'f')}} at: </label> {{ file.ListItemAllFields.ApprovalDate | date : 'Y-M-d HH:mm'}}
+                                    </p>
                                 </div>
                             </div>
                             <div class="documents-files-item-comments">

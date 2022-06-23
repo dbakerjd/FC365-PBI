@@ -31,6 +31,7 @@ import { FilesService } from '@services/files.service';
 import { SelectListsService } from '@services/select-lists.service';
 import { EntitiesService } from '@services/entities.service';
 import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -84,7 +85,8 @@ export class ActionsListComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
     private readonly selectLists: SelectListsService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly stringMapper: StringMapperService
     ) { }
 
   ngOnInit(): void {
@@ -294,7 +296,7 @@ export class ActionsListComponent implements OnInit {
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+          this.toastr.error(`There was a problem ${this.stringMapper.getString('approving', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -317,14 +319,14 @@ export class ActionsListComponent implements OnInit {
         if (result.success) {
           // update view
           await this.updateCurrentFiles();
-          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          this.toastr.warning("The model " + file.Name + " has been " + this.stringMapper.getString('rejected', 'l'), "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
             `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+          this.toastr.error(`There were a problem ${this.stringMapper.getString('rejecting', 'l')} the forecast model`, 'Try again');
         }
       });
   }

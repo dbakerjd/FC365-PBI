@@ -8,6 +8,7 @@ import { AppControlService } from '@services/app/app-control.service';
 import { EntitiesService } from '@services/entities.service';
 import { ErrorService } from '@services/app/error.service';
 import { PermissionsService } from '@services/permissions.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-summary',
@@ -39,7 +40,8 @@ export class SummaryComponent implements OnInit {
     private readonly permissions: PermissionsService,
     private readonly entities: EntitiesService,
     private readonly appControl: AppControlService,
-    private readonly error: ErrorService
+    private readonly error: ErrorService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -288,7 +290,7 @@ export class SummaryComponent implements OnInit {
           type: 'pie'
         },
         title: {
-          text: 'Therapy Areas: ' + this.therapyAreasData.total + ' Projects',
+          text: this.stringMapper.getString('Therapy Areas') + ': ' + this.therapyAreasData.total + ' Projects',
           style: {
             "fontSize": "1.2rem",
             "color": "#000"
@@ -328,7 +330,7 @@ export class SummaryComponent implements OnInit {
           }
         },
         series: [{
-          name: 'Therapy Areas',
+          name: this.stringMapper.getString('Therapy Areas'),
           colorByPoint: true,
           data: Object.keys(this.therapyAreasData.areas).map(key => {
             if (!this.currentTherapyArea) this.currentTherapyArea = key;
@@ -377,7 +379,7 @@ export class SummaryComponent implements OnInit {
           type: 'pie'
       },
       title: {
-          text: 'Indications for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' Projects',
+          text: this.stringMapper.getString('Indications') + ' for '+self.currentTherapyArea+': '+self.therapyAreasData.areas[self.currentTherapyArea].count+' Projects',
           style: {
             "fontSize": "1.2rem",
             "color": "#000"
@@ -407,7 +409,7 @@ export class SummaryComponent implements OnInit {
           }
       },
       series: [{
-          name: 'Indications for '+self.currentTherapyArea,
+          name: this.stringMapper.getString('Indications') + ' for '+self.currentTherapyArea,
           colorByPoint: true,
           data: Object.keys(self.therapyAreasData.areas[self.currentTherapyArea].indications).map(key => {
             return {

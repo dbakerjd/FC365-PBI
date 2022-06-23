@@ -33,3 +33,10 @@ Add list 'App Config Values' with fields
 
 22/03/11 Remove item from "Master Group Types List"
    - removes item related with Master Apps list (OU). Not needed.
+
+0.5.9
+   - Add field ApprovalDate at Approved Models list/files [type DateTime, not required]
+   - Add new list 'String Mappings' with fields
+      * ID 
+      * Title 
+      * Key: string (required, unique)

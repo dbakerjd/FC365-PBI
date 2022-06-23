@@ -7,6 +7,7 @@ import { DatepickerModule } from "ng2-datepicker";
 import { FormlyFieldDatePicker } from "./date-picker";
 import { FormlyFieldFile } from "./file-input";
 import { FileValueAccessor } from "./file-value-accessor";
+import { FormlyFieldNgSelectByGroups } from "./ng-select-by-groups-input";
 import { FormlyFieldNgSelect } from "./ng-select-input";
 import { FormlyFieldSearchableSelectApi } from "./sharepoint-searchable-select";
 import { FormlyFieldUsersNgSelect } from "./users-ng-select-input";
@@ -32,6 +33,7 @@ export const FORMLY_CONFIG = {
     { name: 'datepicker', component: FormlyFieldDatePicker, wrappers: ['form-field'] },
     { name: 'searchable', component: FormlyFieldSearchableSelectApi, wrappers: ['form-field'] },
     { name: 'ngsearchable', component: FormlyFieldNgSelect, wrappers: ['form-field'] },
+    { name: 'ngselectgroups', component: FormlyFieldNgSelectByGroups, wrappers: ['form-field'] },
     { name: 'userssearchable', component: FormlyFieldUsersNgSelect, wrappers: ['form-field'] },
   ],
   validators: [
@@ -57,6 +59,7 @@ export const FORMLY_CONFIG = {
     FormlyFieldDatePicker,
     FormlyFieldSearchableSelectApi,
     FormlyFieldNgSelect,
+    FormlyFieldNgSelectByGroups,
     FormlyFieldUsersNgSelect
   ]
 })

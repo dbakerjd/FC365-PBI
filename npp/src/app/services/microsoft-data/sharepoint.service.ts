@@ -152,11 +152,11 @@ export class SharepointService {
           })
         }
       ).toPromise();
+      return true;
     } catch (e: any) {
       this.error.handleError(e);
       return false;
     }
-    return true;
   }
 
   public async deleteItem(id: number, listName: string): Promise<boolean> {

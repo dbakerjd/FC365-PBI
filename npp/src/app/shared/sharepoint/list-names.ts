@@ -26,3 +26,4 @@ export const MASTER_FORECAST_CYCLES_LIST_NAME = 'Master Forecast Cycles';
 export const MASTER_BUSINESS_UNIT_LIST_NAME = 'Master Business Units';
 export const MASTER_SCENARIOS_LIST_NAME = 'Master Scenarios';
 export const MASTER_CLINICAL_TRIAL_PHASES_LIST_NAME = 'Master Clinical Trial Phases';
+export const STRING_MAPPINGS = 'String Mappings';

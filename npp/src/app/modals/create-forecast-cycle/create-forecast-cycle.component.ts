@@ -4,11 +4,13 @@ import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dial
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { ErrorService } from '@services/app/error.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
-import { Opportunity } from '@shared/models/entity';
+import { EntityForecastCycle, Opportunity } from '@shared/models/entity';
 import { EntitiesService } from 'src/app/services/entities.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
-
+import { takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-create-forecast-cycle',
@@ -21,7 +23,9 @@ export class CreateForecastCycleComponent implements OnInit {
   form: FormGroup = new FormGroup({});
   model: any = {};
   entity: Opportunity | undefined;
-  cycles: SelectInputList[] = [];
+  cyclesList: SelectInputList[] = [];
+  yearsOptions: any[] = [];
+  private readonly _destroying$ = new Subject<void>();
 
   // flow control
   updating = false;
@@ -33,13 +37,15 @@ export class CreateForecastCycleComponent implements OnInit {
     private error: ErrorService,
     public jobs: WorkInProgressService,
     private readonly entities: EntitiesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    public readonly stringMapper: StringMapperService
   ) { }
 
   async ngOnInit(): Promise<void> {
 
     this.entity = this.data.entity;
-    this.cycles = await this.selectLists.getForecastCyclesList();
+    const usedCycles: EntityForecastCycle[] = this.data.cycles;
+    this.cyclesList = await this.selectLists.getForecastCyclesList();
     const currentYear = new Date().getFullYear();
     
     let year = currentYear;
@@ -48,13 +54,19 @@ export class CreateForecastCycleComponent implements OnInit {
       elegibleYears.push(++year);
     }
 
+    // remove years already used in every forecast cycle type
+    for (const c of this.cyclesList) {
+      const yearsUsed: number[] = usedCycles.filter(uc => uc.ForecastCycleTypeId === c.value).map(e => +e.Year);
+      this.yearsOptions[c.value] = elegibleYears.filter(y => !yearsUsed.includes(y));
+    }
+
     this.fields = [{
       fieldGroup: [{
         key: 'ForecastCycle',
         type: 'select',
         templateOptions: {
-            label: 'Forecast Cycle Type',
-            options: this.cycles,
+            label: this.stringMapper.getString('Forecast Cycle') + ' Type',
+            options: this.cyclesList,
             required: true,
             multiple: false
         }
@@ -62,16 +74,41 @@ export class CreateForecastCycleComponent implements OnInit {
         key: 'Year',
         type: 'select',
         templateOptions: {
-          label: 'Year:',
-          options: elegibleYears.map(el => {
-            return {
-              label: el,
-              value: el
-            }
-          }),
+          label: this.stringMapper.getString('FC Year') + ':',
+          options: [],
           required: true,
         },
-        defaultValue: this.entity?.Year || currentYear
+        defaultValue: this.entity?.Year || currentYear,
+        hooks: {
+          onInit: (field) => {
+            if (!field?.parent?.fieldGroup) return;
+            const cycleSelect = field.parent.fieldGroup.find(f => f.key === 'ForecastCycle');
+            if (!cycleSelect?.formControl) return;
+
+            // initial value
+            if (cycleSelect.formControl.value) {
+              field.templateOptions!.options = this.yearsOptions[cycleSelect.formControl.value].map((el: number) => {
+                return {
+                  label: el,
+                  value: el
+                }
+              });
+            }
+            
+            // subscription to value changes
+            cycleSelect.formControl.valueChanges.pipe(
+              takeUntil(this._destroying$),
+              tap(cycleId => {
+                  if (field.templateOptions) field.templateOptions.options = this.yearsOptions[cycleId].map((el: number) => {
+                    return {
+                      label: el,
+                      value: el
+                    }
+                  });
+              }),
+            ).subscribe();
+          }
+        }
       },{
         key: 'ForecastCycleDescriptor',
         type: 'input',
@@ -86,7 +123,7 @@ export class CreateForecastCycleComponent implements OnInit {
 
   async onSubmit() {
     let job = this.jobs.startJob(
-      "Creating Forecast Cycle"
+      "Creating " + this.stringMapper.getString('Forecast Cycle')
       );
     try {
       if (this.form.invalid || !this.entity) {
@@ -118,5 +155,10 @@ export class CreateForecastCycleComponent implements OnInit {
         this.validateAllFormFields(control);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this._destroying$.next();
+    this._destroying$.complete();
   }
 }
