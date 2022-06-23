@@ -16,7 +16,7 @@
     </div>
     <div class="opportunity-molecule">
         <p><label>Molecule Name: </label> {{opportunity.MoleculeName}}</p>
-        <p><label>Indication: </label> {{opportunity.Indication.Title}}</p> 
+        <p><label>{{stringMapper.getString('Indications')}}: </label> {{getIndications(opportunity.Indication)}}</p> 
     </div>
     <div class="opportunity-owner">
         <div class="owner-pic">
@@ -143,7 +143,7 @@
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
-                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p><label>{{stringMapper.getString('Indications')}}: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
@@ -152,15 +152,21 @@
                                 </p>
                             </div>
                             <div class="documents-files-item-uploaded">
-                                <div>
-                                    <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
+                                <div class="documents-files-item-model-status">
+                                    <div [ngClass]="{
+                                        'status-in-progress': file.ListItemAllFields?.ApprovalStatus?.Title == 'In Progress', 
+                                        'status-submitted': file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted', 
+                                        'status-approved': file.ListItemAllFields?.ApprovalStatus?.Title == 'Approved'
+                                    }">
+                                        <label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}
+                                    </div>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
-                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> 
-                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="{{stringMapper.getString('Approve', 'f')}} the Forecast Model">{{stringMapper.getString('Approve', 'f')}}</span> 
+                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="{{stringMapper.getString('Reject', 'f')}} the Forecast Model">{{stringMapper.getString('Reject', 'f')}}</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
+                                    <div class="model-send-approve-icon" matTooltip="Send for {{stringMapper.getString('Approval', 'l')}}" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>
@@ -201,9 +207,18 @@
                     </div>
                     <div class="action-item-completed" *ngIf="!action.Complete"><label>Not completed yet</label></div>
                     <div class="action-item-due" *ngIf="action.ActionDueDate">
-                        <label>Due by </label>
+                        <label class="duedate-warning" matTooltip="Please note that the due by date is currently scheduled to occur after the entire gate / phase has been reviewed." matTooltipClass='red-tooltip' *ngIf="afterGateDue(action.ActionDueDate); else simpleDueLabel">
+                            Due by 
+                            <span class="duedate-warning-icon">
+                                <div class="action-item-status-icon"></div>
+                            </span>
+                        </label>
+                        <ng-template #simpleDueLabel>
+                            <label>Due by</label>
+                        </ng-template>
                         <ngx-datepicker [(ngModel)]="action.ActionDueDate" (ngModelChange)="onDueDateChange(action.ID, $event)" [options]="dateOptions" *ngIf="isOwner || currentUser?.IsSiteAdmin"></ngx-datepicker>
                         <span *ngIf="!isOwner && !currentUser?.IsSiteAdmin">{{action.ActionDueDate | date: 'Y-M-d'}}</span>
+                        
                     </div>
                     <div class="action-item-status">
                         <div class="action-item-status-button" (click)="toggleStatus(action)" [ngClass]="{ 'action-completed': action.status == 'completed', 'action-late': action.status == 'late', 'action-pending': action.status == 'pending'}">

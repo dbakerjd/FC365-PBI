@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { AppType, SelectInputList, StringMapping } from '@shared/models/app-config';
+import { Action, Country, EntityForecastCycle, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { OpportunityInput, StageInput, BrandInput, EntityGeographyInput } from '@shared/models/inputs';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
@@ -57,6 +57,7 @@ export class AppDataService {
     stage: number;
     folders: NPPFolder[]
   }[] = [];
+  stringMappingCache: StringMapping[] = [];
 
   public app!: AppType;
 
@@ -93,6 +94,14 @@ export class AppDataService {
 
   async getAppContactInfo() {
     return await this.licensing.getContactInfo();
+  }
+
+  async getStringMappingItems(): Promise<StringMapping[]> {
+    if (this.stringMappingCache.length < 1) {
+      let count = await this.sharepoint.countItems(SPLists.STRING_MAPPINGS);
+      this.stringMappingCache = await this.sharepoint.getAllItems(SPLists.STRING_MAPPINGS, `$top=${count}`);
+    }
+    return this.stringMappingCache;
   }
 
   /** ------ ENTITIES ------- **/
@@ -212,7 +221,7 @@ export class AppDataService {
     );
   }
 
-  async getEntityForecastCycles(entity: Opportunity) {
+  async getEntityForecastCycles(entity: Opportunity): Promise<EntityForecastCycle[]> {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.sharepoint.getAllItems(
@@ -364,6 +373,7 @@ export class AppDataService {
 
   /** ---- MASTER INFO ---- */
 
+  /** Get the list of all indications or for a concrete therapy */
   async getMasterIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndicationsCache.find(i => i.therapy == therapy);
     if (cache) {

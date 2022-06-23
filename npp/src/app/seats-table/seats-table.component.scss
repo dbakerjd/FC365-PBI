@@ -12,40 +12,4 @@
             font-weight: bold;
         }
     }
-    table.seats-table {
-        width: 80%;
-        margin: 2rem auto;
-        th {
-            text-align: left;
-            background-color: #73726d;
-            color: #fff;
-            padding: 3px;
-        }
-        tr {
-            &:nth-child(odd) {
-                background-color: #eee;
-            }
-            &:hover {
-                background-color: #ddd;
-            }
-            &.opps-list {
-                background-color: #f5e6d7;
-                td {
-                    padding: 0 2rem;
-                }
-            }
-            td {
-                padding: 3px;
-                &.dropdown {
-                    cursor: pointer;
-                }
-            }
-            border-bottom: 1px solid #ddd
-        }
-        
-        th.centered-value,
-        td.centered-value {
-            text-align: center;
-        }
-    }
 }
