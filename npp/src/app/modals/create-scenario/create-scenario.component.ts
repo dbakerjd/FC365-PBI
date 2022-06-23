@@ -196,9 +196,7 @@ export class CreateScenarioComponent implements OnInit {
       if (this.file) {
         let commentsStr = '';
         if(this.model.comments) {
-          commentsStr = await this.files.addFileComment(this.file, this.model.comments);
-        } else {
-          commentsStr = this.file.ListItemAllFields?.Comments ? this.file.ListItemAllFields?.Comments : '';
+          commentsStr = await this.files.firstCommentString(this.model.comments);
         }
         success = await this.files.cloneForecastModel(this.file, fileName, scenarios, (await this.appData.getCurrentUserInfo()).Id, commentsStr);
       }

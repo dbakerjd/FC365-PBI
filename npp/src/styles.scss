@@ -53,6 +53,24 @@ input, select, textarea,
     }
 }
 
+.opportunity-filter {
+    select {
+        background-color: #fff;
+    }
+
+    .ng-select .ng-select-container {
+        height: 36px;
+        .ng-value-container {
+            flex-wrap: nowrap !important;
+            overflow: hidden;
+        }
+        .ng-placeholder {
+            color: #666 !important;
+            top: 0.5rem !important;
+        }
+    }
+}
+
 .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
     top: 0;
 }
@@ -549,12 +567,18 @@ app-opportunity-list, app-brand-list {
             color: #666;
         }
 
+        // search by name field filter
         &:nth-child(1) {
             width: 25%;
             input {
                 padding: 1px 4px 1px 7.5px;
                 width: 100%;
             }
+        }
+
+        // indications field filter
+        &:nth-child(4) {
+            width: 20%;
         }
     }
 }
@@ -730,4 +754,43 @@ div.has-error .ng-select-container {
 .datepicker-default, 
 .datepicker-default div {
     line-height: normal !important;
+}
+
+.summary-content-wrapper {
+    table {
+        width: 80%;
+        margin: 2rem auto;
+        th {
+            text-align: left;
+            background-color: #73726d;
+            color: #fff;
+            padding: 3px;
+        }
+        tr {
+            &:nth-child(odd) {
+                background-color: #eee;
+            }
+            &:hover {
+                background-color: #ddd;
+            }
+            &.opps-list {
+                background-color: #f5e6d7;
+                td {
+                    padding: 0 2rem;
+                }
+            }
+            td {
+                padding: 3px;
+                &.dropdown {
+                    cursor: pointer;
+                }
+            }
+            border-bottom: 1px solid #ddd
+        }
+        
+        th.centered-value,
+        td.centered-value {
+            text-align: center;
+        }
+    }
 }

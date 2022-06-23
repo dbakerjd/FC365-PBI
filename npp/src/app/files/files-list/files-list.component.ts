@@ -30,6 +30,7 @@ import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
 import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-files-list',
@@ -82,7 +83,8 @@ export class FilesListComponent implements OnInit {
     private readonly appData: AppDataService,
     private readonly appControl: AppControlService,
     private readonly files: FilesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   ngOnInit(): void {
@@ -186,6 +188,7 @@ export class FilesListComponent implements OnInit {
           for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
+              this.cycles = await this.appData.getEntityForecastCycles(this.entity!);
               folder = folder + '/' + this.currentCycle;
             } else {
               folder = folder + '/0';
@@ -288,12 +291,12 @@ export class FilesListComponent implements OnInit {
         if (result.success) {
           // update view
           this.updateCurrentFiles();
-          this.toastr.success("The model has been sent for approval", "Forecast Model");
+          this.toastr.success("The model has been sent for " + this.stringMapper.getString('Approval', 'l'), "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.entityId, [
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("The model couldn't be sent for approval");
+          this.toastr.error("The model couldn't be sent for " + this.stringMapper.getString('Approval', 'l'));
         }
       });
   }
@@ -340,7 +343,7 @@ export class FilesListComponent implements OnInit {
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+          this.toastr.error(`There was a problem ${this.stringMapper.getString('approving', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -529,12 +532,12 @@ export class FilesListComponent implements OnInit {
         }
 
         if(res.needsIndicationsUpdate && res.indicationsUpdateWorked) {
-          str += ` Indications have been updated.`
+          str += ` ${this.stringMapper.getString('Indications')} have been updated.`
         }
 
         if(res.needsIndicationsUpdate && !res.indicationsUpdateWorked) {
           error = true;
-          str += ` There was an error updating model indications.`
+          str += ` There was an error updating model ${this.stringMapper.getString('Indications', 'l')}.`
         }
 
         if (!error) {
@@ -659,7 +662,8 @@ export class FilesListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        entity: this.entity
+        entity: this.entity,
+        cycles: this.cycles
       }
     });
 
@@ -667,20 +671,25 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (success: any) => {
         if (success) {
-          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.entity) this.cycles = await this.appData.getEntityForecastCycles(this.entity);
-          this.entity = Object.assign(this.entity, {
-            ForecastCycleId: success.ForecastCycleId,
-            ForecastCycle: { 
-              Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
-              ID: success.ForecastCycleId
-            },
-            Year: success.Year,
-            ForecastCycleDescriptor: success.ForecastCycleDescriptor
-          });
+          this.toastr.success(
+            `The new ${this.stringMapper.getString('Forecast Cycle', 'l')} has been created successfully`, 
+            "New " + this.stringMapper.getString('Forecast Cycle')
+          );
+          if(this.entity) {
+            this.cycles = await this.appData.getEntityForecastCycles(this.entity);
+            this.entity = Object.assign(this.entity, {
+              ForecastCycleId: success.ForecastCycleId,
+              ForecastCycle: { 
+                Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
+                ID: success.ForecastCycleId
+              },
+              Year: success.Year,
+              ForecastCycleDescriptor: success.ForecastCycleDescriptor
+            });
+          } 
           this.updateCurrentFiles();
         } else if (success === false) {
-          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+          this.toastr.error(`The new ${this.stringMapper.getString('Forecast Cycle', 'l')} could not be created`, 'Try Again');
         }
       });
   }
@@ -715,13 +724,13 @@ export class FilesListComponent implements OnInit {
         if (result.success) {
           // update view
           await this.updateCurrentFiles();
-          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          this.toastr.warning("The model " + file.Name + " has been " + this.stringMapper.getString('rejected', 'l'), "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.entityId, [
             `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+          this.toastr.error(`There were a problem ${this.stringMapper.getString('rejecting', 'l')} the forecast model`, 'Try again');
         }
       });
   }

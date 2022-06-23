@@ -124,7 +124,7 @@ export class LicensingService {
       if (this.licenseContext) {
         return await this.httpClient.post(this.licensingApiUrl + '/seats', {
           applicationIdentity: this.licenseContext,
-          userEmail: Md5.hashStr(email)
+          userEmail: email
         }, {
           headers: headers
         }).toPromise() as SeatsResponse;
@@ -154,7 +154,7 @@ export class LicensingService {
             headers: headers,
             body: {
               applicationIdentity: this.licenseContext,
-              userEmail: Md5.hashStr(email)
+              userEmail: email
             },
           }).toPromise() as SeatsResponse;
         }
@@ -177,7 +177,7 @@ export class LicensingService {
       if (this.licenseContext) {
         return await this.httpClient.post(this.licensingApiUrl + '/userseats', {
           applicationIdentity: this.licenseContext,
-          userEmail: Md5.hashStr(email)
+          userEmail: email
         }, {
           headers: headers
         }).toPromise() as SeatsResponse;

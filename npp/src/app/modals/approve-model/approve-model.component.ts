@@ -6,6 +6,7 @@ import { NotificationsService } from 'src/app/services/notifications.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { FilesService } from 'src/app/services/files.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-approve-model',
@@ -40,7 +41,8 @@ export class ApproveModelComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<ApproveModelComponent>,
     private readonly notifications: NotificationsService,
-    private readonly files: FilesService
+    private readonly files: FilesService,
+    public readonly stringMapper: StringMapperService
   ) { }
 
   ngOnInit(): void {

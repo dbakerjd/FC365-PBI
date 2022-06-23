@@ -4,6 +4,7 @@ import { Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
 import { SharepointService } from './microsoft-data/sharepoint.service';
 import { AppDataService } from './app/app-data.service';
+import { StringMapperService } from './string-mapper.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,11 @@ import { AppDataService } from './app/app-data.service';
 export class NotificationsService {
   currentUser: User | undefined;
 
-  constructor(private sharepoint: SharepointService, private readonly appData: AppDataService) {}
+  constructor(
+    private sharepoint: SharepointService, 
+    private readonly appData: AppDataService,
+    private readonly stringMapper: StringMapperService
+  ) {}
 
 
   async getNotifications(): Promise<NPPNotification[]> {
@@ -99,7 +104,7 @@ export class NotificationsService {
   async modelSubmittedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
     const currentUser = await this.getCurrentUser();
     await this.generateModelNotification(
-      `${currentUser.Title} has submitted for approval the model '${fileName}'`, 
+      `${currentUser.Title} has submitted for ${this.stringMapper.getString('Approval', 'l')} the model '${fileName}'`, 
       usersGroups,
       opportunityId
     );
@@ -108,7 +113,7 @@ export class NotificationsService {
   async modelApprovedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
     const currentUser = await this.getCurrentUser();
     await this.generateModelNotification(
-      `${currentUser.Title} has approved the model '${fileName}'`, 
+      `${currentUser.Title} has ${this.stringMapper.getString('Approved', 'l')} the model '${fileName}'`, 
       usersGroups,
       opportunityId
     );
@@ -117,7 +122,7 @@ export class NotificationsService {
   async modelRejectedNotification(fileName: string, opportunityId: number, usersGroups: string[]) {
     const currentUser = await this.getCurrentUser();
     await this.generateModelNotification(
-      `${currentUser.Title} has rejected the model '${fileName}'`, 
+      `${currentUser.Title} has ${this.stringMapper.getString('Rejected', 'l')} the model '${fileName}'`, 
       usersGroups,
       opportunityId
     );
