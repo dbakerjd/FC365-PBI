@@ -5,7 +5,7 @@
 export const environment = {
   ssoRedirectUrl: 'https://localhost:3200/auth-end',
   production: false,
-  version: '0.5.9'.
+  version: '0.5.9',
   isInlineApp: true,
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost',
