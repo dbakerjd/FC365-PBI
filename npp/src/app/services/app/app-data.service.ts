@@ -955,7 +955,7 @@ export class AppDataService {
     return await this.sharepoint.getPathFiles(path, `$filter=Name eq '${this.clearFileName(filename)}'`);
   }
 
-  async getFileByForecast(path: string, forecastId: number) {
+  async getFilesByForecast(path: string, forecastId: number): Promise<NPPFile[]> {
     return await this.sharepoint.getPathFiles(path, `$filter=ListItemAllFields/ForecastId eq ${forecastId}`);
   }
 

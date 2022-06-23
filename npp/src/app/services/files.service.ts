@@ -358,10 +358,7 @@ export class FilesService {
     let files: NPPFile[] = []
 
     if (powerBiLibrary && file.ListItemAllFields) {
-      const result = await this.appData.getFileByForecast(powerBiLibrary, file.ListItemAllFields.ID);
-      if (result.value) {
-        files = result.value;
-      }   
+      files = await this.appData.getFilesByForecast(powerBiLibrary, file.ListItemAllFields.ID);
     }
 
     return files;
