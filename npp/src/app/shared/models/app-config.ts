@@ -14,3 +14,9 @@ export interface LicenseContext {
     entityId?: string;
     teamSiteDomain?: string;
 }
+
+export interface StringMapping {
+    ID: number;
+    Key: string;
+    Title: string;
+}

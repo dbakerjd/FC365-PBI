@@ -16,6 +16,7 @@ import { AppDataService } from '@services/app/app-data.service';
 import { PermissionsService } from 'src/app/services/permissions.service';
 import { EntitiesService } from '@services/entities.service';
 import { SelectListsService } from '@services/select-lists.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-opportunity-list',
@@ -31,6 +32,7 @@ export class OpportunityListComponent implements OnInit {
   dialogInstance: any;
   loading = true;
   canCreate = false;
+  mappedStrings: any = [];
 
   constructor(
     private permissions: PermissionsService, 
@@ -42,7 +44,8 @@ export class OpportunityListComponent implements OnInit {
     private readonly appControl: AppControlService,
     private readonly appData: AppDataService,
     private readonly entities: EntitiesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
     ) { }
 
   async ngOnInit() {
@@ -92,7 +95,8 @@ export class OpportunityListComponent implements OnInit {
         key: 'indication',
         type: 'ngselectgroups',
         templateOptions: {
-          placeholder: 'All therapies/indications',
+          placeholder: 'All ' + this.stringMapper.getString('Therapy Areas', 'l')
+            + '/' + this.stringMapper.getString('Indications', 'l'),
           options: indications,
         }
       },{

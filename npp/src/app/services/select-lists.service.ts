@@ -4,6 +4,7 @@ import { Opportunity } from '@shared/models/entity';
 import { User } from '@shared/models/user';
 import { FILES_FOLDER, FOLDER_WIP } from '@shared/sharepoint/folders';
 import { AppDataService } from './app/app-data.service';
+import { StringMapperService } from './string-mapper.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,8 @@ export class SelectListsService {
   masterTherapiesList: SelectInputList[] = [];
 
   constructor(
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   async getOpportunityFilterFields() {
@@ -23,7 +25,7 @@ export class SelectListsService {
       { value: 'projectEnd', label: 'Project End Date' },
       { value: 'opportunityType', label: 'Project Type' },
       { value: 'molecule', label: 'Molecule' },
-      { value: 'indication', label: 'Indication' },
+      { value: 'indication', label: this.stringMapper.getString('Indication') },
     ];
   }
 
@@ -31,8 +33,8 @@ export class SelectListsService {
     return [
       { value: 'Title', label: 'Brand Name' },
       //{ value: 'FCDueDate', label: 'Forecast Cycle Due Date' },
-      { value: 'BusinessUnit.Title', label: 'Business Unit' },
-      { value: 'Indication.Title', label: 'Indication Name' },
+      { value: 'BusinessUnit.Title', label: this.stringMapper.getString('Business Unit') },
+      { value: 'Indication.Title', label: this.stringMapper.getString('Indication') },
     ];
   }
 

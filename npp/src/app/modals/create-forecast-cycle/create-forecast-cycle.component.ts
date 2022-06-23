@@ -10,6 +10,7 @@ import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-create-forecast-cycle',
@@ -36,7 +37,8 @@ export class CreateForecastCycleComponent implements OnInit {
     private error: ErrorService,
     public jobs: WorkInProgressService,
     private readonly entities: EntitiesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    public readonly stringMapper: StringMapperService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -63,7 +65,7 @@ export class CreateForecastCycleComponent implements OnInit {
         key: 'ForecastCycle',
         type: 'select',
         templateOptions: {
-            label: 'Forecast Cycle Type',
+            label: this.stringMapper.getString('Forecast Cycle') + ' Type',
             options: this.cyclesList,
             required: true,
             multiple: false
@@ -72,7 +74,7 @@ export class CreateForecastCycleComponent implements OnInit {
         key: 'Year',
         type: 'select',
         templateOptions: {
-          label: 'Year:',
+          label: this.stringMapper.getString('FC Year') + ':',
           options: [],
           required: true,
         },
@@ -121,7 +123,7 @@ export class CreateForecastCycleComponent implements OnInit {
 
   async onSubmit() {
     let job = this.jobs.startJob(
-      "Creating Forecast Cycle"
+      "Creating " + this.stringMapper.getString('Forecast Cycle')
       );
     try {
       if (this.form.invalid || !this.entity) {

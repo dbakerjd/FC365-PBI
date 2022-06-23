@@ -16,7 +16,7 @@
     </div>
     <div class="opportunity-molecule">
         <p><label>Molecule Name: </label> {{opportunity.MoleculeName}}</p>
-        <p><label>Indication: </label> {{opportunity.Indication.Title}}</p> 
+        <p><label>{{stringMapper.getString('Indications')}}: </label> {{getIndications(opportunity.Indication)}}</p> 
     </div>
     <div class="opportunity-owner">
         <div class="owner-pic">
@@ -143,7 +143,7 @@
                                         {{s.Title + ($last ? '' : ', ')}}
                                     </ng-container>
                                 </p>
-                                <p><label>Indications: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
+                                <p><label>{{stringMapper.getString('Indications')}}: </label>{{getIndications(file.ListItemAllFields?.Indication)}}</p>
                                 <p>
                                     <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
                                     <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
@@ -155,12 +155,12 @@
                                 <div>
                                     <p><label>Status: </label>{{file.ListItemAllFields?.ApprovalStatus?.Title}}</p>
                                     <p *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title == 'Submitted' && (isOwner || isStageUser || currentUser?.IsSiteAdmin)">
-                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="Approve the Forecast Model">Approve</span> 
-                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="Reject the Forecast Model">Reject</span>
+                                        <span (click)="approveModel(file, currentFolder.DepartmentID)" class="model-approve-btn" matTooltip="{{stringMapper.getString('Approve', 'f')}} the Forecast Model">{{stringMapper.getString('Approve', 'f')}}</span> 
+                                        <span (click)="rejectModel(file, currentFolder.DepartmentID)" class="model-reject-btn" matTooltip="{{stringMapper.getString('Reject', 'f')}} the Forecast Model">{{stringMapper.getString('Reject', 'f')}}</span>
                                     </p>
                                 </div>
                                 <div class="documents-files-item-model-actions">
-                                    <div class="model-send-approve-icon" matTooltip="Send for Approval" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
+                                    <div class="model-send-approve-icon" matTooltip="Send for {{stringMapper.getString('Approval', 'l')}}" *ngIf="file.ListItemAllFields?.ApprovalStatus?.Title != 'Submitted'" (click)="sendForApproval(file, currentFolder.DepartmentID)"></div>
                                     <div class="model-create-scenario-icon" matTooltip="Create Scenario" (click)="createScenario(file)"></div>
                                 </div>
                             </div>

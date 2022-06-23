@@ -2,6 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
+import { StringMapperService } from '@services/string-mapper.service';
 import { Opportunity } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { FilesService } from 'src/app/services/files.service';
@@ -24,7 +25,7 @@ export class RejectModelComponent implements OnInit {
       type: 'textarea',
       templateOptions: {
           label: 'Comments:',
-          placeholder: 'Please enter comments for rejecting',
+          placeholder: 'Please enter comments for ' + this.stringMapper.getString('rejecting', 'l'),
           rows: 3
       }
     }]
@@ -36,7 +37,8 @@ export class RejectModelComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<RejectModelComponent>,
-    private readonly files: FilesService
+    private readonly files: FilesService,
+    public readonly stringMapper: StringMapperService
   ) { }
 
   ngOnInit(): void {
