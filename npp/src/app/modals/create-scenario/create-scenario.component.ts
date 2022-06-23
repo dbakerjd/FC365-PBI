@@ -94,8 +94,8 @@ export class CreateScenarioComponent implements OnInit {
       let dialogsObs: Observable<any>[] = [];
 
       for (const scenId of this.model.scenario) {
-        const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, [scenId]);
-        if (existsFileWithSameScenarios) {
+        const existsFileWithSameTags = await this.files.getFileWithSameTags(destinationFolder, [scenId], this.model.indications);
+        if (existsFileWithSameTags) {
           const currentScenario = scenarios.find(s => s.ID == scenId);
           const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
             maxWidth: "400px",
@@ -128,9 +128,9 @@ export class CreateScenarioComponent implements OnInit {
 
     } else {
       success = true;
-      const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, this.model.scenario);
+      const existsFileWithSameTags = await this.files.getFileWithSameTags(destinationFolder, this.model.scenario, this.model.indications);
       
-      if (existsFileWithSameScenarios) {
+      if (existsFileWithSameTags) {
         const scenariosNames = this.model.scenario.map((scenId: number) => {
           const scenario = scenarios.find(s => s.ID == scenId);
           if (scenario) return scenario.Title;
