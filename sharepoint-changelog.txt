@@ -36,9 +36,7 @@ Add list 'App Config Values' with fields
 
 0.5.9
    - Add field ApprovalDate at Approved Models list/files [type DateTime, not required]
-
-0.5.10
-   -Add new list 'String Mappings' with fields
+   - Add new list 'String Mappings' with fields
       * ID 
       * Title 
       * Key: string (required, unique)
