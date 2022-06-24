@@ -1,10 +1,13 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { FormlyFieldConfig } from '@ngx-formly/core';
 import { Indication } from '@shared/models/entity';
 import { NPPFile } from '@shared/models/file-system';
 import { AppDataService } from '@services/app/app-data.service';
+import { FilesService } from '@services/files.service';
+import { from, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-entity-edit-file',
@@ -34,7 +37,8 @@ export class EntityEditFileComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: any,
     public dialogRef: MatDialogRef<EntityEditFileComponent>,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private readonly files: FilesService
   ) { }
 
   ngOnInit(): void {
@@ -56,7 +60,13 @@ export class EntityEditFileComponent implements OnInit {
           multiple: true,
           required: true
         },
-        defaultValue: this.fileInfo.ListItemAllFields.IndicationId
+        defaultValue: this.fileInfo.ListItemAllFields.IndicationId,
+        asyncValidators: {
+          uniqueFileWithSameTags: {
+            expression: (control: FormControl) => this.checkExistsOtherFileWithSameTags(control.value),
+            message: 'Already exists another model with the same geography and scenarios for the selected indications',
+          },
+        },
       });
     }
     
@@ -68,7 +78,7 @@ export class EntityEditFileComponent implements OnInit {
   }
 
   async onSubmit() {
-    if (this.fileInfo) {
+    if (this.fileInfo && this.form.valid) {
       const newFilename = this.model.filename.replace(/[~#%&*{}:<>?+|"/\\]/g, "");
       let result = false;
       let result2 = false;
@@ -101,4 +111,17 @@ export class EntityEditFileComponent implements OnInit {
       });
     }
   }
+
+  private checkExistsOtherFileWithSameTags(indications: number[]) {
+    const filePath = this.fileInfo!.ServerRelativeUrl.slice(0, this.fileInfo!.ServerRelativeUrl.lastIndexOf('/'));
+    const fileFields = this.fileInfo!.ListItemAllFields!;
+    return from(this.files.getFileWithSameTags(
+      filePath,
+      fileFields.ModelScenarioId!,
+      indications
+    )).pipe(
+      map(foundFile => foundFile ? foundFile.ListItemAllFields?.ID === fileFields.ID : { uniqueFileWithSameTags: true })
+    );
+  }
+  
 }
