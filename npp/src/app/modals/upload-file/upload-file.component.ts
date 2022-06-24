@@ -66,7 +66,7 @@ export class UploadFileComponent implements OnInit {
 
     let cleanFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, ""); // clean filename
     let sameTagsExists = null;
-    if (uploadingModel) sameTagsExists = await this.files.getFileWithSameTags(folderToUpload, this.model.scenario, this.model.indications);
+    if (uploadingModel) sameTagsExists = await this.files.getFileWithSameTags(folderToUpload, this.model.scenario, this.model.IndicationId);
     let fileExists = await this.files.fileExistsInFolder(cleanFileName, folderToUpload);
     if (fileExists || sameTagsExists) {
       let message = '';
