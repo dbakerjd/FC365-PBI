@@ -94,14 +94,14 @@ export class CreateScenarioComponent implements OnInit {
       let dialogsObs: Observable<any>[] = [];
 
       for (const scenId of this.model.scenario) {
-        const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, [scenId]);
-        if (existsFileWithSameScenarios) {
+        const existsFileWithSameTags = await this.files.getFileWithSameTags(destinationFolder, [scenId], this.file.ListItemAllFields!.IndicationId);
+        if (existsFileWithSameTags) {
           const currentScenario = scenarios.find(s => s.ID == scenId);
           const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
             maxWidth: "400px",
             height: "250px",
             data: {
-              message: `A model with the scenario ${currentScenario?.Title} already exists. Do you want to overwrite it?`,
+              message: `A model with same indications and the scenario ${currentScenario?.Title} already exists. Do you want to overwrite it?`,
               confirmButtonText: 'Yes, overwrite',
               cancelButtonText: 'No, keep the original',
               reference: scenId
@@ -128,9 +128,9 @@ export class CreateScenarioComponent implements OnInit {
 
     } else {
       success = true;
-      const existsFileWithSameScenarios = await this.files.getFileByScenarios(destinationFolder, this.model.scenario);
+      const existsFileWithSameTags = await this.files.getFileWithSameTags(destinationFolder, this.model.scenario, this.file.ListItemAllFields!.IndicationId);
       
-      if (existsFileWithSameScenarios) {
+      if (existsFileWithSameTags) {
         const scenariosNames = this.model.scenario.map((scenId: number) => {
           const scenario = scenarios.find(s => s.ID == scenId);
           if (scenario) return scenario.Title;
@@ -138,15 +138,15 @@ export class CreateScenarioComponent implements OnInit {
         });
         let modalMessage = '';
         if (scenariosNames.length > 1) {
-          modalMessage = `A model with the same scenarios (${scenariosNames.join(', ')}) already exists. Do you want to overwrite it?`
+          modalMessage = `A model with the same indications and the chosen scenarios (${scenariosNames.join(', ')}) already exists. Do you want to overwrite it?`
         } else {
-          modalMessage = `A model with the same scenario (${scenariosNames}) already exists. Do you want to overwrite it?`
+          modalMessage = `A model with the same indications and the chosen scenario (${scenariosNames}) already exists. Do you want to overwrite it?`
         }
         const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
           maxWidth: "400px",
           height: "250px",
           data: {
-            message: `A model with the same scenarios (${scenariosNames}) already exists. Do you want to overwrite it?`,
+            message: modalMessage,
             confirmButtonText: 'Yes, overwrite',
             cancelButtonText: 'No, keep the original'
           }
@@ -160,7 +160,7 @@ export class CreateScenarioComponent implements OnInit {
             } else {
               // do nothing and close
               this.updating = this.dialogRef.disableClose = false;
-              this.dialogRef.close(true);
+              this.dialogRef.close(undefined);
             }
           });
       } else {
