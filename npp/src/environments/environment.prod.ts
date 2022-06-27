@@ -2,7 +2,7 @@ export const environment = {
   ssoRedirectUrl: 'https://icy-water-0ae577403.1.azurestaticapps.net/auth-end',
   production: true,
   isInlineApp: true,
-  version: '0.5.9',
+  version: '0.5.10',
   functionAppUrl: 'https://func-fc365-test.azurewebsites.net/api/PowerBI',
   functionAppDomain: 'func-fc365-test.azurewebsites.net',
   //AAD api scope to use. For multitenant must be preceded by domain, otherwise api://{clientID}/{scope}

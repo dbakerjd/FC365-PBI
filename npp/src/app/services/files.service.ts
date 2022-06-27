@@ -13,9 +13,10 @@ export class FilesService {
 
   async uploadFileToFolder(fileData: string, folder: string, fileName: string, metadata?: any): Promise<any> {
     if (metadata) {
-      let scenarios = metadata.ModelScenarioId;
-      if (scenarios) {
-        let file = await this.getFileByScenarios(folder, scenarios);
+      const scenarios = metadata.ModelScenarioId;
+      const indications = metadata.IndicationId;
+      if (scenarios && indications) {
+        let file = await this.getFileWithSameTags(folder, scenarios, indications);
         if (file) this.appData.deleteFile(file?.ServerRelativeUrl);
       }
     }
@@ -142,13 +143,13 @@ export class FilesService {
     return JSON.stringify([newComment]);
   }
 
-  /** Search for a model with scenarios assigned */
-  async getFileByScenarios(path: string, scenarios: number[]) {
+  /** Search for a model with Scenarios and Indications assigned */
+  async getFileWithSameTags(path: string, scenarios: number[], indications: number[]): Promise<NPPFile | null> {
     let files = await this.appData.getFolderFiles(path, false);
     for (let i = 0; i < files.length; i++) {
       let model = files[i];
-      let sameScenario = this.haveSameScenarios(model, scenarios);
-      if (sameScenario) {
+      const sameTags = this.haveSameScenarios(model, scenarios) && this.haveSameIndications(model, indications);
+      if (sameTags) {
         return model;
       }
     }
@@ -301,12 +302,14 @@ export class FilesService {
   }
 
   private async removeOldApprovedModel(entity: Opportunity, file: NPPFile) {
-    if (file.ListItemAllFields && file.ListItemAllFields.ModelScenarioId) {
+    const scenarios = file.ListItemAllFields?.ModelScenarioId;
+    const indications = file.ListItemAllFields?.IndicationId;
+
+    if (file.ListItemAllFields && scenarios && indications) {
       const arrFolder = file.ServerRelativeUrl.split("/");
       const path = '/' + arrFolder[1] + '/' + arrFolder[2] + '/' + FOLDER_APPROVED + '/' + entity.BusinessUnitId + '/' + entity.ID + '/0/0/' + arrFolder[arrFolder.length - 3] + '/0/';
-      const scenarios = file.ListItemAllFields.ModelScenarioId;
 
-      const model = await this.getFileByScenarios(path, scenarios);
+      const model = await this.getFileWithSameTags(path, scenarios, indications);
       if (model) {
         await this.deleteFile(model.ServerRelativeUrl);
       }
@@ -327,6 +330,20 @@ export class FilesService {
       return sameScenario;
 
     } else return false;
+  }
+
+  /** Check if the model have exactly the same indications */
+  private haveSameIndications(model: NPPFile, indications: number[]): boolean {
+    if (model.ListItemAllFields && model.ListItemAllFields.IndicationId) {
+
+      let sameIndications = model.ListItemAllFields.IndicationId.length === indications.length;
+      for (let j = 0; sameIndications && j < model.ListItemAllFields.IndicationId.length; j++) {
+        let indicationId = model.ListItemAllFields.IndicationId[j];
+        sameIndications = sameIndications && (indications.indexOf(indicationId) != -1);
+      }
+      return sameIndications;
+    }
+    return false;
   }
 
   private async copyCSV(file: NPPFile, path: string) {
@@ -380,8 +397,8 @@ export class FilesService {
   async cloneForecastModel(originFile: NPPFile, newFilename: string, newScenarios: number[], authorId: number, comments = ''): Promise<boolean> {
     const destinationFolder = originFile.ServerRelativeUrl.replace('/' + originFile.Name, '/');
 
-    let fileWithSameScenarios = await this.getFileByScenarios(destinationFolder, newScenarios);
-    if (fileWithSameScenarios) this.appData.deleteFile(fileWithSameScenarios.ServerRelativeUrl);
+    let fileWithSameTags = await this.getFileWithSameTags(destinationFolder, newScenarios, originFile.ListItemAllFields!.IndicationId);
+    if (fileWithSameTags) this.appData.deleteFile(fileWithSameTags.ServerRelativeUrl);
 
     let success = await this.appData.cloneFile(originFile.ServerRelativeUrl, destinationFolder, newFilename);
     if (!success) return false;

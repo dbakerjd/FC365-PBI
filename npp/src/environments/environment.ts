@@ -5,8 +5,8 @@
 export const environment = {
   ssoRedirectUrl: 'https://localhost:3200/auth-end',
   production: false,
-  version: '0.5.9',
   isInlineApp: true,
+  version: '0.5.10',
   functionAppUrl: 'http://localhost:7071/api/PowerBI',
   functionAppDomain: 'localhost',
   //AAD api scope to use. For multitenant must be preceded by domain, otherwise api://{clientID}/{scope}
