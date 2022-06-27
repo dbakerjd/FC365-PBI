@@ -65,20 +65,20 @@ export class UploadFileComponent implements OnInit {
     }
 
     let cleanFileName = this.model.file[0].name.replace(/[~#%&*{}:<>?+|"/\\]/g, ""); // clean filename
-    let scenarioExists = null;
-    if (uploadingModel) scenarioExists = await this.files.getFileByScenarios(folderToUpload, this.model.scenario);
+    let sameTagsExists = null;
+    if (uploadingModel) sameTagsExists = await this.files.getFileWithSameTags(folderToUpload, this.model.scenario, this.model.IndicationId);
     let fileExists = await this.files.fileExistsInFolder(cleanFileName, folderToUpload);
-    if (fileExists || scenarioExists) {
+    if (fileExists || sameTagsExists) {
       let message = '';
       if(fileExists) {
         message = `A model with this name (${cleanFileName}) already exists in this location.`
-        if(scenarioExists) {
-          message += " Also, a model with the same scenario exists. Do you want to overwrite everything?"
+        if(sameTagsExists) {
+          message += " Also, a model with the same scenarios and indications exists. Do you want to overwrite everything?"
         } else {
           message += " Do you want to overwrite it?"
         }
-      } else if(scenarioExists) {
-        message = "A model with the same scenario already exists. Do you want to overwrite it?"
+      } else if(sameTagsExists) {
+        message = "A model with the same scenarios and indications already exists. Do you want to overwrite it?"
       }
 
       const dialogRef = this.matDialog.open(ConfirmDialogComponent, {

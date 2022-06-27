@@ -520,6 +520,7 @@ export class FilesListComponent implements OnInit {
     dialogRef.afterClosed()
       .pipe(take(1))
       .subscribe(async result => {
+        if (!result) return;
         let res = result.success;
         let str = '';
         let error = false;
