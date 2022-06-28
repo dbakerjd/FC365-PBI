@@ -727,17 +727,17 @@ export class AppDataService {
     }
   }
 
-  /** Adds a user to a group. If ask for seat, also try to assign a seat for the user */
-  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false, newUser = false): Promise<boolean> {
+  /** Adds a user to a group and try to assign a seat for the user */
+  async addUserToGroupAndSeat(user: User, groupId: number): Promise<boolean> {
     try {
-      if (askForSeat) {
-        //check if is previously in the group, to avoid ask again for the same seat
-        if (!newUser && await this.userIsInGroup(user.Id, groupId)) {
-          return true;
-        }
-        await this.askSeatForUser(user.Email!);
+      
+      //check if is previously in the group, to avoid ask again for the same seat
+      if (await this.userIsInGroup(user.Id, groupId)) {
+        return true;
       }
+      await this.askSeatForUser(user.Email!);
       return await this.addUserToGroup(user, groupId);
+      
     } catch (e: any) {
       if (e.status === 422) {
         this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \

@@ -87,7 +87,7 @@ export class PermissionsService {
     const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
+    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id)) {
       return false;
     }
     await this.appData.addUserToGroup(owner, OOGroup.Id);
@@ -106,7 +106,7 @@ export class PermissionsService {
     for (const userMail of users) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
-      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
       else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
 
       if (!userSeated) continue;
@@ -186,7 +186,7 @@ export class PermissionsService {
     for (const userMail of addedUsers) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
-      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
       else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
        
       if (!userSeated) continue;
@@ -228,7 +228,7 @@ export class PermissionsService {
       const user = await this.appData.getUserInfoByMail(userMail);
       if (!user) return false;
       success = success && await this.appData.removeUserFromGroup(RGGroup.Id, user.Id);
-      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['RU']); // remove (if needed) of OU group
+      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['RU']); // remove (if needed) of RU group
     }
 
     if (!success) return success;
@@ -236,7 +236,7 @@ export class PermissionsService {
     for (const userMail of addedUsers) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
-      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, RUGroup.Id, true);
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, RUGroup.Id);
       else userSeated = await this.appData.addNewUserToGroup(userMail, RUGroup.Id);
        
       if (!userSeated) continue;
@@ -265,7 +265,7 @@ export class PermissionsService {
 
     let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
 
-    if (success = await this.appData.addUserToGroupAndSeat(newOwner, OUGroup.Id, true) && success) {
+    if (success = await this.appData.addUserToGroupAndSeat(newOwner, OUGroup.Id) && success) {
       success = await this.appData.addUserToGroup(newOwner, OOGroup.Id) && success;
     }
 
@@ -297,7 +297,7 @@ export class PermissionsService {
       for (const userMail of addedUsers) {
         const user = await this.appData.getUserInfoByMail(userMail);
         let userSeated;
-        if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+        if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
         else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
 
         if (!userSeated) continue;
@@ -610,7 +610,7 @@ export class PermissionsService {
     const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
+    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id)) {
       return false;
     }
     await this.appData.addUserToGroup(owner, OOGroup.Id);
@@ -745,7 +745,7 @@ export class PermissionsService {
     group = await this.appData.createGroup(`OU-${entityId}`);
     if (group) {
       groups.push({ type: 'OU', data: group });
-      if (!await this.appData.addUserToGroupAndSeat(owner, group.Id, true)) {
+      if (!await this.appData.addUserToGroupAndSeat(owner, group.Id)) {
         return [];
       }
     }
@@ -754,7 +754,7 @@ export class PermissionsService {
     group = await this.appData.createGroup(`OO-${entityId}`);
     if (group) {
       groups.push({ type: 'OO', data: group });
-      await this.appData.addUserToGroupAndSeat(owner, group.Id);
+      await this.appData.addUserToGroup(owner, group.Id);
     }
 
     // Reports Only Users (RU)
