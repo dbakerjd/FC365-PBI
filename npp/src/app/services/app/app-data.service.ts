@@ -751,6 +751,13 @@ export class AppDataService {
     }
   }
 
+  /**
+   * Create a user in Sharepoint from email, ask for a seat for it and add it to the group
+   * 
+   * @param userMail mail of the new user from MS Graph
+   * @param groupId group id where to add the user
+   * @returns boolean. True if the user is added. False, otherwise
+   */
   async addNewUserToGroup(userMail: string, groupId: number): Promise<boolean> {
     if (await this.askSeatForUser(userMail)) {
       return await this.addUserToGroupFromMail(userMail, groupId);
