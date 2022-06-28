@@ -178,7 +178,7 @@ export class PermissionsService {
       const user = await this.appData.getUserInfoByMail(userMail);
       if (!user) return false;
       success = success && await this.appData.removeUserFromGroup(DUGroup.Id, user.Id);
-      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['OU']); // remove (if needed) of OU group
+      success = success && await this.removeUserFromSeatsGroups(oppId, user.Id); // remove (if needed) of OU group
     }
 
     if (!success) return success;
@@ -228,7 +228,7 @@ export class PermissionsService {
       const user = await this.appData.getUserInfoByMail(userMail);
       if (!user) return false;
       success = success && await this.appData.removeUserFromGroup(RGGroup.Id, user.Id);
-      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['RU']); // remove (if needed) of RU group
+      success = success && await this.removeUserFromSeatsGroups(oppId, user.Id); // remove (if needed) of RU group
     }
 
     if (!success) return success;
@@ -470,7 +470,7 @@ export class PermissionsService {
   /** Get the user groups inside an entity */
   async getUserEntityGroups(userId: number, entityId: number) {
     const userGroups = await this.appData.getUserGroups(userId);
-    return userGroups.filter(g => Number(g.Title.split('-')[1]) == entityId);
+    return userGroups.filter(g => Number(g.Title.split('-')[1]) === entityId);
   }
 
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
@@ -848,6 +848,37 @@ export class PermissionsService {
       if (updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()).length === 1) {
         // not involved in any group of the opportunity
         success = await this.appData.removeUserFromGroup('OU-' + oppId, userId, true);
+      }
+    }
+    return success;
+  }
+
+  /**
+   * Remove users from the entity general groups (related with seats) 
+   * if they are not related with the entity anymore
+   * 
+   * @param entityId Id of the entity
+   * @param userId Id of the user
+   * @returns boolean: success
+   */
+  private async removeUserFromSeatsGroups(entityId: number, userId: number): Promise<boolean> {
+    const entityGroups = await this.getUserEntityGroups(userId, entityId);
+    console.log('removing', userId, entityId, entityGroups);
+    const relatedGroups = [
+      { parent: 'OU', related: ['OO', 'SU', 'DU'] },
+      { parent: 'RU', related: ['RG'] }
+    ];
+    let success = true;
+
+    for (const rg of relatedGroups) {
+      if (entityGroups.find(eg => eg.Title.split('-')[0] === rg.parent)) {
+        console.log('removing found ' + rg.parent);
+        if (entityGroups.filter(eg => rg.related.includes(eg.Title.split('-')[0])).length === 0) {
+          console.log('removing not found others');
+          success = success && await this.appData.removeUserFromGroup(rg.parent + '-' + entityId, userId, true);
+        } else {
+          console.log('removing - FOUND Others', entityGroups.filter(eg => rg.related.includes(eg.Title.split('-')[0])));
+        }
       }
     }
     return success;
