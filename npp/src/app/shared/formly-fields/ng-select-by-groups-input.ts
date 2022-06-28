@@ -48,7 +48,6 @@ export class FormlyFieldNgSelectByGroups extends FieldType {
   ngOnInit() {
 
     const { options} = this.to;
-    console.log(options);
   }
 
   // trackByFn(item: any) {
