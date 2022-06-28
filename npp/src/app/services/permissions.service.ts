@@ -256,42 +256,43 @@ export class PermissionsService {
     return success;
   }
 
-  async changeEntityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
+  async changeEntityOwnerPermissions(entityId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
   
     const newOwner = await this.appData.getUserInfo(newOwnerId);
-    const OOGroup = await this.appData.getGroup('OO-' + oppId); // Opportunity Owner (OO)
-    const OUGroup = await this.appData.getGroup('OU-' + oppId); // Opportunity Users (OO)
+    const OOGroup = await this.appData.getGroup('OO-' + entityId); // Opportunity Owner (OO)
+    const OUGroup = await this.appData.getGroup('OU-' + entityId); // Opportunity Users (OO)
     if (!newOwner.LoginName || !OOGroup || !OUGroup) return false;
 
-    let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
+    let success = await this.appData.removeUserFromGroup(OOGroup.Id, currentOwnerId);
+    success = success && await this.removeUserFromSeatsGroups(entityId, currentOwnerId);
 
     if (success = await this.appData.addUserToGroupAndSeat(newOwner, OUGroup.Id) && success) {
       success = await this.appData.addUserToGroup(newOwner, OOGroup.Id) && success;
     }
 
-    const geographies = await this.appData.getEntityGeographies(oppId);
-    await this.addUsersToPowerBI_RLS([newOwner], oppId, geographies);
-    await this.removeUsersToPowerBI_RLS([currentOwnerId], oppId, geographies);
+    const geographies = await this.appData.getEntityGeographies(entityId);
+    await this.addUsersToPowerBI_RLS([newOwner], entityId, geographies);
+    await this.removeUsersToPowerBI_RLS([currentOwnerId], entityId, geographies);
 
     return success;
   }
 
-  async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsersMails: string[], newUsersMails: string[]): Promise<boolean> {
+  async changeStageUsersPermissions(entityId: number, masterStageId: number, currentUsersMails: string[], newUsersMails: string[]): Promise<boolean> {
     const removedUsers = currentUsersMails.filter(item => newUsersMails.indexOf(item) < 0);
     const addedUsers = newUsersMails.filter(item => currentUsersMails.indexOf(item) < 0);
 
     let success = true;
     for (const userMail of removedUsers) {
       const user = await this.appData.getUserInfoByMail(userMail);
-      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['SU'], masterStageId.toString());
-      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['OU']); // remove (if needed) of OU group
+      success = success && await this.appData.removeUserFromGroup(`SU-${entityId}-${masterStageId}`, user!.Id);
+      success = success && await this.removeUserFromSeatsGroups(entityId, user!.Id); // remove (if needed) of OU group
     }
 
     if (!success) return false;
 
     if (addedUsers.length > 0) {
-      const OUGroup = await this.appData.getGroup('OU-' + oppId);
-      const SUGroup = await this.appData.getGroup(`SU-${oppId}-${masterStageId}`);
+      const OUGroup = await this.appData.getGroup('OU-' + entityId);
+      const SUGroup = await this.appData.getGroup(`SU-${entityId}-${masterStageId}`);
       if (!OUGroup || !SUGroup) return false;
 
       for (const userMail of addedUsers) {
@@ -306,11 +307,11 @@ export class PermissionsService {
       }
     }
 
-    const geographies = await this.appData.getEntityGeographies(oppId);
+    const geographies = await this.appData.getEntityGeographies(entityId);
     let users = await this.appData.getUsersByEmails(addedUsers);
-    await this.addUsersToPowerBI_RLS(users, oppId, geographies);
+    await this.addUsersToPowerBI_RLS(users, entityId, geographies);
     users = await this.appData.getUsersByEmails(removedUsers);
-    await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), oppId, geographies);
+    await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), entityId, geographies);
     
     return success;
   }
@@ -827,32 +828,6 @@ export class PermissionsService {
     return actions;
   }
 
-  private async removeUserFromAllGroups(oppId: number, userId: number, groups: string[], sufix: string = ''): Promise<boolean> {
-    const userGroups = await this.appData.getUserGroups(userId);
-    const involvedGroups = userGroups.filter(userGroup => {
-      for (const groupType of groups) {
-        if (userGroup.Title.startsWith(groupType + '-' + oppId + (sufix ? '-' + sufix : ''))) return true;
-      }
-      return false;
-    });
-    let success = true;
-    for (const ig of involvedGroups) {
-      if (!ig.Title.startsWith('OU')) success = await this.appData.removeUserFromGroup(ig.Title, userId) && success;
-    }
-
-    if (!success) return false;
-
-    // has to be removed of OU -> extra check if the user is not in any opportunity group
-    if (involvedGroups.some(ig => ig.Title.startsWith('OU'))) {
-      const updatedGroups = await this.appData.getUserGroups(userId);
-      if (updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()).length === 1) {
-        // not involved in any group of the opportunity
-        success = await this.appData.removeUserFromGroup('OU-' + oppId, userId, true);
-      }
-    }
-    return success;
-  }
-
   /**
    * Remove users from the entity general groups (related with seats) 
    * if they are not related with the entity anymore
@@ -863,7 +838,6 @@ export class PermissionsService {
    */
   private async removeUserFromSeatsGroups(entityId: number, userId: number): Promise<boolean> {
     const entityGroups = await this.getUserEntityGroups(userId, entityId);
-    console.log('removing', userId, entityId, entityGroups);
     const relatedGroups = [
       { parent: 'OU', related: ['OO', 'SU', 'DU'] },
       { parent: 'RU', related: ['RG'] }
@@ -872,12 +846,8 @@ export class PermissionsService {
 
     for (const rg of relatedGroups) {
       if (entityGroups.find(eg => eg.Title.split('-')[0] === rg.parent)) {
-        console.log('removing found ' + rg.parent);
         if (entityGroups.filter(eg => rg.related.includes(eg.Title.split('-')[0])).length === 0) {
-          console.log('removing not found others');
           success = success && await this.appData.removeUserFromGroup(rg.parent + '-' + entityId, userId, true);
-        } else {
-          console.log('removing - FOUND Others', entityGroups.filter(eg => rg.related.includes(eg.Title.split('-')[0])));
         }
       }
     }
