@@ -15,6 +15,7 @@
             <th class="centered-value">Seats Value</th>
             <th class="centered-value">#{{ entityNamePlural }} (Groups)</th>
             <th class="centered-value">{{ entityNameSingular }} Owner</th>
+            <th class="centered-value">Reports Only</th>
         </tr>
         <ng-container *ngFor="let user of usersList">
             <tr>
@@ -24,14 +25,18 @@
                 <td class="centered-value">{{ user.seats }}</td>
                 <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OU')">{{ user.opportunities }}</td>
                 <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'OO')">{{ user.owner }}</td>
+                <td class="centered-value dropdown" (click)="listOpportunities(user.Id, 'RU')">{{ user.reports }}</td>
             </tr>
             <tr *ngIf="usersOpportunitiesListItem.userId == user.Id && usersOpportunitiesListItem.list.length > 0" class="opps-list">
-                <td colspan="6">
+                <td colspan="7">
                     <h5 *ngIf="usersOpportunitiesListItem.type == 'OU'">
                         {{ user.Title }} - {{ entityNamePlural }}' user
                     </h5>
                     <h5 *ngIf="usersOpportunitiesListItem.type == 'OO'">
                         {{ user.Title }} - {{ entityNamePlural }}' owner
+                    </h5>
+                    <h5 *ngIf="usersOpportunitiesListItem.type == 'RU'">
+                        {{ user.Title }} - Reports Only
                     </h5>
                     <ul>
                         <li *ngFor="let opp of usersOpportunitiesListItem.list">
