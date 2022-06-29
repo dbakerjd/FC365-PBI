@@ -41,5 +41,5 @@ Add list 'App Config Values' with fields
       * Title 
       * Key: string (required, unique)
 
-0.5.11
+0.6.0 (2022-06-29)
    - Add item to 'Master Groups Type List': RU / Master Power BI / ListRead / List
