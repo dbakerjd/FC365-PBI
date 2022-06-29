@@ -66,14 +66,16 @@ export class SeatsTableComponent implements OnInit {
       const groups = await this.appData.getUserGroups(user.Id);
       const OUgroups = groups.filter(g => g.Title.startsWith('OU-'));
       const OOgroups = groups.filter(g => g.Title.startsWith('OO-'));
+      const RUgroups = groups.filter(g => g.Title.startsWith('RU-'));
       user['opportunities'] = OUgroups.length;
       user['owner'] = OOgroups.length;
+      user['reports'] = RUgroups.length;
     }
 
     this.generatingSeatsTable = false;
   }
 
-  async listOpportunities(userId: number, group: 'OU' | 'OO') {
+  async listOpportunities(userId: number, group: 'OU' | 'OO' | 'RU') {
     if (this.usersOpportunitiesListItem.type == group && this.usersOpportunitiesListItem.userId == userId) {
       this.usersOpportunitiesListItem.type = null;
       this.usersOpportunitiesListItem.userId = null;

@@ -49,7 +49,8 @@ export class PermissionsService {
   }
 
   async initializeOpportunity(opportunity: Opportunity, stage?: Stage, users?: string[]): Promise<boolean> {
-    const groups = await this.createOpportunityGroups(opportunity.EntityOwnerId, opportunity.ID);
+    const oppGeographies = await this.appData.getEntityGeographies(opportunity.ID);
+    const groups = await this.createEntityGroups(opportunity.EntityOwnerId, opportunity.ID, oppGeographies);
     if (groups.length < 1) return false;
 
     let permissions;
@@ -63,7 +64,6 @@ export class PermissionsService {
 
     // add groups to the Opp geographies
     permissions = await this.appData.getMasterGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
-    const oppGeographies = await this.appData.getEntityGeographies(opportunity.ID);
     for (const oppGeo of oppGeographies) {
       await this.setPermissions(permissions, groups, oppGeo.Id);
     }
@@ -87,7 +87,7 @@ export class PermissionsService {
     const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
+    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id)) {
       return false;
     }
     await this.appData.addUserToGroup(owner, OOGroup.Id);
@@ -106,7 +106,7 @@ export class PermissionsService {
     for (const userMail of users) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
-      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
       else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
 
       if (!userSeated) continue;
@@ -153,18 +153,13 @@ export class PermissionsService {
   /** Sets the access for the entity departments groups updating their members */
   async updateDepartmentUsers(
     oppId: number,
-    stageId: number,
     departmentId: number,
-    folderDepartmentId: number,
     geoId: number | null,
     currentUsersList: string[],
     newUsersList: string[]
   ): Promise<boolean> {
     // groups needed
     const OUGroup = await this.appData.getGroup('OU-' + oppId);
-    const OOGroup = await this.appData.getGroup('OO-' + oppId);
-    let SUGroup = null;
-    if(stageId) SUGroup = await this.appData.getGroup('SU-' + oppId + '-' + stageId);
     let groupName = `DU-${oppId}-${departmentId}`;
     let entityGeography;
     if (geoId) {
@@ -173,7 +168,7 @@ export class PermissionsService {
     }
     const DUGroup = await this.appData.getGroup(groupName);
 
-    if (!OUGroup || !OOGroup || (!SUGroup && stageId) || !DUGroup) throw new Error("Permission groups missing.");
+    if (!OUGroup || !DUGroup) throw new Error("Permission groups missing.");
 
     const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
     const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
@@ -183,7 +178,7 @@ export class PermissionsService {
       const user = await this.appData.getUserInfoByMail(userMail);
       if (!user) return false;
       success = success && await this.appData.removeUserFromGroup(DUGroup.Id, user.Id);
-      success = success && await this.removeUserFromAllGroups(oppId, user.Id, ['OU']); // remove (if needed) of OU group
+      success = success && await this.removeUserFromSeatsGroups(oppId, user.Id); // remove (if needed) of OU group
     }
 
     if (!success) return success;
@@ -191,7 +186,7 @@ export class PermissionsService {
     for (const userMail of addedUsers) {
       let user = await this.appData.getUserInfoByMail(userMail);
       let userSeated;
-      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
       else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
        
       if (!userSeated) continue;
@@ -211,48 +206,99 @@ export class PermissionsService {
     return success;
   }
 
-  async changeEntityOwnerPermissions(oppId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
-  
-    const newOwner = await this.appData.getUserInfo(newOwnerId);
-    const OOGroup = await this.appData.getGroup('OO-' + oppId); // Opportunity Owner (OO)
-    const OUGroup = await this.appData.getGroup('OU-' + oppId); // Opportunity Users (OO)
-    if (!newOwner.LoginName || !OOGroup || !OUGroup) return false;
+  /** Sets the access for the users that only has reports access */
+  async updateReportsOnlyUsers(
+    oppId: number,
+    geoId: number,
+    currentUsersList: string[],
+    newUsersList: string[]
+  ): Promise<boolean> {
+    // groups needed
+    const RUGroup = await this.appData.getGroup('RU-' + oppId);
+    const RGGroup = await this.appData.getGroup(`RG-${oppId}-${geoId}`);
+    const entityGeography = await this.appData.getEntityGeography(geoId);
 
-    let success = await this.removeUserFromAllGroups(oppId, currentOwnerId, ['OO', 'OU']);
+    if (!RUGroup || !RGGroup) throw new Error("Permission groups missing.");
 
-    if (success = await this.appData.addUserToGroupAndSeat(newOwner, OUGroup.Id, true) && success) {
-      success = await this.appData.addUserToGroup(newOwner, OOGroup.Id) && success;
+    const removedUsers = currentUsersList.filter(item => newUsersList.indexOf(item) < 0);
+    const addedUsers = newUsersList.filter(item => currentUsersList.indexOf(item) < 0);
+
+    let success = true;
+    for (const userMail of removedUsers) {
+      const user = await this.appData.getUserInfoByMail(userMail);
+      if (!user) return false;
+      success = success && await this.appData.removeUserFromGroup(RGGroup.Id, user.Id);
+      success = success && await this.removeUserFromSeatsGroups(oppId, user.Id); // remove (if needed) of RU group
     }
 
-    const geographies = await this.appData.getEntityGeographies(oppId);
-    await this.addUsersToPowerBI_RLS([newOwner], oppId, geographies);
-    await this.removeUsersToPowerBI_RLS([currentOwnerId], oppId, geographies);
+    if (!success) return success;
+
+    for (const userMail of addedUsers) {
+      let user = await this.appData.getUserInfoByMail(userMail);
+      let userSeated;
+      if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, RUGroup.Id);
+      else userSeated = await this.appData.addNewUserToGroup(userMail, RUGroup.Id);
+       
+      if (!userSeated) continue;
+      
+      success = success && await this.appData.addUserToGroupFromMail(userMail, RGGroup.Id);
+      if (!success) return success;
+    }
+
+    // update power bi rls groups after all removing
+    if (success && entityGeography) {
+      let users = await this.appData.getUsersByEmails(addedUsers);
+      await this.addUsersToPowerBI_RLS(users, oppId, [entityGeography]);
+      users = await this.appData.getUsersByEmails(removedUsers);
+      await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), oppId, [entityGeography]);
+    }
 
     return success;
   }
 
-  async changeStageUsersPermissions(oppId: number, masterStageId: number, currentUsersMails: string[], newUsersMails: string[]): Promise<boolean> {
+  async changeEntityOwnerPermissions(entityId: number, currentOwnerId: number, newOwnerId: number): Promise<boolean> {
+  
+    const newOwner = await this.appData.getUserInfo(newOwnerId);
+    const OOGroup = await this.appData.getGroup('OO-' + entityId); // Opportunity Owner (OO)
+    const OUGroup = await this.appData.getGroup('OU-' + entityId); // Opportunity Users (OO)
+    if (!newOwner.LoginName || !OOGroup || !OUGroup) return false;
+
+    let success = await this.appData.removeUserFromGroup(OOGroup.Id, currentOwnerId);
+    success = success && await this.removeUserFromSeatsGroups(entityId, currentOwnerId);
+
+    if (success = await this.appData.addUserToGroupAndSeat(newOwner, OUGroup.Id) && success) {
+      success = await this.appData.addUserToGroup(newOwner, OOGroup.Id) && success;
+    }
+
+    const geographies = await this.appData.getEntityGeographies(entityId);
+    await this.addUsersToPowerBI_RLS([newOwner], entityId, geographies);
+    await this.removeUsersToPowerBI_RLS([currentOwnerId], entityId, geographies);
+
+    return success;
+  }
+
+  async changeStageUsersPermissions(entityId: number, masterStageId: number, currentUsersMails: string[], newUsersMails: string[]): Promise<boolean> {
     const removedUsers = currentUsersMails.filter(item => newUsersMails.indexOf(item) < 0);
     const addedUsers = newUsersMails.filter(item => currentUsersMails.indexOf(item) < 0);
 
     let success = true;
     for (const userMail of removedUsers) {
       const user = await this.appData.getUserInfoByMail(userMail);
-      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['SU'], masterStageId.toString());
-      success = success && await this.removeUserFromAllGroups(oppId, user!.Id, ['OU']); // remove (if needed) of OU group
+      success = success && await this.appData.removeUserFromGroup(`SU-${entityId}-${masterStageId}`, user!.Id);
+      success = success && await this.removeUserFromSeatsGroups(entityId, user!.Id); // remove (if needed) of OU group
     }
 
     if (!success) return false;
 
     if (addedUsers.length > 0) {
-      const OUGroup = await this.appData.getGroup('OU-' + oppId);
-      const SUGroup = await this.appData.getGroup(`SU-${oppId}-${masterStageId}`);
+      const OUGroup = await this.appData.getGroup('OU-' + entityId);
+      const SUGroup = await this.appData.getGroup(`SU-${entityId}-${masterStageId}`);
       if (!OUGroup || !SUGroup) return false;
 
       for (const userMail of addedUsers) {
         const user = await this.appData.getUserInfoByMail(userMail);
         let userSeated;
-        if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id, true);
+        if (user) userSeated = await this.appData.addUserToGroupAndSeat(user, OUGroup.Id);
         else userSeated = await this.appData.addNewUserToGroup(userMail, OUGroup.Id);
 
         if (!userSeated) continue;
@@ -261,11 +307,11 @@ export class PermissionsService {
       }
     }
 
-    const geographies = await this.appData.getEntityGeographies(oppId);
+    const geographies = await this.appData.getEntityGeographies(entityId);
     let users = await this.appData.getUsersByEmails(addedUsers);
-    await this.addUsersToPowerBI_RLS(users, oppId, geographies);
+    await this.addUsersToPowerBI_RLS(users, entityId, geographies);
     users = await this.appData.getUsersByEmails(removedUsers);
-    await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), oppId, geographies);
+    await this.removeUsersToPowerBI_RLS(users.map(u => u.Id), entityId, geographies);
     
     return success;
   }
@@ -362,6 +408,13 @@ export class PermissionsService {
 
     let permissions = await this.appData.getMasterGroupPermissions(SPLists.GEOGRAPHIES_LIST_NAME);
     let stages = await this.appData.getEntityStages(entity.ID);
+    
+    // Create Reports Only groups by Geography (RG) for new geos
+    for (const geo of newGeos) {
+      await this.appData.createGroup(`RG-${entity.ID}-${geo.ID}`, 'Reports Only EntityId: ' + entity.ID + ' / Geo: ' + geo.Title);
+    }
+
+    // folders and DU groups for new geos
     if (stages && stages.length) {
       for (const oppGeo of newGeos) {
         await this.setPermissions(permissions, groups, oppGeo.Id); // assign permissions to new entity geo items
@@ -418,7 +471,19 @@ export class PermissionsService {
   /** Get the user groups inside an entity */
   async getUserEntityGroups(userId: number, entityId: number) {
     const userGroups = await this.appData.getUserGroups(userId);
-    return userGroups.filter(g => Number(g.Title.split('-')[1]) == entityId);
+    return userGroups.filter(g => Number(g.Title.split('-')[1]) === entityId);
+  }
+
+  /**
+   * Check if the user is assigned at least to one entity information
+   * 
+   * @param userId User Id. If not present, the current user
+   * @returns boolean
+   */
+  async userHasAccessToEntities(userId?: number) {
+    const user = userId ? await this.appData.getUserInfo(userId) : await this.appData.getCurrentUserInfo();
+    const currentUserGroups = await this.appData.getUserGroups(user.Id);
+    return !!currentUserGroups.find(g => g.Title.startsWith('OU'));
   }
 
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
@@ -476,6 +541,10 @@ export class PermissionsService {
         const DUGroupId = await this.appData.getGroupId(`DU-${entity.ID}-0-${geo.Id}`);
         if (DUGroupId) await this.appData.deleteGroup(DUGroupId);
       }
+    }
+    for (const geo of removeGeos) {
+      const RGGroupId = await this.appData.getGroupId(`RG-${entity.ID}-${geo.Id}`);
+      if (RGGroupId) await this.appData.deleteGroup(RGGroupId);
     }
 
     // soft delete entity geographies
@@ -535,6 +604,10 @@ export class PermissionsService {
       await this.createFolderGroups(entity.ID, archivedPermissions, folders.ro.filter(el => el.ServerRelativeUrl.includes(SPFolders.FOLDER_ARCHIVED)), groups);   
     }
 
+    for (const geo of restoreGeos) {
+      await this.appData.createGroup(`RG-${entity.ID}-${geo.ID}`, 'Reports Only EntityId: ' + entity.ID + ' / Geo: ' + geo.Title);
+    }
+
     // restore entity geographies
     for (let i = 0; i < restoreGeos.length; i++) {
       await this.appData.updateEntityGeography(restoreGeos[i].ID, { Removed: "false" });
@@ -550,7 +623,7 @@ export class PermissionsService {
     const owner = await this.appData.getUserInfo(opportunity.EntityOwnerId);
     if (!owner.LoginName) return false;
 
-    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id, true)) {
+    if (!await this.appData.addUserToGroupAndSeat(owner, OUGroup.Id)) {
       return false;
     }
     await this.appData.addUserToGroup(owner, OOGroup.Id);
@@ -675,26 +748,38 @@ export class PermissionsService {
     return folders;
   }
 
-  private async createOpportunityGroups(ownerId: number, oppId: number): Promise<SPGroupListItem[]> {
+  private async createEntityGroups(ownerId: number, entityId: number, geographies: EntityGeography[]): Promise<SPGroupListItem[]> {
     let group;
     let groups: SPGroupListItem[] = [];
     const owner = await this.appData.getUserInfo(ownerId);
     if (!owner.LoginName) return [];
 
     // Opportunity Users (OU)
-    group = await this.appData.createGroup(`OU-${oppId}`);
+    group = await this.appData.createGroup(`OU-${entityId}`);
     if (group) {
       groups.push({ type: 'OU', data: group });
-      if (!await this.appData.addUserToGroupAndSeat(owner, group.Id, true)) {
+      if (!await this.appData.addUserToGroupAndSeat(owner, group.Id)) {
         return [];
       }
     }
 
     // Opportunity Owner (OO)
-    group = await this.appData.createGroup(`OO-${oppId}`);
+    group = await this.appData.createGroup(`OO-${entityId}`);
     if (group) {
       groups.push({ type: 'OO', data: group });
-      await this.appData.addUserToGroupAndSeat(owner, group.Id);
+      await this.appData.addUserToGroup(owner, group.Id);
+    }
+
+    // Reports Only Users (RU)
+    group = await this.appData.createGroup(`RU-${entityId}`, 'Reports Only Entity Id: ' + entityId);
+    if (group) {
+      groups.push({ type: 'RU', data: group });
+    }
+
+    // Reports Only Geography (RG)
+    for (const geo of geographies) {
+      group = await this.appData.createGroup(`RG-${entityId}-${geo.ID}`, 'Reports Only EntityId: ' + entityId + ' Geo: ' + geo.Title);
+      if (group) groups.push({ type: 'RG', data: group });
     }
 
     return groups;
@@ -755,27 +840,27 @@ export class PermissionsService {
     return actions;
   }
 
-  private async removeUserFromAllGroups(oppId: number, userId: number, groups: string[], sufix: string = ''): Promise<boolean> {
-    const userGroups = await this.appData.getUserGroups(userId);
-    const involvedGroups = userGroups.filter(userGroup => {
-      for (const groupType of groups) {
-        if (userGroup.Title.startsWith(groupType + '-' + oppId + (sufix ? '-' + sufix : ''))) return true;
-      }
-      return false;
-    });
+  /**
+   * Remove users from the entity general groups (related with seats) 
+   * if they are not related with the entity anymore
+   * 
+   * @param entityId Id of the entity
+   * @param userId Id of the user
+   * @returns boolean: success
+   */
+  private async removeUserFromSeatsGroups(entityId: number, userId: number): Promise<boolean> {
+    const entityGroups = await this.getUserEntityGroups(userId, entityId);
+    const relatedGroups = [
+      { parent: 'OU', related: ['OO', 'SU', 'DU'] },
+      { parent: 'RU', related: ['RG'] }
+    ];
     let success = true;
-    for (const ig of involvedGroups) {
-      if (!ig.Title.startsWith('OU')) success = await this.appData.removeUserFromGroup(ig.Title, userId) && success;
-    }
 
-    if (!success) return false;
-
-    // has to be removed of OU -> extra check if the user is not in any opportunity group
-    if (involvedGroups.some(ig => ig.Title.startsWith('OU'))) {
-      const updatedGroups = await this.appData.getUserGroups(userId);
-      if (updatedGroups.filter(userGroup => userGroup.Title.split('-')[1] === oppId.toString()).length === 1) {
-        // not involved in any group of the opportunity
-        success = await this.appData.removeUserFromGroup('OU-' + oppId, userId, true);
+    for (const rg of relatedGroups) {
+      if (entityGroups.find(eg => eg.Title.split('-')[0] === rg.parent)) {
+        if (entityGroups.filter(eg => rg.related.includes(eg.Title.split('-')[0])).length === 0) {
+          success = success && await this.appData.removeUserFromGroup(rg.parent + '-' + entityId, userId, true);
+        }
       }
     }
     return success;
