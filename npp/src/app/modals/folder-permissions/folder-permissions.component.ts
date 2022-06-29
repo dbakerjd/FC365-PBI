@@ -46,6 +46,9 @@ export class FolderPermissionsComponent implements OnInit {
   
     const geographiesList = (await this.appData.getEntityGeographies(this.entity.ID))
       .map(el => { return { label: el.Title, value: el.Id } });
+    const categoryOptions = this.data?.folderList.map((f: NPPFolder) => {
+      return {'name': f.Title, 'value': f.DepartmentID};
+    });
 
     this.entityId = this.entity.ID;
     this.stageId = this.data.stageId;
@@ -56,12 +59,7 @@ export class FolderPermissionsComponent implements OnInit {
         type: 'select',
         templateOptions: {
           label: 'Department/Folder:',
-          options: this.data?.folderList.map((f: NPPFolder) => {
-            return {
-              'name': f.Title,
-              'value': f.DepartmentID,
-            };
-          }),
+          options: [...categoryOptions, ...[{'name': 'Reports Only', 'value': 'reports'}]],
           valueProp: 'value',
           labelProp: 'name',
           required: true,
@@ -76,7 +74,7 @@ export class FolderPermissionsComponent implements OnInit {
           required: true,
         },
         "hideExpression": (model: any) => {
-          return !this.data?.folderList.find((f: NPPFolder) => { return f.DepartmentID === model.category})?.containsModels;
+          return !this.data?.folderList.find((f: NPPFolder) => { return f.DepartmentID === model.category})?.containsModels && model.category !== 'reports';
         },
       },
     ];
@@ -102,6 +100,16 @@ export class FolderPermissionsComponent implements OnInit {
       }
     }
 
+    // Reports Only options
+    for (const geo of geographiesList) {
+      stageGroups.push({ 
+        departmentID: 'reports',
+        geoID: geo.value,
+        group: `RG-${this.entityId}-${geo.value}`,
+        folder: { Title: 'Reports Only', 'DepartmentID': 'reports' }
+      });
+    }
+
     for (const sg of stageGroups) {
       const defaultUsersList: SelectInputList[] = (await this.appData.getGroupMembers(sg.group))
         .map(el => { return { value: el.Email, label: el.Title ? el.Title : '' } });
@@ -114,7 +122,8 @@ export class FolderPermissionsComponent implements OnInit {
       });
 
       // create formly field
-      let hideExpression = 'model.category != ' + sg.folder.DepartmentID;
+      let hideExpression = 'model.category != ';
+      hideExpression += typeof sg.folder.DepartmentID === 'number' ?  + sg.folder.DepartmentID : `'${sg.folder.DepartmentID}'`;
       let formlyKey = 'DepartmentUsersId.' + sg.departmentID;
       if (sg.geoID) {
         hideExpression += ' || model.geography != ' + sg.geoID;
@@ -152,6 +161,7 @@ export class FolderPermissionsComponent implements OnInit {
       return;
     }
 
+    // console.log('model', this.model); return;
     try {
 
       
@@ -165,9 +175,7 @@ export class FolderPermissionsComponent implements OnInit {
             const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
             success = success && await this.permissions.updateDepartmentUsers(
               this.entityId,
-              this.stageId,
               +key,
-              this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
               +geoKey,
               currentList.list,
               this.model.DepartmentUsersId[key][geoKey]
@@ -181,13 +189,21 @@ export class FolderPermissionsComponent implements OnInit {
             }
             else break;
           }
+        } else if (key === 'reports') {
+          for (const geoKey in this.model.DepartmentUsersId[key]) {
+            const currentList = this.currentUsersList.find(el => el.geoID == geoKey && el.departmentID == key);
+            success = success && await this.permissions.updateReportsOnlyUsers(
+              this.entityId,
+              +geoKey,
+              currentList.list,
+              this.model.DepartmentUsersId[key][geoKey]
+            );
+          }
         } else {
           const currentList = this.currentUsersList.find(el => el.departmentID == key);
           success = success && await this.permissions.updateDepartmentUsers(
             this.entityId,
-            this.stageId,
             +key,
-            this.data?.folderList.find((f: NPPFolder) => f.DepartmentID === +key).Id,
             null,
             currentList.list,
             this.model.DepartmentUsersId[key]
