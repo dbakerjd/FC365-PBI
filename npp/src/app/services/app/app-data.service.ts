@@ -727,17 +727,17 @@ export class AppDataService {
     }
   }
 
-  /** Adds a user to a group. If ask for seat, also try to assign a seat for the user */
-  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false, newUser = false): Promise<boolean> {
+  /** Adds a user to a group and try to assign a seat for the user */
+  async addUserToGroupAndSeat(user: User, groupId: number): Promise<boolean> {
     try {
-      if (askForSeat) {
-        //check if is previously in the group, to avoid ask again for the same seat
-        if (!newUser && await this.userIsInGroup(user.Id, groupId)) {
-          return true;
-        }
-        await this.askSeatForUser(user.Email!);
+      
+      //check if is previously in the group, to avoid ask again for the same seat
+      if (await this.userIsInGroup(user.Id, groupId)) {
+        return true;
       }
+      await this.askSeatForUser(user.Email!);
       return await this.addUserToGroup(user, groupId);
+      
     } catch (e: any) {
       if (e.status === 422) {
         this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
@@ -751,6 +751,13 @@ export class AppDataService {
     }
   }
 
+  /**
+   * Create a user in Sharepoint from email, ask for a seat for it and add it to the group
+   * 
+   * @param userMail mail of the new user from MS Graph
+   * @param groupId group id where to add the user
+   * @returns boolean. True if the user is added. False, otherwise
+   */
   async addNewUserToGroup(userMail: string, groupId: number): Promise<boolean> {
     if (await this.askSeatForUser(userMail)) {
       return await this.addUserToGroupFromMail(userMail, groupId);
