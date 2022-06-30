@@ -59,7 +59,6 @@ import { CreateBrandComponent } from './modals/create-brand/create-brand.compone
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 import { AppControlService } from '@services/app/app-control.service';
@@ -129,7 +128,6 @@ import { SimpleUploadComponent } from './modals/simple-upload/simple-upload.comp
     CreateBrandComponent,
     BrandListComponent,
     BrandSummaryComponent,
-    BreadcrumbsComponent,
     SeatsTableComponent,
     GeneralAreaComponent,
     SimpleUploadComponent,
