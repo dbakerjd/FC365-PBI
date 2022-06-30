@@ -91,6 +91,9 @@ export class ActionsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
         this.opportunity = await this.appData.getEntity(params.id);

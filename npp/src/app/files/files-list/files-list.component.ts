@@ -102,6 +102,9 @@ export class FilesListComponent implements OnInit {
   init() {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       this.currentUser = await this.appData.getCurrentUserInfo();
       this.masterCycles = await this.selectLists.getForecastCyclesList();
 
