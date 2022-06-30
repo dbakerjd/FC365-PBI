@@ -6,7 +6,7 @@ import { environment } from 'src/environments/environment';
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { PermissionsService } from '@services/permissions.service';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,20 +37,20 @@ export class DashboardComponent implements OnInit {
     private readonly teams: TeamsService, 
     private router: Router, 
     private licensing: LicensingService,
-    private readonly permissions: PermissionsService
+    private readonly appControl: AppControlService
   ) { }
 
   async ngOnInit() {
 
     this.loadedApp = this.teams.isLoggedIn();
     if (this.loadedApp) {
-      if (!await this.permissions.userHasAccessToEntities()) this.router.navigate(['power-bi']);
+      if (!await this.appControl.userHasAccessToEntities()) this.router.navigate(['power-bi']);
     } else {
       this.teams.statusSubject
       .pipe(takeUntil(this._destroying$))
       .subscribe(async (msg) => {
         if (msg == 'loggedIn') {
-          if (!await this.permissions.userHasAccessToEntities()) {
+          if (!await this.appControl.userHasAccessToEntities()) {
             this.router.navigate(['power-bi']);
           } else {
             this.loadedApp = true;

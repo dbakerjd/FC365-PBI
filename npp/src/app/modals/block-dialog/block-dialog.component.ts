@@ -8,7 +8,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 })
 export class BlockDialogComponent implements OnInit {
 
-  wait: string = "Update in progress, please do not navigate away from this screen or close the application";
+  wait: string = "Update in progress, please do not navigate away from this screen or close the application.";
   message: string = '';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any, private dialogRef: MatDialogRef<BlockDialogComponent>) {
