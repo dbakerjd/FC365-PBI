@@ -474,18 +474,6 @@ export class PermissionsService {
     return userGroups.filter(g => Number(g.Title.split('-')[1]) === entityId);
   }
 
-  /**
-   * Check if the user is assigned at least to one entity information
-   * 
-   * @param userId User Id. If not present, the current user
-   * @returns boolean
-   */
-  async userHasAccessToEntities(userId?: number) {
-    const user = userId ? await this.appData.getUserInfo(userId) : await this.appData.getCurrentUserInfo();
-    const currentUserGroups = await this.appData.getUserGroups(user.Id);
-    return !!currentUserGroups.find(g => g.Title.startsWith('OU'));
-  }
-
   async createGeographies(oppId: number, geographies: number[], countries: number[]): Promise<EntityGeography[]> {
     const geographiesList = await this.appData.getMasterGeographies();
     const countriesList = await this.appData.getMasterCountries();

@@ -74,4 +74,16 @@ export class AppControlService {
     return undefined;
   }
 
+  /**
+   * Check if the user is assigned at least to one entity information
+   * 
+   * @param userId User Id. If not present, the current user
+   * @returns boolean
+   */
+   async userHasAccessToEntities(userId?: number) {
+    const user = userId ? await this.appData.getUserInfo(userId) : await this.appData.getCurrentUserInfo();
+    const currentUserGroups = await this.appData.getUserGroups(user.Id);
+    return !!currentUserGroups.find(g => g.Title.startsWith('OU'));
+  }
+
 }

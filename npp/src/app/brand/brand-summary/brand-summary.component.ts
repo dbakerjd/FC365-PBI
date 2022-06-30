@@ -9,6 +9,7 @@ import { NotificationsService } from '@services/notifications.service';
 import { ErrorService } from '@services/app/error.service';
 import { PermissionsService } from '@services/permissions.service';
 import { StringMapperService } from '@services/string-mapper.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-brand-summary',
@@ -38,7 +39,8 @@ export class BrandSummaryComponent implements OnInit {
     private readonly entities: EntitiesService,
     private readonly appControl: AppControlService,
     private readonly error: ErrorService,
-    private readonly stringMapper: StringMapperService
+    private readonly stringMapper: StringMapperService,
+    private router: Router
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -52,6 +54,10 @@ export class BrandSummaryComponent implements OnInit {
   }
 
   async init() {
+    if (!await this.appControl.userHasAccessToEntities()) {
+      this.router.navigate(['splash/reports']); return;
+    }
+
     //@ts-ignore
     window.SummaryComponent = this;
 

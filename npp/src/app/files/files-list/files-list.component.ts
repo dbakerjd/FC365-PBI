@@ -17,7 +17,6 @@ import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/fo
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
-import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
@@ -78,7 +77,6 @@ export class FilesListComponent implements OnInit {
     private toastr: ToastrService, 
     public licensing: LicensingService,
     public notifications: NotificationsService,
-    private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
     private readonly appData: AppDataService,
     private readonly appControl: AppControlService,
@@ -102,6 +100,9 @@ export class FilesListComponent implements OnInit {
   init() {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       this.currentUser = await this.appData.getCurrentUserInfo();
       this.masterCycles = await this.selectLists.getForecastCyclesList();
 
@@ -117,10 +118,7 @@ export class FilesListComponent implements OnInit {
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
-          this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
-          
           this.cycles = await this.appData.getEntityForecastCycles(this.entity);
-
           let profileImgBlob = await this.appData.getUserProfilePic(ownerId);
           this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
