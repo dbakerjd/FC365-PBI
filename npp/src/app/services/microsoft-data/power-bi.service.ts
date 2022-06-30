@@ -144,7 +144,6 @@ export class PowerBiService {
 
         let tokenResponse = await this.teams.msalInstance.acquireTokenSilent(request);
         token = tokenResponse.accessToken;
-        console.log(token);
         return token;
 
       }

@@ -17,7 +17,6 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
@@ -77,7 +76,6 @@ export class ActionsListComponent implements OnInit {
     private toastr: ToastrService,
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
-    private breadcrumbService: BreadcrumbsService,
     public sanitize: DomSanitizer,
     private readonly appData: AppDataService,
     private readonly appControl: AppControlService,
@@ -91,6 +89,9 @@ export class ActionsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
         this.opportunity = await this.appData.getEntity(params.id);
@@ -99,7 +100,6 @@ export class ActionsListComponent implements OnInit {
         }
         this.currentUser = await this.appData.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
-        this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
         this.opportunityGeographies = await this.appData.getEntityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {

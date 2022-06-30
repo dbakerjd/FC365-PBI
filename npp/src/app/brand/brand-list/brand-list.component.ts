@@ -58,7 +58,9 @@ export class BrandListComponent implements OnInit {
   }
 
   async init() {
-    
+    if (!await this.appControl.userHasAccessToEntities()) {
+      this.router.navigate(['splash/reports']); return;
+    }
     this.currentUser = await this.appData.getCurrentUserInfo();
     this.canCreate = this.appControl.getAppConfigValue('AllowCreation') && !!this.currentUser?.IsSiteAdmin;
 
