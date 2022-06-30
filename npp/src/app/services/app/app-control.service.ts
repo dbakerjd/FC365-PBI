@@ -83,7 +83,7 @@ export class AppControlService {
    async userHasAccessToEntities(userId?: number) {
     const user = userId ? await this.appData.getUserInfo(userId) : await this.appData.getCurrentUserInfo();
     const currentUserGroups = await this.appData.getUserGroups(user.Id);
-    return !!currentUserGroups.find(g => g.Title.startsWith('RU'));
+    return !!currentUserGroups.find(g => g.Title.startsWith('OU'));
   }
 
 }
