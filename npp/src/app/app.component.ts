@@ -34,11 +34,6 @@ export class AppComponent implements OnInit, OnDestroy {
           await this.teams.checkAndSetActiveAccount();
         }
 
-      } else if (msg == 'loggedIn') {
-        // check if we are allowed to connect to the license sharepoint
-        if (!await this.appData.canConnectAndAccessData()) {
-          this.router.navigate(['splash/non-access']);
-        }
       }
     })
     
