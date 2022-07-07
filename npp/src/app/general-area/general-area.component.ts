@@ -75,7 +75,6 @@ export class GeneralAreaComponent implements OnInit {
       if(!this.updatingFiles) {
         this.updatingFiles = true;
         let currentFolder = GLOBAL_DOCUMENTS_FOLDER + '/' + this.selectedFolder?.Name;
-        console.log('current folder', currentFolder);
         this.currentFiles = await this.appData.getFolderFiles(currentFolder, true);
         this.updatingFiles = false;
       } else {
