@@ -72,8 +72,8 @@ export class AppDataService {
   async canConnectAndAccessData(): Promise<boolean> {
     try {
       const currentUser = await this.getCurrentUserInfo();
-      const userInfo = await this.getUserInfo(currentUser.Id);
-      return true;
+      const userGroups = await this.getUserGroups(currentUser.Id);
+      return userGroups.length > 0;
     } catch (e) {
       return false;
     }
