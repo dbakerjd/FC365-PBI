@@ -43,3 +43,8 @@ Add list 'App Config Values' with fields
 
 0.6.0 (2022-06-29)
    - Add item to 'Master Groups Type List': RU / Master Power BI / ListRead / List
+
+0.6.2 (2022-07-08)
+   - Add item to 'Master Groups Type List': 
+      RU / Master Apps / ListRead / List
+      RU / Global Documents / ListRead / List

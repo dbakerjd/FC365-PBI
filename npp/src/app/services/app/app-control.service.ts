@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { AppDataService } from '@services/app/app-data.service';
 import { ErrorService } from './error.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +21,8 @@ export class AppControlService {
   constructor(
     private readonly teams: TeamsService, 
     private readonly error: ErrorService,
-    private readonly appData: AppDataService
+    private readonly appData: AppDataService,
+    private router: Router
   ) { 
     this.isInline = environment.isInlineApp;
     this.isReady = false;
@@ -30,7 +32,12 @@ export class AppControlService {
     } else {
       this.teams.statusSubject.subscribe(async (msg) => {
         if(msg == 'loggedIn') {
-          this.setApp();
+          // check if we are allowed to connect to the license sharepoint
+          if (await this.appData.canConnectAndAccessData()) {
+            this.setApp();
+          } else {
+            this.router.navigate(['splash/non-access']); 
+          }
         }
       })
     }
