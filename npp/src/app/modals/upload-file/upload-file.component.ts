@@ -54,8 +54,13 @@ export class UploadFileComponent implements OnInit {
     
     this.uploading = this.dialogRef.disableClose = true;
 
-    let folderToUpload = await this.files.constructUploadFolder(this.data.entity, this.data.masterStageId, this.model.category, this.model.geography);
-    const uploadingModel = !!this.model.geography;
+    const uploadingModel = this.data.folderList.find((f: NPPFolder) => f.DepartmentID === this.model.category)?.containsModels;
+    let folderToUpload = await this.files.constructUploadFolder(
+      this.data.entity, 
+      this.data.masterStageId, 
+      this.model.category, 
+      uploadingModel ? this.model.geography : undefined
+    );
 
     let fileData = {};
     if (uploadingModel) {
