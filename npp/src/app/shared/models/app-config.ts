@@ -8,3 +8,15 @@ export interface SelectInputList {
     value: any;
     group?: string;
 }
+
+export interface LicenseContext {
+    host: string;
+    entityId?: string;
+    teamSiteDomain?: string;
+}
+
+export interface StringMapping {
+    ID: number;
+    Key: string;
+    Title: string;
+}

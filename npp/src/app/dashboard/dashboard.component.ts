@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 import { animate, query, stagger, style, transition, trigger } from '@angular/animations';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { AppControlService } from '@services/app/app-control.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -36,15 +37,27 @@ export class DashboardComponent implements OnInit {
     private readonly teams: TeamsService, 
     private router: Router, 
     private licensing: LicensingService,
+    private readonly appControl: AppControlService
   ) { }
 
   async ngOnInit() {
 
-    this.teams.statusSubject
+    this.loadedApp = this.teams.isLoggedIn();
+    if (this.loadedApp) {
+      if (!await this.appControl.userHasAccessToEntities()) this.router.navigate(['power-bi']);
+    } else {
+      this.teams.statusSubject
       .pipe(takeUntil(this._destroying$))
       .subscribe(async (msg) => {
-        if (msg == 'loggedIn') this.loadedApp = true;
+        if (msg == 'loggedIn') {
+          if (!await this.appControl.userHasAccessToEntities()) {
+            this.router.navigate(['power-bi']);
+          } else {
+            this.loadedApp = true;
+          }
+        }
       });
+    }
     
     let NPPitems = [{
       src: 'assets/dashboard/npp-summary.svg',
@@ -90,10 +103,6 @@ export class DashboardComponent implements OnInit {
 
   getUser() {
     return this.teams.user;
-  }
-
-  getContext()  {
-    return this.teams.context;
   }
 
   getToken()  {

@@ -48,7 +48,6 @@ import { AuthEndComponent } from './auth/auth-end/auth-end.component';
 import { AuthInterceptor } from './auth/auth.interceptor';
 import { BlockDialogComponent } from './modals/block-dialog/block-dialog.component';
 import { EditFileComponent } from './modals/edit-file/edit-file.component';
-import { PowerBiService } from './services/power-bi.service';
 import { RejectModelComponent } from './modals/reject-model/reject-model.component';
 import { PowerBIEmbedModule } from 'powerbi-client-angular';
 import { FilesListComponent } from './files/files-list/files-list.component';
@@ -60,11 +59,13 @@ import { CreateBrandComponent } from './modals/create-brand/create-brand.compone
 import { BrandListComponent } from './brand/brand-list/brand-list.component';
 import { BrandSummaryComponent } from './brand/brand-summary/brand-summary.component';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { BreadcrumbsComponent } from './breadcrumbs/breadcrumbs.component';
 import { EntitiesService } from './services/entities.service';
 import { TeamsService } from '@services/microsoft-data/teams.service';
 import { AppControlService } from '@services/app/app-control.service';
 import { SeatsTableComponent } from './seats-table/seats-table.component';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
+import { GeneralAreaComponent } from './general-area/general-area.component';
+import { SimpleUploadComponent } from './modals/simple-upload/simple-upload.component';
 
 @NgModule({
   imports: [
@@ -127,8 +128,9 @@ import { SeatsTableComponent } from './seats-table/seats-table.component';
     CreateBrandComponent,
     BrandListComponent,
     BrandSummaryComponent,
-    BreadcrumbsComponent,
     SeatsTableComponent,
+    GeneralAreaComponent,
+    SimpleUploadComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

@@ -1,3 +1,6 @@
+.top-info-wrapper {
+    padding-top: 1.5rem;
+}
 .opportunity-info-wrapper {
     .opportunity-active {
         background-color: #bdffd1;
@@ -79,6 +82,26 @@
                 width: 20%;
                 font-size: 0.9rem;
                 font-weight: 700;
+
+                label .duedate-warning-icon {
+                    display: none;
+                }
+                label.duedate-warning {
+                    color: #F15A29;
+
+                    .duedate-warning-icon {
+                        position: relative;
+                        display: inline-block;
+                        vertical-align: middle;
+                        .action-item-status-icon {
+                            width: 1.5rem;
+                            height: 1.5rem;
+                            background-color: #F15A29;
+                            -webkit-mask: url('/assets/gate-icons/late.svg') no-repeat;
+                            mask: url('/assets/gate-icons/late.svg') no-repeat;
+                        }
+                    }
+                }
             }
 
             .action-item-status {
@@ -183,4 +206,8 @@
         
     }
 
+}
+
+::ng-deep .red-tooltip {
+    background-color: #F15A29;
 }

@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BreadcrumbsComponent } from './breadcrumbs.component';
+import { GeneralAreaComponent } from './general-area.component';
 
-describe('BreadcrumbsComponent', () => {
-  let component: BreadcrumbsComponent;
-  let fixture: ComponentFixture<BreadcrumbsComponent>;
+describe('GeneralAreaComponent', () => {
+  let component: GeneralAreaComponent;
+  let fixture: ComponentFixture<GeneralAreaComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ BreadcrumbsComponent ]
+      declarations: [ GeneralAreaComponent ]
     })
     .compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(BreadcrumbsComponent);
+    fixture = TestBed.createComponent(GeneralAreaComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

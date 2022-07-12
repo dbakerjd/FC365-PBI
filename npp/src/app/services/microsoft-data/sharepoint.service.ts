@@ -152,11 +152,11 @@ export class SharepointService {
           })
         }
       ).toPromise();
+      return true;
     } catch (e: any) {
       this.error.handleError(e);
       return false;
     }
-    return true;
   }
 
   public async deleteItem(id: number, listName: string): Promise<boolean> {
@@ -282,7 +282,7 @@ export class SharepointService {
   async existsFile(filename: string, folder: string): Promise<boolean> {
     try {
       const file = await this.getPathFiles(folder, `$filter=Name eq '${filename}'`);
-      return file.value.length > 0;
+      return file.length > 0;
     } catch (e) {
       return false;
     }

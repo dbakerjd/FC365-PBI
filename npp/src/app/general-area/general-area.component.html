@@ -1,0 +1,73 @@
+<app-npp-header [currentSection]="'general-area'"></app-npp-header>
+
+<div class="folder-and-actions-wrapper opportunity-contents">
+    <div class="folder-wrapper left-selection">
+        <div class="folder-item-wrapper" *ngIf="documentFolders.length > 1">
+            <div class="folder-item left-top-selection" (click)="setSection('documents')">
+                <span>Reference Documents</span>
+                <svg>
+                    <use xlink:href="assets/symbol-defs.svg#icon-chevron"></use>
+                </svg>
+            </div>
+            <div class="folders-wrapper">
+                <ng-container *ngFor="let folder of documentFolders">
+                    <div class="folders-item left-dd-selection" *ngIf="!folder.containsModels"
+                        [ngClass]="{'selected-status': selectedFolder.Name === folder.Name}" (click)="setFolder(folder)">
+                        <svg>
+                            <use xlink:href="assets/symbol-defs.svg#icon-folder"></use>
+                        </svg>
+                        <span>{{folder.Name}}</span>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+    <div class="files-wrapper">
+        <div class="folder-info-wrapper">
+            <div class="folder-info-review">
+
+            </div>
+
+            <div class="folder-info-progress">&nbsp;</div>
+
+            <div class="folder-info-icons opportunity-top-actions">
+                <div class="info-icons-upload" matTooltip="Upload file" (click)="openUploadDialog()" *ngIf="canUpload()"></div>
+            </div>
+        </div>
+        <div class="documents-files">
+            <app-progress-spinner *ngIf="loading"></app-progress-spinner>
+
+            <ng-container *ngIf="currentFiles && currentFiles.length && !loading">
+                <div class="documents-files-item" *ngFor="let file of currentFiles">
+                    <div class="documents-files-item-name">
+                        <p><label>Name: </label>{{file.Name}}</p>
+                    </div>
+                    <div class="documents-files-item-uploaded">
+                        <p>
+                            <label>Uploaded at </label>{{file.TimeLastModified | date : 'Y-M-d'}}
+                            <ng-container *ngIf="file.ListItemAllFields.Author"><label> by </label>
+                                {{file.ListItemAllFields.Author.FirstName + ' ' +
+                                file.ListItemAllFields.Author.LastName}}
+                            </ng-container>
+                        </p>
+                    </div>
+                    <div class="documents-files-item-comments">
+                        <p *ngIf="file.ListItemAllFields.Comments">
+                            <label>Description: </label>
+                            {{file.ListItemAllFields.Comments}}
+                        </p>
+                    </div>
+                    <div class="documents-files-item-icons">
+                        <div class="documents-files-item-icons-download" matTooltip="Download file"
+                            (click)="downloadFile(file.ListItemAllFields.ID)"></div>
+                        <div class="documents-files-item-icons-remove" matTooltip="Delete file" *ngIf="canUpload()"
+                            (click)="deleteFile(file.ListItemAllFields.ID)"></div>
+                    </div>
+                </div>
+            </ng-container>
+            <h3 *ngIf="(!currentFiles || currentFiles.length == 0) && !loading" style="text-align: center;">No Files
+                Found
+                in {{ selectedFolder?.Name }}</h3>
+        </div>
+    </div>
+</div>

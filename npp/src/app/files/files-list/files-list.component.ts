@@ -17,10 +17,8 @@ import { FolderPermissionsComponent } from 'src/app/modals/folder-permissions/fo
 import { RejectModelComponent } from 'src/app/modals/reject-model/reject-model.component';
 import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-for-approval.component';
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
-import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { PowerBiService } from 'src/app/services/power-bi.service';
 import { EntityForecastCycle, EntityGeography, ForecastCycle, Indication, Opportunity } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
 import { User } from '@shared/models/user';
@@ -30,6 +28,8 @@ import { FilesService } from 'src/app/services/files.service';
 import { SelectInputList } from '@shared/models/app-config';
 import { SelectListsService } from '@services/select-lists.service';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
+import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-files-list',
@@ -71,18 +71,18 @@ export class FilesListComponent implements OnInit {
   loading = false;
 
   constructor(
-    private powerBi: PowerBiService, 
     private route: ActivatedRoute, 
     private router: Router,
     public matDialog: MatDialog,
     private toastr: ToastrService, 
     public licensing: LicensingService,
     public notifications: NotificationsService,
-    private breadcrumbService: BreadcrumbsService,
     private sanitize: DomSanitizer,
     private readonly appData: AppDataService,
+    private readonly appControl: AppControlService,
     private readonly files: FilesService,
-    private readonly selectLists: SelectListsService
+    private readonly selectLists: SelectListsService,
+    private readonly stringMapper: StringMapperService
   ) { }
 
   ngOnInit(): void {
@@ -100,6 +100,9 @@ export class FilesListComponent implements OnInit {
   init() {
     this.loading = true;
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       this.currentUser = await this.appData.getCurrentUserInfo();
       this.masterCycles = await this.selectLists.getForecastCyclesList();
 
@@ -115,10 +118,7 @@ export class FilesListComponent implements OnInit {
         let ownerId = this.entity.EntityOwnerId;
         this.isOwner = this.currentUser.Id === ownerId;
         if (this.entity && owner) {
-          this.breadcrumbService.addBreadcrumbLevel(this.entity.Title);
-          
           this.cycles = await this.appData.getEntityForecastCycles(this.entity);
-
           let profileImgBlob = await this.appData.getUserProfilePic(ownerId);
           this.ownerProfilePic = profileImgBlob ? this.sanitize.bypassSecurityTrustUrl(window.URL.createObjectURL(profileImgBlob)) : null;
         }
@@ -186,6 +186,7 @@ export class FilesListComponent implements OnInit {
           for (const geofolder of this.geoFolders) {
             let folder = currentFolder + '/' + geofolder.Name;
             if(this.currentStatus == 'Archived') {
+              this.cycles = await this.appData.getEntityForecastCycles(this.entity!);
               folder = folder + '/' + this.currentCycle;
             } else {
               folder = folder + '/0';
@@ -288,12 +289,12 @@ export class FilesListComponent implements OnInit {
         if (result.success) {
           // update view
           this.updateCurrentFiles();
-          this.toastr.success("The model has been sent for approval", "Forecast Model");
+          this.toastr.success("The model has been sent for " + this.stringMapper.getString('Approval', 'l'), "Forecast Model");
           await this.notifications.modelSubmittedNotification(file.Name, this.entityId, [
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("The model couldn't be sent for approval");
+          this.toastr.error("The model couldn't be sent for " + this.stringMapper.getString('Approval', 'l'));
         }
       });
   }
@@ -340,7 +341,7 @@ export class FilesListComponent implements OnInit {
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+          this.toastr.error(`There was a problem ${this.stringMapper.getString('approving', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -517,6 +518,7 @@ export class FilesListComponent implements OnInit {
     dialogRef.afterClosed()
       .pipe(take(1))
       .subscribe(async result => {
+        if (!result) return;
         let res = result.success;
         let str = '';
         let error = false;
@@ -529,12 +531,12 @@ export class FilesListComponent implements OnInit {
         }
 
         if(res.needsIndicationsUpdate && res.indicationsUpdateWorked) {
-          str += ` Indications have been updated.`
+          str += ` ${this.stringMapper.getString('Indications')} have been updated.`
         }
 
         if(res.needsIndicationsUpdate && !res.indicationsUpdateWorked) {
           error = true;
-          str += ` There was an error updating model indications.`
+          str += ` There was an error updating model ${this.stringMapper.getString('Indications', 'l')}.`
         }
 
         if (!error) {
@@ -576,33 +578,75 @@ export class FilesListComponent implements OnInit {
   }
   
   async refreshPowerBi() {
-    try {
-      if(!this.refreshingPowerBi) {
-        this.refreshingPowerBi = true;
-        const reportName: string = "Epi Report";
+    if (!this.refreshingPowerBi) {
+      this.refreshingPowerBi = true;
+      const reportName = "Epi Report Inline";
 
-        let response = await this.powerBi.refreshReport(reportName);
-        this.refreshingPowerBi = false;   
-        switch (response){
-          case 202:{
-            this.toastr.success("Analytics report succesfully refreshed.");
-            break;
-          }
-          case 409:{
-            this.toastr.error("Report currently refreshing. Please try again later");
-            break;
-          }
-          default:{
-            this.toastr.error(`Unknown error, ${response}`);
-            break;
-          }
+      const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
+
+      if (pbiPremium) {
+        this.doRefresh(reportName);
+      } else {
+        const pbiLimit = this.appControl.getAppConfigValue('PBIRefreshLimit');
+        const availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
+
+        if (availableRefreshes < 1) {
+          this.toastr.warning(`You reached your Power BI license limit of refreshes (${pbiLimit}) for today`, 'Limit reached');
+          this.refreshingPowerBi = false;
+          return;
         }
-      }  
-    } catch(e: any) {
+
+        if (availableRefreshes < 4) {
+          const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+            maxWidth: "400px",
+            minWidth: "350px",
+            height: "200px",
+            data: {
+              message: `There are only ${availableRefreshes} available refreshes more for your Power BI license for today. Do you want to continue?`,
+              confirmButtonText: 'Yes, refresh',
+            }
+          });
+
+          dialogRef.afterClosed()
+            .pipe(take(1))
+            .subscribe(async dorefresh => {
+              if (dorefresh) {
+                this.doRefresh(reportName, availableRefreshes);
+              }
+            });
+        } else {
+          this.doRefresh(reportName, availableRefreshes);
+        }
+      }
+      this.refreshingPowerBi = false;
+    }
+
+  }
+
+  private async doRefresh(reportName: string, availableRefreshes?: number) {
+    try {
+      let response = await this.appData.refreshPBIReport(reportName);
+      this.refreshingPowerBi = false;
+      switch (response) {
+        case 202: {
+          if (availableRefreshes && availableRefreshes > 1) this.toastr.success(`Analytics report succesfully refreshed. You have ${availableRefreshes - 1} refreshes left for today.`);
+          else this.toastr.success("Analytics report succesfully refreshed.");
+          break;
+        }
+        case 409: {
+          this.toastr.error("Report currently refreshing. Please try again later");
+          break;
+        }
+        default: {
+          this.toastr.error(`Unknown error, ${response}`);
+          break;
+        }
+      }
+    }
+    catch(e: any) {
       this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
-    
   }
 
   navigateTo(item: Opportunity) {
@@ -617,7 +661,8 @@ export class FilesListComponent implements OnInit {
       height: '400px',
       width: '405px',
       data: {
-        entity: this.entity
+        entity: this.entity,
+        cycles: this.cycles
       }
     });
 
@@ -625,20 +670,25 @@ export class FilesListComponent implements OnInit {
       .pipe(take(1))
       .subscribe(async (success: any) => {
         if (success) {
-          this.toastr.success(`The new forecast cycle has been created successfully`, "New Forecast Cycle");
-          if(this.entity) this.cycles = await this.appData.getEntityForecastCycles(this.entity);
-          this.entity = Object.assign(this.entity, {
-            ForecastCycleId: success.ForecastCycleId,
-            ForecastCycle: { 
-              Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
-              ID: success.ForecastCycleId
-            },
-            Year: success.Year,
-            ForecastCycleDescriptor: success.ForecastCycleDescriptor
-          });
+          this.toastr.success(
+            `The new ${this.stringMapper.getString('Forecast Cycle', 'l')} has been created successfully`, 
+            "New " + this.stringMapper.getString('Forecast Cycle')
+          );
+          if(this.entity) {
+            this.cycles = await this.appData.getEntityForecastCycles(this.entity);
+            this.entity = Object.assign(this.entity, {
+              ForecastCycleId: success.ForecastCycleId,
+              ForecastCycle: { 
+                Title: this.masterCycles.find(el => el.value == success.ForecastCycleId)?.label,
+                ID: success.ForecastCycleId
+              },
+              Year: success.Year,
+              ForecastCycleDescriptor: success.ForecastCycleDescriptor
+            });
+          } 
           this.updateCurrentFiles();
         } else if (success === false) {
-          this.toastr.error('The new forecast cycle could not be created', 'Try Again');
+          this.toastr.error(`The new ${this.stringMapper.getString('Forecast Cycle', 'l')} could not be created`, 'Try Again');
         }
       });
   }
@@ -673,13 +723,13 @@ export class FilesListComponent implements OnInit {
         if (result.success) {
           // update view
           await this.updateCurrentFiles();
-          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          this.toastr.warning("The model " + file.Name + " has been " + this.stringMapper.getString('rejected', 'l'), "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.entityId, [
             `DU-${this.entityId}-0-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.entityId}`
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+          this.toastr.error(`There were a problem ${this.stringMapper.getString('rejecting', 'l')} the forecast model`, 'Try again');
         }
       });
   }

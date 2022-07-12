@@ -1,5 +1,6 @@
+<app-npp-header *ngIf="messageToShow == 'reports'"></app-npp-header>
 <div class="dashboard-wrapper">
-    <img src="assets/layout/j+d_logo_green.svg" alt="J+D" class="jd-logo" />
+    <img src="assets/layout/j+d_logo_green.svg" alt="J+D" class="jd-logo" *ngIf="messageToShow != 'reports'" />
     <div class="dashboard-welcome">
         <img src="assets/layout/FC365-logo.svg" alt="FC365" />
     </div>
@@ -9,11 +10,12 @@
             <h1 *ngSwitchCase="'expired'">It seems your license is expired</h1>
             <h1 *ngSwitchCase="'non-license'">There is no license to use the FC365 {{appTitle}} App</h1>
             <h1 *ngSwitchCase="'non-access'">It looks like you don't have permission to access the FC365 {{appTitle}} App</h1>
+            <h1 *ngSwitchCase="'reports'">It looks like you don't have permission to access the FC365 {{appTitle}} App</h1>
         </ng-container>
         <h2>
-            This application is currently intended for <span class="client">{{ client.name }}</span>. 
+            This application is currently intended for <span class="client">{{ client.contactName }}</span>. 
             If you think that this is an error, please raise a request with 
-            <span class="client"><a href="mailto:{{client.email}}?subject='FC365 {{appTitle}} App'">{{ client.email }}</a></span> 
+            <span class="client"><a href="mailto:{{client.contactEmail}}?subject='FC365 {{appTitle}} App'">{{ client.contactEmail }}</a></span> 
             detailing that you don't have access to the FC365 {{appTitle}} App.
         </h2>
     </div>

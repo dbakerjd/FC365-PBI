@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { AppType, SelectInputList } from '@shared/models/app-config';
-import { Action, Country, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
+import { AppType, SelectInputList, StringMapping } from '@shared/models/app-config';
+import { Action, Country, EntityForecastCycle, EntityGeography, Indication, MasterApprovalStatus, MasterBusinessUnit, MasterClinicalTrialPhase, MasterCountry, MasterForecastCycle, MasterGeography, MasterScenario, MasterStage, Opportunity, OpportunityType, Stage } from '@shared/models/entity';
 import { OpportunityInput, StageInput, BrandInput, EntityGeographyInput } from '@shared/models/inputs';
 import { NPPFile, NPPFileMetadata, NPPFolder, SystemFolder } from '@shared/models/file-system';
 import { NPPNotification } from '@shared/models/notification';
 import { PBIRefreshComponent, PBIReport } from '@shared/models/pbi';
 import { GroupPermission, User } from '@shared/models/user';
-import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME } from '@shared/sharepoint/folders';
+import { FILES_FOLDER, FOLDER_APPROVED, FOLDER_ARCHIVED, FOLDER_DOCUMENTS, FOLDER_POWER_BI_APPROVED, FOLDER_POWER_BI_ARCHIVED, FOLDER_POWER_BI_DOCUMENTS, FOLDER_POWER_BI_WIP, FOLDER_WIP, FORECAST_MODELS_FOLDER_NAME, GLOBAL_DOCUMENTS_FOLDER } from '@shared/sharepoint/folders';
 import * as SPLists from '@shared/sharepoint/list-names';
 import { ToastrService } from 'ngx-toastr';
 import { from, Observable } from 'rxjs';
@@ -14,6 +14,7 @@ import { map } from 'rxjs/operators';
 import { LicensingService } from '../jd-data/licensing.service';
 import { GraphService, MSGraphUser } from '../microsoft-data/graph.service';
 import { ReadPermission, SharepointService } from '../microsoft-data/sharepoint.service';
+import { PowerBiService } from '@services/microsoft-data/power-bi.service';
 
 
 interface MasterAction {
@@ -56,12 +57,14 @@ export class AppDataService {
     stage: number;
     folders: NPPFolder[]
   }[] = [];
+  stringMappingCache: StringMapping[] = [];
 
   public app!: AppType;
 
   constructor(
     private readonly sharepoint: SharepointService, 
     private readonly msgraph: GraphService,
+    private readonly powerbi: PowerBiService,
     private readonly licensing: LicensingService,
     private readonly toastr: ToastrService
   ) { }
@@ -69,8 +72,8 @@ export class AppDataService {
   async canConnectAndAccessData(): Promise<boolean> {
     try {
       const currentUser = await this.getCurrentUserInfo();
-      const userInfo = await this.getUserInfo(currentUser.Id);
-      return true;
+      const userGroups = await this.getUserGroups(currentUser.Id);
+      return userGroups.length > 0;
     } catch (e) {
       return false;
     }
@@ -87,6 +90,18 @@ export class AppDataService {
 
   public async getApp(appId: string) {
     return await this.sharepoint.getAllItems(SPLists.MASTER_APPS_LIST_NAME, "$select=*&$filter=Title eq '" + appId + "'");
+  }
+
+  async getAppContactInfo() {
+    return await this.licensing.getContactInfo();
+  }
+
+  async getStringMappingItems(): Promise<StringMapping[]> {
+    if (this.stringMappingCache.length < 1) {
+      let count = await this.sharepoint.countItems(SPLists.STRING_MAPPINGS);
+      this.stringMappingCache = await this.sharepoint.getAllItems(SPLists.STRING_MAPPINGS, `$top=${count}`);
+    }
+    return this.stringMappingCache;
   }
 
   /** ------ ENTITIES ------- **/
@@ -206,7 +221,7 @@ export class AppDataService {
     );
   }
 
-  async getEntityForecastCycles(entity: Opportunity) {
+  async getEntityForecastCycles(entity: Opportunity): Promise<EntityForecastCycle[]> {
     let filter = `$filter=EntityNameId eq ${entity.ID}`;
     
     return await this.sharepoint.getAllItems(
@@ -358,6 +373,7 @@ export class AppDataService {
 
   /** ---- MASTER INFO ---- */
 
+  /** Get the list of all indications or for a concrete therapy */
   async getMasterIndications(therapy: string = 'all'): Promise<Indication[]> {
     let cache = this.masterIndicationsCache.find(i => i.therapy == therapy);
     if (cache) {
@@ -711,17 +727,17 @@ export class AppDataService {
     }
   }
 
-  /** Adds a user to a group. If ask for seat, also try to assign a seat for the user */
-  async addUserToGroupAndSeat(user: User, groupId: number, askForSeat = false, newUser = false): Promise<boolean> {
+  /** Adds a user to a group and try to assign a seat for the user */
+  async addUserToGroupAndSeat(user: User, groupId: number): Promise<boolean> {
     try {
-      if (askForSeat) {
-        //check if is previously in the group, to avoid ask again for the same seat
-        if (!newUser && await this.userIsInGroup(user.Id, groupId)) {
-          return true;
-        }
-        await this.askSeatForUser(user.Email!);
+      
+      //check if is previously in the group, to avoid ask again for the same seat
+      if (await this.userIsInGroup(user.Id, groupId)) {
+        return true;
       }
+      await this.askSeatForUser(user.Email!);
       return await this.addUserToGroup(user, groupId);
+      
     } catch (e: any) {
       if (e.status === 422) {
         this.toastr.warning(`Sorry, there are no more free seats for user <${user.Title}>. This \
@@ -735,6 +751,13 @@ export class AppDataService {
     }
   }
 
+  /**
+   * Create a user in Sharepoint from email, ask for a seat for it and add it to the group
+   * 
+   * @param userMail mail of the new user from MS Graph
+   * @param groupId group id where to add the user
+   * @returns boolean. True if the user is added. False, otherwise
+   */
   async addNewUserToGroup(userMail: string, groupId: number): Promise<boolean> {
     if (await this.askSeatForUser(userMail)) {
       return await this.addUserToGroupFromMail(userMail, groupId);
@@ -802,26 +825,48 @@ export class AppDataService {
 
   /** ---- Power BI ---- **/
 
-  async getReports(): Promise<PBIReport[]>{
+  async getPBIReports(): Promise<PBIReport[]>{
     return await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_LIST_NAME,'$orderby=SortOrder');
   }
 
-  async getReport(id:number): Promise<PBIReport>{
+  async getPBIReport(id:number): Promise<PBIReport>{
     return await this.sharepoint.getOneItemById(id, SPLists.MASTER_POWER_BI_LIST_NAME);
   }
 
-  async getReportByName(reportName:string): Promise<PBIReport>{
+  async getPBIReportByName(reportName:string): Promise<PBIReport>{
     let filter = `$filter=Title eq '${reportName}'`;
     let select = `$select=ID,name,GroupId,pageName,Title`;
     return await this.sharepoint.getOneItem(SPLists.MASTER_POWER_BI_LIST_NAME,`${select}&${filter}`)
   }
 
-  async getComponents(report: PBIReport): Promise<PBIRefreshComponent[]> {
+  async getPBIComponents(report: PBIReport): Promise<PBIRefreshComponent[]> {
     let select = `$select=Title,ComponentType,GroupId`
     let filter = `$filter=ReportTypeId eq'${report.ID}'`;
     let order = '$orderby=ComponentOrder';
     let reportComponents: PBIRefreshComponent[];
     return reportComponents = (await this.sharepoint.getAllItems(SPLists.MASTER_POWER_BI_COMPONENTS_LIST_NAME, `${select}&${filter}&${order}`)).map(t => { return { ComponentType: t.ComponentType, GroupId: t.GroupId, ComponentName: t.Title } })
+  }
+
+  /** Get the number of resfreshes available today */
+  async getPBIAvailableRefreshes(reportName: string, limit: number): Promise<number> {
+    const report = await this.getPBIReportByName(reportName);
+    const datasetComponent = (await this.getPBIComponents(report)).find(c => c.ComponentType === 'Datasets');
+
+    if (datasetComponent) {
+      const dataset = (await this.powerbi.getDataset(datasetComponent.GroupId)).find(ds => ds.name === datasetComponent.ComponentName);
+      if (dataset) {
+        const refreshes = await this.powerbi.getDatasetRefreshes(datasetComponent.GroupId, dataset.id, limit);
+        const today = new Date().setHours(0, 0, 0, 0);
+        return Math.max(limit - refreshes.filter(r => new Date(r.startTime).setHours(0, 0, 0, 0) === today).length, 0);
+      }
+    }
+    return -1;
+  }
+
+  async refreshPBIReport(reportName: string): Promise<number> {
+    const report = await this.getPBIReportByName(encodeURIComponent(reportName));
+    const reportComponents = await this.getPBIComponents(report);
+    return await this.powerbi.refreshReport(reportName, reportComponents);
   }
 
   /** Add Power BI Row Level Security Access for the user to the entity */
@@ -917,7 +962,7 @@ export class AppDataService {
     return await this.sharepoint.getPathFiles(path, `$filter=Name eq '${this.clearFileName(filename)}'`);
   }
 
-  async getFileByForecast(path: string, forecastId: number) {
+  async getFilesByForecast(path: string, forecastId: number): Promise<NPPFile[]> {
     return await this.sharepoint.getPathFiles(path, `$filter=ListItemAllFields/ForecastId eq ${forecastId}`);
   }
 
@@ -1050,6 +1095,9 @@ export class AppDataService {
         break;
       case FOLDER_ARCHIVED:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title&$expand=Author,Editor,EntityGeography,ModelScenario,Indication';  
+        break;
+      case GLOBAL_DOCUMENTS_FOLDER:
+        select = '$select=*';
         break;
       default:
         select = '$select=*,Indication/Title,Indication/ID,Indication/TherapyArea,Author/Id,Author/FirstName,Author/LastName,Editor/Id,Editor/FirstName,Editor/LastName,EntityGeography/Title,EntityGeography/EntityGeographyType,ModelScenario/Title,ApprovalStatus/Title&$expand=Author,Editor,EntityGeography,ModelScenario,ApprovalStatus,Indication';

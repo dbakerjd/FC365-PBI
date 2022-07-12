@@ -17,10 +17,8 @@ import { SendForApprovalComponent } from 'src/app/modals/send-for-approval/send-
 import { ShareDocumentComponent } from 'src/app/modals/share-document/share-document.component';
 import { StageSettingsComponent } from 'src/app/modals/stage-settings/stage-settings.component';
 import { UploadFileComponent } from 'src/app/modals/upload-file/upload-file.component';
-import { BreadcrumbsService } from 'src/app/services/breadcrumbs.service';
 import { LicensingService } from 'src/app/services/jd-data/licensing.service';
 import { NotificationsService } from 'src/app/services/notifications.service';
-import { PowerBiService } from 'src/app/services/power-bi.service';
 import { WorkInProgressService } from '@services/app/work-in-progress.service';
 import { Action, EntityGeography, Indication, MasterStage, Opportunity, Stage } from '@shared/models/entity';
 import { FileComments, NPPFile, NPPFolder } from '@shared/models/file-system';
@@ -31,6 +29,8 @@ import { PermissionsService } from '@services/permissions.service';
 import { FilesService } from '@services/files.service';
 import { SelectListsService } from '@services/select-lists.service';
 import { EntitiesService } from '@services/entities.service';
+import { AppControlService } from '@services/app/app-control.service';
+import { StringMapperService } from '@services/string-mapper.service';
 
 @Component({
   selector: 'app-actions-list',
@@ -76,19 +76,22 @@ export class ActionsListComponent implements OnInit {
     private toastr: ToastrService,
     public licensing: LicensingService,
     public jobs: WorkInProgressService,
-    public powerBi: PowerBiService,
-    private breadcrumbService: BreadcrumbsService,
     public sanitize: DomSanitizer,
     private readonly appData: AppDataService,
+    private readonly appControl: AppControlService,
     private readonly files: FilesService,
     private readonly permissions: PermissionsService,
     private readonly notifications: NotificationsService,
     private readonly selectLists: SelectListsService,
-    private readonly entities: EntitiesService
+    private readonly entities: EntitiesService,
+    private readonly stringMapper: StringMapperService
     ) { }
 
   ngOnInit(): void {
     this.route.params.subscribe(async (params) => {
+      if (!await this.appControl.userHasAccessToEntities()) {
+        this.router.navigate(['splash/reports']); return;
+      }
       if(params.id && params.id != this.opportunityId) {
         this.opportunityId = params.id;
         this.opportunity = await this.appData.getEntity(params.id);
@@ -97,7 +100,6 @@ export class ActionsListComponent implements OnInit {
         }
         this.currentUser = await this.appData.getCurrentUserInfo();
         this.isOwner = this.currentUser.Id === this.opportunity.EntityOwnerId;
-        this.breadcrumbService.addBreadcrumbLevel(this.opportunity.Title);
         this.opportunityGeographies = await this.appData.getEntityGeographies(this.opportunity.ID, false);
 
         if (this.opportunity.EntityOwner) {
@@ -294,7 +296,7 @@ export class ActionsListComponent implements OnInit {
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There was a problem approving the forecast model", 'Try again');
+          this.toastr.error(`There was a problem ${this.stringMapper.getString('approving', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -317,14 +319,14 @@ export class ActionsListComponent implements OnInit {
         if (result.success) {
           // update view
           await this.updateCurrentFiles();
-          this.toastr.warning("The model " + file.Name + " has been rejected", "Forecast Model");
+          this.toastr.warning("The model " + file.Name + " has been " + this.stringMapper.getString('rejected', 'l'), "Forecast Model");
           await this.notifications.modelRejectedNotification(file.Name, this.opportunityId, [
             `DU-${this.opportunityId}-${departmentId}-${file.ListItemAllFields?.EntityGeographyId}`,
             `OO-${this.opportunityId}`,
             `SU-${this.opportunityId}-${this.currentGate?.StageNameId}`,
           ]);
         } else if (result.success === false) {
-          this.toastr.error("There were a problem rejecting the forecast model", 'Try again');
+          this.toastr.error(`There were a problem ${this.stringMapper.getString('rejecting', 'l')} the forecast model`, 'Try again');
         }
       });
   }
@@ -473,6 +475,13 @@ export class ActionsListComponent implements OnInit {
 
   onDueDateChange(actionId: number, value: string) {
     this.appData.setActionDueDate(actionId, value);
+  }
+
+  afterGateDue(taskDueDate: Date) {
+    if (this.currentGate?.StageReview) {
+      return taskDueDate.getTime() > new Date(this.currentGate.StageReview).getTime();
+    }
+    return false;
   }
 
   async goNextStage() {
@@ -836,37 +845,76 @@ export class ActionsListComponent implements OnInit {
   }
 
   async refreshPowerBi() {
-    try {
-      if(!this.refreshingPowerBi) {
-        this.refreshingPowerBi = true;
-        //const at the moment needs to be dynamic
-        const reportName: string = "Epi Report"
+    if (!this.refreshingPowerBi) {
+      this.refreshingPowerBi = true;
+      //const at the moment needs to be dynamic
+      const reportName = "Epi Report Inline";
 
-        let response = await this.powerBi.refreshReport(reportName);
-        console.log("status is: "+response);
-        switch (response){
-          case 202:{
-            this.toastr.success("Analytics report succesfully refreshed.");
-            break;
-          }
-          case 409:{
-            this.toastr.error("Report currently refreshing. Please try again later");
-            break;
-          }
-          default:{
-            this.toastr.error(`Unknown error, ${response}`);
-            break;
-          }
+      const pbiPremium = this.appControl.getAppConfigValue('PBIPremium');
+
+      if (pbiPremium) {
+        this.doRefresh(reportName);
+      } else {
+        const pbiLimit = this.appControl.getAppConfigValue('PBIRefreshLimit');
+        const availableRefreshes = await this.appData.getPBIAvailableRefreshes(reportName, pbiLimit);
+
+        if (availableRefreshes < 1) {
+          this.toastr.warning(`You reached your Power BI license limit of refreshes (${pbiLimit}) for today`, 'Limit reached');
+          this.refreshingPowerBi = false;
+          return;
         }
 
-        this.refreshingPowerBi = false;   
-      }  
-    } catch(e: any) {
+        if (availableRefreshes < 4) {
+          const dialogRef = this.matDialog.open(ConfirmDialogComponent, {
+            maxWidth: "400px",
+            minWidth: "350px",
+            height: "200px",
+            data: {
+              message: `There are only ${availableRefreshes} available refreshes more for your Power BI license for today. Do you want to continue?`,
+              confirmButtonText: 'Yes, refresh',
+            }
+          });
+
+          dialogRef.afterClosed()
+            .pipe(take(1))
+            .subscribe(async dorefresh => {
+              if (dorefresh) {
+                this.doRefresh(reportName, availableRefreshes);
+              }
+            });
+        } else {
+          this.doRefresh(reportName, availableRefreshes);
+        }
+      }
       this.refreshingPowerBi = false;
-      
+    }
+
+  }
+
+  private async doRefresh(reportName: string, availableRefreshes?: number) {
+    try {
+      let response = await this.appData.refreshPBIReport(reportName);
+      this.refreshingPowerBi = false;
+      switch (response) {
+        case 202: {
+          if (availableRefreshes && availableRefreshes > 1) this.toastr.success(`Analytics report succesfully refreshed. You have ${availableRefreshes - 1} refreshes left for today.`);
+          else this.toastr.success("Analytics report succesfully refreshed.");
+          break;
+        }
+        case 409: {
+          this.toastr.error("Report currently refreshing. Please try again later");
+          break;
+        }
+        default: {
+          this.toastr.error(`Unknown error, ${response}`);
+          break;
+        }
+      }
+    }
+    catch(e: any) {
+      this.refreshingPowerBi = false;
       this.toastr.error(e.message);
     }
-    
   }
 
   navigateTo(item: Opportunity) {
