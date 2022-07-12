@@ -1,7 +1,7 @@
 export const environment = {
   ssoRedirectUrl: 'https://icy-water-0ae577403.1.azurestaticapps.net/auth-end',
   production: true,
-  isInlineApp: true,
+  isInlineApp: false,
   version: '0.6.3',
   functionAppUrl: 'https://func-fc365-test.azurewebsites.net/api/PowerBI',
   functionAppDomain: 'func-fc365-test.azurewebsites.net',
